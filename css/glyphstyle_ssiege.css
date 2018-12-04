@@ -1,0 +1,193 @@
+/* 
+    layout  
+*/
+div.whole{
+    width: 1800px;
+}
+
+hr{
+    border: 1px solid #000;
+}
+div.left1 {
+    color: #006;
+    float: left;
+    width: 890px;
+    border: 1px solid #000;
+    word-wrap: break-word;
+}
+div.right1 {
+    color: #600;
+    float: right;
+    width: 890px;
+    border: 1px solid #000;
+    word-wrap: break-word;
+}
+div.mymargin{
+    margin: 10px 10px 10px;
+}
+
+/* State Graph */
+.statenode {
+    stroke-opacity: .7;
+    fill-opacity: .7;
+    stroke-width: 3;
+}
+/*
+    Arrow colors
+#000062;
+*/
+marker#start {
+    fill: green;
+}
+marker#end {
+    fill: #680000;
+}
+marker#mid {
+    fill: #5E4E00;
+}
+/*
+The part of the graph that consist of crowd behavior. Defined as a class
+*/
+marker {
+    stroke-opacity: .4;
+    fill-opacity: .4;
+}
+/*
+The part of the graph that consist of a selected path.
+*/
+
+.start {
+    stroke: #000062;
+    fill: #1962FF;
+}
+text.start{
+    fill: #000062;
+    stroke:none;
+}
+.mid {
+    stroke: #5E4E00;
+    fill: #F5FFA3;
+}
+text.mid{
+    fill: #5E4E00;
+    stroke:none;
+}
+
+.end {
+    stroke: #680000;
+    fill: #B74D3D;
+}
+text.end{
+    fill: #680000;
+    stroke:none;
+}
+
+.statelink{
+    stroke-opacity: .7;
+/*        fill-opacity: 0;*/
+    fill: transparent;
+}
+/* selected placed here will overshadow start, mid and end */
+.selected {
+    stroke: #FF0509;
+    stroke-opacity: 1;
+}
+
+/* Behavior graph */
+
+.behaviornode,
+.behaviorlink {
+    stroke-opacity: .8;
+    fill-opacity: .8;
+    stroke-width: 3;
+    stroke: #FFFAC9;
+}
+
+.complete{
+    fill: #88F37F;
+    stroke:green;
+}
+text.complete{
+    fill: green;
+    stroke:none;
+}
+
+.incomplete{
+    fill: #FF77DF;
+    stroke: purple;
+}
+text.incomplete{
+    fill: purple;
+    stroke:none;
+}
+
+div.popup {
+  position: absolute;
+  border: 1px solid #bbbbbb;
+  color: #444444;
+  background-color: white;
+  padding: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+/*      pointer-events: none;*/
+}
+div.popup table{
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 12px;
+}
+div.popup hr{
+  margin: 5px 0px;
+  border: none;
+  height: 1px;
+  color: #cccccc;
+  background-color: #cccccc;
+}
+div.popup p.services{
+  font-size: 11px;
+  line-height: 17px;
+  padding: 0px;
+  margin: 0px;
+}
+.hover_image {position:relative;}
+.hover_image span{position:absolute; display:none; z-index:99;}
+.hover_image:hover span{display:block;}
+
+text {
+    font-family: sans-serif;
+/*      font: "Helvetica Neue", Helvetica, Arial, sans-serif;*/
+/*      text-anchor: middle;*/
+    pointer-events: none;
+    stroke:none;
+    font-weight: bold;
+}
+
+/*   For coordinates */
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+/*
+.x.axis path {
+  display: none;
+}
+*/
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
+/* Grid line in the coordinate chart*/
+.grid .tick {
+    stroke: lightgrey;
+    stroke-opacity: 0.7;
+    shape-rendering: crispEdges;
+}
+.grid path {
+          stroke-width: 0;
+}
