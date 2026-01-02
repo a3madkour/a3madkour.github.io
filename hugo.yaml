@@ -1,0 +1,7 @@
+baseURL: 'https://a3madkour.github.io/'
+languageCode: 'en-us'
+title: 'A3Madkour Blog'
+
+caches:
+  images:
+    dir: :cacheDir/images
