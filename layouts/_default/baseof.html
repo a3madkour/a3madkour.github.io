@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="{{ .Site.LanguageCode }}">
+  <body class="bg-white text-black antialiased dark:bg-gray-950 dark:text-white flex">
+	<h1>Title</h1>
+    <section class="xl:max-w-5xl min-h-dvh mx-auto px-4 xl:px-0 flex flex-col grow">
+      <main class="grow">
+        {{- block "main" . -}}{{- end -}}
+      </main>
+    </section>
+  </body>
+</html>
