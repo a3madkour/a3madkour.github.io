@@ -1,7 +1,33 @@
-baseURL: 'https://a3madkour.github.io/'
-languageCode: 'en-us'
-title: 'A3Madkour Blog'
+baseURL: https://a3madkour.github.io
+languageCode: en-us
+title: Content for the Context gods
+module:
+  hugoVersion:
+    extended: true
+    min: "0.112.0"
+    mounts:
+      - source: assets
+        target: assets
+      - disableWatch: true
+        source: hugo_stats.json
+        target: assets/watching/hugo_stats.json
+build:
+  buildStats:
+    enable: true
+  cachebusters:
+  - source: 'assets/notwatching/hugo_stats\.json'
+    target: css
+  - source: '(postcss|tailwind)\.config\.js'
+    target: css
+  - source: assets/.*\.(js|ts|jsx|tsx)
+    target: js
+  - source: assets/.*\.(.*)$
+    target: $1
 
-caches:
-  images:
-    dir: :cacheDir/images
+markup:
+    highlight:
+        style: dracula
+    tableOfContents:
+        startLevel: 2
+        endLevel: 6
+        ordered: false
