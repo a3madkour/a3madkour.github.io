@@ -19,7 +19,6 @@
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.18",
     "autoprefixer": "^10.4.23",
-    "hugo-bin": "^0.149.2",
     "init": "^0.1.2",
     "micromodal": "^0.6.1",
     "postcss": "^8.5.6",
