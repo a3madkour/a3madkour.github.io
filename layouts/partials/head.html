@@ -1,16 +1,33 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta author="Abdelrahman Madkour">
-  <title>{{ .Site.Title }}</title>
+  <meta name="author" content="Abdelrahman Madkour">
+  {{ $description := or .Description .Summary site.Params.description }}
+  {{ with $description }}<meta name="description" content="{{ . }}">{{ end }}
+  <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} | {{ site.Title }}{{ end }}</title>
+  <link rel="canonical" href="{{ .Permalink }}">
+
+  {{/* Open Graph / Twitter */}}
+  <meta property="og:title" content="{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }}{{ end }}">
+  <meta property="og:type" content="{{ if .IsPage }}article{{ else }}website{{ end }}">
+  <meta property="og:url" content="{{ .Permalink }}">
+  {{ with $description }}<meta property="og:description" content="{{ . }}">{{ end }}
+  <meta name="twitter:card" content="summary">
+
+  {{/* RSS */}}
+  {{ range .AlternativeOutputFormats }}
+    <link rel="{{ .Rel }}" type="{{ .MediaType.Type }}" href="{{ .Permalink }}" title="{{ site.Title }}">
+  {{ end }}
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Righteous&display=swap" rel="stylesheet">
-  {{ $options := dict "inlineImports" true }}
-  {{ $styles := resources.Get "css/main.css" }}
-  {{ $styles = $styles  | css.PostCSS $options }}
-  {{ if hugo.IsProduction }}
-      {{ $styles = $styles | minify | fingerprint | resources.PostProcess }}
+  {{ with resources.Get "css/compiled.css" }}
+    {{ $styles := . }}
+    {{ if hugo.IsProduction }}
+      {{ $styles = $styles | minify | fingerprint }}
+    {{ end }}
+    <link href="{{ $styles.RelPermalink }}" rel="stylesheet"
+      {{ with $styles.Data.Integrity }} integrity="{{ . }}" crossorigin="anonymous"{{ end }}>
   {{ end }}
-  <link href="{{ $styles.RelPermalink }}" rel="stylesheet" >
 </head>

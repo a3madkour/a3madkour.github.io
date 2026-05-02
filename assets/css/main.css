@@ -48,5 +48,6 @@
   /* 2. Define your custom font family */
   --font-righteous: "Righteous", sans-serif;
 }
-@source "hugo_stats.json"
-@source "./assets/js/*.js"
+@source "../../layouts/**/*.html";
+@source "../../content/**/*.{html,md}";
+@source "../js/**/*.js";

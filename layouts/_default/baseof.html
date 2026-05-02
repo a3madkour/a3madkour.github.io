@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ .Site.LanguageCode }}">
+<html lang="{{ .Site.Language.Lang }}">
   {{ partial "head.html" . }}
   <body class="bg-white text-black antialiased dark:bg-gray-950 dark:text-white flex">
     <section class="xl:max-w-5xl min-h-dvh mx-auto px-4 xl:px-0 flex flex-col grow">
@@ -17,7 +17,6 @@
       </nav>
     </aside>
     {{ end }}
-    {{- partial "search.html" . -}}
     {{ partial "scripts.html" . }}
   </body>
 </html>

@@ -33,10 +33,8 @@
       if(document.documentElement.classList.contains('dark')) {
         setTheme(false);
         localStorage.theme = 'light';
-		console.log("light")
       } else {
         setTheme(true);
-		console.log("dark")
         localStorage.theme = 'dark';
       }
       // Remove the event listener when the theme is changed using the toggle

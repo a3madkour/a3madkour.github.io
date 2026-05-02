@@ -5,9 +5,11 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "hugo server --disableFastRender --ignoreCache --noHTTPCache --buildDrafts --cleanDestinationDir",
+    "build:css": "tailwindcss -i assets/css/main.css -o assets/css/compiled.css --optimize",
+    "watch:css": "tailwindcss -i assets/css/main.css -o assets/css/compiled.css --watch",
+    "start": "npm run build:css && hugo server --disableFastRender --ignoreCache --noHTTPCache --buildDrafts --cleanDestinationDir",
     "hugo": "hugo",
-    "hugo:build": "hugo --minify"
+    "hugo:build": "npm run build:css && hugo --minify"
   },
   "keywords": [],
   "author": "",
@@ -15,14 +17,6 @@
   "type": "commonjs",
   "hugo-bin": {
     "buildTags": "extended"
-  },
-  "dependencies": {
-    "@tailwindcss/postcss": "^4.1.18",
-    "autoprefixer": "^10.4.23",
-    "init": "^0.1.2",
-    "micromodal": "^0.6.1",
-    "postcss": "^8.5.6",
-    "postcss-cli": "^11.0.1"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.18",
