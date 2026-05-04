@@ -1,53 +1,258 @@
-@import "tailwindcss";
+/* a3madkour.github.io — visual identity
+ * Tokens, typography, base layout, and site components.
+ * See docs/superpowers/specs/2026-05-03-personal-site-design.md §2.
+ */
 
-@custom-variant dark (&:where(.dark, .dark *));
+/* ------------------------------------------------------------------
+ * 1. Reset
+ * ------------------------------------------------------------------ */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { min-height: 100dvh; }
+img, svg { display: block; max-width: 100%; }
 
-@supports (overflow-wrap: anywhere) {
-  .break-anywhere {
-    overflow-wrap: anywhere;
+/* ------------------------------------------------------------------
+ * 2. Tokens — light mode (:root, default)
+ * ------------------------------------------------------------------ */
+:root {
+  --color-stone:    #eeeeea;
+  --color-ink:      #1c1a17;
+  --color-ink-soft: #5a564f;
+  --color-ink-fade: #9a958e;
+  --color-rule:     #d4d3cd;
+  --color-tile:     #fdfcf8;
+  --color-burgundy: #6b1f2c;
+  --color-steel:    #1e4060;
+
+  --font-body: "Petrona", Georgia, serif;
+  --font-ui:   "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --reading-column: 720px;
+  --page-gutter:    1.25rem;
+
+  --text-xs:   0.8125rem;
+  --text-sm:   0.9375rem;
+  --text-base: 1.0625rem;
+  --text-md:   1.25rem;
+  --text-lg:   1.625rem;
+  --text-xl:   2rem;
+  --text-2xl:  2.75rem;
+  --text-3xl:  3.5rem;
+}
+
+/* Dark mode — explicit override via attribute */
+:root[data-theme="dark"] {
+  --color-stone:    #181818;
+  --color-ink:      #e2e2dd;
+  --color-ink-soft: #b0aca0;
+  --color-ink-fade: #7a7770;
+  --color-rule:     #333333;
+  --color-tile:     #2a2a2a;
+  --color-burgundy: #d65a6a;
+  --color-steel:    #7eafd0;
+}
+
+/* Dark mode — system preference, only when no explicit override */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --color-stone:    #181818;
+    --color-ink:      #e2e2dd;
+    --color-ink-soft: #b0aca0;
+    --color-ink-fade: #7a7770;
+    --color-rule:     #333333;
+    --color-tile:     #2a2a2a;
+    --color-burgundy: #d65a6a;
+    --color-steel:    #7eafd0;
   }
 }
-@supports not (overflow-wrap: anywhere) {
-  .break-anywhere {
-    word-break: break-word;
+
+/* ------------------------------------------------------------------
+ * 3. Typography
+ * ------------------------------------------------------------------ */
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  color: var(--color-ink);
+  background: var(--color-stone);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-body);
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 1.5em 0 0.5em;
+  color: var(--color-ink);
+}
+
+h1 { font-size: var(--text-2xl); }
+h2 { font-size: var(--text-xl); }
+h3 { font-size: var(--text-lg); }
+h4 { font-size: var(--text-md); }
+
+p { margin: 0 0 1em; }
+
+a {
+  color: var(--color-burgundy);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+a:hover { text-decoration-thickness: 2px; }
+
+code, pre, kbd, samp {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+}
+pre {
+  background: var(--color-tile);
+  border: 1px solid var(--color-rule);
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-rule);
+  margin: 2.5rem 0;
+}
+
+::selection {
+  background: var(--color-burgundy);
+  color: var(--color-stone);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------
+ * 4. Layout primitives
+ * ------------------------------------------------------------------ */
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 var(--page-gutter);
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.reading-column {
+  max-width: var(--reading-column);
+  margin: 0 auto;
+}
+
+main { flex-grow: 1; }
+
+/* ------------------------------------------------------------------
+ * 5. Site header
+ * ------------------------------------------------------------------ */
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2rem 0;
+  font-family: var(--font-ui);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.site-brand {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-md);
+  color: var(--color-ink);
+  text-decoration: none;
+}
+.site-brand:hover { color: var(--color-burgundy); }
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-size: var(--text-sm);
+}
+
+.site-nav a {
+  color: var(--color-ink);
+  text-decoration: none;
+}
+.site-nav a:hover { color: var(--color-burgundy); text-decoration: underline; }
+.site-nav a[aria-current="page"] { color: var(--color-burgundy); }
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+.icon-button:hover { color: var(--color-burgundy); }
+.icon-button svg { width: 1.25rem; height: 1.25rem; }
+
+.rss-link { color: #ee7e2c; }
+.rss-link:hover { color: #ee7e2c; filter: brightness(1.1); }
+
+/* ------------------------------------------------------------------
+ * 6. Site footer
+ * ------------------------------------------------------------------ */
+.site-footer {
+  margin-top: 4rem;
+  padding: 2rem 0;
+  border-top: 1px solid var(--color-rule);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+}
+
+.colophon { margin: 0 0 0.75rem; }
+.colophon strong { color: var(--color-ink); font-weight: 600; }
+
+.site-footer .social {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.site-footer .social a {
+  color: var(--color-ink-soft);
+  text-decoration: none;
+}
+.site-footer .social a:hover {
+  color: var(--color-burgundy);
+  text-decoration: underline;
+}
+
+/* ------------------------------------------------------------------
+ * 7. Hero / role line (homepage placeholder)
+ * ------------------------------------------------------------------ */
+.role {
+  font-family: var(--font-ui);
+  color: var(--color-ink-soft);
+  max-width: 640px;
+  font-size: var(--text-md);
+  margin: 0.25rem 0 1.5rem;
+}
+
+/* ------------------------------------------------------------------
+ * 8. Reduced motion
+ * ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
-
-/* Hide scrollbar for Chrome, Safari and Opera */
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-/* Hide scrollbar for IE, Edge and Firefox */
-.hide-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
-}
-
-#search-modal.is-open{
-	display: block;
-}
-
-@theme {
-  /* 1. Map the 'accent' color to the built-in pink palette */
-  --color-accent: var(--color-pink-500);
-  
-  /* If you want the whole palette (accent-50, accent-100, etc.) */
-  --color-accent-50: var(--color-pink-50);
-  --color-accent-100: var(--color-pink-100);
-  --color-accent-200: var(--color-pink-200);
-  --color-accent-300: var(--color-pink-300);
-  --color-accent-400: var(--color-pink-400);
-  --color-accent-500: var(--color-pink-500);
-  --color-accent-600: var(--color-pink-600);
-  --color-accent-700: var(--color-pink-700);
-  --color-accent-800: var(--color-pink-800);
-  --color-accent-900: var(--color-pink-900);
-  --color-accent-950: var(--color-pink-950);
-
-  /* 2. Define your custom font family */
-  --font-righteous: "Righteous", sans-serif;
-}
-@source "../../layouts/**/*.html";
-@source "../../content/**/*.{html,md}";
-@source "../js/**/*.js";
