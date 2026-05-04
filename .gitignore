@@ -3,6 +3,9 @@ public/
 resources/_gen/
 .hugo_build.lock
 
+# Superpowers brainstorm artifacts
+.superpowers/
+
 # Tailwind compiled output (built by `npm run build:css`)
 assets/css/compiled.css
 
