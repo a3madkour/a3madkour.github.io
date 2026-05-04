@@ -1,4 +1,8 @@
 <head>
+  {{/* Inline theme application — runs synchronously before any rendering to prevent FOUC.
+       Mirrors the logic in assets/js/toggle-theme.js. Kept tiny on purpose. */}}
+  <script>(function(){try{var p=localStorage.getItem('theme-pref');if(p==='light'||p==='dark')document.documentElement.setAttribute('data-theme',p);}catch(_){}})();</script>
+
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="author" content="Abdelrahman Madkour">

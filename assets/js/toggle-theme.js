@@ -1,13 +1,33 @@
-// Theme toggle — cycles light → dark → system.
+// Theme toggle — cycles system → light → dark → system.
 // Stores override in localStorage key "theme-pref".
-// On load: if "theme-pref" is set, applies it; otherwise CSS handles
-// system preference via @media (prefers-color-scheme: dark) :root:not([data-theme]).
+// Initial apply happens via an inline script in head.html (FOUC prevention);
+// this file handles the click cycle and label updates.
 
 (function () {
   const STORAGE_KEY = 'theme-pref';
   const ORDER = ['system', 'light', 'dark'];
 
   const root = document.documentElement;
+
+  // Storage may throw in restricted contexts (private browsing strict, sandboxed
+  // iframes). Wrap access so the toggle still works for the session even when
+  // persistence is unavailable.
+  function readStored() {
+    try {
+      return localStorage.getItem(STORAGE_KEY);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function writeStored(value) {
+    try {
+      if (value === null) localStorage.removeItem(STORAGE_KEY);
+      else localStorage.setItem(STORAGE_KEY, value);
+    } catch (_) {
+      // ignore — session-only persistence
+    }
+  }
 
   function apply(pref) {
     if (pref === 'light' || pref === 'dark') {
@@ -18,7 +38,7 @@
   }
 
   function read() {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = readStored();
     return ORDER.includes(stored) ? stored : 'system';
   }
 
@@ -27,7 +47,8 @@
     return ORDER[(i + 1) % ORDER.length];
   }
 
-  // Initialize on load
+  // Re-apply on script execution (matches the inline-head script's result;
+  // safe to run again — idempotent).
   apply(read());
 
   function updateButtonLabel(button, pref) {
@@ -49,11 +70,7 @@
 
     button.addEventListener('click', () => {
       const newPref = next(read());
-      if (newPref === 'system') {
-        localStorage.removeItem(STORAGE_KEY);
-      } else {
-        localStorage.setItem(STORAGE_KEY, newPref);
-      }
+      writeStored(newPref === 'system' ? null : newPref);
       apply(newPref);
       updateButtonLabel(button, newPref);
     });
