@@ -1,43 +1,61 @@
-(function() {
-    const setTheme = (isDarkMode) => {
-      if (isDarkMode) {
-        document.documentElement.classList.add('dark')
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    }
+// Theme toggle — cycles light → dark → system.
+// Stores override in localStorage key "theme-pref".
+// On load: if "theme-pref" is set, applies it; otherwise CSS handles
+// system preference via @media (prefers-color-scheme: dark) :root:not([data-theme]).
 
-    // Define windows media event listener separately, so we can remove it when the toggle is being used
-    const windowsMediaEventListener = (event) => {
-      setTheme(event.matches);
-    }
+(function () {
+  const STORAGE_KEY = 'theme-pref';
+  const ORDER = ['system', 'light', 'dark'];
 
-    // Check if the theme is already set
-    if(localStorage.getItem('theme')) {
-      setTheme(localStorage.getItem('theme') === 'dark');
+  const root = document.documentElement;
+
+  function apply(pref) {
+    if (pref === 'light' || pref === 'dark') {
+      root.setAttribute('data-theme', pref);
     } else {
-      // When theme is not already set, check the user's preference
-      // Check if the browser supports matchMedia first
-      if (window.matchMedia) {
-        // Set the theme based on the user's preference
-        setTheme(window.matchMedia('(prefers-color-scheme: dark)').matches);
-        // Add event listener to the windows media, when OS theme changes, the website theme will change
-        // We will remove this event listener when the theme is changed using the toggle
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', windowsMediaEventListener);
-      }
+      root.removeAttribute('data-theme');
     }
+  }
 
-    const themeToggle = document.querySelector('[data-theme-toggle]');
+  function read() {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return ORDER.includes(stored) ? stored : 'system';
+  }
 
-    themeToggle.addEventListener('click', function() {
-      if(document.documentElement.classList.contains('dark')) {
-        setTheme(false);
-        localStorage.theme = 'light';
+  function next(current) {
+    const i = ORDER.indexOf(current);
+    return ORDER[(i + 1) % ORDER.length];
+  }
+
+  // Initialize on load
+  apply(read());
+
+  function updateButtonLabel(button, pref) {
+    const labels = {
+      system: 'Theme: system (click to switch to light)',
+      light:  'Theme: light (click to switch to dark)',
+      dark:   'Theme: dark (click to switch to system)',
+    };
+    button.setAttribute('aria-label', labels[pref]);
+    button.setAttribute('title', labels[pref]);
+    button.dataset.themePref = pref;
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const button = document.querySelector('[data-theme-toggle]');
+    if (!button) return;
+
+    updateButtonLabel(button, read());
+
+    button.addEventListener('click', () => {
+      const newPref = next(read());
+      if (newPref === 'system') {
+        localStorage.removeItem(STORAGE_KEY);
       } else {
-        setTheme(true);
-        localStorage.theme = 'dark';
+        localStorage.setItem(STORAGE_KEY, newPref);
       }
-      // Remove the event listener when the theme is changed using the toggle
-      window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', windowsMediaEventListener);
+      apply(newPref);
+      updateButtonLabel(button, newPref);
     });
-  })();
+  });
+})();
