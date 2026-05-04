@@ -6,22 +6,6 @@ resources/_gen/
 # Superpowers brainstorm artifacts
 .superpowers/
 
-# Tailwind compiled output (built by `npm run build:css`)
-assets/css/compiled.css
-
-# Node & NPM
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Build outputs
-static/css/output.css
-static/css/*.map
-static/js/bundle.js
-static/js/*.map
-dist/
-
 # Environment variables
 .env
 .env.local
@@ -71,10 +55,8 @@ $RECYCLE.BIN/
 [._]sw[a-p]
 *.swp
 *.swo
-*~
 
 # Emacs
-*~
 \#*\#
 /.emacs.desktop
 /.emacs.desktop.lock
@@ -85,16 +67,6 @@ $RECYCLE.BIN/
 *.temp
 *.log
 *.cache
-
-# WASM build artifacts (if building from source)
-# Uncomment if you're building WASM in this repo
-# pkg/
-# target/
-# Cargo.lock  # Uncomment if not committing Rust lock file
-
-# Testing
-coverage/
-*.test
 
 # Misc
 .sass-cache/
