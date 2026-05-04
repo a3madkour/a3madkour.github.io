@@ -1,3 +1,16 @@
-<footer class="mt-16 mb-6 text-sm text-gray-500 dark:text-gray-400 text-center">
-  &copy; {{ now.Year }} Abdelrahman Madkour
+<footer class="site-footer">
+  <p class="colophon">
+    Built with <a href="https://gohugo.io/">Hugo</a>.
+    Set in Petrona &amp; Inter.
+    <strong>Words are mine; not generated.</strong>
+  </p>
+  <p class="copyright">
+    &copy; {{ now.Year }} Abdelrahman Madkour.
+  </p>
+  <div class="social">
+    <a href="https://github.com/a3madkour" rel="me">GitHub</a>
+    <a href="https://bsky.app/" rel="me">Bluesky</a>
+    <a href="mailto:a3madkour@gmail.com">Email</a>
+    <a href="{{ "/index.xml" | relURL }}">RSS</a>
+  </div>
 </footer>
