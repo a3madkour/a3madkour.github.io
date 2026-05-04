@@ -1,10 +1,11 @@
 ---
 title: 'About'
-description: 'About me'
+description: 'About Abdelrahman Madkour.'
 type: 'about'
 ---
-### TL;DR
 
-### Long version
+Games researcher, writer, occasional maker of music and poems.
 
-### Short version
+## Bio
+
+(Placeholder. Phase 2 fills in the long-form bio, Now widget, affiliations, connect block, and colophon.)

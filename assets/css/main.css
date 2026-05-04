@@ -256,3 +256,28 @@ main { flex-grow: 1; }
     scroll-behavior: auto !important;
   }
 }
+
+/* ------------------------------------------------------------------
+ * 9. Page lists, meta, post hero
+ * ------------------------------------------------------------------ */
+.page-list {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0;
+}
+.page-list > li { margin: 0 0 1.25rem; }
+.page-list-desc {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  margin: 0.25rem 0 0;
+}
+.meta {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+  margin: 0;
+}
+.post-hero {
+  margin: 2rem 0;
+  text-align: center;
+}

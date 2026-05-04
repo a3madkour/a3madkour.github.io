@@ -1,17 +1,22 @@
+// TOC active-link highlighter — observes headings with `id` and adds
+// `is-active` to the corresponding anchor inside the TOC container.
+// Used by per-essay layouts when a TOC is present (Phase 2 onward).
+
 window.addEventListener('DOMContentLoaded', () => {
-	const observer = new IntersectionObserver(entries => {
-		entries.forEach(entry => {
-			const id = entry.target.getAttribute('id');
+  const tocLinks = document.querySelectorAll('#TableOfContents a');
+  if (tocLinks.length === 0) return;
 
-			if (entry.intersectionRatio > 0) {
-        document.querySelectorAll(`#TableOfContents li a`)?.forEach((section) => section.classList.remove('text-accent-500', 'font-medium'));
-				document.querySelector(`#TableOfContents li a[href="#${id}"]`)?.classList.add('text-accent-500', 'font-medium');
-			}
-		});
-	});
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      const id = entry.target.getAttribute('id');
+      if (!id) return;
+      if (entry.intersectionRatio > 0) {
+        tocLinks.forEach((a) => a.classList.remove('is-active'));
+        document.querySelector(`#TableOfContents a[href="#${id}"]`)?.classList.add('is-active');
+      }
+    });
+  });
 
-	// Track all headings that have an `id` applied
-	document.querySelectorAll('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]').forEach((section) => {
-		observer.observe(section);
-	});
+  document.querySelectorAll('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]')
+    .forEach((heading) => observer.observe(heading));
 });
