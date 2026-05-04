@@ -1,5 +1,14 @@
 # Foundation Cleanup + Visual Identity Implementation Plan
 
+> **Status (2026-05-04): COMPLETE.** All 14 tasks executed and merged to `master` via the `rebuild/foundation-and-identity` branch (subagent-driven execution, with per-task spec + code review). Phase 2 (Essays grid, Garden tiles + graph, Research themes, Works pages, Library, Pagefind search, plus the per-section content widgets) is the next chunk — see `docs/superpowers/specs/2026-05-03-personal-site-design.md` §14 for the phase breakdown.
+>
+> Carried-forward items to revisit when starting Phase 2:
+> - `actions/checkout@v6` and `actions/configure-pages@v6` in `.github/workflows/hugo.yaml` may not resolve (latest tags are v4 / v5); intentionally left for the user to confirm.
+> - Petrona italic only loaded at weight 400 — Phase 2 may want italic 600/700 for emphasized headings (extend the Google Fonts URL in `layouts/partials/head.html`).
+> - `::selection` is 4.68:1 in dark mode (acceptable per spec accent rules; flagged for future thought).
+> - RSS orange `#ee7e2c` is 2.36:1 on light stone (universal-recognition exception per spec).
+> - Bluesky URL in the footer is the placeholder `https://bsky.app/` — replace with a real handle when the user is ready.
+>
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the current Tailwind v4 CSS pipeline with hand-rolled CSS implementing the locked visual identity (Petrona/Inter/JetBrains Mono on cool stone with burgundy/steel accents), update the top navigation to match the new content architecture, and add a contrast-checker tool — without breaking the existing Hugo build or content. After this plan, the site renders with the new look on the `rebuild/foundation-and-identity` branch, ready for section work in Phase 2.

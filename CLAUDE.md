@@ -60,6 +60,21 @@ Three Google Fonts loaded in a single `<link>`: **Petrona** (body, italic + upri
 - **Phase 0+1 implementation plan** (this rebuild): `docs/superpowers/plans/2026-05-04-foundation-and-visual-identity.md`
 - The spec's §14 lists the Phase 2+ work still to do (Essays grid, Garden tiles, Research themes, Works pages, Library, Pagefind search).
 
+## Project status (2026-05-04)
+
+**Phase 0+1 complete.** Foundation cleanup (dropped Tailwind/Node) and visual identity scaffold (hand-rolled CSS, theme toggle, top nav, contrast CI gate) are merged. Section pages (Essays / Garden / Research / Works) are stubs — clicking them resolves to "(Coming soon.)" placeholder list pages.
+
+**Next phase: not started.** Phase 2 picks up per-section work from spec §14:
+- Essays variable-tile grid + per-essay layouts (TOC, sidenotes, citations, code highlighting, embedded interactive widgets)
+- Garden tiles + topic maps + d3-force graph view + Matuschak-style stacked-columns retrieval
+- Research theme cards + question hubs + research graph
+- Works (games index + game pages with iframe embeds, music with custom player + synced lyrics, poetry list + poem pages)
+- Library (reading / listening / playing) — data-driven from `data/*.yaml`
+- About page (real bio, Now widget, affiliations, connect block, full colophon)
+- Homepage v3 (Currently widget, Essays grid, Research cards, Garden + Studio columns)
+
+To pick up Phase 2 in a future session: read this file + spec §14, pick a slice (often "Essays + Garden notes" first), run `superpowers:writing-plans` to produce the next implementation plan. Most Phase 2 work depends on the org-mode export pipeline (Phase 3 in spec); confirm with the user whether to coordinate with their elisp helpers or build with placeholder data first.
+
 ## Hard constraints (from spec §1)
 
 - **No AI-generated text** anywhere on the site. AI is permitted only for site/app code and code for interactive explorables.
