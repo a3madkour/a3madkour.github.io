@@ -1,19 +1,28 @@
-<header class="flex items-center justify-between py-3 sm:py-10">
-  <div>
-    <a aria-label="a3madkour.github.io" href="/">
-      <div class="flex items-center justify-between">
-        <div class="text-xl font-bold font-mono">A3Madkour</div>
-      </div>
+<header class="site-header">
+  <a class="site-brand" href="{{ "/" | relURL }}">a3madkour</a>
+  <nav class="site-nav" aria-label="Primary">
+    {{ $current := .RelPermalink }}
+    {{ range slice
+        (dict "url" "/essays/"  "label" "Essays")
+        (dict "url" "/garden/"  "label" "Garden")
+        (dict "url" "/research/" "label" "Research")
+        (dict "url" "/works/"   "label" "Works")
+        (dict "url" "/about/"   "label" "About")
+    }}
+      <a href="{{ .url | relURL }}"
+         {{ if hasPrefix $current .url }}aria-current="page"{{ end }}>{{ .label }}</a>
+    {{ end }}
+    <a class="icon-button rss-link"
+       href="{{ "/index.xml" | relURL }}"
+       aria-label="RSS feed"
+       title="RSS feed">
+      {{ with resources.Get "images/icons/rss.svg" }}{{ .Content | safeHTML }}{{ end }}
     </a>
-  </div>
-  <nav class="flex items-center space-x-4 leading-5 sm:space-x-6">
-    <a class="hidden font-medium text-gray-900 dark:text-gray-100 hover:text-accent-500 sm:block" href="/blog">Blog</a>
-    <a class="hidden font-medium text-gray-900 dark:text-gray-100 hover:text-accent-500 sm:block" href="/tools">Tools</a>
-    <a class="hidden font-medium text-gray-900 dark:text-gray-100 hover:text-accent-500 sm:block" href="/about">About</a>
-    <button class="hover:text-accent-500" aria-label="Toggle Theme" data-theme-toggle>
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-6 w-6">
-        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
-      </svg>
+    <button class="icon-button"
+            type="button"
+            data-theme-toggle
+            aria-label="Theme: system (click to switch to light)">
+      {{ with resources.Get "images/icons/sun.svg" }}{{ .Content | safeHTML }}{{ end }}
     </button>
   </nav>
 </header>
