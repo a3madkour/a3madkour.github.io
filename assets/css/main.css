@@ -281,3 +281,10 @@ main { flex-grow: 1; }
   margin: 2rem 0;
   text-align: center;
 }
+
+/* TOC active-link state — applied by assets/js/nav.js when a heading
+   scrolls into view. Used by per-essay layouts in Phase 2 onward. */
+#TableOfContents .is-active {
+  color: var(--color-burgundy);
+  font-weight: 600;
+}
