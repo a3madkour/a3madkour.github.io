@@ -19,10 +19,13 @@
     <link rel="{{ .Rel }}" type="{{ .MediaType.Type }}" href="{{ .Permalink }}" title="{{ site.Title }}">
   {{ end }}
 
+  {{/* Fonts: Petrona (body) + Inter (UI) + JetBrains Mono (code) */}}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Righteous&display=swap" rel="stylesheet">
-  {{ with resources.Get "css/compiled.css" }}
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono&family=Petrona:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+  {{/* Site CSS — hand-rolled, processed by Hugo */}}
+  {{ with resources.Get "css/main.css" }}
     {{ $styles := . }}
     {{ if hugo.IsProduction }}
       {{ $styles = $styles | minify | fingerprint }}
