@@ -1,7 +1,7 @@
 baseURL: https://a3madkour.github.io
 languages:
   en:
-    languageName: English
+    label: English
     locale: en-US
 title: Content for the Context gods
 module:
