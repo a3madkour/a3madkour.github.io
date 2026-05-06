@@ -456,3 +456,33 @@ main { flex-grow: 1; }
 .essay-references ol { padding-left: 1.5rem; }
 .essay-references li { margin-bottom: 0.75rem; line-height: 1.5; }
 .essay-references li:target { background: rgba(107, 31, 44, 0.08); padding: 0.25rem 0.5rem; border-radius: 4px; }
+
+/* ------------------------------------------------------------------
+ * 14. Figures
+ * ------------------------------------------------------------------ */
+.essay-figure {
+  margin: 2rem 0;
+}
+.essay-figure img {
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  display: block;
+}
+.essay-figure figcaption {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+/* Wide breakout — extends beyond reading column */
+.essay-figure.wide {
+  margin-left: calc((var(--reading-column) - 920px) / 2);
+  margin-right: calc((var(--reading-column) - 920px) / 2);
+  max-width: 920px;
+}
+@media (max-width: 920px) {
+  .essay-figure.wide { margin-left: 0; margin-right: 0; max-width: 100%; }
+}
