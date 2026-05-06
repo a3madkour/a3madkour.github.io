@@ -1,0 +1,14 @@
+{{- /* Figure shortcode: semantic <figure><img><figcaption>.
+       Supports class="wide" for breakout figures. Resolves src
+       from page bundle resources first, falls back to literal URL. */ -}}
+{{- $src := .Get "src" -}}
+{{- $alt := .Get "alt" | default "" -}}
+{{- $caption := .Get "caption" -}}
+{{- $class := .Get "class" -}}
+{{- $resource := .Page.Resources.Get $src -}}
+{{- $url := $src -}}
+{{- if $resource -}}{{- $url = $resource.RelPermalink -}}{{- end -}}
+<figure class="essay-figure{{ with $class }} {{ . }}{{ end }}">
+  <img src="{{ $url }}" alt="{{ $alt }}">
+  {{- with $caption -}}<figcaption>{{ . | markdownify }}</figcaption>{{- end -}}
+</figure>

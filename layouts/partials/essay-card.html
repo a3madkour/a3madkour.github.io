@@ -1,0 +1,24 @@
+{{/* Standard essay card with tile-size + span resolution.
+     Priority: explicit tile_size > featured > active series > default.
+     Span: featured → 2x1; hero → adds row span; defaults to 1x1. */}}
+{{- $tile := .Params.tile_size -}}
+{{- if not $tile -}}
+  {{- if .Params.featured -}}{{- $tile = "large" -}}
+  {{- else if .Params.series -}}{{- $tile = "medium" -}}
+  {{- else -}}{{- $tile = "medium" -}}{{- end -}}
+{{- end -}}
+{{- $colSpan := 1 -}}{{- $rowSpan := 1 -}}
+{{- if .Params.featured -}}{{- $colSpan = 2 -}}{{- end -}}
+{{- if .Params.hero -}}{{- $rowSpan = 2 -}}{{- end -}}
+{{- $span := printf "%dx%d" $colSpan $rowSpan -}}
+<li class="essay-card" data-tile-size="{{ $tile }}" data-span="{{ $span }}" data-tags="{{ delimit (.Params.tags | default slice) " " }}" data-series="{{ .Params.series | default "" }}" data-year="{{ .Date.Format "2006" }}">
+  <a class="essay-card-link" href="{{ .RelPermalink }}">
+    {{ with .Params.hero }}
+      {{ $hero := $.Resources.Get . }}
+      {{ if $hero }}<img class="essay-card-hero" src="{{ $hero.RelPermalink }}" alt="">{{ end }}
+    {{ end }}
+    <h3 class="essay-card-title">{{ .Title }}</h3>
+    {{ with .Params.summary }}<p class="essay-card-summary">{{ . }}</p>{{ end }}
+    {{ partial "essay-meta.html" . }}
+  </a>
+</li>

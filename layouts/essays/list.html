@@ -1,0 +1,67 @@
+{{ define "main" }}
+<section class="essays-index">
+  <header class="essays-hero reading-column">
+    <h1>{{ .Title }}</h1>
+    {{ with .Content }}<div class="framing">{{ . }}</div>{{ end }}
+  </header>
+
+  {{ if eq (len .Pages) 0 }}
+    <p class="reading-column meta">No essays yet.</p>
+  {{ else }}
+    {{/* Collect dimensions from pages */}}
+    {{ $tags := slice }}
+    {{ $seriesList := slice }}
+    {{ $years := slice }}
+    {{ range .Pages }}
+      {{ range .Params.tags }}
+        {{ if not (in $tags .) }}{{ $tags = $tags | append . }}{{ end }}
+      {{ end }}
+      {{ with .Params.series }}
+        {{ if not (in $seriesList .) }}{{ $seriesList = $seriesList | append . }}{{ end }}
+      {{ end }}
+      {{ $y := .Date.Format "2006" }}
+      {{ if not (in $years $y) }}{{ $years = $years | append $y }}{{ end }}
+    {{ end }}
+
+    <nav class="filter-strip" aria-label="Filter essays">
+      {{ if ge (len $tags) 2 }}
+        <div class="filter-dimension" data-dim="tag">
+          <span class="filter-label">Tags</span>
+          <button class="filter-chip is-active" data-filter="all">All</button>
+          {{ range $tags }}
+            <a class="filter-chip" data-filter="{{ . }}" href="{{ printf "/tags/%s/" (urlize .) | relURL }}">#{{ . }}</a>
+          {{ end }}
+        </div>
+      {{ end }}
+      {{ if ge (len $seriesList) 2 }}
+        <div class="filter-dimension" data-dim="series">
+          <span class="filter-label">Series</span>
+          <button class="filter-chip is-active" data-filter="all">All</button>
+          {{ range $seriesList }}
+            <a class="filter-chip" data-filter="{{ . }}" href="{{ printf "/series/%s/" (urlize .) | relURL }}">{{ . }}</a>
+          {{ end }}
+        </div>
+      {{ end }}
+      {{ if ge (len $years) 2 }}
+        <div class="filter-dimension" data-dim="year">
+          <span class="filter-label">Year</span>
+          <button class="filter-chip is-active" data-filter="all">All</button>
+          {{ range $years }}
+            <span class="filter-chip" data-filter="{{ . }}" role="button" tabindex="0">{{ . }}</span>
+          {{ end }}
+        </div>
+      {{ end }}
+    </nav>
+
+    <ul class="essay-grid">
+      {{ range .Pages.ByDate.Reverse }}
+        {{ if .Params.featured }}
+          {{ partial "essay-card-featured.html" . }}
+        {{ else }}
+          {{ partial "essay-card.html" . }}
+        {{ end }}
+      {{ end }}
+    </ul>
+  {{ end }}
+</section>
+{{ end }}

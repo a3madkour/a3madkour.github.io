@@ -48,6 +48,10 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Verify CSS contrast (WCAG)
         run: python3 tools/check-contrast.py
+      - name: Verify essay fixtures
+        run: python3 tools/check_fixtures.py
+      - name: Run linter unit tests
+        run: python3 -m unittest tools/test_check_fixtures.py -v
       - name: Build with Hugo
         env:
           HUGO_CACHEDIR: ${{ runner.temp }}/hugo_cache

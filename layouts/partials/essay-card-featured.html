@@ -1,0 +1,17 @@
+{{/* Featured essay card with tile-size + span resolution. */}}
+{{- $tile := .Params.tile_size | default "large" -}}
+{{- $colSpan := 2 -}}{{- $rowSpan := 1 -}}
+{{- if .Params.hero -}}{{- $rowSpan = 2 -}}{{- end -}}
+{{- $span := printf "%dx%d" $colSpan $rowSpan -}}
+<li class="essay-card essay-card-featured" data-tile-size="{{ $tile }}" data-span="{{ $span }}" data-tags="{{ delimit (.Params.tags | default slice) " " }}" data-series="{{ .Params.series | default "" }}" data-year="{{ .Date.Format "2006" }}">
+  <a class="essay-card-link" href="{{ .RelPermalink }}">
+    <span class="essay-card-eyebrow">{{ with .Params.series }}{{ . }}{{ else }}Featured{{ end }}</span>
+    {{ with .Params.hero }}
+      {{ $hero := $.Resources.Get . }}
+      {{ if $hero }}<img class="essay-card-hero" src="{{ $hero.RelPermalink }}" alt="">{{ end }}
+    {{ end }}
+    <h3 class="essay-card-title">{{ .Title }}</h3>
+    {{ with .Params.summary }}<p class="essay-card-summary">{{ . }}</p>{{ end }}
+    {{ partial "essay-meta.html" . }}
+  </a>
+</li>

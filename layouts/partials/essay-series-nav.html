@@ -1,0 +1,26 @@
+{{- /* Series navigation — prev/next + "Part N of M".
+       Walks all essays sharing the .Params.series, ordered by series_order. */ -}}
+{{- $current := . -}}
+{{- $seriesName := .Params.series -}}
+{{- $all := where site.RegularPages "Section" "essays" -}}
+{{- $siblings := where $all "Params.series" $seriesName -}}
+{{- $sorted := sort $siblings "Params.series_order" "asc" -}}
+{{- $count := len $sorted -}}
+{{- $idx := -1 -}}
+{{- range $i, $p := $sorted -}}
+  {{- if eq $p.RelPermalink $current.RelPermalink -}}{{- $idx = $i -}}{{- end -}}
+{{- end -}}
+{{- $prev := false -}}{{- $next := false -}}
+{{- if gt $idx 0 -}}{{- $prev = index $sorted (sub $idx 1) -}}{{- end -}}
+{{- if and (ge $idx 0) (lt $idx (sub $count 1)) -}}{{- $next = index $sorted (add $idx 1) -}}{{- end -}}
+<nav class="essay-series-nav" aria-label="Series navigation">
+  <p class="series-position">{{ $seriesName }} — Part {{ .Params.series_order }} of {{ $count }}</p>
+  <div class="series-links">
+    {{ if $prev }}
+      <a class="series-prev" href="{{ $prev.RelPermalink }}">← {{ $prev.Title }}</a>
+    {{ end }}
+    {{ if $next }}
+      <a class="series-next" href="{{ $next.RelPermalink }}">{{ $next.Title }} →</a>
+    {{ end }}
+  </div>
+</nav>

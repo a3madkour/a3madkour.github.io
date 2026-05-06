@@ -12,10 +12,16 @@
       <a href="{{ .url | relURL }}"
          {{ if hasPrefix $current .url }}aria-current="page"{{ end }}>{{ .label }}</a>
     {{ end }}
+    {{- $rssHref := "/index.xml" -}}
+    {{- $rssLabel := "Site RSS feed" -}}
+    {{- if hasPrefix .RelPermalink "/essays/" -}}
+      {{- $rssHref = "/essays/index.xml" -}}
+      {{- $rssLabel = "Essays RSS feed" -}}
+    {{- end -}}
     <a class="icon-button rss-link"
-       href="{{ "/index.xml" | relURL }}"
-       aria-label="RSS feed"
-       title="RSS feed">
+       href="{{ $rssHref | relURL }}"
+       aria-label="{{ $rssLabel }}"
+       title="{{ $rssLabel }}">
       {{ with resources.Get "images/icons/rss.svg" }}{{ .Content | safeHTML }}{{ end }}
     </a>
     <button class="icon-button"

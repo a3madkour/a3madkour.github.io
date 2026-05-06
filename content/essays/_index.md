@@ -3,4 +3,4 @@ title: 'Essays'
 description: 'Long-form writing — the centerpiece.'
 ---
 
-(Coming soon.)
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.

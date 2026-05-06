@@ -1,0 +1,20 @@
+{{/* References list rendered at the end of the post.
+     Reads keys collected by the cite shortcode via scratch. */}}
+{{- $used := .Scratch.Get "cite-keys" | default slice -}}
+{{- if $used -}}
+  {{- $citations := site.Data.citations.citations -}}
+  <section class="essay-references" aria-labelledby="references-heading">
+    <h2 id="references-heading">References</h2>
+    <ol>
+      {{- range $used -}}
+        {{- $entry := index $citations . -}}
+        <li id="ref-{{ . }}">
+          {{ delimit $entry.authors ", " }} ({{ $entry.year }}).
+          <em>{{ $entry.title }}</em>.
+          {{ $entry.venue }}.
+          {{ with $entry.url }}<a href="{{ . }}" rel="noopener">→ source</a>{{ end }}
+        </li>
+      {{- end -}}
+    </ol>
+  </section>
+{{- end -}}
