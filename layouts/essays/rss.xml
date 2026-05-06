@@ -1,0 +1,20 @@
+{{- $pages := where site.RegularPages "Section" "essays" -}}
+{{- $title := printf "%s — Essays" site.Title -}}
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>{{ $title }}</title>
+    <link>{{ "/essays/" | absURL }}</link>
+    <description>{{ site.Params.description | default site.Title }} — essays.</description>
+    <language>{{ site.Language.Lang }}</language>
+    <atom:link href="{{ "/essays/index.xml" | absURL }}" rel="self" type="application/rss+xml"/>
+    {{- range first 20 (sort $pages "Date" "desc") }}
+    <item>
+      <title>{{ .Title }}</title>
+      <link>{{ .Permalink }}</link>
+      <pubDate>{{ .Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" | safeHTML }}</pubDate>
+      <guid>{{ .Permalink }}</guid>
+      <description>{{ .Summary | html }}</description>
+    </item>
+    {{- end }}
+  </channel>
+</rss>
