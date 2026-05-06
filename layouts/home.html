@@ -1,0 +1,29 @@
+{{ define "main" }}
+{{ .Content }}
+
+{{- $essays := where site.RegularPages "Section" "essays" -}}
+{{- $essays = sort $essays "Date" "desc" -}}
+{{- if $essays -}}
+  {{- $featured := false -}}
+  {{- range $essays -}}
+    {{- if and (not $featured) .Params.featured -}}{{- $featured = . -}}{{- end -}}
+  {{- end -}}
+  {{- if not $featured -}}{{- $featured = index $essays 0 -}}{{- end -}}
+  {{- $recents := first 4 (where $essays "RelPermalink" "ne" $featured.RelPermalink) -}}
+  {{- $recents = first 3 $recents -}}
+
+<section class="home-essays">
+  <header class="home-essays-header">
+    <h2>Essays</h2>
+    <a href="{{ "/essays/" | relURL }}" class="home-essays-all">All essays →</a>
+  </header>
+
+  <ul class="essay-grid home-essays-grid">
+    {{ partial "essay-card-featured.html" $featured }}
+    {{ range $recents }}
+      {{ partial "essay-card.html" . }}
+    {{ end }}
+  </ul>
+</section>
+{{- end }}
+{{ end }}

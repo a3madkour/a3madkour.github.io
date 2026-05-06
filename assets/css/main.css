@@ -647,3 +647,26 @@ main { flex-grow: 1; }
 }
 .series-prev:hover, .series-next:hover { color: var(--color-burgundy); text-decoration: underline; }
 .series-next { margin-left: auto; }
+
+/* ------------------------------------------------------------------
+ * 18. Homepage essays strip
+ * ------------------------------------------------------------------ */
+.home-essays { margin-top: 3rem; }
+.home-essays-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1rem;
+}
+.home-essays-header h2 {
+  font-size: var(--text-xl);
+  margin: 0;
+}
+.home-essays-all {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+  text-decoration: none;
+}
+.home-essays-all:hover { color: var(--color-burgundy); text-decoration: underline; }
+.home-essays-grid { margin-top: 0; }
