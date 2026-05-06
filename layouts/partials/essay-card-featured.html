@@ -1,5 +1,9 @@
-{{/* Featured essay card — adds eyebrow text. Caller passes the page context. */}}
-<li class="essay-card essay-card-featured" data-tags="{{ delimit (.Params.tags | default slice) " " }}" data-series="{{ .Params.series | default "" }}" data-year="{{ .Date.Format "2006" }}">
+{{/* Featured essay card with tile-size + span resolution. */}}
+{{- $tile := .Params.tile_size | default "large" -}}
+{{- $colSpan := 2 -}}{{- $rowSpan := 1 -}}
+{{- if .Params.hero -}}{{- $rowSpan = 2 -}}{{- end -}}
+{{- $span := printf "%dx%d" $colSpan $rowSpan -}}
+<li class="essay-card essay-card-featured" data-tile-size="{{ $tile }}" data-span="{{ $span }}" data-tags="{{ delimit (.Params.tags | default slice) " " }}" data-series="{{ .Params.series | default "" }}" data-year="{{ .Date.Format "2006" }}">
   <a class="essay-card-link" href="{{ .RelPermalink }}">
     <span class="essay-card-eyebrow">{{ with .Params.series }}{{ . }}{{ else }}Featured{{ end }}</span>
     {{ with .Params.hero }}

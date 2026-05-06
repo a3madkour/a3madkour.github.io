@@ -382,3 +382,16 @@ main { flex-grow: 1; }
   overflow: hidden;
 }
 .essay-card .essay-meta { margin-top: 0.5rem; font-size: var(--text-xs); }
+
+/* Bento span rules — driven by data-span on the card */
+.essay-card[data-span="2x1"] { grid-column: span 2; }
+.essay-card[data-span="1x2"] { grid-row: span 2; }
+.essay-card[data-span="2x2"] { grid-column: span 2; grid-row: span 2; }
+
+.essay-card[data-tile-size="large"] .essay-card-title { font-size: var(--text-lg); }
+.essay-card[data-tile-size="small"] .essay-card-title { font-size: var(--text-sm); }
+.essay-card[data-tile-size="small"] .essay-card-summary { display: none; }
+
+@media (max-width: 600px) {
+  .essay-card[data-span] { grid-column: span 1; grid-row: span 1; }
+}
