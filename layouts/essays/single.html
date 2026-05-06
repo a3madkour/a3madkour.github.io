@@ -8,5 +8,8 @@
   <div class="essay-body">
     {{ .Content }}
   </div>
+  {{ if .Params.has_citations }}
+    {{ partial "essay-references.html" . }}
+  {{ end }}
 </article>
 {{ end }}

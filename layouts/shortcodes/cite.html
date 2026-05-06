@@ -1,0 +1,23 @@
+{{- /* Cite shortcode: looks up the key in site.Data.citations.citations,
+       emits an inline <cite> with data-cite-key, jump-anchored to the
+       references list. Aborts the build if the key is missing. */ -}}
+{{- $key := .Get 0 -}}
+{{- $citations := site.Data.citations.citations -}}
+{{- $entry := index $citations $key -}}
+{{- if not $entry -}}
+  {{- errorf "cite: unknown citation key %q in %s" $key .Page.RelPermalink -}}
+{{- end -}}
+{{- $authors := slice -}}
+{{- range $entry.authors -}}
+  {{- $last := index (split . ",") 0 -}}
+  {{- $authors = $authors | append $last -}}
+{{- end -}}
+{{- $label := "" -}}
+{{- if eq (len $authors) 1 -}}{{- $label = printf "%s %d" (index $authors 0) $entry.year -}}
+{{- else if eq (len $authors) 2 -}}{{- $label = printf "%s & %s %d" (index $authors 0) (index $authors 1) $entry.year -}}
+{{- else -}}{{- $label = printf "%s et al. %d" (index $authors 0) $entry.year -}}{{- end -}}
+{{- /* Track keys used on this page in scratch (collected by essay-references partial) */ -}}
+{{- $used := .Page.Scratch.Get "cite-keys" | default slice -}}
+{{- if not (in $used $key) -}}{{- $used = $used | append $key -}}{{- end -}}
+{{- .Page.Scratch.Set "cite-keys" $used -}}
+<cite class="citation" data-cite-key="{{ $key }}"><a href="#ref-{{ $key }}">[{{ $label }}]</a></cite>
