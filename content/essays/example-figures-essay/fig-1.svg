@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 300" role="img" aria-label="Placeholder figure one">
+  <rect width="600" height="300" fill="#fdfcf8" stroke="#d4d3cd"/>
+  <circle cx="300" cy="150" r="80" fill="none" stroke="#1e4060" stroke-width="2"/>
+  <text x="300" y="280" text-anchor="middle" font-family="Inter, sans-serif" font-size="13" fill="#9a958e">EXAMPLE FIGURE 1</text>
+</svg>
