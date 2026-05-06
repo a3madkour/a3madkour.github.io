@@ -569,4 +569,51 @@ main { flex-grow: 1; }
   .essay-toc summary { display: none; }
 }
 
+/* ------------------------------------------------------------------
+ * 16. Filter strip (essays index)
+ * ------------------------------------------------------------------ */
+.filter-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin: 1rem 0 2rem;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+}
+.filter-dimension {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+.filter-label {
+  color: var(--color-ink-fade);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-right: 0.25rem;
+}
+.filter-chip {
+  display: inline-block;
+  padding: 0.2rem 0.7rem;
+  border: 1px solid var(--color-rule);
+  border-radius: 999px;
+  color: var(--color-ink-soft);
+  background: transparent;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+}
+.filter-chip:hover { border-color: var(--color-burgundy); color: var(--color-burgundy); }
+.filter-chip.is-active {
+  background: var(--color-burgundy);
+  color: var(--color-stone);
+  border-color: var(--color-burgundy);
+}
+
+/* Filter state — applied by essay.js */
+.essay-grid[data-filter-state] .essay-card { display: none; }
+.essay-grid[data-filter-state="all"] .essay-card { display: block; }
+
 .essay-sidenote-zone { display: none; }
