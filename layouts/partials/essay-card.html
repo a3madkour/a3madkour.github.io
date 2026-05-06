@@ -1,0 +1,12 @@
+{{/* Standard essay card. Caller passes the page context. */}}
+<li class="essay-card" data-tags="{{ delimit (.Params.tags | default slice) " " }}" data-series="{{ .Params.series | default "" }}" data-year="{{ .Date.Format "2006" }}">
+  <a class="essay-card-link" href="{{ .RelPermalink }}">
+    {{ with .Params.hero }}
+      {{ $hero := $.Resources.Get . }}
+      {{ if $hero }}<img class="essay-card-hero" src="{{ $hero.RelPermalink }}" alt="">{{ end }}
+    {{ end }}
+    <h3 class="essay-card-title">{{ .Title }}</h3>
+    {{ with .Params.summary }}<p class="essay-card-summary">{{ . }}</p>{{ end }}
+    {{ partial "essay-meta.html" . }}
+  </a>
+</li>

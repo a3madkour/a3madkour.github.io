@@ -312,3 +312,73 @@ main { flex-grow: 1; }
   font-style: italic;
   color: var(--color-ink-soft);
 }
+
+/* ------------------------------------------------------------------
+ * 11. Essay grid + cards
+ * ------------------------------------------------------------------ */
+.essay-grid {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+@media (max-width: 900px) {
+  .essay-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .essay-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+.essay-card {
+  background: var(--color-tile);
+  border: 1px solid var(--color-rule);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+.essay-card:hover { border-color: var(--color-burgundy); }
+
+.essay-card-link {
+  display: block;
+  padding: 1.25rem;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+.essay-card-link:hover { text-decoration: none; }
+
+.essay-card-eyebrow {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-ink-fade);
+  margin-bottom: 0.5rem;
+}
+.essay-card-hero {
+  width: 100%;
+  height: auto;
+  margin: -1.25rem -1.25rem 1rem;
+  width: calc(100% + 2.5rem);
+  display: block;
+}
+.essay-card-title {
+  font-size: var(--text-md);
+  margin: 0 0 0.5rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.essay-card-summary {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  margin: 0 0 0.75rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.essay-card .essay-meta { margin-top: 0.5rem; font-size: var(--text-xs); }

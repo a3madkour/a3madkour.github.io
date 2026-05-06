@@ -1,19 +1,20 @@
 {{ define "main" }}
-<section class="reading-column essays-index">
-  <header class="essays-hero">
+<section class="essays-index">
+  <header class="essays-hero reading-column">
     <h1>{{ .Title }}</h1>
     {{ with .Content }}<div class="framing">{{ . }}</div>{{ end }}
   </header>
 
   {{ if eq (len .Pages) 0 }}
-    <p class="meta">No essays yet.</p>
+    <p class="reading-column meta">No essays yet.</p>
   {{ else }}
-    <ul class="page-list">
+    <ul class="essay-grid">
       {{ range .Pages.ByDate.Reverse }}
-        <li>
-          <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-          <p class="page-list-desc">{{ .Summary }}</p>
-        </li>
+        {{ if .Params.featured }}
+          {{ partial "essay-card-featured.html" . }}
+        {{ else }}
+          {{ partial "essay-card.html" . }}
+        {{ end }}
       {{ end }}
     </ul>
   {{ end }}
