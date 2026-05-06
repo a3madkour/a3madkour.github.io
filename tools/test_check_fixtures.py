@@ -1,7 +1,6 @@
 """Tests for check_fixtures.py — run with: python3 -m unittest tools/test_check_fixtures.py -v"""
 from __future__ import annotations
 
-import io
 import shutil
 import sys
 import tempfile
@@ -9,7 +8,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import check_fixtures as lint  # noqa: E402
+import check_fixtures as lint  # noqa: E402  # pyright: ignore[reportMissingImports]
 
 
 VALID_FRONTMATTER = """\
@@ -88,6 +87,7 @@ class CheckFixturesTest(unittest.TestCase):
         self.repo.write_citations(VALID_CITATIONS)
         rc, errors = lint.run(self.repo.root)
         self.assertEqual(rc, 0)
+        self.assertEqual(errors, [])
 
     def test_missing_required_field_fails(self) -> None:
         broken = VALID_FRONTMATTER.replace('title: "Example essay one"\n', "")

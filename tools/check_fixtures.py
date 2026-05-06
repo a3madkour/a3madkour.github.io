@@ -9,7 +9,6 @@ Exits 0 on all-pass, 1 on any violation. Stdlib only.
 from __future__ import annotations
 
 import re
-import sys
 from datetime import date as Date
 from pathlib import Path
 
@@ -123,7 +122,8 @@ def lint_essay(essay_dir: Path, valid_cite_keys: set[str]) -> list[str]:
     if isinstance(date, Date) and isinstance(lastmod, Date) and lastmod < date:
         errors.append(f"{md_path}: lastmod {lastmod} is before date {date}")
 
-    body = text[FRONTMATTER_RE.match(text).end():] if FRONTMATTER_RE.match(text) else ""
+    fm_match = FRONTMATTER_RE.match(text)
+    body = text[fm_match.end():] if fm_match else ""
     for cite_key in CITE_RE.findall(body):
         if cite_key not in valid_cite_keys:
             errors.append(
