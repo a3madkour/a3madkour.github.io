@@ -1,0 +1,21 @@
+{{ define "main" }}
+<section class="reading-column essays-index">
+  <header class="essays-hero">
+    <h1>{{ .Title }}</h1>
+    {{ with .Content }}<div class="framing">{{ . }}</div>{{ end }}
+  </header>
+
+  {{ if eq (len .Pages) 0 }}
+    <p class="meta">No essays yet.</p>
+  {{ else }}
+    <ul class="page-list">
+      {{ range .Pages.ByDate.Reverse }}
+        <li>
+          <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+          <p class="page-list-desc">{{ .Summary }}</p>
+        </li>
+      {{ end }}
+    </ul>
+  {{ end }}
+</section>
+{{ end }}

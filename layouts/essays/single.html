@@ -1,0 +1,11 @@
+{{ define "main" }}
+<article class="reading-column essay">
+  <header class="essay-header">
+    <h1>{{ .Title }}</h1>
+    <p class="meta">{{ .Date.Format "2 January 2006" }}</p>
+  </header>
+  <div class="essay-body">
+    {{ .Content }}
+  </div>
+</article>
+{{ end }}
