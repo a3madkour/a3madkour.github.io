@@ -395,3 +395,44 @@ main { flex-grow: 1; }
 @media (max-width: 600px) {
   .essay-card[data-span] { grid-column: span 1; grid-row: span 1; }
 }
+
+/* ------------------------------------------------------------------
+ * 12. Sidenotes
+ * ------------------------------------------------------------------ */
+.sidenote-marker {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: 0.7em;
+  vertical-align: super;
+  color: var(--color-burgundy);
+  padding: 0 0.15em;
+  cursor: pointer;
+}
+.sidenote {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+  margin: 0.5rem 0 1rem;
+  padding-left: 1rem;
+  border-left: 2px solid var(--color-rule);
+}
+.sidenote-num {
+  color: var(--color-burgundy);
+  font-weight: 600;
+  margin-right: 0.25rem;
+}
+
+/* On wide viewports, float sidenotes into the right rail (added in Task 14). */
+@media (min-width: 1100px) {
+  .essay-body .sidenote {
+    float: right;
+    clear: right;
+    width: 250px;
+    margin-right: -290px;
+    padding-left: 0;
+    border-left: 0;
+    border-top: 1px solid var(--color-rule);
+    padding-top: 0.5rem;
+  }
+}

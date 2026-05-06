@@ -1,0 +1,6 @@
+{{- /* Sidenote: emits a numbered marker + aside. Auto-numbered per page via scratch.
+       Forbidden inside code blocks (errored by template). */ -}}
+{{- $page := .Page -}}
+{{- $n := add (int ($page.Scratch.Get "sidenote-count" | default 0)) 1 -}}
+{{- $page.Scratch.Set "sidenote-count" $n -}}
+<span class="sidenote-marker" tabindex="0" role="button" aria-controls="sn-{{ $n }}" aria-label="Open sidenote {{ $n }}">{{ $n }}</span><aside class="sidenote" id="sn-{{ $n }}"><span class="sidenote-num">{{ $n }}.</span> {{ .Inner | markdownify }}</aside>
