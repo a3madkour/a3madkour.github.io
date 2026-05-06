@@ -27,5 +27,9 @@
   {{ if .Params.has_citations }}
     <div class="reading-column">{{ partial "essay-references.html" . }}</div>
   {{ end }}
+
+  {{ if .Params.series }}
+    <div class="reading-column">{{ partial "essay-series-nav.html" . }}</div>
+  {{ end }}
 </article>
 {{ end }}
