@@ -569,6 +569,8 @@ main { flex-grow: 1; }
   .essay-toc summary { display: none; }
 }
 
+.essay-sidenote-zone { display: none; }
+
 /* ------------------------------------------------------------------
  * 16. Filter strip (essays index)
  * ------------------------------------------------------------------ */
@@ -611,12 +613,6 @@ main { flex-grow: 1; }
   color: var(--color-stone);
   border-color: var(--color-burgundy);
 }
-
-/* Filter state — applied by essay.js */
-.essay-grid[data-filter-state] .essay-card { display: none; }
-.essay-grid[data-filter-state="all"] .essay-card { display: block; }
-
-.essay-sidenote-zone { display: none; }
 
 /* ------------------------------------------------------------------
  * 17. Series nav
