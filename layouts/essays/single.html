@@ -1,15 +1,31 @@
 {{ define "main" }}
-<article class="reading-column essay">
-  <header class="essay-header">
+<article class="essay" data-toc="{{ if not (eq .Params.toc false) }}true{{ end }}">
+  <header class="essay-header reading-column">
+    {{ with .Params.hero }}
+      {{ $hero := $.Resources.Get . }}
+      {{ if $hero }}<img class="essay-hero" src="{{ $hero.RelPermalink }}" alt="">{{ end }}
+    {{ end }}
     {{ partial "essay-meta.html" . }}
     <h1>{{ .Title }}</h1>
     {{ with .Params.summary }}<p class="lede">{{ . }}</p>{{ end }}
   </header>
-  <div class="essay-body">
-    {{ .Content }}
+
+  <div class="essay-layout">
+    {{ if not (eq .Params.toc false) }}
+      <div class="essay-toc-zone">
+        {{ partial "essay-toc.html" . }}
+      </div>
+    {{ end }}
+
+    <div class="essay-body reading-column">
+      {{ .Content }}
+    </div>
+
+    <div class="essay-sidenote-zone" aria-hidden="true"></div>
   </div>
+
   {{ if .Params.has_citations }}
-    {{ partial "essay-references.html" . }}
+    <div class="reading-column">{{ partial "essay-references.html" . }}</div>
   {{ end }}
 </article>
 {{ end }}
