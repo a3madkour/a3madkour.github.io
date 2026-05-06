@@ -1,8 +1,9 @@
 {{ define "main" }}
 <article class="reading-column essay">
   <header class="essay-header">
+    {{ partial "essay-meta.html" . }}
     <h1>{{ .Title }}</h1>
-    <p class="meta">{{ .Date.Format "2 January 2006" }}</p>
+    {{ with .Params.summary }}<p class="lede">{{ . }}</p>{{ end }}
   </header>
   <div class="essay-body">
     {{ .Content }}

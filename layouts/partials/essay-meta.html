@@ -1,0 +1,19 @@
+{{/* Meta line: date · reading-time · tags · series pill.
+     Caller passes the page context (.). */}}
+<p class="essay-meta">
+  <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2 January 2006" }}</time>
+  <span class="meta-sep">·</span>
+  <span class="meta-reading-time">{{ .ReadingTime }} min</span>
+  {{ with .Params.tags }}
+    <span class="meta-sep">·</span>
+    <span class="meta-tags">
+      {{ range . }}
+        <a href="{{ printf "/tags/%s/" (urlize .) | relURL }}" class="tag-chip">#{{ . }}</a>
+      {{ end }}
+    </span>
+  {{ end }}
+  {{ with .Params.series }}
+    <span class="meta-sep">·</span>
+    <span class="series-pill">{{ . }} (Part {{ $.Params.series_order }})</span>
+  {{ end }}
+</p>
