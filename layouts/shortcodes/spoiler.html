@@ -1,1 +1,12 @@
-<span data-spoiler>{{ .Inner | markdownify }}</span>
+{{- /* spoiler shortcode (replaces the no-op stub from the essays slice).
+       Authoring form:
+         {{< spoiler summary="chapter ending" level="light|heavy" >}}…{{< /spoiler >}}
+       Click-to-reveal via native <details>. No JS. Reduced-motion respected
+       by default (no transitions defined).
+*/ -}}
+{{- $level := .Get "level" | default "light" -}}
+{{- $summary := .Get "summary" | default "spoiler" -}}
+<details class="spoiler" data-spoiler-level="{{ $level }}">
+  <summary>{{ $summary }}</summary>
+  <div class="spoiler-body">{{ .Inner | markdownify }}</div>
+</details>
