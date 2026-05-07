@@ -1,0 +1,88 @@
+{{ define "main" }}
+<section class="garden-grid reading-column">
+  <header class="garden-hero">
+    <h1>{{ .Title }}</h1>
+    {{ with .Content }}<div class="framing">{{ . }}</div>{{ end }}
+  </header>
+
+  {{- $pages := where .Site.RegularPages "Section" "garden" -}}
+  {{- if eq (len $pages) 0 -}}
+    <p class="garden-empty-static">No notes yet — check back soon.</p>
+  {{- else -}}
+
+    {{- /* ----- Build dimension value sets for the filter strip ----- */ -}}
+    {{- $tags := slice -}}
+    {{- $flavors := slice -}}
+    {{- $stages := slice -}}
+    {{- range $pages -}}
+      {{- range .Params.tags -}}
+        {{- if not (in $tags .) -}}{{- $tags = $tags | append . -}}{{- end -}}
+      {{- end -}}
+      {{- $mt := .Params.media_type -}}
+      {{- $f := "concept" -}}
+      {{- if $mt -}}
+        {{- if in (slice "book" "album" "track" "game" "film" "series") $mt -}}
+          {{- $f = "media" -}}
+        {{- else -}}
+          {{- $f = "reference" -}}
+        {{- end -}}
+      {{- end -}}
+      {{- if not (in $flavors $f) -}}{{- $flavors = $flavors | append $f -}}{{- end -}}
+      {{- $st := .Params.growth_stage | default "seedling" -}}
+      {{- if not (in $stages $st) -}}{{- $stages = $stages | append $st -}}{{- end -}}
+    {{- end -}}
+
+    {{- $dims := slice -}}
+    {{- if ge (len $tags) 2 -}}
+      {{- $dims = $dims | append (dict "key" "tag" "label" "Tag" "values" $tags) -}}
+    {{- end -}}
+    {{- if ge (len $flavors) 2 -}}
+      {{- $dims = $dims | append (dict "key" "flavor" "label" "Flavor" "values" $flavors) -}}
+    {{- end -}}
+    {{- if ge (len $stages) 2 -}}
+      {{- $dims = $dims | append (dict "key" "stage" "label" "Stage" "values" $stages) -}}
+    {{- end -}}
+    {{ partial "filter-chips.html" (dict "dimensions" $dims "mode" "and") }}
+
+    {{- /* ----- Pass 1: build the set of slugs referenced by any topic_map ----- */ -}}
+    {{- $referenced := slice -}}
+    {{- range $pages -}}
+      {{- range .Params.topic_map -}}
+        {{- if not (in $referenced .) -}}{{- $referenced = $referenced | append . -}}{{- end -}}
+      {{- end -}}
+    {{- end -}}
+
+    {{- /* ----- Pass 2a: render topic-map sections in weight, then alphabetical ----- */ -}}
+    {{- $topicMapPages := where $pages "Params.topic_map" "ne" nil -}}
+    {{- range $topicMapPages.ByWeight -}}
+      {{ partial "garden/topic-section.html" (dict "context" .) }}
+    {{- end -}}
+
+    {{- /* ----- Pass 2b: render "Other notes" — pages neither referenced nor topic-map owners ----- */ -}}
+    {{- $others := slice -}}
+    {{- range $pages -}}
+      {{- $slug := path.Base .File.Dir -}}
+      {{- $isOwner := .Params.topic_map -}}
+      {{- $isReferenced := in $referenced $slug -}}
+      {{- if and (not $isOwner) (not $isReferenced) -}}
+        {{- $others = $others | append . -}}
+      {{- end -}}
+    {{- end -}}
+    {{- if $others -}}
+    <section class="garden-topic" data-garden-section="other">
+      <h2 class="garden-topic-heading">Other notes</h2>
+      <p class="garden-topic-framing">Notes not yet placed in a topic map.</p>
+      <div class="garden-tiles">
+        {{- range (sort $others "Params.last_modified" "desc") -}}
+          {{ partial "garden/note-tile.html" (dict "page" .) }}
+        {{- end -}}
+      </div>
+    </section>
+    {{- end -}}
+
+    {{- /* ----- Empty-state for filter combinations with zero matches ----- */ -}}
+    <p class="garden-empty" hidden>No notes match these filters yet.</p>
+
+  {{- end -}}
+</section>
+{{ end }}
