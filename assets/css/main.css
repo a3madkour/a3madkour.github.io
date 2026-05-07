@@ -707,6 +707,58 @@ main { flex-grow: 1; }
 /* When a topic section has no visible tiles (filter applied), hide it */
 .garden-topic[hidden] { display: none; }
 
+/* Garden single-note page elements */
+.garden-note { max-width: 720px; }
+.garden-note .crumb {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  color: var(--color-ink-fade);
+  margin: 0 0 0.5rem;
+}
+.garden-note .crumb a {
+  color: var(--color-burgundy);
+  text-decoration: none;
+  border-bottom: 1px dotted currentColor;
+}
+.garden-note-title {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-2xl);
+  line-height: 1.18;
+  margin: 0.4rem 0 0.4rem;
+  color: var(--color-ink);
+}
+.garden-creator {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--color-ink-soft);
+  font-size: var(--text-base);
+  margin: 0 0 0.75rem;
+}
+.garden-media-meta {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  margin: 0 0 1.1rem;
+}
+.garden-media-meta a.original-link {
+  color: var(--color-burgundy);
+  text-decoration: none;
+  border-bottom: 1px dotted currentColor;
+}
+.garden-media-meta .media-type-meta {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-ink-fade);
+}
+.garden-note-body { margin-top: 0.75rem; }
+
+/* Topic section nested inside a single note (not the index) */
+.garden-note .garden-topic { margin-top: 2.5rem; padding-top: 1.25rem; border-top: 1px solid var(--color-rule); }
+
 /* ------------------------------------------------------------------
  * 20. Garden note header strip + status pill
  * ------------------------------------------------------------------ */
