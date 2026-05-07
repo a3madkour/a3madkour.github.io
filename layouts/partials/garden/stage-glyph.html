@@ -1,0 +1,32 @@
+{{- /* Inputs:
+       .stage  — "seedling" | "budding" | "evergreen"
+       .size   — "lg" | "sm" | "xs" (default "sm")
+   Returns inline SVG; stroke is currentColor so consumers control colour.
+*/ -}}
+{{- $stage := .stage -}}
+{{- $size  := .size | default "sm" -}}
+{{- $px    := 14 -}}
+{{- $sw    := "1.6" -}}
+{{- if eq $size "lg" -}}{{- $px = 20 -}}{{- $sw = "1.6" -}}{{- end -}}
+{{- if eq $size "xs" -}}{{- $px = 11 -}}{{- $sw = "1.8" -}}{{- end -}}
+<svg class="stage-glyph stage-glyph-{{ $size }}"
+     width="{{ $px }}" height="{{ $px }}"
+     viewBox="0 0 24 24"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="{{ $sw }}"
+     stroke-linecap="round"
+     aria-hidden="true">
+  {{- if eq $stage "seedling" -}}
+  <path d="M12 21 V13"/>
+  <path d="M12 15 C9 14 7 11 7 8 C10 8 12 11 12 14"/>
+  <path d="M3 21 H21"/>
+  {{- else if eq $stage "budding" -}}
+  <path d="M12 21 V11"/>
+  <path d="M12 14 C8 13 6 10 6 7 C9 7 11 9 12 12"/>
+  <path d="M12 13 C15 12 17 9 17 6 C14 6 12 8 12 11"/>
+  {{- else if eq $stage "evergreen" -}}
+  <path d="M12 4 L7 12 H10 L7 18 H17 L14 12 H17 Z"/>
+  <path d="M12 18 V21"/>
+  {{- end -}}
+</svg>
