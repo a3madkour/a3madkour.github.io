@@ -23,35 +23,17 @@
       {{ if not (in $years $y) }}{{ $years = $years | append $y }}{{ end }}
     {{ end }}
 
-    <nav class="filter-strip" aria-label="Filter essays">
-      {{ if ge (len $tags) 2 }}
-        <div class="filter-dimension" data-dim="tag">
-          <span class="filter-label">Tags</span>
-          <button class="filter-chip is-active" data-filter="all">All</button>
-          {{ range $tags }}
-            <a class="filter-chip" data-filter="{{ . }}" href="{{ printf "/tags/%s/" (urlize .) | relURL }}">#{{ . }}</a>
-          {{ end }}
-        </div>
-      {{ end }}
-      {{ if ge (len $seriesList) 2 }}
-        <div class="filter-dimension" data-dim="series">
-          <span class="filter-label">Series</span>
-          <button class="filter-chip is-active" data-filter="all">All</button>
-          {{ range $seriesList }}
-            <a class="filter-chip" data-filter="{{ . }}" href="{{ printf "/series/%s/" (urlize .) | relURL }}">{{ . }}</a>
-          {{ end }}
-        </div>
-      {{ end }}
-      {{ if ge (len $years) 2 }}
-        <div class="filter-dimension" data-dim="year">
-          <span class="filter-label">Year</span>
-          <button class="filter-chip is-active" data-filter="all">All</button>
-          {{ range $years }}
-            <span class="filter-chip" data-filter="{{ . }}" role="button" tabindex="0">{{ . }}</span>
-          {{ end }}
-        </div>
-      {{ end }}
-    </nav>
+    {{ $dims := slice }}
+    {{ if ge (len $tags) 2 }}
+      {{ $dims = $dims | append (dict "key" "tag" "label" "Tag" "values" $tags) }}
+    {{ end }}
+    {{ if ge (len $seriesList) 2 }}
+      {{ $dims = $dims | append (dict "key" "series" "label" "Series" "values" $seriesList) }}
+    {{ end }}
+    {{ if ge (len $years) 2 }}
+      {{ $dims = $dims | append (dict "key" "year" "label" "Year" "values" $years) }}
+    {{ end }}
+    {{ partial "filter-chips.html" (dict "dimensions" $dims "mode" "and") }}
 
     <ul class="essay-grid">
       {{ range .Pages.ByDate.Reverse }}
