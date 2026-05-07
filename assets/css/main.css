@@ -578,12 +578,13 @@ main { flex-grow: 1; }
 .essay-sidenote-zone { display: none; }
 
 /* ------------------------------------------------------------------
- * 16. Filter strip (essays index)
+ * 16. Filter chips (multi-dim, shared by essays + garden)
  * ------------------------------------------------------------------ */
+.filter-chips,
 .filter-strip {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.5rem;
+  gap: 1.25rem;
   margin: 1rem 0 2rem;
   font-family: var(--font-ui);
   font-size: var(--text-sm);
@@ -618,6 +619,10 @@ main { flex-grow: 1; }
   background: var(--color-burgundy);
   color: var(--color-stone);
   border-color: var(--color-burgundy);
+}
+.filter-chip:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
 }
 
 /* ------------------------------------------------------------------

@@ -1,0 +1,32 @@
+{{- /* Shared multi-dimension filter chip strip.
+   Inputs:
+     dimensions  — slice of dicts: { key, label, values }
+                   key:    machine name (used as data-dim, e.g. "tag")
+                   label:  display label (e.g. "Tag")
+                   values: slice of strings (the chip values)
+     mode        — "single" (legacy, single chip active across all dims)
+                 — "and"    (default, per-dim active state, AND combined)
+   Suppression rule: dimensions with len(values) < 2 are not rendered.
+*/ -}}
+{{- $mode := .mode | default "and" -}}
+{{- $dims := .dimensions | default slice -}}
+{{- $renderable := slice -}}
+{{- range $dims -}}
+  {{- if ge (len .values) 2 -}}
+    {{- $renderable = $renderable | append . -}}
+  {{- end -}}
+{{- end -}}
+{{- if $renderable -}}
+<nav class="filter-chips" data-filter-mode="{{ $mode }}" aria-label="Filters">
+  {{- range $renderable -}}
+    {{- $key := .key -}}
+    <div class="filter-dimension" data-dim="{{ $key }}">
+      <span class="filter-label">{{ .label }}</span>
+      <button type="button" class="filter-chip is-active" data-dim="{{ $key }}" data-key="all">All</button>
+      {{- range .values -}}
+        <button type="button" class="filter-chip" data-dim="{{ $key }}" data-key="{{ . }}">{{ . }}</button>
+      {{- end -}}
+    </div>
+  {{- end -}}
+</nav>
+{{- end -}}
