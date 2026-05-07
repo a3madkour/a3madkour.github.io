@@ -671,9 +671,38 @@ main { flex-grow: 1; }
 .home-essays-grid { margin-top: 0; }
 
 /* ------------------------------------------------------------------
- * 19. Garden index (placeholder — full styles in Task 9)
+ * 19. Garden index — topic sections + tiles
  * ------------------------------------------------------------------ */
-.garden-grid { /* deferred to Task 9 */ }
+.garden-topic { margin: 2rem 0 0; }
+.garden-topic-heading {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--text-lg);
+  margin: 0 0 0.25rem;
+  color: var(--color-ink);
+}
+.garden-topic-heading a {
+  color: var(--color-ink);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--color-burgundy);
+}
+.garden-topic-heading a:hover { color: var(--color-burgundy); }
+.garden-topic-framing {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  margin: 0 0 0.75rem;
+  max-width: 60ch;
+  line-height: 1.5;
+}
+.garden-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.6rem;
+}
+/* When a topic section has no visible tiles (filter applied), hide it */
+.garden-topic[hidden] { display: none; }
 
 /* ------------------------------------------------------------------
  * 20. Garden note header strip + status pill (placeholder — Task 6)
