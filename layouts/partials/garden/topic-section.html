@@ -5,6 +5,7 @@
        .linkHeading  — bool, true to wrap heading in an anchor to context (default true)
 */ -}}
 {{- $ctx := .context -}}
+{{- $page := .context -}}
 {{- $heading := .heading | default $ctx.Title -}}
 {{- $framing := .framing -}}
 {{- $linkHeading := true -}}
@@ -29,8 +30,8 @@
   <div class="garden-tiles">
     {{- range $ctx.Params.topic_map -}}
       {{- $slug := . -}}
-      {{- with $.Site.GetPage (printf "/garden/%s/" $slug) -}}
-        {{ partial "garden/note-tile.html" (dict "page" .) }}
+      {{- with where (where $ctx.Site.RegularPages "Section" "garden") "File.ContentBaseName" $slug -}}
+        {{ partial "garden/note-tile.html" (dict "page" (index . 0)) }}
       {{- else -}}
         {{- errorf "topic_map entry %q on %q does not resolve" $slug $ctx.RelPermalink -}}
       {{- end -}}
