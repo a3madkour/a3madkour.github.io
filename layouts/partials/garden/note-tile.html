@@ -1,0 +1,32 @@
+{{- /* Inputs:
+       .page  — a *hugolib.Page, the target garden note
+   Renders a single tile. Adds data-* attrs for the filter JS.
+*/ -}}
+{{- $page := .page -}}
+{{- $stage := $page.Params.growth_stage | default "seedling" -}}
+{{- $mediaType := $page.Params.media_type -}}
+{{- $flavor := "concept" -}}
+{{- if $mediaType -}}
+  {{- if in (slice "book" "album" "track" "game" "film" "series") $mediaType -}}
+    {{- $flavor = "media" -}}
+  {{- else -}}
+    {{- $flavor = "reference" -}}
+  {{- end -}}
+{{- end -}}
+{{- $tags := delimit ($page.Params.tags | default slice) " " -}}
+<a class="garden-tile stage-{{ $stage }}"
+   href="{{ $page.RelPermalink }}"
+   data-tags="{{ $tags }}"
+   data-flavor="{{ $flavor }}"
+   data-stage="{{ $stage }}">
+  <div class="tile-stage">
+    {{ partial "garden/stage-glyph.html" (dict "stage" $stage "size" "sm") }}
+    <span class="tile-stage-label">{{ title $stage }}</span>
+  </div>
+  <p class="tile-title">{{ $page.Title }}</p>
+  <div class="tile-meta">
+    {{- with $page.Params.last_modified -}}
+      tended {{ partial "garden/relative-date.html" (dict "date" .) }}
+    {{- end -}}
+  </div>
+</a>
