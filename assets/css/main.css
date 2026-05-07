@@ -24,6 +24,7 @@ img, svg { display: block; max-width: 100%; }
   --color-burgundy: #6b1f2c;
   --color-steel:    #1e4060;
   --color-green:    #2d5a3d;
+  --color-warn:     #a05a1a;
 
   --font-body: "Petrona", Georgia, serif;
   --font-ui:   "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -53,6 +54,7 @@ img, svg { display: block; max-width: 100%; }
   --color-burgundy: #d65a6a;
   --color-steel:    #7eafd0;
   --color-green:    #86c099;
+  --color-warn:     #d4a060;
 }
 
 /* Dark mode — system preference, only when no explicit override */
@@ -67,6 +69,7 @@ img, svg { display: block; max-width: 100%; }
     --color-burgundy: #d65a6a;
     --color-steel:    #7eafd0;
     --color-green:    #86c099;
+    --color-warn:     #d4a060;
   }
 }
 
@@ -705,9 +708,70 @@ main { flex-grow: 1; }
 .garden-topic[hidden] { display: none; }
 
 /* ------------------------------------------------------------------
- * 20. Garden note header strip + status pill (placeholder — Task 6)
+ * 20. Garden note header strip + status pill
  * ------------------------------------------------------------------ */
-.garden-note-header { /* deferred to Task 6 */ }
+.garden-note-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--color-rule);
+  margin-bottom: 0.9rem;
+}
+.garden-note-header .meta-sep { color: var(--color-ink-fade); }
+.garden-note-header .stage {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.garden-note-header.stage-seedling .stage { color: var(--color-burgundy); }
+.garden-note-header.stage-budding  .stage { color: var(--color-steel); }
+.garden-note-header.stage-evergreen .stage { color: var(--color-green); }
+.garden-note-header .stage-glyph { color: currentColor; }
+.garden-note-header .stage-label {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-ink-soft);
+}
+
+.garden-note-header .tended,
+.garden-note-header .started,
+.garden-note-header .finished,
+.garden-note-header .ref-type { color: var(--color-ink-soft); }
+.garden-note-header .ref-type {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-ink-fade);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: var(--text-xs);
+}
+.status-pill svg { width: 0.7em; height: 0.7em; }
+.status-pill.status-reading   { color: var(--color-steel); }
+.status-pill.status-finished  { color: var(--color-green); }
+.status-pill.status-abandoned { color: var(--color-burgundy); }
+.status-pill.status-queued    { color: var(--color-warn); }
+
+.spoiler-warning {
+  color: var(--color-burgundy);
+  font-weight: 600;
+}
 
 /* ------------------------------------------------------------------
  * 21. Garden note tile
