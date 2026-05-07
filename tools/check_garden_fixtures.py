@@ -79,10 +79,18 @@ def lint_note(note_dir: Path) -> tuple[list[str], dict[str, object] | None]:
             f"{md}: growth_stage='{stage}' not in {sorted(GROWTH_STAGES)}"
         )
 
-    # Date: last_modified
-    lm = fm.get("last_modified")
-    if isinstance(lm, Date) and lm > Date.today():
-        errors.append(f"{md}: last_modified {lm} is in the future")
+    # Date validation: last_modified, started, finished
+    for date_field in ("last_modified", "started", "finished"):
+        val = fm.get(date_field)
+        if val is None or val == "":
+            continue
+        if not isinstance(val, Date):
+            errors.append(
+                f"{md}: {date_field}='{val}' is not a valid YYYY-MM-DD date"
+            )
+            continue
+        if date_field == "last_modified" and val > Date.today():
+            errors.append(f"{md}: last_modified {val} is in the future")
 
     # Flavor-specific
     flavor = derive_flavor(fm)

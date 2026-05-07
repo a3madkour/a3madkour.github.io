@@ -233,6 +233,20 @@ class GardenLinterTest(unittest.TestCase):
         self.assertEqual(rc, 1)
         self.assertTrue(any("last_modified" in e and "future" in e for e in errors))
 
+    def test_malformed_last_modified_fails(self) -> None:
+        broken = CONCEPT_NOTE.replace("last_modified: 2026-04-22", "last_modified: not-a-date")
+        self.repo.write_note("broken", broken)
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("last_modified" in e and "not a valid" in e for e in errors))
+
+    def test_malformed_started_fails(self) -> None:
+        broken = MEDIA_NOTE.replace("started: 2025-12-15", "started: 2025-1-1")
+        self.repo.write_note("broken", broken)
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("started" in e and "not a valid" in e for e in errors))
+
     # --- topic_map resolution ---
 
     def test_topic_map_unresolved_fails(self) -> None:
