@@ -17,6 +17,9 @@
     {{- if hasPrefix .RelPermalink "/essays/" -}}
       {{- $rssHref = "/essays/index.xml" -}}
       {{- $rssLabel = "Essays RSS feed" -}}
+    {{- else if hasPrefix .RelPermalink "/garden/" -}}
+      {{- $rssHref = "/garden/index.xml" -}}
+      {{- $rssLabel = "Garden RSS feed" -}}
     {{- end -}}
     <a class="icon-button rss-link"
        href="{{ $rssHref | relURL }}"
