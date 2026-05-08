@@ -62,6 +62,7 @@
         {{- range $values -}}
           {{- if not (in $primary .) -}}{{- $secondary = $secondary | append . -}}{{- end -}}
         {{- end -}}
+        {{- $secondaryId := printf "filter-secondary-tag-%s" (or $section "x") -}}
 
         {{- range $primary -}}
           <button type="button" class="filter-chip" data-dim="tag" data-key="{{ . }}" data-tier="primary">{{ . }}</button>
@@ -71,19 +72,19 @@
           <details class="filter-disclosure">
             <summary class="filter-chip is-disclosure">
               <span class="filter-disclosure-label">More tags</span>
-              <span class="filter-disclosure-count" hidden></span>
+              <span class="filter-disclosure-count" aria-live="polite" hidden></span>
             </summary>
             <div class="filter-disclosure-body">
               <input type="search" class="filter-search"
                      placeholder="Search {{ len $secondary }} more tags…"
                      aria-label="Search secondary tags"
-                     aria-controls="filter-secondary-tag"
+                     aria-controls="{{ $secondaryId }}"
                      autocomplete="off">
-              <div class="filter-secondary" id="filter-secondary-tag">
+              <div class="filter-secondary" id="{{ $secondaryId }}">
                 {{- range $secondary -}}
                   <button type="button" class="filter-chip" data-dim="tag" data-key="{{ . }}" data-tier="secondary">{{ . }}</button>
                 {{- end -}}
-                <p class="filter-secondary-empty" hidden>No matching tags.</p>
+                <p class="filter-secondary-empty" role="status" hidden>No matching tags.</p>
               </div>
             </div>
           </details>
