@@ -614,6 +614,7 @@ main { flex-grow: 1; }
   font-family: var(--font-ui);
   font-size: var(--text-xs);
 }
+.filter-chip[hidden] { display: none; }
 .filter-chip:hover { border-color: var(--color-burgundy); color: var(--color-burgundy); }
 .filter-chip.is-active {
   background: var(--color-burgundy);
