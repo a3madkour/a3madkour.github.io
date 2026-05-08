@@ -3,7 +3,7 @@ title: "Story atoms"
 draft: false
 last_modified: 2026-04-29
 growth_stage: budding
-tags: ["narrative"]
+tags: ["narrative", "dummy-10"]
 summary: "Lorem ipsum placeholder summary."
 ---
 
