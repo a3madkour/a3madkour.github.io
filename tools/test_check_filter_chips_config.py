@@ -195,6 +195,31 @@ class FilterChipsLinterTest(unittest.TestCase):
         self.assertEqual(rc, 1)
         self.assertTrue(any("primary_top_k" in e for e in errors))
 
+    def test_indent_typo_fails(self) -> None:
+        # 4-space indent silently skipped before fix; now emits a parse error.
+        self.repo.write_config(
+            'garden:\n'
+            '    primary_tags: ["memory"]\n'
+        )
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        joined = "\n".join(errors)
+        self.assertIn("data/filter-chips.yaml", joined)
+        self.assertTrue(any("unrecognized line" in e for e in errors))
+
+    def test_unknown_key_fails(self) -> None:
+        # `primary_tag` (singular) is a typo for `primary_tags`.
+        self.repo.write_garden("salience-and-memory")
+        self.repo.write_config(
+            'garden:\n'
+            '  primary_tag: ["memory"]\n'
+        )
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertTrue(
+            any("primary_tag" in e and "is not a recognized key" in e for e in errors)
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

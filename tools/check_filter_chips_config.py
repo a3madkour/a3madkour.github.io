@@ -8,6 +8,13 @@ positive integer.
 
 Exits 0 on all-pass (or absent config file), 1 on any violation.
 Stdlib only — imports the YAML-subset parser from check_fixtures.
+
+Unsupported YAML features (not handled by the narrow subset parser):
+- Block-style lists (`- item` form); only flow-style (`["a", "b"]`) is parsed.
+- Inline `#` comments on value lines (the `#` and everything after it is
+  treated as part of the value).
+- Multi-line / folded / literal-block strings.
+- Anchors and aliases (`&anchor`, `*alias`).
 """
 from __future__ import annotations
 
@@ -33,9 +40,15 @@ SECTION_RE = re.compile(r"^([A-Za-z][A-Za-z0-9_-]*):\s*$")
 KV_RE = re.compile(r"^\s{2}([A-Za-z_][A-Za-z0-9_]*):\s*(.*)$")
 
 
-def parse_config(text: str) -> dict[str, dict[str, object]]:
-    """Parse the data/filter-chips.yaml subset we accept."""
+def parse_config(text: str) -> tuple[dict[str, dict[str, object]], list[str]]:
+    """Parse the data/filter-chips.yaml subset we accept.
+
+    Returns (config_dict, parse_errors).  Any non-blank, non-comment line
+    inside a section block that doesn't match the 2-space KV pattern is
+    recorded as a parse error rather than silently dropped.
+    """
     out: dict[str, dict[str, object]] = {}
+    parse_errors: list[str] = []
     current: str | None = None
     for raw in text.splitlines():
         line = raw.rstrip()
@@ -56,7 +69,12 @@ def parse_config(text: str) -> dict[str, dict[str, object]]:
             if key is None or value is None:
                 continue
             out[current][key] = parse_scalar(value.strip())
-    return out
+        elif current is not None:
+            parse_errors.append(
+                f"data/filter-chips.yaml: unrecognized line in section "
+                f"'{current}' (expected 2-space indent): {line!r}"
+            )
+    return out, parse_errors
 
 
 def collect_tags(section_dir: Path) -> set[str]:
@@ -89,9 +107,18 @@ def run(repo_root: Path) -> tuple[int, list[str]]:
     if not config_path.exists():
         return 0, []
 
-    config = parse_config(config_path.read_text())
+    config, parse_errors = parse_config(config_path.read_text())
+    errors.extend(parse_errors)
+
+    ALLOWED_KEYS = {"primary_tags", "primary_top_k"}
 
     for section, section_cfg in config.items():
+        # Flag unrecognized keys before per-key validation
+        for unknown in sorted(set(section_cfg.keys()) - ALLOWED_KEYS):
+            errors.append(
+                f"data/filter-chips.yaml:{section}.{unknown} is not a recognized key"
+            )
+
         # Validate primary_top_k if present
         top_k = section_cfg.get("primary_top_k")
         if top_k is not None:
