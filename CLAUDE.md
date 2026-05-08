@@ -15,6 +15,8 @@ Personal website for Abdelrahman Madkour, built as a Hugo static site with hand-
 - `python3 -m unittest tools/test_check_fixtures.py -v` — essay linter unit tests (CI gate)
 - `python3 tools/check_garden_fixtures.py` — garden fixture frontmatter linter (CI gate)
 - `python3 -m unittest tools/test_check_garden_fixtures.py -v` — garden linter unit tests (CI gate)
+- `python3 tools/check_filter_chips_config.py` — filter-chips config linter (CI gate)
+- `python3 -m unittest tools/test_check_filter_chips_config.py -v` — filter-chips linter unit tests (CI gate)
 
 There is no npm step. The Python tooling (linter + contrast) is stdlib-only.
 
@@ -106,9 +108,19 @@ CSS reads `data-span` and applies `grid-column: span N` / `grid-row: span N`.
 
 ### Filter chips
 
-`/essays/` and `/garden/` both render filter chip strips via the shared `partials/filter-chips.html` partial (essays: tag / series / year; garden: tag / flavor / stage). **Suppression rule:** dimensions with <2 distinct values don't render. **Active-state:** per-dimension and AND-composed across dimensions — selecting "Budding" while "memory" tag is active narrows to the intersection (notes that are *both*). The shared logic lives in `assets/js/filter-chips.js`; `essay.js` and `garden.js` each call `setupFilterChips({ containerSelector, cardSelector, sectionSelector?, emptyStateSelector? })` with their own selectors. Garden's empty-intersection state: section wrappers with no visible tiles get `hidden`; a `.garden-empty` element shows when zero tiles globally pass.
+`/essays/` and `/garden/` both render filter chip strips via the shared `partials/filter-chips.html` partial (essays: tag / series / year; garden: tag / flavor / stage). **Suppression rule:** dimensions with <2 distinct values don't render.
 
-**No in-strip no-JS fallback.** Chips are `<button>` elements only (no anchor href). With JS disabled, chips are inert. Tag and series taxonomy pages still exist at `/tags/<slug>/` and `/series/<slug>/` (Hugo auto-generated) for direct entry. The earlier essays-slice fallback that rendered tag/series chips as anchors was removed when the garden slice migrated both pages to the shared partial. Garden tags do not back-link to a `/tags/` page either — they're chip-filter-only.
+**Two-tier rendering** (tag dim only): primary chips render inline in the strip. When the section has more tags than K (default 10), the remaining tags become "secondary" and live inside a native `<details>` disclosure with a search input. The primary set is sourced from `data/filter-chips.yaml` `<section>.primary_tags` (manual curation, ordered) or computed as the top-K by note count when curation is absent (alphabetical for ties). `data/filter-chips.yaml` also accepts `<section>.primary_top_k` to override K per section. Hugo exposes hyphenated data filenames literally — read via `index site.Data "filter-chips"`, not dot syntax. `tools/check_filter_chips_config.py` validates every curated tag against the live taxonomy.
+
+**Active-state model:** per-dimension AND across dimensions; **multi-select within the tag dimension only** (`memory` + `calvino` → notes with both). Other dims (flavor, stage, series, year) stay single-active because their values are mutually exclusive. Clicking an active tag chip deselects it; clicking "All" clears the entire tag selection. The disclosure summary shows active secondary tags when collapsed (`▾ More tags · calvino` or `· N active`).
+
+**Search inside the disclosure:** substring match, case-insensitive, applied to secondary chips' `data-key`. Live-filter — the chips themselves narrow as you type. Keyboard navigation: Arrow Down from input → first visible chip, Arrow Left/Right between visible chips (no wraparound), Arrow Up returns to input, Enter toggles, Esc clears.
+
+The shared logic lives in `assets/js/filter-chips.js`; `essay.js` and `garden.js` each call `setupFilterChips({ containerSelector, cardSelector, sectionSelector?, emptyStateSelector? })`. Garden's empty-intersection state: section wrappers with no visible tiles get `hidden`; a `.garden-empty` element shows when zero tiles globally pass.
+
+**`[hidden]` cascade gotcha**: any element with author-side `display: <something>` overrides the UA `[hidden] { display: none }` rule. When JS toggles the `hidden` attribute on a chip or tile, add an explicit `.<class>[hidden] { display: none; }` rule (already in place for `.filter-chip`, `.garden-tile`, `.garden-topic`). Without that, the attribute toggles but the element stays visible.
+
+**No in-strip no-JS fallback.** Chips are `<button>` elements (no anchor href). With JS disabled, the disclosure still opens and closes (native `<details>`), but chips and the search input are inert. Tag and series taxonomy pages still exist at `/tags/<slug>/` and `/series/<slug>/` (Hugo auto-generated) for direct entry.
 
 Taxonomies are declared in `hugo.yaml` (`tag: tags`, `series: series`).
 
@@ -118,7 +130,7 @@ Three Google Fonts loaded in a single `<link>`: **Petrona** (body, italic + upri
 
 ### Deployment
 
-`.github/workflows/hugo.yaml` builds with Hugo extended and deploys `public/` to GitHub Pages on pushes to `master`. The build job runs: Install Hugo CLI → Checkout → Setup Pages → **Verify CSS contrast (WCAG)** → **Verify essay fixtures** → **Run essay linter unit tests** → **Verify garden fixtures** → **Run garden linter unit tests** → Build with Hugo → Upload artifact → Deploy. All five Python checks must pass before the Hugo build.
+`.github/workflows/hugo.yaml` builds with Hugo extended and deploys `public/` to GitHub Pages on pushes to `master`. The build job runs: Install Hugo CLI → Checkout → Setup Pages → **Verify CSS contrast (WCAG)** → **Verify essay fixtures** → **Run essay linter unit tests** → **Verify garden fixtures** → **Run garden linter unit tests** → **Verify filter-chips config** → **Run filter-chips linter unit tests** → Build with Hugo → Upload artifact → Deploy. All seven Python checks must pass before the Hugo build.
 
 ## Reference docs
 
@@ -130,13 +142,15 @@ Three Google Fonts loaded in a single `<link>`: **Petrona** (body, italic + upri
 - **Phase 2 garden slice plan**: `docs/superpowers/plans/2026-05-07-garden-notes.md`
 - The site spec's §14 is the master phase list.
 
-## Project status (2026-05-07)
+## Project status (2026-05-08)
 
 **Phase 0+1 complete.** Foundation cleanup (dropped Tailwind/Node) and visual identity scaffold.
 
 **Phase 2 — essays slice complete.** Variable-tile grid index with filter chips, full essay post layout (TOC + sidenotes + citations placeholder + figures + footnotes + tags + hero illustrations + series nav + reading time), per-section RSS, homepage essays strip, fixture frontmatter linter wired into CI. Six fixture essays under `content/essays/<slug>/` exercise all in-scope and deferred capabilities — see the slice spec for the table. **All fixture bodies are obvious filler text (lorem ipsum / "Example N") — never authored prose.** When the elisp/ox-hugo pipeline arrives, fixtures get overwritten in place without template changes.
 
 **Phase 2 — garden slice complete.** Single note template for concept/media/reference flavors with metadata-routed header strip (status pill + dates + spoiler-level + creator + "→ original"); `topic_map:` frontmatter facet (any concept note can declare an ordered slug list and renders a curated tile grid below the body — supersedes parent spec §4.9, no `/garden/topics/` URL); garden index with topic-map sections + "Other notes" catch-all + multi-dimension AND filter chips (tag / flavor / stage); hand-authored SVG growth-stage glyphs (seedling sprout / budding two-leaf / evergreen tree) in `partials/garden/stage-glyph.html`; native `<details>` spoiler runtime (replaces the no-op stub from the essays slice); per-section RSS at `/garden/index.xml`; 14-fixture set covering every status (reading/finished/abandoned/queued), every spoiler-level (none/light/heavy), and every growth stage. **Filter chips refactored:** shared `assets/js/filter-chips.js` module powers both `/essays/` and `/garden/`; both pages migrated to AND-composition (clicking a tag chip + a series chip narrows to intersection — was previously single-active on essays).
+
+**Phase 2 polish — tag two-tier filter complete (2026-05-08).** Shared `partials/filter-chips.html` upgraded to render the tag dim in two tiers: curated primary chips from `data/filter-chips.yaml` (or top-K auto-fallback by note count, K=10) plus a native `<details>` disclosure with a search input that live-filters secondary chips. Multi-select within tag dim (`memory` + `calvino` → AND), single-active for flavor/stage/series/year. Keyboard nav (arrow keys + Esc); active-secondary tags surface in the disclosure summary when collapsed. New CI gate: `tools/check_filter_chips_config.py` validates curated tags against the live taxonomy. Both `/garden/` and `/essays/` get the upgrade automatically; suppression keeps the disclosure invisible on small tag sets (essays' 3-tag fixture set is below threshold, garden's set was extended to 22 fixture tags including 10 dummy-NN singletons so the disclosure exercises a real secondary set in dev).
 
 **Phase 2 — remaining slices (not started).** Spec §14's Phase 2 also called for About; that's still pending. Beyond Phase 2:
 - About page rewrite (real bio, Now widget, affiliations, connect block, full colophon) — Phase 3-dependent for the Now widget.
