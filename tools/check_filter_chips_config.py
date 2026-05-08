@@ -43,13 +43,19 @@ def parse_config(text: str) -> dict[str, dict[str, object]]:
             continue
         m = SECTION_RE.match(line)
         if m:
-            current = m.group(1)
-            out[current] = {}
+            section = m.group(1)
+            if section is None:
+                continue
+            current = section
+            out[section] = {}
             continue
         m = KV_RE.match(line)
         if m and current is not None:
-            key, value = m.group(1), m.group(2).strip()
-            out[current][key] = parse_scalar(value)
+            key = m.group(1)
+            value = m.group(2)
+            if key is None or value is None:
+                continue
+            out[current][key] = parse_scalar(value.strip())
     return out
 
 
