@@ -247,6 +247,16 @@ class GardenLinterTest(unittest.TestCase):
         self.assertEqual(rc, 1)
         self.assertTrue(any("started" in e and "not a valid" in e for e in errors))
 
+    def test_malformed_finished_fails(self) -> None:
+        broken = MEDIA_NOTE.replace(
+            "status: reading\n",
+            "status: reading\nfinished: bogus\n",
+        )
+        self.repo.write_note("broken", broken)
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("finished" in e and "not a valid" in e for e in errors))
+
     # --- topic_map resolution ---
 
     def test_topic_map_unresolved_fails(self) -> None:

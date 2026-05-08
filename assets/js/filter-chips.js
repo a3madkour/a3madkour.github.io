@@ -1,8 +1,8 @@
-// Multi-dimension filter chip strip.
+// Multi-dimension AND filter chip strip.
 // Used by both /essays/ and /garden/ (and any future filtered list).
 //
 // HTML contract (rendered by partials/filter-chips.html):
-//   <nav class="filter-chips" data-filter-mode="and|single">
+//   <nav class="filter-chips">
 //     <div class="filter-dimension" data-dim="tag">
 //       <button class="filter-chip is-active" data-dim="tag" data-key="all">All</button>
 //       <button class="filter-chip" data-dim="tag" data-key="memory">memory</button>
@@ -10,8 +10,9 @@
 //     </div>
 //   </nav>
 //
-// Cards are any element matching `[data-dim-target]` (each grid passes its
-// own selector). Each card declares its values as data-{dim} attributes.
+// Cards declare their values as data-{dim} attributes. Visibility is the
+// AND of all non-"all" dimensions; sections and the global empty-state
+// element toggle their hidden attribute based on tile counts.
 // data-tags is space-separated; other dims are single-valued.
 
 export function setupFilterChips({
@@ -27,7 +28,6 @@ export function setupFilterChips({
     return;
   }
 
-  const mode = container.getAttribute('data-filter-mode') || 'and';
   // state: { [dim]: activeKey }, all initialized to "all"
   const state = {};
   container.querySelectorAll('.filter-dimension').forEach((dimEl) => {
@@ -36,18 +36,6 @@ export function setupFilterChips({
   });
 
   function cardMatches(card) {
-    if (mode === 'single') {
-      // Single-active legacy: at most one dim has a non-"all" active key.
-      // A card matches iff that single active dim's value is satisfied.
-      let activeDim = null;
-      let activeKey = 'all';
-      for (const dim in state) {
-        if (state[dim] !== 'all') { activeDim = dim; activeKey = state[dim]; break; }
-      }
-      if (!activeDim) return true;
-      return cardHasValue(card, activeDim, activeKey);
-    }
-    // and mode: every non-"all" dim must match
     for (const dim in state) {
       if (state[dim] === 'all') continue;
       if (!cardHasValue(card, dim, state[dim])) return false;
@@ -105,14 +93,7 @@ export function setupFilterChips({
       const dim = chip.getAttribute('data-dim');
       const key = chip.getAttribute('data-key') || 'all';
       if (!dim) return;
-
-      if (mode === 'single') {
-        // Clear every dim back to "all" first
-        for (const d in state) state[d] = 'all';
-        state[dim] = key;
-      } else {
-        state[dim] = key;
-      }
+      state[dim] = key;
 
       // Reflect active state on chip elements
       container.querySelectorAll('.filter-dimension').forEach((dimEl) => {

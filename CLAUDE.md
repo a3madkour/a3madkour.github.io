@@ -108,7 +108,9 @@ CSS reads `data-span` and applies `grid-column: span N` / `grid-row: span N`.
 
 `/essays/` and `/garden/` both render filter chip strips via the shared `partials/filter-chips.html` partial (essays: tag / series / year; garden: tag / flavor / stage). **Suppression rule:** dimensions with <2 distinct values don't render. **Active-state:** per-dimension and AND-composed across dimensions — selecting "Budding" while "memory" tag is active narrows to the intersection (notes that are *both*). The shared logic lives in `assets/js/filter-chips.js`; `essay.js` and `garden.js` each call `setupFilterChips({ containerSelector, cardSelector, sectionSelector?, emptyStateSelector? })` with their own selectors. Garden's empty-intersection state: section wrappers with no visible tiles get `hidden`; a `.garden-empty` element shows when zero tiles globally pass.
 
-Taxonomies are declared in `hugo.yaml` (`tag: tags`, `series: series`). Garden tags do not currently round-trip through the `/tags/` taxonomy pages — they're chip-filter-only for now.
+**No in-strip no-JS fallback.** Chips are `<button>` elements only (no anchor href). With JS disabled, chips are inert. Tag and series taxonomy pages still exist at `/tags/<slug>/` and `/series/<slug>/` (Hugo auto-generated) for direct entry. The earlier essays-slice fallback that rendered tag/series chips as anchors was removed when the garden slice migrated both pages to the shared partial. Garden tags do not back-link to a `/tags/` page either — they're chip-filter-only.
+
+Taxonomies are declared in `hugo.yaml` (`tag: tags`, `series: series`).
 
 ### Typography
 

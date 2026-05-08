@@ -42,7 +42,7 @@
     {{- if ge (len $stages) 2 -}}
       {{- $dims = $dims | append (dict "key" "stage" "label" "Stage" "values" $stages) -}}
     {{- end -}}
-    {{ partial "filter-chips.html" (dict "dimensions" $dims "mode" "and") }}
+    {{ partial "filter-chips.html" (dict "dimensions" $dims) }}
 
     {{- /* ----- Pass 1: build the set of slugs referenced by any topic_map ----- */ -}}
     {{- $referenced := slice -}}

@@ -33,7 +33,7 @@
     {{ if ge (len $years) 2 }}
       {{ $dims = $dims | append (dict "key" "year" "label" "Year" "values" $years) }}
     {{ end }}
-    {{ partial "filter-chips.html" (dict "dimensions" $dims "mode" "and") }}
+    {{ partial "filter-chips.html" (dict "dimensions" $dims) }}
 
     <ul class="essay-grid">
       {{ range .Pages.ByDate.Reverse }}
