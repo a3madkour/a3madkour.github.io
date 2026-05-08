@@ -103,6 +103,7 @@ export function setupFilterChips({
     }
 
     refreshChipActiveStates();
+    refreshDisclosureSummary();
   }
 
   function refreshChipActiveStates() {
@@ -126,6 +127,34 @@ export function setupFilterChips({
         c.classList.toggle('is-active', active);
       });
     });
+  }
+
+  function refreshDisclosureSummary() {
+    const countEl = container.querySelector('.filter-disclosure-count');
+    if (!countEl) return;
+    if (!state.tag) return;
+    // Find which selected tag keys are secondary-tier
+    const secondaryEls = container.querySelectorAll(
+      '.filter-chip[data-tier="secondary"]'
+    );
+    const secondaryKeys = new Set(
+      Array.from(secondaryEls)
+        .map((el) => el.getAttribute('data-key'))
+        .filter(Boolean)
+    );
+    const activeSecondary = Array.from(state.tag).filter((k) =>
+      secondaryKeys.has(k)
+    );
+    if (activeSecondary.length === 0) {
+      countEl.textContent = '';
+      countEl.setAttribute('hidden', '');
+    } else if (activeSecondary.length === 1) {
+      countEl.textContent = ` · ${activeSecondary[0]}`;
+      countEl.removeAttribute('hidden');
+    } else {
+      countEl.textContent = ` · ${activeSecondary.length} active`;
+      countEl.removeAttribute('hidden');
+    }
   }
 
   function setupDisclosure() {
