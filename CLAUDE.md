@@ -120,7 +120,7 @@ The shared logic lives in `assets/js/filter-chips.js`; `essay.js` and `garden.js
 
 **`[hidden]` cascade gotcha**: any element with author-side `display: <something>` overrides the UA `[hidden] { display: none }` rule. When JS toggles the `hidden` attribute on a chip or tile, add an explicit `.<class>[hidden] { display: none; }` rule (already in place for `.filter-chip`, `.garden-tile`, `.garden-topic`). Without that, the attribute toggles but the element stays visible.
 
-**No in-strip no-JS fallback.** Chips are `<button>` elements (no anchor href). With JS disabled, the disclosure still opens and closes (native `<details>`), but chips and the search input are inert. Tag and series taxonomy pages still exist at `/tags/<slug>/` and `/series/<slug>/` (Hugo auto-generated) for direct entry.
+**No in-strip no-JS fallback.** Inline chips are `<button>` elements (no anchor href); the disclosure summary chip is a `<summary>` styled to match. With JS disabled, the disclosure still opens and closes (native `<details>`), but chips and the search input are inert. Tag and series taxonomy pages still exist at `/tags/<slug>/` and `/series/<slug>/` (Hugo auto-generated) for direct entry.
 
 Taxonomies are declared in `hugo.yaml` (`tag: tags`, `series: series`).
 
@@ -140,6 +140,8 @@ Three Google Fonts loaded in a single `<link>`: **Petrona** (body, italic + upri
 - **Phase 2 essays slice plan**: `docs/superpowers/plans/2026-05-05-essays-section.md`
 - **Phase 2 garden slice spec**: `docs/superpowers/specs/2026-05-07-garden-notes-design.md` (amends parent §4.9 — topic maps are a note facet, not a separate URL)
 - **Phase 2 garden slice plan**: `docs/superpowers/plans/2026-05-07-garden-notes.md`
+- **Phase 2 polish — tag two-tier filter spec**: `docs/superpowers/specs/2026-05-08-garden-tag-search-design.md`
+- **Phase 2 polish — tag two-tier filter plan**: `docs/superpowers/plans/2026-05-08-garden-tag-search.md`
 - The site spec's §14 is the master phase list.
 
 ## Project status (2026-05-08)

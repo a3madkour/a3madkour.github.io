@@ -50,7 +50,7 @@ jobs:
         run: python3 tools/check-contrast.py
       - name: Verify essay fixtures
         run: python3 tools/check_fixtures.py
-      - name: Run linter unit tests
+      - name: Run essay linter unit tests
         run: python3 -m unittest tools/test_check_fixtures.py -v
       - name: Verify garden fixtures
         run: python3 tools/check_garden_fixtures.py
