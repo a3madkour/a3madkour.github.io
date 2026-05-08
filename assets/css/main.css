@@ -23,6 +23,8 @@ img, svg { display: block; max-width: 100%; }
   --color-tile:     #fdfcf8;
   --color-burgundy: #6b1f2c;
   --color-steel:    #1e4060;
+  --color-green:    #2d5a3d;
+  --color-warn:     #a05a1a;
 
   --font-body: "Petrona", Georgia, serif;
   --font-ui:   "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -51,6 +53,8 @@ img, svg { display: block; max-width: 100%; }
   --color-tile:     #2a2a2a;
   --color-burgundy: #d65a6a;
   --color-steel:    #7eafd0;
+  --color-green:    #86c099;
+  --color-warn:     #d4a060;
 }
 
 /* Dark mode — system preference, only when no explicit override */
@@ -64,6 +68,8 @@ img, svg { display: block; max-width: 100%; }
     --color-tile:     #2a2a2a;
     --color-burgundy: #d65a6a;
     --color-steel:    #7eafd0;
+    --color-green:    #86c099;
+    --color-warn:     #d4a060;
   }
 }
 
@@ -572,12 +578,13 @@ main { flex-grow: 1; }
 .essay-sidenote-zone { display: none; }
 
 /* ------------------------------------------------------------------
- * 16. Filter strip (essays index)
+ * 16. Filter chips (multi-dim, shared by essays + garden)
  * ------------------------------------------------------------------ */
+.filter-chips,
 .filter-strip {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.5rem;
+  gap: 1.25rem;
   margin: 1rem 0 2rem;
   font-family: var(--font-ui);
   font-size: var(--text-sm);
@@ -612,6 +619,10 @@ main { flex-grow: 1; }
   background: var(--color-burgundy);
   color: var(--color-stone);
   border-color: var(--color-burgundy);
+}
+.filter-chip:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
 }
 
 /* ------------------------------------------------------------------
@@ -666,3 +677,275 @@ main { flex-grow: 1; }
 }
 .home-essays-all:hover { color: var(--color-burgundy); text-decoration: underline; }
 .home-essays-grid { margin-top: 0; }
+
+/* ------------------------------------------------------------------
+ * 19. Garden index — topic sections + tiles
+ * ------------------------------------------------------------------ */
+.garden-topic { margin: 2rem 0 0; }
+.garden-topic-heading {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--text-lg);
+  margin: 0 0 0.25rem;
+  color: var(--color-ink);
+}
+.garden-topic-heading a {
+  color: var(--color-ink);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--color-burgundy);
+}
+.garden-topic-heading a:hover { color: var(--color-burgundy); }
+.garden-topic-framing {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  margin: 0 0 0.75rem;
+  max-width: 60ch;
+  line-height: 1.5;
+}
+.garden-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.6rem;
+}
+/* When a topic section has no visible tiles (filter applied), hide it */
+.garden-topic[hidden] { display: none; }
+
+/* Garden single-note page elements */
+.garden-note { max-width: 720px; }
+.garden-note .crumb {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  color: var(--color-ink-fade);
+  margin: 0 0 0.5rem;
+}
+.garden-note .crumb a {
+  color: var(--color-burgundy);
+  text-decoration: none;
+  border-bottom: 1px dotted currentColor;
+}
+.garden-note-title {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-2xl);
+  line-height: 1.18;
+  margin: 0.4rem 0 0.4rem;
+  color: var(--color-ink);
+}
+.garden-creator {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--color-ink-soft);
+  font-size: var(--text-base);
+  margin: 0 0 0.75rem;
+}
+.garden-media-meta {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  margin: 0 0 1.1rem;
+}
+.garden-media-meta a.original-link {
+  color: var(--color-burgundy);
+  text-decoration: none;
+  border-bottom: 1px dotted currentColor;
+}
+.garden-media-meta .media-type-meta {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-ink-fade);
+}
+.garden-note-body { margin-top: 0.75rem; }
+
+/* Topic section nested inside a single note (not the index) */
+.garden-note .garden-topic { margin-top: 2.5rem; padding-top: 1.25rem; border-top: 1px solid var(--color-rule); }
+
+/* ------------------------------------------------------------------
+ * 20. Garden note header strip + status pill
+ * ------------------------------------------------------------------ */
+.garden-note-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--color-rule);
+  margin-bottom: 0.9rem;
+}
+.garden-note-header .meta-sep { color: var(--color-ink-fade); }
+.garden-note-header .stage {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.garden-note-header.stage-seedling .stage { color: var(--color-burgundy); }
+.garden-note-header.stage-budding  .stage { color: var(--color-steel); }
+.garden-note-header.stage-evergreen .stage { color: var(--color-green); }
+.garden-note-header .stage-glyph { color: currentColor; }
+.garden-note-header .stage-label {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-ink-soft);
+}
+
+.garden-note-header .tended,
+.garden-note-header .started,
+.garden-note-header .finished,
+.garden-note-header .ref-type { color: var(--color-ink-soft); }
+.garden-note-header .ref-type {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-ink-fade);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: var(--text-xs);
+}
+.status-pill svg { width: 0.7em; height: 0.7em; }
+.status-pill.status-reading   { color: var(--color-steel); }
+.status-pill.status-finished  { color: var(--color-green); }
+.status-pill.status-abandoned { color: var(--color-burgundy); }
+.status-pill.status-queued    { color: var(--color-warn); }
+
+.spoiler-warning {
+  color: var(--color-burgundy);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------------
+ * 21. Garden note tile
+ * ------------------------------------------------------------------ */
+.garden-tile {
+  display: block;
+  background: var(--color-tile);
+  border: 1px solid var(--color-rule);
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+  text-decoration: none;
+  color: var(--color-ink);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.garden-tile:hover {
+  border-color: var(--color-burgundy);
+  transform: translateY(-1px);
+}
+.garden-tile.stage-seedling { color: var(--color-burgundy); }
+.garden-tile.stage-budding  { color: var(--color-steel); }
+.garden-tile.stage-evergreen { color: var(--color-green); }
+
+.garden-tile .tile-stage {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: currentColor;
+  margin-bottom: 0.25rem;
+}
+.garden-tile .stage-glyph { color: currentColor; }
+.garden-tile .tile-stage-label { color: var(--color-ink-soft); }
+
+.garden-tile .tile-title {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--text-base);
+  line-height: 1.25;
+  color: var(--color-ink);
+}
+.garden-tile .tile-meta {
+  margin-top: 0.35rem;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-fade);
+}
+
+/* Hidden by filter (no display:none, so layout shifts are minimal) */
+.garden-tile[hidden] { display: none; }
+
+/* ------------------------------------------------------------------
+ * 22. Spoiler runtime (details-based)
+ * ------------------------------------------------------------------ */
+details.spoiler {
+  margin: 0.75rem 0;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--color-rule);
+  border-left: 3px solid var(--color-burgundy);
+  border-radius: 4px;
+  background: var(--color-tile);
+}
+details.spoiler[open] { padding-bottom: 0.7rem; }
+details.spoiler > summary {
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-burgundy);
+  list-style: none; /* hide default disclosure triangle */
+}
+details.spoiler > summary::-webkit-details-marker { display: none; }
+details.spoiler > summary::before { content: "▸ "; margin-right: 0.1rem; }
+details.spoiler[open] > summary::before { content: "▾ "; }
+details.spoiler > summary:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+details.spoiler .spoiler-body {
+  margin-top: 0.4rem;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--color-ink);
+}
+details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
+
+/* ------------------------------------------------------------------
+ * 23. Garden empty-state placeholder
+ * ------------------------------------------------------------------ */
+.garden-empty,
+.garden-empty-static {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--color-ink-soft);
+  padding: 2rem 1rem;
+  text-align: center;
+  border: 1px dashed var(--color-rule);
+  border-radius: 6px;
+  margin: 1.5rem 0;
+}
+.garden-hero { margin-bottom: 0.5rem; }
+.garden-hero h1 {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-2xl);
+  margin: 0 0 0.25rem;
+}
+.garden-hero .framing {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--color-ink-soft);
+  max-width: 60ch;
+}

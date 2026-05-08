@@ -1,0 +1,58 @@
+{{- /* Inputs:
+       . — a Hugo Page (the note being rendered)
+   Output: the metadata strip above the title.
+*/ -}}
+{{- $stage := .Params.growth_stage | default "seedling" -}}
+{{- $mediaType := .Params.media_type -}}
+{{- $flavor := "concept" -}}
+{{- if $mediaType -}}
+  {{- if in (slice "book" "album" "track" "game" "film" "series") $mediaType -}}
+    {{- $flavor = "media" -}}
+  {{- else -}}
+    {{- $flavor = "reference" -}}
+  {{- end -}}
+{{- end -}}
+<div class="garden-note-header stage-{{ $stage }}">
+  <span class="stage">
+    {{ partial "garden/stage-glyph.html" (dict "stage" $stage "size" "lg") }}
+    <span class="stage-label">{{ title $stage }}</span>
+  </span>
+  <span class="meta-sep" aria-hidden="true">·</span>
+  {{- with .Params.last_modified -}}
+  <span class="tended">tended {{ partial "garden/relative-date.html" (dict "date" .) }}</span>
+  {{- end -}}
+
+  {{- if eq $flavor "media" -}}
+    {{- with .Params.status -}}
+    <span class="meta-sep" aria-hidden="true">·</span>
+    <span class="status-pill status-{{ . }}" aria-label="status: {{ . }}">
+      {{- if eq . "reading" -}}
+      <svg viewBox="0 0 9 9" aria-hidden="true"><circle cx="4.5" cy="4.5" r="3" fill="currentColor"/></svg>
+      {{- else if eq . "finished" -}}
+      <svg viewBox="0 0 9 9" aria-hidden="true"><path d="M2 5 L4 7 L7 3" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      {{- else if eq . "abandoned" -}}
+      <svg viewBox="0 0 9 9" aria-hidden="true"><path d="M2 2 L7 7 M7 2 L2 7" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+      {{- else if eq . "queued" -}}
+      <svg viewBox="0 0 9 9" aria-hidden="true"><path d="M4.5 7 V2 M2.5 4 L4.5 2 L6.5 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      {{- end -}}
+      <span>{{ title . }}</span>
+    </span>
+    {{- end -}}
+    {{- with .Params.started -}}
+    <span class="meta-sep" aria-hidden="true">·</span>
+    <span class="started">started {{ . | dateFormat "2 Jan 2006" }}</span>
+    {{- end -}}
+    {{- with .Params.finished -}}
+    <span class="meta-sep" aria-hidden="true">·</span>
+    <span class="finished">finished {{ . | dateFormat "2 Jan 2006" }}</span>
+    {{- end -}}
+    {{- $sl := .Params.spoiler_level | default "none" -}}
+    {{- if or (eq $sl "light") (eq $sl "heavy") -}}
+    <span class="meta-sep" aria-hidden="true">·</span>
+    <span class="spoiler-warning" role="note">⚠ {{ $sl }} spoilers</span>
+    {{- end -}}
+  {{- else if eq $flavor "reference" -}}
+    <span class="meta-sep" aria-hidden="true">·</span>
+    <span class="ref-type">{{ upper $mediaType }}</span>
+  {{- end -}}
+</div>

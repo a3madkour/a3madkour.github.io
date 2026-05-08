@@ -1,0 +1,39 @@
+{{- /* Inputs:
+       .context  — the topic-map note (a *hugolib.Page with .Params.topic_map set)
+       .heading  — optional heading text override (defaults to .context.Title)
+       .framing  — optional framing override (defaults to first paragraph of body)
+       .linkHeading  — bool, true to wrap heading in an anchor to context (default true)
+*/ -}}
+{{- $ctx := .context -}}
+{{- $heading := .heading | default $ctx.Title -}}
+{{- $framing := .framing -}}
+{{- $linkHeading := true -}}
+{{- if isset . "linkHeading" -}}{{- $linkHeading = .linkHeading -}}{{- end -}}
+{{- if not $framing -}}{{- $framing = $ctx.Params.summary -}}{{- end -}}
+{{- if not $framing -}}
+  {{- $plain := $ctx.Plain -}}
+  {{- $first := index (split $plain "\n\n") 0 -}}
+  {{- $framing = $first | strings.TrimSpace -}}
+{{- end -}}
+<section class="garden-topic" data-garden-section="topic" data-topic-slug="{{ path.Base $ctx.File.Dir }}">
+  <h2 class="garden-topic-heading">
+    {{- if $linkHeading -}}
+    <a href="{{ $ctx.RelPermalink }}">{{ $heading }}</a>
+    {{- else -}}
+    {{ $heading }}
+    {{- end -}}
+  </h2>
+  {{- with $framing -}}
+  <p class="garden-topic-framing">{{ . }}</p>
+  {{- end -}}
+  <div class="garden-tiles">
+    {{- range $ctx.Params.topic_map -}}
+      {{- $slug := . -}}
+      {{- with where (where $ctx.Site.RegularPages "Section" "garden") "File.ContentBaseName" $slug -}}
+        {{ partial "garden/note-tile.html" (dict "page" (index . 0)) }}
+      {{- else -}}
+        {{- errorf "topic_map entry %q on %q does not resolve" $slug $ctx.RelPermalink -}}
+      {{- end -}}
+    {{- end -}}
+  </div>
+</section>

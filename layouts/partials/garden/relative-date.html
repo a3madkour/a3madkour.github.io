@@ -1,0 +1,20 @@
+{{- /* Input: .date — a time.Time (or YAML date)
+   Output: "Nd ago" / "N days ago" / "today" / "yesterday" — short form.
+*/ -}}
+{{- $now := now -}}
+{{- $dateVal := .date -}}
+{{- $then := $dateVal -}}
+{{- /* If date is a string (YAML parsed as string), try to parse it */ -}}
+{{- if (strings.Contains (printf "%T" $dateVal) "string") -}}
+  {{- /* Extract date in YYYY-MM-DD format and parse it */ -}}
+  {{- $extracted := (index (findRE "\\d{4}-\\d{2}-\\d{2}" (printf "%v" $dateVal)) 0) -}}
+  {{- /* Create a time by appending time portion */ -}}
+  {{- $then = (printf "%sT00:00:00Z" $extracted | time.AsTime) -}}
+{{- end -}}
+{{- $diff := math.Floor (div (sub $now.Unix $then.Unix) 86400) -}}
+{{- if le $diff 0 -}}today
+{{- else if eq $diff 1.0 -}}yesterday
+{{- else if lt $diff 30.0 -}}{{ int $diff }}d ago
+{{- else if lt $diff 365.0 -}}{{ math.Floor (div $diff 30) }}mo ago
+{{- else -}}{{ math.Floor (div $diff 365) }}y ago
+{{- end -}}

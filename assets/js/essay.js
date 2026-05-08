@@ -5,6 +5,8 @@
 //
 // Guards on .essay-body presence; bails on non-essay pages.
 
+import { setupFilterChips } from './filter-chips.js';
+
 const RAIL_BREAKPOINT = 1100;
 
 function reducedMotion() {
@@ -73,64 +75,15 @@ function setupCitationHook() {
   });
 }
 
-function setupFilterChips() {
-  const grid = document.querySelector('.essay-grid');
-  const strip = document.querySelector('.filter-strip');
-  if (!grid || !strip) return;
-
-  function applyFilter(dim, value) {
-    grid.setAttribute('data-filter-state', value === 'all' ? 'all' : `${dim}:${value}`);
-    grid.querySelectorAll('.essay-card').forEach((card) => {
-      if (value === 'all') {
-        card.style.display = '';
-        return;
-      }
-      const cardValue = card.getAttribute(`data-${dim === 'tag' ? 'tags' : dim}`) || '';
-      const matches = dim === 'tag'
-        ? cardValue.split(' ').includes(value)
-        : cardValue === value;
-      card.style.display = matches ? '' : 'none';
-    });
-  }
-
-  strip.querySelectorAll('.filter-dimension').forEach((dimEl) => {
-    const dim = dimEl.getAttribute('data-dim');
-    if (!dim) return;
-    dimEl.querySelectorAll('.filter-chip').forEach((chip) => {
-      const handler = (e) => {
-        e.preventDefault();
-        // Clear all chip active states across all dimensions
-        strip.querySelectorAll('.filter-chip').forEach((c) => c.classList.remove('is-active'));
-        // Within each other dimension, mark "all" active
-        strip.querySelectorAll('.filter-dimension').forEach((other) => {
-          if (other !== dimEl) {
-            const allChip = other.querySelector('.filter-chip[data-filter="all"]');
-            if (allChip) allChip.classList.add('is-active');
-          }
-        });
-        chip.classList.add('is-active');
-        const value = chip.getAttribute('data-filter') || 'all';
-        applyFilter(dim, value);
-      };
-      chip.addEventListener('click', handler);
-      if (chip.tagName === 'SPAN') {
-        chip.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') handler(e);
-        });
-      }
-    });
-  });
-
-  // Initial state
-  grid.setAttribute('data-filter-state', 'all');
-}
-
 function init() {
   if (!document.querySelector('.essay-body') && !document.querySelector('.essay-grid')) return;
   setupSidenotePopups();
   setupTocSmoothScroll();
   setupCitationHook();
-  setupFilterChips();
+  setupFilterChips({
+    containerSelector: '.filter-chips',
+    cardSelector: '.essay-card',
+  });
 }
 
 if (document.readyState === 'loading') {

@@ -179,10 +179,11 @@ CSS reads `data-span` and assigns `grid-column: span N` / `grid-row: span N`.
 
 ### 4.4 Filter chips
 
-- Each chip toggles a CSS class on `.essay-grid` via inline JS (or `essay.js` if loaded). Each card carries `data-tags`, `data-series`, `data-year` (year computed from `.Date.Format "2006"` at render time, no frontmatter field required). Hidden cards get `display: none`.
-- **No-JS fallback for tag and series:** chips are rendered as anchor links to Hugo's auto-generated taxonomy pages (`/tags/<slug>/`, `/series/<slug>/`). Visual filter is enhancement; navigation is server-rendered.
-- **No-JS fallback for year:** none — year is a synthetic, JS-only filter. With JS off, year chips render as inert `<span>` elements (not links). Rationale: avoids creating a real `year` taxonomy that would require either a frontmatter field outside spec §10 or a pre-build step to populate it. The cost is small: tag and series cover the common navigation cases.
-- **One chip active across all three dimensions at a time.** Multi-dimension filtering (tag AND year) is not supported in v1; selecting a chip in any dimension clears chips in the other dimensions back to "all."
+> **Updated 2026-05-08 by the garden-notes slice** — chips render via the shared `partials/filter-chips.html` partial (button elements only, no anchor fallback). Active state is per-dimension and AND-combined across dimensions. The earlier no-JS fallback to taxonomy pages and the single-active-across-dimensions rule no longer apply. Tag and series taxonomy pages still exist at `/tags/<slug>/` and `/series/<slug>/` for direct entry. See `docs/superpowers/specs/2026-05-07-garden-notes-design.md` §4.7 + memory `feedback_filter_chips_compose` for rationale.
+
+- Each chip is a `<button>` with `data-dim` and `data-key`. Cards carry `data-tags`, `data-series`, `data-year` (year computed from `.Date.Format "2006"` at render time, no frontmatter field required). The shared `assets/js/filter-chips.js` module hides cards that fail the AND of all non-`all` filters (`hidden` attribute, not `display: none`).
+- **No-JS behavior:** chips render but are inert; tag and series taxonomy pages remain reachable at `/tags/<slug>/` and `/series/<slug>/` via direct entry. There is no in-strip anchor fallback.
+- **Per-dimension active state, AND-composed:** selecting a chip in one dimension does not affect chips in other dimensions; visibility is the intersection.
 - **Suppression:** if a dimension has fewer than 2 distinct values, that dimension's chip strip is not rendered (avoids the single-value cosmetic "2026 (6)" button while only one year of content exists).
 
 ### 4.5 `layouts/essays/single.html` — post template
