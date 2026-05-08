@@ -1,0 +1,17 @@
+# Filter-chips configuration — controls the primary tag set for each
+# section's filter strip on the index page.
+#
+# Schema (per top-level section key):
+#   primary_tags:    ordered list of tag slugs to render as primary chips.
+#                    When omitted, falls back to top-K by note count.
+#   primary_top_k:   integer; overrides the default K=10 used by auto-mode.
+#                    Only consulted when primary_tags is absent or empty.
+#
+# Linter: tools/check_filter_chips_config.py validates that every entry in
+# primary_tags resolves to a tag used by a non-draft note in the matching
+# section. Stale entries fail the build.
+
+garden:
+  # Auto top-10 fallback applies until curated.
+essays:
+  # Auto top-10 fallback applies until curated.
