@@ -4,7 +4,7 @@ draft: false
 last_modified: 2026-05-05
 growth_stage: budding
 weight: 2
-tags: ["memory", "play"]
+tags: ["memory", "play", "dummy-04"]
 summary: "What survives a session, and what does the player rebuild from scratch."
 topic_map: ["sleep-and-consolidation", "recall-vs-replay", "the-save-game"]
 ---

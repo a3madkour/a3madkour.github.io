@@ -11,7 +11,7 @@ started: 2025-01-20
 finished: 2026-03-30
 spoiler_level: heavy
 original_url: "https://example.invalid/severance"
-tags: ["series", "mystery"]
+tags: ["series", "mystery", "dummy-08"]
 summary: "Lorem ipsum placeholder summary."
 ---
 

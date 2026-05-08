@@ -11,7 +11,7 @@ started: 2025-12-15
 spoiler_level: light
 original_url: "https://example.invalid/invisible-cities"
 roam_refs: "@calvino1972cities"
-tags: ["reading", "calvino"]
+tags: ["reading", "calvino", "dummy-02"]
 summary: "Lorem ipsum placeholder summary."
 ---
 

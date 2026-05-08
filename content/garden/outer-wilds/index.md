@@ -8,7 +8,7 @@ status: queued
 creator: "Mobius Digital"
 year: 2019
 original_url: "https://example.invalid/outer-wilds"
-tags: ["playing", "games"]
+tags: ["playing", "games", "dummy-05"]
 summary: "Lorem ipsum placeholder summary."
 ---
 

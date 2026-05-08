@@ -3,7 +3,7 @@ title: "Sleep and consolidation"
 draft: false
 last_modified: 2026-05-04
 growth_stage: seedling
-tags: ["memory"]
+tags: ["memory", "dummy-09"]
 summary: "Lorem ipsum placeholder summary."
 ---
 

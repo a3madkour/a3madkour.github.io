@@ -9,7 +9,7 @@ creator: "Philip Glass"
 year: 1983
 finished: 2026-02-10
 original_url: "https://example.invalid/koyaanisqatsi"
-tags: ["listening", "glass"]
+tags: ["listening", "glass", "dummy-03"]
 summary: "Lorem ipsum placeholder summary."
 ---
 

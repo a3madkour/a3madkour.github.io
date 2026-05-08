@@ -3,28 +3,100 @@
      dimensions  — slice of dicts: { key, label, values }
                    key:    machine name (used as data-dim, e.g. "tag")
                    label:  display label (e.g. "Tag")
-                   values: slice of strings (the chip values)
+                   values: slice of strings (the chip values).
+                           For the tag dim, values must be pre-ranked by
+                           note count (desc, alphabetical for ties) — the
+                           caller does this.
+     section     — section slug (e.g. "garden", "essays") used to look up
+                   site.Data["filter-chips"].<section> for curated primary tags.
    Suppression rule: dimensions with len(values) < 2 are not rendered.
-   Visibility is the AND of all non-"all" active chips; logic lives in
+   Visibility is the AND of all non-default active chips; logic lives in
    assets/js/filter-chips.js.
+
+   Two-tier behavior applies ONLY to the tag dim:
+     - primary tags = curated list from site.Data["filter-chips"].<section>.primary_tags
+                      (in declared order), or first K of values when absent.
+                      K defaults to 10; override per section via primary_top_k.
+     - secondary tags = remaining values (in their ranked order).
+     - When secondary is non-empty, render <details> with a search input
+       and the secondary chips. When empty (≤K total values), no <details>.
 */ -}}
 {{- $dims := .dimensions | default slice -}}
+{{- $section := .section | default "" -}}
+{{- $sectionCfg := dict -}}
+{{- with index site.Data "filter-chips" -}}
+  {{- $sectionCfg = index . $section | default dict -}}
+{{- end -}}
+{{- $curated := $sectionCfg.primary_tags | default slice -}}
+{{- $topK := $sectionCfg.primary_top_k | default 10 -}}
+
 {{- $renderable := slice -}}
 {{- range $dims -}}
   {{- if ge (len .values) 2 -}}
     {{- $renderable = $renderable | append . -}}
   {{- end -}}
 {{- end -}}
+
 {{- if $renderable -}}
 <nav class="filter-chips" aria-label="Filters">
   {{- range $renderable -}}
     {{- $key := .key -}}
+    {{- $label := .label -}}
+    {{- $values := .values -}}
     <div class="filter-dimension" data-dim="{{ $key }}">
-      <span class="filter-label">{{ .label }}</span>
+      <span class="filter-label">{{ $label }}</span>
       <button type="button" class="filter-chip is-active" data-dim="{{ $key }}" data-key="all">All</button>
-      {{- range .values -}}
-        <button type="button" class="filter-chip" data-dim="{{ $key }}" data-key="{{ . }}">{{ . }}</button>
+
+      {{- if eq $key "tag" -}}
+        {{- /* Resolve primary set */ -}}
+        {{- $primary := slice -}}
+        {{- if $curated -}}
+          {{- range $curated -}}
+            {{- if in $values . -}}{{- $primary = $primary | append . -}}{{- end -}}
+          {{- end -}}
+        {{- else -}}
+          {{- $primary = first $topK $values -}}
+        {{- end -}}
+        {{- /* Secondary = values not in primary, preserving ranked order */ -}}
+        {{- $secondary := slice -}}
+        {{- range $values -}}
+          {{- if not (in $primary .) -}}{{- $secondary = $secondary | append . -}}{{- end -}}
+        {{- end -}}
+        {{- $secondaryId := printf "filter-secondary-tag-%s" (or $section "x") -}}
+
+        {{- range $primary -}}
+          <button type="button" class="filter-chip" data-dim="tag" data-key="{{ . }}" data-tier="primary">{{ . }}</button>
+        {{- end -}}
+
+        {{- if $secondary -}}
+          <details class="filter-disclosure">
+            <summary class="filter-chip is-disclosure">
+              <span class="filter-disclosure-label">More tags</span>
+              <span class="filter-disclosure-count" aria-live="polite" hidden></span>
+            </summary>
+            <div class="filter-disclosure-body">
+              <input type="search" class="filter-search"
+                     placeholder="Search {{ len $secondary }} more tags…"
+                     aria-label="Search secondary tags"
+                     aria-controls="{{ $secondaryId }}"
+                     autocomplete="off">
+              <div class="filter-secondary" id="{{ $secondaryId }}">
+                {{- range $secondary -}}
+                  <button type="button" class="filter-chip" data-dim="tag" data-key="{{ . }}" data-tier="secondary">{{ . }}</button>
+                {{- end -}}
+                <p class="filter-secondary-empty" role="status" hidden>No matching tags.</p>
+              </div>
+            </div>
+          </details>
+        {{- end -}}
+
+      {{- else -}}
+        {{- /* Other dims: flat chip list, unchanged */ -}}
+        {{- range $values -}}
+          <button type="button" class="filter-chip" data-dim="{{ $key }}" data-key="{{ . }}">{{ . }}</button>
+        {{- end -}}
       {{- end -}}
+
     </div>
   {{- end -}}
 </nav>

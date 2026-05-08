@@ -50,12 +50,16 @@ jobs:
         run: python3 tools/check-contrast.py
       - name: Verify essay fixtures
         run: python3 tools/check_fixtures.py
-      - name: Run linter unit tests
+      - name: Run essay linter unit tests
         run: python3 -m unittest tools/test_check_fixtures.py -v
       - name: Verify garden fixtures
         run: python3 tools/check_garden_fixtures.py
       - name: Run garden linter unit tests
         run: python3 -m unittest tools/test_check_garden_fixtures.py -v
+      - name: Verify filter-chips config
+        run: python3 tools/check_filter_chips_config.py
+      - name: Run filter-chips linter unit tests
+        run: python3 -m unittest tools/test_check_filter_chips_config.py -v
       - name: Build with Hugo
         env:
           HUGO_CACHEDIR: ${{ runner.temp }}/hugo_cache

@@ -11,12 +11,13 @@
   {{- else -}}
 
     {{- /* ----- Build dimension value sets for the filter strip ----- */ -}}
-    {{- $tags := slice -}}
+    {{- $tagCounts := dict -}}
     {{- $flavors := slice -}}
     {{- $stages := slice -}}
     {{- range $pages -}}
       {{- range .Params.tags -}}
-        {{- if not (in $tags .) -}}{{- $tags = $tags | append . -}}{{- end -}}
+        {{- $cur := index $tagCounts . | default 0 -}}
+        {{- $tagCounts = merge $tagCounts (dict . (add $cur 1)) -}}
       {{- end -}}
       {{- $mt := .Params.media_type -}}
       {{- $f := "concept" -}}
@@ -32,6 +33,16 @@
       {{- if not (in $stages $st) -}}{{- $stages = $stages | append $st -}}{{- end -}}
     {{- end -}}
 
+    {{- /* Rank tags by count desc, alphabetical for ties */ -}}
+    {{- $tagPairs := slice -}}
+    {{- range $name, $count := $tagCounts -}}
+      {{- $tagPairs = $tagPairs | append (dict "name" $name "count" $count) -}}
+    {{- end -}}
+    {{- $tags := slice -}}
+    {{- range (sort (sort $tagPairs "name" "asc") "count" "desc") -}}
+      {{- $tags = $tags | append .name -}}
+    {{- end -}}
+
     {{- $dims := slice -}}
     {{- if ge (len $tags) 2 -}}
       {{- $dims = $dims | append (dict "key" "tag" "label" "Tag" "values" $tags) -}}
@@ -42,7 +53,7 @@
     {{- if ge (len $stages) 2 -}}
       {{- $dims = $dims | append (dict "key" "stage" "label" "Stage" "values" $stages) -}}
     {{- end -}}
-    {{ partial "filter-chips.html" (dict "dimensions" $dims) }}
+    {{ partial "filter-chips.html" (dict "dimensions" $dims "section" "garden") }}
 
     {{- /* ----- Pass 1: build the set of slugs referenced by any topic_map ----- */ -}}
     {{- $referenced := slice -}}

@@ -4,7 +4,7 @@ draft: false
 last_modified: 2026-04-25
 growth_stage: budding
 weight: 1
-tags: ["narrative", "games"]
+tags: ["narrative", "games", "dummy-06"]
 summary: "How systems generate meaning when a player walks through them."
 topic_map: ["surprise-budget", "salience-and-memory", "emergence-vs-design", "story-atoms"]
 ---

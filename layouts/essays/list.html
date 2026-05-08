@@ -9,18 +9,29 @@
     <p class="reading-column meta">No essays yet.</p>
   {{ else }}
     {{/* Collect dimensions from pages */}}
-    {{ $tags := slice }}
+    {{ $tagCounts := dict }}
     {{ $seriesList := slice }}
     {{ $years := slice }}
     {{ range .Pages }}
       {{ range .Params.tags }}
-        {{ if not (in $tags .) }}{{ $tags = $tags | append . }}{{ end }}
+        {{ $cur := index $tagCounts . | default 0 }}
+        {{ $tagCounts = merge $tagCounts (dict . (add $cur 1)) }}
       {{ end }}
       {{ with .Params.series }}
         {{ if not (in $seriesList .) }}{{ $seriesList = $seriesList | append . }}{{ end }}
       {{ end }}
       {{ $y := .Date.Format "2006" }}
       {{ if not (in $years $y) }}{{ $years = $years | append $y }}{{ end }}
+    {{ end }}
+
+    {{/* Rank tags by count desc, alphabetical for ties */}}
+    {{ $tagPairs := slice }}
+    {{ range $name, $count := $tagCounts }}
+      {{ $tagPairs = $tagPairs | append (dict "name" $name "count" $count) }}
+    {{ end }}
+    {{ $tags := slice }}
+    {{ range (sort (sort $tagPairs "name" "asc") "count" "desc") }}
+      {{ $tags = $tags | append .name }}
     {{ end }}
 
     {{ $dims := slice }}
@@ -33,7 +44,7 @@
     {{ if ge (len $years) 2 }}
       {{ $dims = $dims | append (dict "key" "year" "label" "Year" "values" $years) }}
     {{ end }}
-    {{ partial "filter-chips.html" (dict "dimensions" $dims) }}
+    {{ partial "filter-chips.html" (dict "dimensions" $dims "section" "essays") }}
 
     <ul class="essay-grid">
       {{ range .Pages.ByDate.Reverse }}

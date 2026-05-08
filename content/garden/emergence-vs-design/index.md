@@ -3,7 +3,7 @@ title: "Emergence vs design"
 draft: false
 last_modified: 2026-04-05
 growth_stage: evergreen
-tags: ["narrative"]
+tags: ["narrative", "dummy-01"]
 summary: "Lorem ipsum placeholder summary."
 ---
 
