@@ -128,6 +128,53 @@ export function setupFilterChips({
     });
   }
 
+  function setupDisclosure() {
+    const details = container.querySelector('.filter-disclosure');
+    if (!details) return;
+    const input = details.querySelector('.filter-search');
+    const secondary = details.querySelector('.filter-secondary');
+    const empty = details.querySelector('.filter-secondary-empty');
+    if (!input || !secondary || !empty) return;
+
+    function applySearch() {
+      const q = input.value.trim().toLowerCase();
+      const chips = secondary.querySelectorAll('.filter-chip[data-tier="secondary"]');
+      let visible = 0;
+      chips.forEach((chip) => {
+        const key = (chip.getAttribute('data-key') || '').toLowerCase();
+        const matches = q === '' || key.includes(q);
+        if (matches) {
+          chip.removeAttribute('hidden');
+          visible += 1;
+        } else {
+          chip.setAttribute('hidden', '');
+        }
+      });
+      if (visible === 0 && q !== '') {
+        empty.removeAttribute('hidden');
+      } else {
+        empty.setAttribute('hidden', '');
+      }
+    }
+
+    input.addEventListener('input', applySearch);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        input.value = '';
+        applySearch();
+        input.focus();
+      }
+    });
+
+    // Focus the search input when the disclosure opens.
+    details.addEventListener('toggle', () => {
+      if (details.open) {
+        input.focus();
+      }
+    });
+  }
+
   // Click handlers — only chips with a data-key participate.
   // The disclosure summary has no data-key, so clicks bubble up to the
   // <details> element which handles open/close natively.
@@ -154,5 +201,6 @@ export function setupFilterChips({
     });
   });
 
+  setupDisclosure();
   applyFilters();
 }
