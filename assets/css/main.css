@@ -625,6 +625,79 @@ main { flex-grow: 1; }
   outline-offset: 2px;
 }
 
+/* Two-tier disclosure for the tag dim.
+   .filter-disclosure is a flex child of .filter-dimension. When open, it
+   takes flex-basis:100% so the body wraps onto a new line below the chips. */
+.filter-disclosure[open] {
+  flex-basis: 100%;
+}
+.filter-disclosure > summary {
+  list-style: none;       /* drop default disclosure marker */
+  cursor: pointer;
+}
+.filter-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+.filter-disclosure > summary.filter-chip.is-disclosure {
+  border-style: dashed;
+  background: transparent;
+  color: var(--color-ink-soft);
+}
+.filter-disclosure > summary.filter-chip.is-disclosure::before {
+  content: "▾ ";
+  display: inline-block;
+  margin-right: 0.15rem;
+}
+.filter-disclosure[open] > summary.filter-chip.is-disclosure::before {
+  content: "▴ ";
+}
+.filter-disclosure[open] > summary.filter-chip.is-disclosure {
+  border-style: solid;
+  border-color: var(--color-burgundy);
+  color: var(--color-burgundy);
+}
+.filter-disclosure-count {
+  margin-left: 0.25rem;
+  font-style: italic;
+}
+.filter-disclosure-body {
+  margin-top: 0.6rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px dashed var(--color-rule);
+  border-radius: 6px;
+  background: var(--color-stone);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.filter-search {
+  width: 100%;
+  max-width: 28rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--color-rule);
+  border-radius: 3px;
+  background: var(--color-stone);
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+.filter-search:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 1px;
+  border-color: var(--color-burgundy);
+}
+.filter-secondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.filter-secondary-empty {
+  margin: 0;
+  color: var(--color-ink-fade);
+  font-style: italic;
+  font-size: var(--text-xs);
+}
+
 /* ------------------------------------------------------------------
  * 17. Series nav
  * ------------------------------------------------------------------ */
