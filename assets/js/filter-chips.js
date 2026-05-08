@@ -5,15 +5,29 @@
 //   <nav class="filter-chips">
 //     <div class="filter-dimension" data-dim="tag">
 //       <button class="filter-chip is-active" data-dim="tag" data-key="all">All</button>
-//       <button class="filter-chip" data-dim="tag" data-key="memory">memory</button>
+//       <button class="filter-chip" data-dim="tag" data-key="memory" data-tier="primary">memory</button>
 //       …
+//       <details class="filter-disclosure">
+//         <summary class="filter-chip is-disclosure">
+//           <span class="filter-disclosure-label">More tags</span>
+//           <span class="filter-disclosure-count" hidden></span>
+//         </summary>
+//         <div class="filter-disclosure-body">
+//           <input class="filter-search">
+//           <div class="filter-secondary">
+//             <button class="filter-chip" data-dim="tag" data-key="calvino" data-tier="secondary">…</button>
+//             <p class="filter-secondary-empty" hidden>No matching tags.</p>
+//           </div>
+//         </div>
+//       </details>
 //     </div>
 //   </nav>
 //
-// Cards declare their values as data-{dim} attributes. Visibility is the
-// AND of all non-"all" dimensions; sections and the global empty-state
-// element toggle their hidden attribute based on tile counts.
-// data-tags is space-separated; other dims are single-valued.
+// State model:
+//   - tag dim: Set<string>. Empty Set === "All" active.
+//   - other dims: string. 'all' === "All" active.
+// AND-composition across dims; within tag dim, all selected tags must
+// appear on the card (data-tags is space-separated).
 
 export function setupFilterChips({
   containerSelector = '.filter-chips',
@@ -28,27 +42,29 @@ export function setupFilterChips({
     return;
   }
 
-  // state: { [dim]: activeKey }, all initialized to "all"
+  // Initialize state per dim
   const state = {};
   container.querySelectorAll('.filter-dimension').forEach((dimEl) => {
     const dim = dimEl.getAttribute('data-dim');
-    if (dim) state[dim] = 'all';
+    if (!dim) return;
+    state[dim] = dim === 'tag' ? new Set() : 'all';
   });
 
   function cardMatches(card) {
     for (const dim in state) {
-      if (state[dim] === 'all') continue;
-      if (!cardHasValue(card, dim, state[dim])) return false;
+      if (dim === 'tag') {
+        if (state.tag.size === 0) continue;
+        const tags = (card.getAttribute('data-tags') || '').split(/\s+/).filter(Boolean);
+        for (const wanted of state.tag) {
+          if (!tags.includes(wanted)) return false;
+        }
+      } else {
+        if (state[dim] === 'all') continue;
+        const attr = card.getAttribute(`data-${dim}`) || '';
+        if (attr !== state[dim]) return false;
+      }
     }
     return true;
-  }
-
-  function cardHasValue(card, dim, key) {
-    const attr = card.getAttribute(`data-${dim === 'tag' ? 'tags' : dim}`) || '';
-    if (dim === 'tag' || dim === 'tags') {
-      return attr.split(/\s+/).filter(Boolean).includes(key);
-    }
-    return attr === key;
   }
 
   function applyFilters() {
@@ -85,25 +101,54 @@ export function setupFilterChips({
         }
       }
     }
+
+    refreshChipActiveStates();
   }
 
-  container.querySelectorAll('.filter-chip').forEach((chip) => {
+  function refreshChipActiveStates() {
+    container.querySelectorAll('.filter-dimension').forEach((dimEl) => {
+      const dim = dimEl.getAttribute('data-dim');
+      if (!dim) return;
+      dimEl.querySelectorAll('.filter-chip').forEach((c) => {
+        const cKey = c.getAttribute('data-key');
+        let active;
+        if (dim === 'tag') {
+          if (cKey === 'all') {
+            active = state.tag.size === 0;
+          } else if (cKey) {
+            active = state.tag.has(cKey);
+          } else {
+            active = false; // disclosure summary chip; never marked active
+          }
+        } else {
+          active = cKey === state[dim];
+        }
+        c.classList.toggle('is-active', active);
+      });
+    });
+  }
+
+  // Click handlers — only chips with a data-key participate.
+  // The disclosure summary has no data-key, so clicks bubble up to the
+  // <details> element which handles open/close natively.
+  container.querySelectorAll('.filter-chip[data-key]').forEach((chip) => {
     chip.addEventListener('click', (e) => {
       e.preventDefault();
       const dim = chip.getAttribute('data-dim');
-      const key = chip.getAttribute('data-key') || 'all';
-      if (!dim) return;
-      state[dim] = key;
+      const key = chip.getAttribute('data-key');
+      if (!dim || !key) return;
 
-      // Reflect active state on chip elements
-      container.querySelectorAll('.filter-dimension').forEach((dimEl) => {
-        const dDim = dimEl.getAttribute('data-dim');
-        if (!dDim) return;
-        dimEl.querySelectorAll('.filter-chip').forEach((c) => {
-          const cKey = c.getAttribute('data-key');
-          c.classList.toggle('is-active', cKey === state[dDim]);
-        });
-      });
+      if (dim === 'tag') {
+        if (key === 'all') {
+          state.tag.clear();
+        } else if (state.tag.has(key)) {
+          state.tag.delete(key);
+        } else {
+          state.tag.add(key);
+        }
+      } else {
+        state[dim] = key;
+      }
 
       applyFilters();
     });
