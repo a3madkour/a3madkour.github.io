@@ -8,13 +8,13 @@
                            note count (desc, alphabetical for ties) — the
                            caller does this.
      section     — section slug (e.g. "garden", "essays") used to look up
-                   site.Data.filter_chips.<section> for curated primary tags.
+                   site.Data["filter-chips"].<section> for curated primary tags.
    Suppression rule: dimensions with len(values) < 2 are not rendered.
    Visibility is the AND of all non-default active chips; logic lives in
    assets/js/filter-chips.js.
 
    Two-tier behavior applies ONLY to the tag dim:
-     - primary tags = curated list from site.Data.filter_chips.<section>.primary_tags
+     - primary tags = curated list from site.Data["filter-chips"].<section>.primary_tags
                       (in declared order), or first K of values when absent.
                       K defaults to 10; override per section via primary_top_k.
      - secondary tags = remaining values (in their ranked order).
@@ -24,7 +24,7 @@
 {{- $dims := .dimensions | default slice -}}
 {{- $section := .section | default "" -}}
 {{- $sectionCfg := dict -}}
-{{- with site.Data.filter_chips -}}
+{{- with index site.Data "filter-chips" -}}
   {{- $sectionCfg = index . $section | default dict -}}
 {{- end -}}
 {{- $curated := $sectionCfg.primary_tags | default slice -}}
