@@ -158,11 +158,49 @@ export function setupFilterChips({
     }
 
     input.addEventListener('input', applySearch);
+
+    function visibleSecondaryChips() {
+      return Array.from(
+        secondary.querySelectorAll('.filter-chip[data-tier="secondary"]:not([hidden])')
+      );
+    }
+
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         e.preventDefault();
         input.value = '';
         applySearch();
+        input.focus();
+        return;
+      }
+      if (e.key === 'ArrowDown') {
+        const chips = visibleSecondaryChips();
+        if (chips.length > 0) {
+          e.preventDefault();
+          chips[0].focus();
+        }
+      }
+    });
+
+    secondary.addEventListener('keydown', (e) => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (!target.matches('.filter-chip[data-tier="secondary"]')) return;
+      const chips = visibleSecondaryChips();
+      const idx = chips.indexOf(target);
+      if (idx === -1) return;
+      if (e.key === 'ArrowRight') {
+        if (idx < chips.length - 1) {
+          e.preventDefault();
+          chips[idx + 1].focus();
+        }
+      } else if (e.key === 'ArrowLeft') {
+        if (idx > 0) {
+          e.preventDefault();
+          chips[idx - 1].focus();
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
         input.focus();
       }
     });
