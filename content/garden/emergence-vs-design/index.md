@@ -7,6 +7,6 @@ tags: ["narrative", "dummy-01"]
 summary: "Lorem ipsum placeholder summary."
 ---
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Example sentence one about the line between emergent and authored systems.
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Example sentence one about the line between emergent and authored systems — see [procedural narrative](/garden/procedural-narrative/) for the framing topic.
 
-Example sentence two. Example sentence three.
+Example sentence two referencing [surprise budget](/garden/surprise-budget/). Example sentence three.

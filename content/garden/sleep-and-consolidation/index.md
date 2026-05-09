@@ -7,6 +7,6 @@ tags: ["memory", "dummy-09"]
 summary: "Lorem ipsum placeholder summary."
 ---
 
-Lorem ipsum dolor sit amet. Example sentence about consolidation during sleep.
+Lorem ipsum dolor sit amet. Example sentence about consolidation during sleep — relates to [memory in play](/garden/memory-in-play/) and [recall vs replay](/garden/recall-vs-replay/).
 
 Example sentence two.

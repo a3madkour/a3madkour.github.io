@@ -12,6 +12,6 @@ tags: ["playing", "games", "dummy-05"]
 summary: "Lorem ipsum placeholder summary."
 ---
 
-Lorem ipsum dolor sit amet. Example sentence about queued status.
+Lorem ipsum dolor sit amet. Example sentence about queued status — connects to [salience and memory](/garden/salience-and-memory/) and [recall vs replay](/garden/recall-vs-replay/).
 
 Example sentence two.

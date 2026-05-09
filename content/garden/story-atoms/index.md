@@ -7,7 +7,7 @@ tags: ["narrative", "dummy-10"]
 summary: "Lorem ipsum placeholder summary."
 ---
 
-Lorem ipsum dolor sit amet. Example sentence one.
+Lorem ipsum dolor sit amet. Example sentence one drawing on [emergence vs design](/garden/emergence-vs-design/), [salience and memory](/garden/salience-and-memory/), [koyaanisqatsi soundtrack](/garden/koyaanisqatsi-soundtrack/), and [invisible cities](/garden/invisible-cities/).
 
 {{< figure src="figure-placeholder.svg" caption="Filler caption — story atoms diagram" >}}
 
