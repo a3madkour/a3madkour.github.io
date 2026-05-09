@@ -1113,4 +1113,95 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   font: inherit;
   cursor: pointer;
 }
+
+/* ------------------------------------------------------------------
+ * 25. Garden stacked-column container
+ *     (default: single column = canonical reading layout;
+ *      ≥ 2 columns appear once garden-stack.js appends.)
+ * ------------------------------------------------------------------ */
+.garden-stack {
+  display: block;
+}
+.garden-stack-columns {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+}
+.garden-stack-columns:has(.garden-column:nth-child(2)) {
+  grid-auto-columns: 480px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--color-rule);
+}
+.garden-column {
+  scroll-snap-align: start;
+  border-right: 1px solid var(--color-rule);
+  padding: 1.5rem var(--page-gutter) 2rem;
+  overflow-y: auto;
+  min-height: 0;
+}
+.garden-column:last-child { border-right: none; }
+.garden-column.is-active {
+  background: color-mix(in srgb, var(--color-tile) 70%, var(--color-stone));
+}
+.garden-stack-columns:not(:has(.garden-column:nth-child(2))) .garden-column {
+  /* Single-column mode — restore canonical reading width */
+  border-right: none;
+  background: transparent;
+  padding: 0;
+  overflow: visible;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .garden-stack-columns { scroll-behavior: auto; }
+}
+
+/* Mobile — collapse stack to single column even when JS would have appended */
+@media (max-width: 720px) {
+  .garden-stack-columns {
+    grid-auto-flow: row;
+    grid-auto-columns: 1fr;
+    overflow-x: visible !important;
+  }
+  .garden-column {
+    border-right: none;
+    border-bottom: 1px solid var(--color-rule);
+  }
+  .garden-column:last-child { border-bottom: none; }
+}
+
+/* ------------------------------------------------------------------
+ * 26. Garden links section (outgoing + backlinks at column bottom)
+ * ------------------------------------------------------------------ */
+.garden-links {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px dashed var(--color-rule);
+}
+.garden-links-heading {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-ink-soft);
+  margin: 1rem 0 0.4rem;
+  font-weight: 600;
+}
+.garden-links-heading:first-of-type { margin-top: 0; }
+.garden-links-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.garden-links-list li { padding: 0.15rem 0; font-size: var(--text-sm); }
+.garden-links-list a {
+  color: var(--color-burgundy);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.garden-links-list a:hover { text-decoration-style: solid; }
 .garden-consent-banner button:hover { background: var(--color-stone); }
