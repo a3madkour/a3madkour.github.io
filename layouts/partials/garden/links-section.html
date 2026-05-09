@@ -1,0 +1,43 @@
+{{- /* Inputs:
+       . — Hugo Page (the note being rendered)
+   Output: <section class="garden-links"> with outgoing + backlinks lists, both
+   limited to /garden/ targets. Reads the cached graph data so we don't
+   re-walk pages.
+*/ -}}
+{{- $slug := path.Base .File.Dir -}}
+{{- $dataJSON := partialCached "garden/graph-data" .Site -}}
+{{- $data := $dataJSON | transform.Unmarshal -}}
+
+{{- /* Build a slug -> title lookup once */ -}}
+{{- $titleBySlug := dict -}}
+{{- range $data.nodes -}}
+  {{- $titleBySlug = merge $titleBySlug (dict .slug .title) -}}
+{{- end -}}
+
+{{- $outgoing := slice -}}
+{{- $backlinks := slice -}}
+{{- range $data.edges -}}
+  {{- if eq .source $slug -}}{{- $outgoing = $outgoing | append .target -}}{{- end -}}
+  {{- if eq .target $slug -}}{{- $backlinks = $backlinks | append .source -}}{{- end -}}
+{{- end -}}
+
+{{- if or $outgoing $backlinks -}}
+<section class="garden-links" aria-label="Note links">
+  {{- if $outgoing -}}
+  <h2 class="garden-links-heading">Links from this note</h2>
+  <ul class="garden-links-list">
+    {{- range $outgoing -}}
+    <li><a href="/garden/{{ . }}/">{{ index $titleBySlug . | default . }}</a></li>
+    {{- end -}}
+  </ul>
+  {{- end -}}
+  {{- if $backlinks -}}
+  <h2 class="garden-links-heading">Backlinks ({{ len $backlinks }})</h2>
+  <ul class="garden-links-list">
+    {{- range $backlinks -}}
+    <li><a href="/garden/{{ . }}/">{{ index $titleBySlug . | default . }}</a></li>
+    {{- end -}}
+  </ul>
+  {{- end -}}
+</section>
+{{- end -}}
