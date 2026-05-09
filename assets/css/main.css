@@ -1205,3 +1205,141 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 }
 .garden-links-list a:hover { text-decoration-style: solid; }
 .garden-consent-banner button:hover { background: var(--color-stone); }
+
+/* ------------------------------------------------------------------
+ * 27. Garden graph panel (slide-in side panel, desktop only)
+ * ------------------------------------------------------------------ */
+.garden-graph-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 320px;
+  background: var(--color-tile);
+  border-left: 1px solid var(--color-rule);
+  box-shadow: -8px 0 22px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 200ms ease-out;
+  z-index: 20;
+}
+.garden-graph-panel[aria-hidden="false"] {
+  transform: translateX(0);
+}
+.garden-graph-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--color-rule);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.garden-graph-panel-close {
+  background: transparent;
+  border: 0;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+  padding: 0.1rem 0.4rem;
+}
+.garden-graph-panel-close:hover { color: var(--color-ink); }
+.garden-graph-panel-toolbar {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-rule);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+}
+.garden-graph-panel-toolbar .label {
+  color: var(--color-ink-soft);
+  margin-right: 0.2rem;
+}
+.garden-graph-panel-toolbar .chip {
+  background: transparent;
+  border: 1px solid var(--color-rule);
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+  font: inherit;
+  cursor: pointer;
+  color: var(--color-ink-soft);
+}
+.garden-graph-panel-toolbar .chip[aria-pressed="true"] {
+  background: var(--color-burgundy);
+  color: var(--color-tile);
+  border-color: var(--color-burgundy);
+}
+.garden-graph-panel-canvas {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+}
+.garden-graph-panel-canvas svg {
+  width: 100%;
+  height: 100%;
+}
+.garden-graph-panel-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid var(--color-rule);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.garden-graph-panel-legend .swatch {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 0.25rem;
+  vertical-align: middle;
+}
+
+/* Force-directed graph node + edge styling */
+.garden-graph-node circle {
+  cursor: pointer;
+  stroke: transparent;
+  stroke-width: 1;
+}
+.garden-graph-node.in-stack circle {
+  stroke: var(--color-ink);
+  stroke-width: 2.5;
+}
+.garden-graph-node text {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  fill: var(--color-ink);
+  pointer-events: none;
+  user-select: none;
+}
+.garden-graph-node:focus circle {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
+}
+.garden-graph-edge {
+  stroke: var(--color-ink-fade);
+  stroke-width: 1;
+}
+.garden-graph-edge.cross-topic {
+  stroke-dasharray: 4 3;
+}
+
+/* Reduced motion: no slide */
+@media (prefers-reduced-motion: reduce) {
+  .garden-graph-panel { transition: none; }
+}
+
+/* Mobile: panel hidden — toggle navigates to /garden/graph/ instead */
+@media (max-width: 720px) {
+  .garden-graph-panel { display: none; }
+}
