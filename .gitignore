@@ -6,6 +6,9 @@ resources/_gen/
 # Superpowers brainstorm artifacts
 .superpowers/
 
+# Git worktrees (subagent-driven development workspace)
+.worktrees/
+
 # Environment variables
 .env
 .env.local
