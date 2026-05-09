@@ -15,6 +15,8 @@ Personal website for Abdelrahman Madkour, built as a Hugo static site with hand-
 - `python3 -m unittest tools/test_check_fixtures.py -v` — essay linter unit tests (CI gate)
 - `python3 tools/check_garden_fixtures.py` — garden fixture frontmatter linter (CI gate)
 - `python3 -m unittest tools/test_check_garden_fixtures.py -v` — garden linter unit tests (CI gate)
+- `python3 tools/check_garden_links.py` — garden internal-link linter (CI gate)
+- `python3 -m unittest tools/test_check_garden_links.py -v` — garden links linter unit tests (CI gate)
 - `python3 tools/check_filter_chips_config.py` — filter-chips config linter (CI gate)
 - `python3 -m unittest tools/test_check_filter_chips_config.py -v` — filter-chips linter unit tests (CI gate)
 
@@ -26,7 +28,7 @@ Hugo **extended** (≥ 0.148.0) is required — the GitHub Actions workflow pins
 
 ### CSS pipeline — hand-rolled, processed by Hugo
 
-`assets/css/main.css` is a single hand-rolled stylesheet, organized into numbered sections (1 reset → 2 tokens → 3 typography → 4 layout primitives → 5 site header → 6 site footer → 7 hero/role → 8 reduced-motion → 9 page lists/meta + TOC active → 10 essay meta → 11 essay grid + cards → 12 sidenotes → 13 citations + references → 14 figures → 15 essay three-zone layout → 16 filter chips (multi-dim, shared by essays + garden) → 17 series nav → 18 homepage essays strip → 19 garden index (topic sections + tiles + single-note page elements) → 20 garden note header strip + status pill → 21 garden note tile → 22 spoiler runtime → 23 garden empty-state placeholder). Consumed by `layouts/partials/head.html` via `resources.Get` + (production) `minify | fingerprint` with SRI integrity.
+`assets/css/main.css` is a single hand-rolled stylesheet, organized into numbered sections (1 reset → 2 tokens → 3 typography → 4 layout primitives → 5 site header → 6 site footer → 7 hero/role → 8 reduced-motion → 9 page lists/meta + TOC active → 10 essay meta → 11 essay grid + cards → 12 sidenotes → 13 citations + references → 14 figures → 15 essay three-zone layout → 16 filter chips (multi-dim, shared by essays + garden) → 17 series nav → 18 homepage essays strip → 19 garden index (topic sections + tiles + single-note page elements) → 20 garden note header strip + status pill → 21 garden note tile → 22 spoiler runtime → 23 garden empty-state placeholder → 24 garden path log + consent banner → 25 garden stacked-column container → 26 garden links section → 27 garden graph panel → 28 garden graph standalone page). Consumed by `layouts/partials/head.html` via `resources.Get` + (production) `minify | fingerprint` with SRI integrity.
 
 - **Tokens** are CSS custom properties on `:root` (light) and `:root[data-theme="dark"]` (dark). System dark is handled by `@media (prefers-color-scheme: dark) :root:not([data-theme])`. The `:root[data-theme="dark"]` block and the media-query block carry duplicate values — both must be updated together when the palette changes.
 - **WCAG contrast**: `tools/check-contrast.py` parses the `:root` blocks and verifies four documented pairings (ink/stone AAA, ink-soft/stone AA, burgundy/stone AA, steel/stone AA) in both modes. Failure blocks deploy. Additional tokens `--color-green` (evergreen stage glyph + finished status pill) and `--color-warn` (queued status pill) ride along but aren't checked.
@@ -34,7 +36,7 @@ Hugo **extended** (≥ 0.148.0) is required — the GitHub Actions workflow pins
 
 ### JS pipeline
 
-`assets/js/index.js` is bundled by Hugo's `js.Build` (esbuild) into `js/bundle.<hash>.js`, minified, fingerprinted, and loaded with `defer`. Entry imports `toggle-theme.js`, `nav.js` (TOC scroll-spy via `IntersectionObserver`), `essay.js`, and `garden.js`. Both `essay.js` and `garden.js` import the shared `filter-chips.js` module (multi-dim AND filter behavior). Each page-level module guards on its own selector (`.essay-body || .essay-grid` / `.garden-grid || .garden-note`) and bails on irrelevant pages.
+`assets/js/index.js` is bundled by Hugo's `js.Build` (esbuild) into `js/bundle.<hash>.js`, minified, fingerprinted, and loaded with `defer`. Entry imports `toggle-theme.js`, `nav.js` (TOC scroll-spy via `IntersectionObserver`), `essay.js`, `garden.js`, `garden-stack.js`, and `garden-graph.js`. Both `essay.js` and `garden.js` import the shared `filter-chips.js` module (multi-dim AND filter behavior). `garden-stack.js` runs the eager-Matuschak stacked-column app (click intercept → fetch → DOMParser → append; URL synced to `?stack=`); `garden-graph.js` mounts the d3-force graph (panel slide-in on desktop, separate `/garden/graph/` page on mobile). The two coordinate via the `garden:stack-changed` custom event; neither imports the other. d3-force is vendored at `assets/js/vendor/d3-force.min.js` (no npm) and lazy-imported on first graph open. Each page-level module guards on its own selector and bails on irrelevant pages.
 
 ### Theme toggle
 
@@ -52,7 +54,7 @@ Three-state cycle: **system → light → dark → system**.
   - `layouts/_default/{baseof,single,list}.html` — base templates.
   - `layouts/home.html` — homepage; renders `.Content` (role line) + the essays strip (1 featured + 3 recents).
   - `layouts/essays/{list,single,rss.xml}.html` — essays index (variable-tile Bento grid + filter chips), essay post (three-zone layout: TOC | body | sidenote rail), per-section RSS feed.
-  - `layouts/garden/{list,single,rss.xml}.html` — garden index (topic-map sections + Other notes + multi-dim filter strip), single note page (single template, flavor-routed metadata strip), per-section RSS feed.
+  - `layouts/garden/{list,single,graph,rss.xml}.html` — garden index (topic-map sections + Other notes + multi-dim filter strip + ⊞ Graph toggle), single note page (single template wrapped in `.garden-stack` for Matuschak-style retrieval), `/garden/graph/` standalone page (mobile fallback + deep link), per-section RSS feed.
   - `layouts/blog/{list,single}.html` — legacy.
   - `layouts/404.html`.
   - `baseof.html` is a thin semantic wrapper (`.page` div around header/main/footer); per-section layouts override `{{ block "main" }}`.
@@ -72,6 +74,11 @@ Three-state cycle: **system → light → dark → system**.
   - `garden/note-tile.html` (single tile card; `data-tags`/`data-flavor`/`data-stage` attributes drive the filter JS)
   - `garden/topic-section.html` (H2 + framing italic + tile grid resolved from a topic-map note's ordered slug list)
   - `garden/relative-date.html` (helper — formats a YAML date string as "Nd ago" / "Nmo ago" / "today" etc.; coerces string inputs via `time.AsTime`)
+  - `garden/path-log.html` (sticky breadcrumb at top of stack container; "N in stack · clear · ⊞ Graph"; populated by JS as columns append)
+  - `garden/links-section.html` (outgoing-links + backlinks at column bottom; computed from build-time graph data; titles only, no snippet preview)
+  - `garden/graph-data.html` (build-time data partial — walks all garden pages, extracts internal links via `findRE`, classifies edges by `topic_map` membership, returns JSON; `partialCached`)
+  - `garden/graph-script.html` (wraps the JSON in `<script type="application/json" id="garden-graph-data">` with `safeJS`; consumed by client-side JS)
+  - `garden/graph-panel.html` (side-panel scaffolding; empty until `garden-graph.js` mounts)
 - **Shortcodes**:
   - `cite.html` — looks up `site.Data.citations.citations[key]`, emits `<cite class="citation" data-cite-key>`, errors if key missing
   - `sidenote.html` — auto-numbered marker + aside via page scratch
@@ -97,6 +104,8 @@ Each `content/garden/<slug>/index.md` declares fields enforced by `tools/check_g
 Topic maps are an optional facet on any note: `topic_map: [slug-1, slug-2, ...]` declares an ordered list of other note slugs. The note's own page renders the prose body followed by a curated tile grid; the `/garden/` index surfaces one section per topic-map note. Linter validates that every entry resolves to an existing non-draft note. The shared parser (`parse_frontmatter`) is imported from `tools/check_fixtures.py` — both linters use one parser.
 
 `last_modified` is parsed by Hugo as a string (YAML 1.2 doesn't auto-coerce to `time.Time` for custom keys); template helpers (`garden/relative-date.html`, `garden/rss.xml`) coerce via `time.AsTime` when a string is detected.
+
+The shared `partials/garden/graph-data.html` partial (run once per build via `partialCached`) walks all garden pages and extracts internal `/garden/<slug>/` references from `.RawContent` via `findRE`. Edges are classified by topic-map membership: an edge between two slugs that share at least one `topic_map:` owner is "same-topic" (solid); else "cross-topic" (dashed). The output JSON shape — `{nodes, edges, topics}` — matches what ox-hugo's `data/notes.json` will eventually produce, so `garden-graph.js` does not change when Phase 3 lands. A new linter `tools/check_garden_links.py` validates every internal reference resolves to a non-draft fixture.
 
 ### Bento variable-tile grid (essays index + homepage strip)
 
@@ -130,7 +139,7 @@ Three Google Fonts loaded in a single `<link>`: **Petrona** (body, italic + upri
 
 ### Deployment
 
-`.github/workflows/hugo.yaml` builds with Hugo extended and deploys `public/` to GitHub Pages on pushes to `master`. The build job runs: Install Hugo CLI → Checkout → Setup Pages → **Verify CSS contrast (WCAG)** → **Verify essay fixtures** → **Run essay linter unit tests** → **Verify garden fixtures** → **Run garden linter unit tests** → **Verify filter-chips config** → **Run filter-chips linter unit tests** → Build with Hugo → Upload artifact → Deploy. All seven Python checks must pass before the Hugo build.
+`.github/workflows/hugo.yaml` builds with Hugo extended and deploys `public/` to GitHub Pages on pushes to `master`. The build job runs: Install Hugo CLI → Checkout → Setup Pages → **Verify CSS contrast (WCAG)** → **Verify essay fixtures** → **Run essay linter unit tests** → **Verify garden fixtures** → **Run garden linter unit tests** → **Verify garden links** → **Run garden links linter unit tests** → **Verify filter-chips config** → **Run filter-chips linter unit tests** → Build with Hugo → Upload artifact → Deploy. All nine Python checks must pass before the Hugo build.
 
 ## Reference docs
 
@@ -142,6 +151,8 @@ Three Google Fonts loaded in a single `<link>`: **Petrona** (body, italic + upri
 - **Phase 2 garden slice plan**: `docs/superpowers/plans/2026-05-07-garden-notes.md`
 - **Phase 2 polish — tag two-tier filter spec**: `docs/superpowers/specs/2026-05-08-garden-tag-search-design.md`
 - **Phase 2 polish — tag two-tier filter plan**: `docs/superpowers/plans/2026-05-08-garden-tag-search.md`
+- **Phase 4 garden interactions spec**: `docs/superpowers/specs/2026-05-08-garden-interactions-design.md`
+- **Phase 4 garden interactions plan**: `docs/superpowers/plans/2026-05-08-garden-interactions.md`
 - The site spec's §14 is the master phase list.
 
 ## Project status (2026-05-08)
@@ -154,9 +165,10 @@ Three Google Fonts loaded in a single `<link>`: **Petrona** (body, italic + upri
 
 **Phase 2 polish — tag two-tier filter complete (2026-05-08).** Shared `partials/filter-chips.html` upgraded to render the tag dim in two tiers: curated primary chips from `data/filter-chips.yaml` (or top-K auto-fallback by note count, K=10) plus a native `<details>` disclosure with a search input that live-filters secondary chips. Multi-select within tag dim (`memory` + `calvino` → AND), single-active for flavor/stage/series/year. Keyboard nav (arrow keys + Esc); active-secondary tags surface in the disclosure summary when collapsed. New CI gate: `tools/check_filter_chips_config.py` validates curated tags against the live taxonomy. Both `/garden/` and `/essays/` get the upgrade automatically; suppression keeps the disclosure invisible on small tag sets (essays' 3-tag fixture set is below threshold, garden's set was extended to 22 fixture tags including 10 dummy-NN singletons so the disclosure exercises a real secondary set in dev).
 
+**Phase 4 — garden interactions complete (2026-05-08).** Eager Matuschak-style stacked-column retrieval (`garden-stack.js`): every garden note page is column 1 from load, path log sticky at top, internal `/garden/` link clicks fetch + DOMParser-extract `<article>` and append a column with scroll-snap focus, URL synced as `?stack=a,b,c`, deep links restore stack on load, click-on-existing re-focuses, clear/Esc collapses to URL note. First-time consent banner on 1→2 expansion stores choice as `path-log-consent` (yes/session/no); visited slugs persist to localStorage or sessionStorage based on consent. Outgoing-links + backlinks at the bottom of every column (`partials/garden/links-section.html`) computed from the same shared graph data. Force-directed graph (`garden-graph.js` + vendored d3-force at `assets/js/vendor/d3-force.min.js`, no npm): side panel on desktop with slide-in transform, ~320px; toggle in path log + index filter strip; tag/stage filter chips inside; all/1-hop/2-hop local mode on note pages; bold-stroke "in stack" markers driven by `garden:stack-changed` event; reduced-motion runs simulation 300 ticks then freezes. Mobile (≤720px): stack collapses to single-column, links navigate normally, panel hidden, graph toggle navigates to `/garden/graph/` standalone page. New CI gate `tools/check_garden_links.py` validates every internal `/garden/<slug>/` reference resolves to a non-draft fixture. Fixture set extended with ~27 internal links across 13 of 14 notes (one deliberate orphan: `nguyen-2020-games-as-art`); insertion is filler-only (lorem-ipsum sentences with markdown links dropped in), no authored prose.
+
 **Phase 2 — remaining slices (not started).** Spec §14's Phase 2 also called for About; that's still pending. Beyond Phase 2:
 - About page rewrite (real bio, Now widget, affiliations, connect block, full colophon) — Phase 3-dependent for the Now widget.
-- Garden interaction model — stacked-columns retrieval, path log with consent, backlinks computation, garden graph view, reduced from this slice — Phase 4.
 - Research theme cards + question hubs + research graph — Phase 5.
 - Works (games + music + poetry) — Phase 6.
 - Library (reading / listening / playing) — data-driven from `data/*.yaml`, Phase 7.
@@ -179,10 +191,6 @@ These capabilities ship as no-op stubs (or are deliberately omitted from renderi
 | Figure lightbox | Polish phase | n/a |
 | Code highlighting palette swap from Dracula | Post-Phase-2 | n/a (Dracula stays placeholder) |
 | Print stylesheet | Phase 8 polish | n/a |
-| Garden outgoing-link section on note pages | Phase 4 | body internal links use `[text](/garden/<slug>/)` form (e.g., `surprise-budget` → `salience-and-memory`) |
-| Garden backlinks section | Phase 4 | computed at build time from outgoing links — `salience-and-memory` is referenced from `surprise-budget`'s body |
-| Garden stacked-columns retrieval + path log | Phase 4 | (no fixture hook — pure UX layer) |
-| Garden graph view | Phase 4 | (`data/notes.json` arrives in Phase 3) |
 | Library cross-linking from media garden notes | Phase 7 | media-flavor garden notes are the canonical source; library will be a filtered view |
 | `single` mode in shared filter-chips JS | Removed once both essays + garden have shipped on `and` mode (this slice) | follow-up — no fixture hook |
 

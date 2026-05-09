@@ -56,6 +56,10 @@ jobs:
         run: python3 tools/check_garden_fixtures.py
       - name: Run garden linter unit tests
         run: python3 -m unittest tools/test_check_garden_fixtures.py -v
+      - name: Verify garden links
+        run: python3 tools/check_garden_links.py
+      - name: Run garden links linter unit tests
+        run: python3 -m unittest tools/test_check_garden_links.py -v
       - name: Verify filter-chips config
         run: python3 tools/check_filter_chips_config.py
       - name: Run filter-chips linter unit tests
