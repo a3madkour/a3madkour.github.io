@@ -87,5 +87,4 @@
 {{- end -}}
 
 {{- $data := dict "nodes" $nodes "edges" $edges "topics" $byTopic -}}
-{{- $json := $data | jsonify -}}
-<script type="application/json" id="garden-graph-data">{{- $json | safeJS -}}</script>
+{{- $data | jsonify -}}
