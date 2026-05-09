@@ -1,0 +1,16 @@
+{{- /* Inputs:
+       . — Hugo Page (the note being rendered)
+   Output: <nav class="garden-path-log"> with one crumb (the URL note).
+   garden-stack.js extends the crumb list when ?stack= is present and on click.
+*/ -}}
+<nav class="garden-path-log" aria-label="Reading path">
+  <span class="path-log-label">Path:</span>
+  <a class="path-log-crumb" href="{{ "/garden/" | relURL }}">Garden</a>
+  <span class="path-log-sep" aria-hidden="true">›</span>
+  <a class="path-log-crumb is-active" aria-current="page" href="{{ .RelPermalink }}" data-slug="{{ path.Base .File.Dir }}">{{ .Title }}</a>
+  <span class="path-log-actions">
+    <span class="path-log-count" data-stack-count="1">1 in stack</span>
+    <button type="button" class="path-log-clear" hidden>clear</button>
+    <button type="button" class="garden-graph-toggle" aria-expanded="false" aria-controls="garden-graph-panel">⊞ Graph</button>
+  </span>
+</nav>

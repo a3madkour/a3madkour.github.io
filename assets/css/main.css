@@ -1023,3 +1023,94 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   color: var(--color-ink-soft);
   max-width: 60ch;
 }
+
+/* ------------------------------------------------------------------
+ * 24. Garden path log + consent banner
+ * ------------------------------------------------------------------ */
+.garden-path-log {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem var(--page-gutter);
+  border-bottom: 1px solid var(--color-rule);
+  background: var(--color-tile);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  flex-wrap: wrap;
+}
+.garden-path-log .path-log-label {
+  color: var(--color-ink-soft);
+  font-weight: 500;
+}
+.garden-path-log .path-log-crumb {
+  color: var(--color-burgundy);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--color-burgundy);
+  padding-bottom: 1px;
+}
+.garden-path-log .path-log-crumb.is-active {
+  font-weight: 600;
+  border-bottom-style: solid;
+}
+.garden-path-log .path-log-sep {
+  color: var(--color-ink-fade);
+}
+.garden-path-log .path-log-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+}
+.garden-path-log .path-log-count {
+  color: var(--color-ink-soft);
+}
+.garden-path-log .path-log-clear,
+.garden-path-log .garden-graph-toggle {
+  background: transparent;
+  border: 1px solid var(--color-rule);
+  border-radius: 4px;
+  padding: 0.15rem 0.55rem;
+  font: inherit;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+}
+.garden-path-log .path-log-clear:hover,
+.garden-path-log .garden-graph-toggle:hover {
+  background: var(--color-stone);
+  color: var(--color-ink);
+}
+.garden-path-log .garden-graph-toggle[aria-expanded="true"] {
+  background: var(--color-burgundy);
+  color: var(--color-tile);
+  border-color: var(--color-burgundy);
+}
+
+.garden-consent-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem var(--page-gutter);
+  background: color-mix(in srgb, var(--color-warn) 15%, var(--color-tile));
+  border-bottom: 1px solid var(--color-rule);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink);
+  flex-wrap: wrap;
+}
+.garden-consent-banner .opts {
+  margin-left: auto;
+  display: flex;
+  gap: 0.35rem;
+}
+.garden-consent-banner button {
+  background: var(--color-tile);
+  border: 1px solid var(--color-rule);
+  border-radius: 4px;
+  padding: 0.15rem 0.55rem;
+  font: inherit;
+  cursor: pointer;
+}
+.garden-consent-banner button:hover { background: var(--color-stone); }
