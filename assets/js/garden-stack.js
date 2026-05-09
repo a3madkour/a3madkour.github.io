@@ -152,13 +152,34 @@ function updatePathLog() {
   if (clear) clear.hidden = state.slugs.length < 2;
 }
 
+// Rewrite element IDs and matching internal #anchor hrefs inside a fetched
+// column so multiple stacked columns don't end up with duplicate IDs (sidenotes,
+// figures, footnotes all use auto-incremented IDs that collide on append).
+function namespaceColumnIds(col, slug) {
+  const idMap = new Map();
+  col.querySelectorAll('[id]').forEach(el => {
+    const oldId = el.id;
+    const newId = `${slug}--${oldId}`;
+    el.id = newId;
+    idMap.set(`#${oldId}`, `#${newId}`);
+  });
+  if (idMap.size === 0) return;
+  col.querySelectorAll('a[href^="#"]').forEach(a => {
+    const target = idMap.get(a.getAttribute('href'));
+    if (target) a.setAttribute('href', target);
+  });
+}
+
 async function fetchColumn(slug) {
   const res = await fetch(`/garden/${slug}/`, FETCH_OPTS);
   if (!res.ok) return null;
   const text = await res.text();
   const doc = new DOMParser().parseFromString(text, 'text/html');
   const col = doc.querySelector(`${COLUMN}[data-slug="${CSS.escape(slug)}"]`);
-  return col ? col.cloneNode(true) : null;
+  if (!col) return null;
+  const cloned = col.cloneNode(true);
+  namespaceColumnIds(cloned, slug);
+  return cloned;
 }
 
 function focusColumn(slug) {
@@ -194,6 +215,7 @@ async function appendColumn(slug) {
 function clearStack() {
   if (state.slugs.length < 2) return;
   const cols = document.querySelector(COLUMNS);
+  if (!cols) return;
   const root = state.slugs[0];
   Array.from(cols.querySelectorAll(COLUMN)).forEach(col => {
     if (col.getAttribute('data-slug') !== root) cols.removeChild(col);
