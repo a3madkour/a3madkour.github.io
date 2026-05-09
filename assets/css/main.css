@@ -1343,3 +1343,65 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 @media (max-width: 720px) {
   .garden-graph-panel { display: none; }
 }
+
+/* ------------------------------------------------------------------
+ * 28. Garden graph standalone page (/garden/graph/)
+ * ------------------------------------------------------------------ */
+.garden-graph-page .garden-graph-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--color-rule);
+  border-bottom: 1px solid var(--color-rule);
+  margin: 1rem 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+}
+.garden-graph-page .garden-graph-toolbar .label {
+  color: var(--color-ink-soft);
+}
+.garden-graph-page .garden-graph-toolbar .chip {
+  background: transparent;
+  border: 1px solid var(--color-rule);
+  border-radius: 999px;
+  padding: 0.1rem 0.65rem;
+  font: inherit;
+  cursor: pointer;
+  color: var(--color-ink-soft);
+}
+.garden-graph-page .garden-graph-toolbar .chip[aria-pressed="true"] {
+  background: var(--color-burgundy);
+  color: var(--color-tile);
+  border-color: var(--color-burgundy);
+}
+.garden-graph-page .garden-graph-canvas {
+  min-height: 70vh;
+  border: 1px solid var(--color-rule);
+  border-radius: 6px;
+  background: var(--color-tile);
+}
+.garden-graph-page .garden-graph-canvas svg {
+  width: 100%;
+  height: 70vh;
+}
+.garden-graph-page .garden-graph-legend {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+}
+.garden-graph-page .garden-graph-legend .swatch {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 0.25rem;
+  vertical-align: middle;
+}

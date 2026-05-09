@@ -181,9 +181,13 @@ async function buildSimulation(canvas) {
 }
 
 function rebuildGraph() {
-  const canvas = state.panel
-    ? state.panel.querySelector('.garden-graph-panel-canvas')
-    : document.querySelector('.garden-graph-page .garden-graph-canvas');
+  let canvas;
+  const isGraphPage = !!document.querySelector('.garden-graph-page');
+  if (isGraphPage) {
+    canvas = document.querySelector('.garden-graph-page .garden-graph-canvas');
+  } else if (state.panel) {
+    canvas = state.panel.querySelector('.garden-graph-panel-canvas');
+  }
   if (!canvas) return;
   if (state.simulation) state.simulation.stop();
   buildSimulation(canvas).then(({ svg, simulation }) => {
@@ -298,6 +302,18 @@ function init() {
   document.querySelectorAll('.garden-stack-columns .garden-column').forEach(c => {
     state.inStack.add(c.dataset.slug);
   });
+
+  const isGraphPage = !!document.querySelector('.garden-graph-page');
+
+  if (isGraphPage) {
+    // Standalone /garden/graph/ — render immediately; no panel.
+    const toolbar = document.querySelector('.garden-graph-page .garden-graph-toolbar');
+    const legend = document.querySelector('.garden-graph-page .garden-graph-legend');
+    if (toolbar) buildToolbar(toolbar);
+    if (legend) buildLegend(legend);
+    rebuildGraph();
+    return;
+  }
 
   // Toggle button(s)
   document.querySelectorAll('.garden-graph-toggle').forEach(btn => {

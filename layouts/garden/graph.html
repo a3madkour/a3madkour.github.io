@@ -1,0 +1,18 @@
+{{ define "main" }}
+<section class="reading-column garden-graph-page">
+  <p class="crumb"><a href="{{ "/garden/" | relURL }}">Garden</a> ›</p>
+  <h1>{{ .Title }}</h1>
+  <p class="garden-graph-summary">Click a node to open it in a stack.</p>
+
+  <nav class="garden-graph-toolbar" aria-label="Graph filters">
+    {{- /* populated by garden-graph.js */ -}}
+  </nav>
+
+  <div class="garden-graph-canvas" role="img" aria-label="Force-directed graph of garden notes">
+    {{- /* SVG mounted by garden-graph.js */ -}}
+  </div>
+
+  <ul class="garden-graph-legend"></ul>
+</section>
+{{ partial "garden/graph-script.html" .Site }}
+{{ end }}
