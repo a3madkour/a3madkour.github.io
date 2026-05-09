@@ -53,7 +53,7 @@ def lint_garden_links(garden_dir: Path) -> tuple[list[str], list[str]]:
         slug_state[d.name] = _is_draft(fm)
 
     # Second pass: validate every reference
-    for slug, is_draft in sorted(slug_state.items()):
+    for slug in sorted(slug_state):
         index = garden_dir / slug / "index.md"
         text = _read(index)
         # Strip frontmatter so we only scan the body
