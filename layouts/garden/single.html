@@ -1,40 +1,47 @@
 {{ define "main" }}
-<article class="reading-column garden-note">
-  <p class="crumb"><a href="{{ "/garden/" | relURL }}">Garden</a> ›</p>
+{{ partial "garden/path-log.html" . }}
+<div class="garden-stack" data-stack-root="true">
+  <div class="garden-stack-columns">
+    <article class="garden-column is-active reading-column garden-note" data-slug="{{ path.Base .File.Dir }}">
+      {{ partial "garden/note-header.html" . }}
 
-  {{ partial "garden/note-header.html" . }}
+      <h1 class="garden-note-title" tabindex="-1">{{ .Title }}</h1>
 
-  <h1 class="garden-note-title">{{ .Title }}</h1>
+      {{- $mediaType := .Params.media_type -}}
+      {{- $isMedia := and $mediaType (in (slice "book" "album" "track" "game" "film" "series") $mediaType) -}}
+      {{- $isReference := and $mediaType (in (slice "paper" "video" "article" "talk") $mediaType) -}}
 
-  {{- $mediaType := .Params.media_type -}}
-  {{- $isMedia := and $mediaType (in (slice "book" "album" "track" "game" "film" "series") $mediaType) -}}
-  {{- $isReference := and $mediaType (in (slice "paper" "video" "article" "talk") $mediaType) -}}
-
-  {{- if or $isMedia $isReference -}}
-    {{- with .Params.creator -}}
-    <p class="garden-creator">by {{ . }}{{ with $.Params.year }} · {{ . }}{{ end }}</p>
-    {{- end -}}
-    <div class="garden-media-meta">
-      {{- with .Params.original_url -}}
-      <a class="original-link" href="{{ . }}" rel="noopener noreferrer">→ original</a>
+      {{- if or $isMedia $isReference -}}
+        {{- with .Params.creator -}}
+        <p class="garden-creator">by {{ . }}{{ with $.Params.year }} · {{ . }}{{ end }}</p>
+        {{- end -}}
+        <div class="garden-media-meta">
+          {{- with .Params.original_url -}}
+          <a class="original-link" href="{{ . }}" rel="noopener noreferrer">→ original</a>
+          {{- end -}}
+          {{- with $mediaType -}}
+          <span class="media-type-meta">{{ . }}</span>
+          {{- end -}}
+        </div>
       {{- end -}}
-      {{- with $mediaType -}}
-      <span class="media-type-meta">{{ . }}</span>
-      {{- end -}}
-    </div>
-  {{- end -}}
 
-  <div class="garden-note-body essay-body">
-    {{ .Content }}
+      <div class="garden-note-body essay-body">
+        {{ .Content }}
+      </div>
+
+      {{- with .Params.topic_map -}}
+      {{ partial "garden/topic-section.html" (dict
+          "context" $
+          "heading" "Notes in this topic"
+          "framing" "Curated reading order, not chronological."
+          "linkHeading" false
+      ) }}
+      {{- end -}}
+
+      {{ partial "garden/links-section.html" . }}
+    </article>
   </div>
-
-  {{- with .Params.topic_map -}}
-  {{ partial "garden/topic-section.html" (dict
-      "context" $
-      "heading" "Notes in this topic"
-      "framing" "Curated reading order, not chronological."
-      "linkHeading" false
-  ) }}
-  {{- end -}}
-</article>
+</div>
+{{ partial "garden/graph-panel.html" . }}
+{{ partial "garden/graph-script.html" .Site }}
 {{ end }}

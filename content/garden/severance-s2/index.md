@@ -15,7 +15,7 @@ tags: ["series", "mystery", "dummy-08"]
 summary: "Lorem ipsum placeholder summary."
 ---
 
-Lorem ipsum dolor sit amet. Example sentence one about the show's premise.
+Lorem ipsum dolor sit amet. Example sentence one about the show's premise — the structural interest sits near [memory in play](/garden/memory-in-play/) and [recall vs replay](/garden/recall-vs-replay/).
 
 {{< spoiler summary="episode 1 ending" level="heavy" >}}
 Filler placeholder for first heavy spoiler.

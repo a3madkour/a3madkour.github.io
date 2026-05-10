@@ -1,0 +1,12 @@
+{{- /* Inputs:
+       . — Hugo Site
+   Output: complete <script type="application/json" id="garden-graph-data"> tag
+   wrapping the JSON returned by `garden/graph-data`. Uses `safeJS` to bypass
+   Hugo's html/template JS-context escaping inside <script> elements.
+
+   Use this partial on layouts that need to inline the graph data for client-side
+   JS (single.html, list.html, graph.html). For Hugo-side data consumption
+   (links-section.html), call `garden/graph-data` directly and `transform.Unmarshal`
+   the result.
+*/ -}}
+<script type="application/json" id="garden-graph-data">{{- partialCached "garden/graph-data" . | safeJS -}}</script>

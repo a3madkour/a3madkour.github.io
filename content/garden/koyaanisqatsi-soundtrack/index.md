@@ -13,6 +13,6 @@ tags: ["listening", "glass", "dummy-03"]
 summary: "Lorem ipsum placeholder summary."
 ---
 
-Lorem ipsum dolor sit amet. Example sentence about minimalism and pacing.
+Lorem ipsum dolor sit amet. Example sentence about minimalism and pacing — pairs with [emergence vs design](/garden/emergence-vs-design/) on system-driven aesthetics.
 
 Example sentence two. Example sentence three.

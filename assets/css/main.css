@@ -1023,3 +1023,386 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   color: var(--color-ink-soft);
   max-width: 60ch;
 }
+
+/* ------------------------------------------------------------------
+ * 24. Garden path log + consent banner
+ * ------------------------------------------------------------------ */
+.garden-path-log {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem var(--page-gutter);
+  border-bottom: 1px solid var(--color-rule);
+  background: var(--color-tile);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  flex-wrap: wrap;
+}
+.garden-path-log .path-log-label {
+  color: var(--color-ink-soft);
+  font-weight: 500;
+}
+.garden-path-log .path-log-crumb {
+  color: var(--color-burgundy);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--color-burgundy);
+  padding-bottom: 1px;
+}
+.garden-path-log .path-log-crumb.is-active {
+  font-weight: 600;
+  border-bottom-style: solid;
+}
+.garden-path-log .path-log-sep {
+  color: var(--color-ink-fade);
+}
+.garden-path-log .path-log-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+}
+.garden-path-log .path-log-count {
+  color: var(--color-ink-soft);
+}
+.garden-path-log .path-log-clear,
+.garden-path-log .garden-graph-toggle {
+  background: transparent;
+  border: 1px solid var(--color-rule);
+  border-radius: 4px;
+  padding: 0.15rem 0.55rem;
+  font: inherit;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+}
+.garden-path-log .path-log-clear:hover,
+.garden-path-log .garden-graph-toggle:hover {
+  background: var(--color-stone);
+  color: var(--color-ink);
+}
+.garden-path-log .garden-graph-toggle[aria-expanded="true"] {
+  background: var(--color-burgundy);
+  color: var(--color-tile);
+  border-color: var(--color-burgundy);
+}
+
+.garden-consent-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem var(--page-gutter);
+  background: color-mix(in srgb, var(--color-warn) 15%, var(--color-tile));
+  border-bottom: 1px solid var(--color-rule);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink);
+  flex-wrap: wrap;
+}
+.garden-consent-banner .opts {
+  margin-left: auto;
+  display: flex;
+  gap: 0.35rem;
+}
+.garden-consent-banner button {
+  background: var(--color-tile);
+  border: 1px solid var(--color-rule);
+  border-radius: 4px;
+  padding: 0.15rem 0.55rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------------
+ * 25. Garden stacked-column container
+ *     (default: single column = canonical reading layout;
+ *      ≥ 2 columns appear once garden-stack.js appends.)
+ * ------------------------------------------------------------------ */
+.garden-stack {
+  display: block;
+}
+.garden-stack-columns {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+}
+.garden-stack-columns:has(.garden-column:nth-child(2)) {
+  grid-auto-columns: 480px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--color-rule);
+}
+.garden-column {
+  scroll-snap-align: start;
+  border-right: 1px solid var(--color-rule);
+  padding: 1.5rem var(--page-gutter) 2rem;
+  overflow-y: auto;
+  min-height: 0;
+}
+.garden-column:last-child { border-right: none; }
+.garden-column.is-active {
+  background: color-mix(in srgb, var(--color-tile) 70%, var(--color-stone));
+}
+.garden-stack-columns:not(:has(.garden-column:nth-child(2))) .garden-column {
+  /* Single-column mode — restore canonical reading width */
+  border-right: none;
+  background: transparent;
+  padding: 0;
+  overflow: visible;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .garden-stack-columns { scroll-behavior: auto; }
+}
+
+/* Mobile — collapse stack to single column even when JS would have appended */
+@media (max-width: 720px) {
+  .garden-stack-columns {
+    grid-auto-flow: row;
+    grid-auto-columns: 1fr;
+    overflow-x: visible !important;
+  }
+  .garden-column {
+    border-right: none;
+    border-bottom: 1px solid var(--color-rule);
+  }
+  .garden-column:last-child { border-bottom: none; }
+}
+
+/* ------------------------------------------------------------------
+ * 26. Garden links section (outgoing + backlinks at column bottom)
+ * ------------------------------------------------------------------ */
+.garden-links {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px dashed var(--color-rule);
+}
+.garden-links-heading {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-ink-soft);
+  margin: 1rem 0 0.4rem;
+  font-weight: 600;
+}
+.garden-links-heading:first-of-type { margin-top: 0; }
+.garden-links-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.garden-links-list li { padding: 0.15rem 0; font-size: var(--text-sm); }
+.garden-links-list a {
+  color: var(--color-burgundy);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.garden-links-list a:hover { text-decoration-style: solid; }
+.garden-consent-banner button:hover { background: var(--color-stone); }
+
+/* ------------------------------------------------------------------
+ * 27. Garden graph panel (slide-in side panel, desktop only)
+ * ------------------------------------------------------------------ */
+.garden-graph-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 320px;
+  background: var(--color-tile);
+  border-left: 1px solid var(--color-rule);
+  box-shadow: -8px 0 22px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  /* Hidden state lives offscreen-right (translateX). When restoring panel
+     state on page load we just flip aria-hidden — no transition because
+     `.is-animating` isn't applied yet. When the user explicitly toggles via
+     click, JS adds `.is-animating` first, which enables the slide. */
+  transform: translateX(100%);
+  z-index: 20;
+}
+.garden-graph-panel[aria-hidden="false"] {
+  transform: translateX(0);
+}
+.garden-graph-panel.is-animating {
+  transition: transform 200ms ease-out;
+}
+.garden-graph-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--color-rule);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.garden-graph-panel-close {
+  background: transparent;
+  border: 0;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+  padding: 0.1rem 0.4rem;
+}
+.garden-graph-panel-close:hover { color: var(--color-ink); }
+.garden-graph-panel-toolbar {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-rule);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+}
+.garden-graph-panel-toolbar .label {
+  color: var(--color-ink-soft);
+  margin-right: 0.2rem;
+}
+.garden-graph-panel-toolbar .chip {
+  background: transparent;
+  border: 1px solid var(--color-rule);
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+  font: inherit;
+  cursor: pointer;
+  color: var(--color-ink-soft);
+}
+.garden-graph-panel-toolbar .chip[aria-pressed="true"] {
+  background: var(--color-burgundy);
+  color: var(--color-tile);
+  border-color: var(--color-burgundy);
+}
+.garden-graph-panel-canvas {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+}
+.garden-graph-panel-canvas svg {
+  width: 100%;
+  height: 100%;
+}
+.garden-graph-panel-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid var(--color-rule);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.garden-graph-panel-legend .swatch {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 0.25rem;
+  vertical-align: middle;
+}
+
+/* Force-directed graph node + edge styling */
+.garden-graph-node circle {
+  cursor: pointer;
+  stroke: transparent;
+  stroke-width: 1;
+}
+.garden-graph-node.in-stack circle {
+  stroke: var(--color-ink);
+  stroke-width: 2.5;
+}
+.garden-graph-node text {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  fill: var(--color-ink);
+  pointer-events: none;
+  user-select: none;
+}
+.garden-graph-node:focus circle {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
+}
+.garden-graph-edge {
+  stroke: var(--color-ink-fade);
+  stroke-width: 1;
+}
+.garden-graph-edge.cross-topic {
+  stroke-dasharray: 4 3;
+}
+
+/* Mobile: panel hidden — toggle navigates to /garden/graph/ instead */
+@media (max-width: 720px) {
+  .garden-graph-panel { display: none; }
+}
+
+/* ------------------------------------------------------------------
+ * 28. Garden graph standalone page (/garden/graph/)
+ * ------------------------------------------------------------------ */
+.garden-graph-page .garden-graph-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--color-rule);
+  border-bottom: 1px solid var(--color-rule);
+  margin: 1rem 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+}
+.garden-graph-page .garden-graph-toolbar .label {
+  color: var(--color-ink-soft);
+}
+.garden-graph-page .garden-graph-toolbar .chip {
+  background: transparent;
+  border: 1px solid var(--color-rule);
+  border-radius: 999px;
+  padding: 0.1rem 0.65rem;
+  font: inherit;
+  cursor: pointer;
+  color: var(--color-ink-soft);
+}
+.garden-graph-page .garden-graph-toolbar .chip[aria-pressed="true"] {
+  background: var(--color-burgundy);
+  color: var(--color-tile);
+  border-color: var(--color-burgundy);
+}
+.garden-graph-page .garden-graph-canvas {
+  min-height: 70vh;
+  border: 1px solid var(--color-rule);
+  border-radius: 6px;
+  background: var(--color-tile);
+}
+.garden-graph-page .garden-graph-canvas svg {
+  width: 100%;
+  height: 70vh;
+}
+.garden-graph-page .garden-graph-legend {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+}
+.garden-graph-page .garden-graph-legend .swatch {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 0.25rem;
+  vertical-align: middle;
+}

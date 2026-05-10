@@ -5,7 +5,9 @@
     {{ with .Content }}<div class="framing">{{ . }}</div>{{ end }}
   </header>
 
-  {{- $pages := where .Site.RegularPages "Section" "garden" -}}
+  {{- /* Exclude the standalone /garden/graph/ page (layout=graph) — it lives in
+         the garden section but isn't a note. */ -}}
+  {{- $pages := where (where .Site.RegularPages "Section" "garden") "Layout" "ne" "graph" -}}
   {{- if eq (len $pages) 0 -}}
     <p class="garden-empty-static">No notes yet — check back soon.</p>
   {{- else -}}
@@ -54,6 +56,7 @@
       {{- $dims = $dims | append (dict "key" "stage" "label" "Stage" "values" $stages) -}}
     {{- end -}}
     {{ partial "filter-chips.html" (dict "dimensions" $dims "section" "garden") }}
+    <button type="button" class="garden-graph-toggle" aria-expanded="false" aria-controls="garden-graph-panel">⊞ Graph</button>
 
     {{- /* ----- Pass 1: build the set of slugs referenced by any topic_map ----- */ -}}
     {{- $referenced := slice -}}
@@ -96,4 +99,6 @@
 
   {{- end -}}
 </section>
+{{ partial "garden/graph-panel.html" . }}
+{{ partial "garden/graph-script.html" .Site }}
 {{ end }}

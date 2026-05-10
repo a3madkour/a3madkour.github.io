@@ -1,0 +1,92 @@
+{{- /* Inputs:
+       . — Hugo Site (passed from call site as `partialCached "garden/graph-data" .Site`)
+   Output: a JSON string {nodes, edges, topics} encoding the garden graph.
+   Tag colour, edge solid/dashed, node sizing all live in the consumer (garden-graph.js).
+*/ -}}
+{{- /* Exclude the standalone /garden/graph/ page (layout=graph) — it lives in the
+       garden section but isn't a note. */ -}}
+{{- $pages := where (where .RegularPages "Section" "garden") "Layout" "ne" "graph" -}}
+
+{{- /* 1. Outgoing-link map: slug -> []targets (deduped, in document order) */ -}}
+{{- $byOut := dict -}}
+{{- range $pages -}}
+  {{- $slug := path.Base .File.Dir -}}
+  {{- $matches := findRE `\(/garden/[a-z0-9-]+/\)` .RawContent -}}
+  {{- $targets := slice -}}
+  {{- range $matches -}}
+    {{- $t := strings.TrimPrefix "(/garden/" . -}}
+    {{- $t = strings.TrimSuffix "/)" $t -}}
+    {{- if not (in $targets $t) -}}
+      {{- if ne $t $slug -}}
+        {{- $targets = $targets | append $t -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $byOut = merge $byOut (dict $slug $targets) -}}
+{{- end -}}
+
+{{- /* 2. Incoming-link map: slug -> []sources */ -}}
+{{- $byIn := dict -}}
+{{- range $src, $targets := $byOut -}}
+  {{- range $targets -}}
+    {{- $cur := index $byIn . | default slice -}}
+    {{- $byIn = merge $byIn (dict . ($cur | append $src)) -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* 3. Topic-membership map: topic-owner-slug -> []member-slugs (from topic_map frontmatter) */ -}}
+{{- $byTopic := dict -}}
+{{- range $pages -}}
+  {{- $owner := path.Base .File.Dir -}}
+  {{- with .Params.topic_map -}}
+    {{- $byTopic = merge $byTopic (dict $owner .) -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* 4. Edge list with crossTopic classification.
+       Edge is solid (crossTopic=false) iff src and tgt share at least one topic-owner. */ -}}
+{{- $edges := slice -}}
+{{- range $src, $targets := $byOut -}}
+  {{- range $targets -}}
+    {{- $tgt := . -}}
+    {{- $cross := true -}}
+    {{- range $owner, $members := $byTopic -}}
+      {{- if and (in $members $src) (in $members $tgt) -}}
+        {{- $cross = false -}}
+      {{- end -}}
+    {{- end -}}
+    {{- $edges = $edges | append (dict "source" $src "target" $tgt "crossTopic" $cross) -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* 5. Node list with degree (in + out) */ -}}
+{{- $nodes := slice -}}
+{{- range $pages -}}
+  {{- $slug := path.Base .File.Dir -}}
+  {{- $tags := .Params.tags | default slice -}}
+  {{- $tag := "" -}}
+  {{- if gt (len $tags) 0 -}}{{- $tag = index $tags 0 -}}{{- end -}}
+  {{- $stage := .Params.growth_stage | default "seedling" -}}
+  {{- $mt := .Params.media_type -}}
+  {{- $flavor := "concept" -}}
+  {{- if $mt -}}
+    {{- if in (slice "book" "album" "track" "game" "film" "series") $mt -}}
+      {{- $flavor = "media" -}}
+    {{- else -}}
+      {{- $flavor = "reference" -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $out := index $byOut $slug | default slice -}}
+  {{- $in := index $byIn $slug | default slice -}}
+  {{- $degree := add (len $out) (len $in) -}}
+  {{- $nodes = $nodes | append (dict
+        "slug"   $slug
+        "title"  .Title
+        "tag"    $tag
+        "flavor" $flavor
+        "stage"  $stage
+        "degree" $degree) -}}
+{{- end -}}
+
+{{- $data := dict "nodes" $nodes "edges" $edges "topics" $byTopic -}}
+{{- $data | jsonify -}}

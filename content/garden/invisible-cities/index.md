@@ -15,7 +15,7 @@ tags: ["reading", "calvino", "dummy-02"]
 summary: "Lorem ipsum placeholder summary."
 ---
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Example sentence about Calvino's nested-list structure.
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Example sentence about Calvino's nested-list structure — compare with [story atoms](/garden/story-atoms/) and the [emergence vs design](/garden/emergence-vs-design/) lens.
 
 {{< spoiler summary="chapter ending" level="light" >}}
 Filler placeholder revealing how the framing device resolves at the end. (Hidden by default — click to expand.)

@@ -467,11 +467,11 @@ When Phase 3's elisp pipeline overwrites bodies wholesale, the test surface (whi
 
 ## 8. Performance budget (advisory, per parent §8)
 
-- **`d3-force` minified** ≈ 30 KB · loaded via dynamic `import()` on first panel open · note pages without panel toggle don't pay the cost
+- **`d3-force` minified** ≈ 16 KB (esm.sh `?bundle` with deps inlined). The source uses `await import('./vendor/d3-force.min.js')` on first panel open, but Hugo's `js.Build` is invoked without `splitting: true`, so esbuild inlines the dynamic import into the main bundle. Net effect: every page eats the ~16 KB until the build is refactored to emit code-split chunks.
 - **`garden-stack.js` + `garden-graph.js` source** ≈ 7 KB combined uncompressed
-- **Inline graph JSON** ≈ 3–5 KB for 14 nodes / 28 edges
-- **Total Phase 4 weight on a note page that doesn't open the graph**: < 8 KB
-- **With graph open**: ≈ 38 KB
+- **Inline graph JSON** ≈ 3–5 KB on every garden page (small enough that it's not worth fetching separately)
+- **Total Phase 4 weight on a note page that doesn't open the graph**: ≈ 24 KB (revised from the originally-budgeted < 8 KB once the lazy-import gap was identified during final review). Bundle is cached after first load.
+- **With graph open**: same ≈ 24 KB; no additional fetch since d3-force is already in the bundle.
 
 ---
 
