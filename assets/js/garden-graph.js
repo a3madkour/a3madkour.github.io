@@ -261,28 +261,13 @@ function buildLegend(host) {
   host.appendChild(note);
 }
 
-function openPanel({ silent = false } = {}) {
+function openPanel() {
   if (!state.panel) return;
   if (isMobile()) {
     window.location.assign('/garden/graph/');
     return;
   }
-  if (silent) {
-    // Restoring from sessionStorage on page load — snap into place without
-    // animation so navigating between notes doesn't keep slamming the panel
-    // back in. The `no-anim` class disables the CSS transition while the
-    // attribute change is committed; double-rAF ensures the new frame paints
-    // with no transition before we re-enable it.
-    state.panel.classList.add('no-anim');
-    state.panel.setAttribute('aria-hidden', 'false');
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        state.panel.classList.remove('no-anim');
-      });
-    });
-  } else {
-    state.panel.setAttribute('aria-hidden', 'false');
-  }
+  state.panel.setAttribute('aria-hidden', 'false');
   state.panelOpen = true;
   try { sessionStorage.setItem(PANEL_KEY, '1'); } catch {}
   document.querySelectorAll('.garden-graph-toggle').forEach(b => b.setAttribute('aria-expanded', 'true'));
@@ -362,7 +347,7 @@ function init() {
   // Restore panel state
   let restore = false;
   try { restore = sessionStorage.getItem(PANEL_KEY) === '1'; } catch {}
-  if (restore && !isMobile()) openPanel({ silent: true });
+  if (restore && !isMobile()) openPanel();
 }
 
 if (document.readyState === 'loading') {
