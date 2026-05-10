@@ -1227,6 +1227,13 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 .garden-graph-panel[aria-hidden="false"] {
   transform: translateX(0);
 }
+/* Suppress the slide animation when JS restores panel state from
+   sessionStorage on page load. JS adds .no-anim, sets aria-hidden=false,
+   then removes .no-anim after a frame — so the panel snaps into place
+   silently and only animates on explicit user toggle. */
+.garden-graph-panel.no-anim {
+  transition: none !important;
+}
 .garden-graph-panel-header {
   display: flex;
   justify-content: space-between;

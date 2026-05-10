@@ -270,12 +270,16 @@ function openPanel({ silent = false } = {}) {
   if (silent) {
     // Restoring from sessionStorage on page load — snap into place without
     // animation so navigating between notes doesn't keep slamming the panel
-    // back in. Subsequent explicit toggles still animate.
-    const prev = state.panel.style.transition;
-    state.panel.style.transition = 'none';
+    // back in. The `no-anim` class disables the CSS transition while the
+    // attribute change is committed; double-rAF ensures the new frame paints
+    // with no transition before we re-enable it.
+    state.panel.classList.add('no-anim');
     state.panel.setAttribute('aria-hidden', 'false');
-    void state.panel.offsetWidth; // force reflow
-    state.panel.style.transition = prev;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        state.panel.classList.remove('no-anim');
+      });
+    });
   } else {
     state.panel.setAttribute('aria-hidden', 'false');
   }
