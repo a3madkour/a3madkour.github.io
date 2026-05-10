@@ -169,13 +169,13 @@ async function buildSimulation(canvas) {
     });
   }
 
-  if (reducedMotion()) {
-    sim.stop();
-    for (let i = 0; i < 300; i++) sim.tick();
-    renderTick();
-  } else {
-    sim.on('tick', renderTick);
-  }
+  // Always pre-tick the simulation to a settled state before rendering.
+  // The animated tick-by-tick approach was visually jittery on every page
+  // load; settling silently and rendering once is faster, calmer, and the
+  // user never sees the layout converge.
+  sim.stop();
+  for (let i = 0; i < 300; i++) sim.tick();
+  renderTick();
 
   return { svg, simulation: sim };
 }
