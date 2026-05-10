@@ -261,13 +261,24 @@ function buildLegend(host) {
   host.appendChild(note);
 }
 
-function openPanel() {
+function openPanel({ silent = false } = {}) {
   if (!state.panel) return;
   if (isMobile()) {
     window.location.assign('/garden/graph/');
     return;
   }
-  state.panel.setAttribute('aria-hidden', 'false');
+  if (silent) {
+    // Restoring from sessionStorage on page load — snap into place without
+    // animation so navigating between notes doesn't keep slamming the panel
+    // back in. Subsequent explicit toggles still animate.
+    const prev = state.panel.style.transition;
+    state.panel.style.transition = 'none';
+    state.panel.setAttribute('aria-hidden', 'false');
+    void state.panel.offsetWidth; // force reflow
+    state.panel.style.transition = prev;
+  } else {
+    state.panel.setAttribute('aria-hidden', 'false');
+  }
   state.panelOpen = true;
   try { sessionStorage.setItem(PANEL_KEY, '1'); } catch {}
   document.querySelectorAll('.garden-graph-toggle').forEach(b => b.setAttribute('aria-expanded', 'true'));
@@ -347,7 +358,7 @@ function init() {
   // Restore panel state
   let restore = false;
   try { restore = sessionStorage.getItem(PANEL_KEY) === '1'; } catch {}
-  if (restore && !isMobile()) openPanel();
+  if (restore && !isMobile()) openPanel({ silent: true });
 }
 
 if (document.readyState === 'loading') {
