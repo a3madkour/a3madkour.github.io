@@ -2,6 +2,7 @@
 // Spec: docs/superpowers/specs/2026-05-08-garden-interactions-design.md §6.
 
 const PANEL_KEY = 'garden-graph-open';
+const POSITIONS_KEY = 'garden-graph-positions';
 const TAG_PALETTE = {
   // Map well-known tags to existing site tokens.
   // Anything else falls back to --color-ink-fade.
@@ -27,6 +28,33 @@ const state = {
 
 function reducedMotion() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+// Cache key encodes everything that would change a node's settled position:
+// the active filters, the focused note (for local-graph mode), and the
+// canvas viewport. Different (panel vs page) viewports legitimately have
+// different layouts so they get separate cache entries.
+function positionsCacheKey(canvas) {
+  const f = state.filters;
+  return `${f.tag}|${f.stage}|${f.local}|${state.page.currentSlug || ''}|${canvas.clientWidth}x${canvas.clientHeight}`;
+}
+
+function loadCachedPositions(canvas) {
+  try {
+    const raw = sessionStorage.getItem(POSITIONS_KEY);
+    if (!raw) return null;
+    const cache = JSON.parse(raw);
+    return cache[positionsCacheKey(canvas)] || null;
+  } catch { return null; }
+}
+
+function saveCachedPositions(canvas, nodes) {
+  try {
+    const raw = sessionStorage.getItem(POSITIONS_KEY);
+    const cache = raw ? JSON.parse(raw) : {};
+    cache[positionsCacheKey(canvas)] = nodes.map(n => ({ slug: n.slug, x: n.x, y: n.y }));
+    sessionStorage.setItem(POSITIONS_KEY, JSON.stringify(cache));
+  } catch {}
 }
 
 function isMobile() {
@@ -151,6 +179,19 @@ async function buildSimulation(canvas) {
 
   canvas.replaceChildren(svg);
 
+  // Restore cached positions if all current nodes have a cache entry.
+  // Hit → skip the simulation entirely (instant, byte-stable layout).
+  // Miss or partial → run a fresh settle and save the result.
+  const cached = loadCachedPositions(canvas);
+  const cachedBySlug = cached ? new Map(cached.map(p => [p.slug, p])) : null;
+  const cacheHit = cachedBySlug && nodes.every(n => cachedBySlug.has(n.slug));
+  if (cacheHit) {
+    nodes.forEach(n => {
+      const p = cachedBySlug.get(n.slug);
+      n.x = p.x; n.y = p.y;
+    });
+  }
+
   const sim = forceSimulation(nodes)
     .force('link', forceLink(edges).id(d => d.slug).distance(60).strength(0.6))
     .force('charge', forceManyBody().strength(-180))
@@ -169,12 +210,14 @@ async function buildSimulation(canvas) {
     });
   }
 
-  // Always pre-tick the simulation to a settled state before rendering.
-  // The animated tick-by-tick approach was visually jittery on every page
-  // load; settling silently and rendering once is faster, calmer, and the
-  // user never sees the layout converge.
+  // On cache hit, nodes already start at their settled positions — render
+  // directly without ticking. On cache miss, pre-tick to convergence and
+  // store the result for the next mount within this session.
   sim.stop();
-  for (let i = 0; i < 300; i++) sim.tick();
+  if (!cacheHit) {
+    for (let i = 0; i < 300; i++) sim.tick();
+    saveCachedPositions(canvas, nodes);
+  }
   renderTick();
 
   return { svg, simulation: sim };
