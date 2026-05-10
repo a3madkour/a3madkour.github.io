@@ -382,10 +382,10 @@ function init() {
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     if (!state.panelOpen) return;
-    if (state.panel && state.panel.contains(document.activeElement)) {
-      e.stopPropagation();
-      closePanel();
-    }
+    // Panel is open — Esc closes it regardless of where focus is. The
+    // garden-stack.js Esc handler suppresses itself when panel is open, so
+    // these two handlers can't both fire.
+    closePanel();
   });
 
   // Listen for stack changes

@@ -290,13 +290,16 @@ async function init() {
   const clear = document.querySelector(`${PATHLOG} .path-log-clear`);
   if (clear) clear.addEventListener('click', clearStack);
 
-  // Esc: clear stack if graph panel isn't focused
+  // Esc: if the graph panel is open, it owns Esc (closes the panel regardless
+  // of focus location — matches the common modal-drawer convention "Esc closes
+  // the open thing first"). Only when the panel is closed does Esc collapse
+  // the stack to column 1.
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     if (state.slugs.length < 2) return;
     const panel = document.getElementById('garden-graph-panel');
-    if (panel && panel.contains(document.activeElement) && panel.getAttribute('aria-hidden') === 'false') {
-      // Panel will handle Esc; do nothing.
+    if (panel && panel.getAttribute('aria-hidden') === 'false') {
+      // Panel is open — let garden-graph.js's Esc handler close it.
       return;
     }
     clearStack();
