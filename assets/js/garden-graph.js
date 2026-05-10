@@ -24,6 +24,11 @@ const state = {
   filters: { tag: 'all', stage: 'all', local: 'all' /* all | 1-hop | 2-hop */ },
   inStack: new Set(),
   page: { isMobile: false, isNotePage: false, currentSlug: null },
+  // Tracks user's last pointer interaction: was it inside the stack columns?
+  // Used to disambiguate Esc — if user's "attention" is on the stack (last
+  // click was in a column), Esc clears the stack; otherwise the open panel
+  // claims Esc.
+  lastPointerInStack: false,
 };
 
 function reducedMotion() {
@@ -382,11 +387,23 @@ function init() {
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     if (!state.panelOpen) return;
-    // Panel is open — Esc closes it regardless of where focus is. The
-    // garden-stack.js Esc handler suppresses itself when panel is open, so
-    // these two handlers can't both fire.
+    // Panel claims Esc UNLESS the user's last pointer-down was in the stack
+    // (they're reading a column — let Esc clear the stack instead).
+    // stopImmediatePropagation prevents garden-stack's keydown handler from
+    // also firing — necessary because both listeners attach to `document` and
+    // would otherwise both run on the same event.
+    if (state.lastPointerInStack) return;
+    e.stopImmediatePropagation();
     closePanel();
   });
+
+  // Track whether the user's last pointer interaction was inside the stack
+  // columns. Capture phase so this fires before any click handlers can
+  // consume the event.
+  document.addEventListener('pointerdown', (e) => {
+    const stack = document.querySelector('.garden-stack');
+    state.lastPointerInStack = stack ? stack.contains(e.target) : false;
+  }, true);
 
   // Listen for stack changes
   window.addEventListener('garden:stack-changed', (e) => {
