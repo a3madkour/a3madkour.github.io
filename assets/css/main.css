@@ -1220,15 +1220,18 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   box-shadow: -8px 0 22px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
-  /* No slide-in transform/transition. The panel toggles instantly via the
-     [aria-hidden] attribute → display rule below. The slide animation was
-     too noisy when navigating between pages with the panel open: every page
-     load re-mounted it visibly. Instant toggle is honest and never
-     disorienting. */
+  /* Hidden state lives offscreen-right (translateX). When restoring panel
+     state on page load we just flip aria-hidden — no transition because
+     `.is-animating` isn't applied yet. When the user explicitly toggles via
+     click, JS adds `.is-animating` first, which enables the slide. */
+  transform: translateX(100%);
   z-index: 20;
 }
-.garden-graph-panel[aria-hidden="true"] {
-  display: none;
+.garden-graph-panel[aria-hidden="false"] {
+  transform: translateX(0);
+}
+.garden-graph-panel.is-animating {
+  transition: transform 200ms ease-out;
 }
 .garden-graph-panel-header {
   display: flex;

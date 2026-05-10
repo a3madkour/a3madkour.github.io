@@ -304,12 +304,17 @@ function buildLegend(host) {
   host.appendChild(note);
 }
 
-function openPanel() {
+function openPanel({ animate = true } = {}) {
   if (!state.panel) return;
   if (isMobile()) {
     window.location.assign('/garden/graph/');
     return;
   }
+  // Adding `.is-animating` enables the CSS transition for the slide. We add
+  // it only on user-initiated toggles, not on the silent restore-from-storage
+  // path — so navigating between notes never re-animates a panel that was
+  // already open.
+  if (animate) state.panel.classList.add('is-animating');
   state.panel.setAttribute('aria-hidden', 'false');
   state.panelOpen = true;
   try { sessionStorage.setItem(PANEL_KEY, '1'); } catch {}
@@ -324,6 +329,8 @@ function openPanel() {
 
 function closePanel() {
   if (!state.panel) return;
+  // Close is always user-initiated (button click or Esc) — always animate.
+  state.panel.classList.add('is-animating');
   state.panel.setAttribute('aria-hidden', 'true');
   state.panelOpen = false;
   try { sessionStorage.removeItem(PANEL_KEY); } catch {}
@@ -390,7 +397,7 @@ function init() {
   // Restore panel state
   let restore = false;
   try { restore = sessionStorage.getItem(PANEL_KEY) === '1'; } catch {}
-  if (restore && !isMobile()) openPanel();
+  if (restore && !isMobile()) openPanel({ animate: false });
 }
 
 if (document.readyState === 'loading') {
