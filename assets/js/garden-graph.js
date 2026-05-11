@@ -164,6 +164,7 @@ async function buildSimulation(canvas) {
   const { forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide } =
     await import('./vendor/d3-force.min.js');
   const { zoom, zoomIdentity } = await import('./vendor/d3-zoom.min.js');
+  const { drag } = await import('./vendor/d3-drag.min.js');
   const { select } = await import('./vendor/d3-selection.min.js');
 
   const { nodes, edges } = applyFilters();
@@ -198,6 +199,39 @@ async function buildSimulation(canvas) {
     return { e, line };
   });
 
+  const dragBehavior = drag()
+    .subject(function() { return this.__data__; })
+    .on('start', function(event) {
+      const d = event.subject;
+      d.fx = d.x;
+      d.fy = d.y;
+      d.__startX = d.x;
+      d.__startY = d.y;
+      d.wasDragged = false;
+      if (!reducedMotion()) sim.alphaTarget(0.3).restart();
+    })
+    .on('drag', function(event) {
+      const d = event.subject;
+      d.fx = event.x;
+      d.fy = event.y;
+    })
+    .on('end', function(event) {
+      const d = event.subject;
+      if (!reducedMotion()) sim.alphaTarget(0);
+      const dx = d.fx - d.__startX;
+      const dy = d.fy - d.__startY;
+      if ((dx * dx + dy * dy) > 9) {
+        d.wasDragged = true;
+        state.pinnedSlugs.add(d.slug);
+      } else {
+        // Pure click — release the pin we just set in 'start' so a click on
+        // an un-dragged node doesn't accidentally pin it at its current spot.
+        d.fx = null;
+        d.fy = null;
+      }
+      persistCacheDebounced();
+    });
+
   // Build node elements (each is a <g> with circle + text)
   const nodeEls = nodes.map(n => {
     const g = document.createElementNS(SVG_NS, 'g');
@@ -218,7 +252,16 @@ async function buildSimulation(canvas) {
     t.setAttribute('y', '3');
     g.appendChild(t);
 
-    g.addEventListener('click', () => { window.location.assign(`/garden/${n.slug}/`); });
+    g.__data__ = n;
+    select(g).call(dragBehavior);
+
+    g.addEventListener('click', () => {
+      if (n.wasDragged) {
+        n.wasDragged = false;
+        return;
+      }
+      window.location.assign(`/garden/${n.slug}/`);
+    });
     g.addEventListener('keydown', (ev) => {
       if (ev.key === 'Enter' || ev.key === ' ') {
         ev.preventDefault();
