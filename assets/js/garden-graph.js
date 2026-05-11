@@ -36,6 +36,26 @@ const state = {
   zoomBehavior: null,
 };
 
+let persistTimer = null;
+function persistCacheDebounced() {
+  if (persistTimer) clearTimeout(persistTimer);
+  persistTimer = setTimeout(() => {
+    persistTimer = null;
+    flushCache();
+  }, 200);
+}
+function flushCache() {
+  let canvas;
+  const isGraphPage = !!document.querySelector('.garden-graph-page');
+  if (isGraphPage) {
+    canvas = document.querySelector('.garden-graph-page .garden-graph-canvas');
+  } else if (state.panel) {
+    canvas = state.panel.querySelector('.garden-graph-panel-canvas');
+  }
+  if (!canvas || !state.simulation) return;
+  saveCachedPositions(canvas, state.simulation.nodes(), state.viewTransform, state.pinnedSlugs);
+}
+
 function reducedMotion() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
@@ -143,6 +163,8 @@ function applyFilters() {
 async function buildSimulation(canvas) {
   const { forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide } =
     await import('./vendor/d3-force.min.js');
+  const { zoom, zoomIdentity } = await import('./vendor/d3-zoom.min.js');
+  const { select } = await import('./vendor/d3-selection.min.js');
 
   const { nodes, edges } = applyFilters();
   const w = canvas.clientWidth || 320;
@@ -209,6 +231,21 @@ async function buildSimulation(canvas) {
   });
 
   canvas.replaceChildren(svg);
+
+  const zoomBehavior = zoom()
+    .scaleExtent([0.3, 4])
+    .filter(event => !event.target.closest('.garden-graph-node'))
+    .on('zoom', ({ transform }) => {
+      contentGroup.setAttribute(
+        'transform',
+        `translate(${transform.x},${transform.y}) scale(${transform.k})`
+      );
+      state.viewTransform = { k: transform.k, tx: transform.x, ty: transform.y };
+      persistCacheDebounced();
+    });
+
+  select(svg).call(zoomBehavior).on('dblclick.zoom', null);
+  state.zoomBehavior = zoomBehavior;
 
   // Restore cached positions if all current nodes have a cache entry.
   // Hit → skip the simulation entirely (instant, byte-stable layout).
