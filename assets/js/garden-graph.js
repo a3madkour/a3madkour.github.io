@@ -34,6 +34,8 @@ const state = {
   viewTransform: { k: 1, tx: 0, ty: 0 },
   pinnedSlugs: new Set(),
   zoomBehavior: null,
+  d3select: null,
+  zoomIdentity: null,
 };
 
 let persistTimer = null;
@@ -166,6 +168,8 @@ async function buildSimulation(canvas) {
   const { zoom, zoomIdentity } = await import('./vendor/d3-zoom.min.js');
   const { drag } = await import('./vendor/d3-drag.min.js');
   const { select } = await import('./vendor/d3-selection.min.js');
+  state.d3select = select;
+  state.zoomIdentity = zoomIdentity;
 
   const { nodes, edges } = applyFilters();
   const w = canvas.clientWidth || 320;
@@ -362,6 +366,24 @@ function updateInStackMarkers() {
   });
 }
 
+function resetView() {
+  if (!state.zoomBehavior || !state.svg || !state.d3select || !state.zoomIdentity) return;
+  state.d3select(state.svg).call(state.zoomBehavior.transform, state.zoomIdentity);
+  // The 'zoom' handler attached in buildSimulation will fire once and update
+  // state.viewTransform + schedule a debounced cache flush.
+}
+
+function resetPositions() {
+  if (!state.simulation) return;
+  state.simulation.nodes().forEach(n => {
+    n.fx = null;
+    n.fy = null;
+  });
+  state.pinnedSlugs.clear();
+  state.simulation.alpha(0.5).restart();
+  persistCacheDebounced();
+}
+
 function buildToolbar(host) {
   if (!state.data) return;
   const tags = new Set();
@@ -403,6 +425,26 @@ function buildToolbar(host) {
     const localLabel = document.createElement('span'); localLabel.className = 'label'; localLabel.textContent = 'Scope:';
     host.append(localLabel, mkChip('All', 'local', 'all'), mkChip('1-hop', 'local', '1-hop'), mkChip('2-hop', 'local', '2-hop'));
   }
+
+  // Action chips: visually separated from filter chips
+  const divider = document.createElement('span');
+  divider.className = 'toolbar-divider';
+  divider.setAttribute('aria-hidden', 'true');
+  host.append(divider);
+
+  const resetViewBtn = document.createElement('button');
+  resetViewBtn.type = 'button';
+  resetViewBtn.className = 'chip chip-action';
+  resetViewBtn.textContent = 'Reset view';
+  resetViewBtn.addEventListener('click', resetView);
+  host.append(resetViewBtn);
+
+  const resetPosBtn = document.createElement('button');
+  resetPosBtn.type = 'button';
+  resetPosBtn.className = 'chip chip-action';
+  resetPosBtn.textContent = 'Reset positions';
+  resetPosBtn.addEventListener('click', resetPositions);
+  host.append(resetPosBtn);
 }
 
 function buildLegend(host) {
