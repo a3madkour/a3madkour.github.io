@@ -170,6 +170,8 @@ async function buildSimulation(canvas) {
   const { select } = await import('./vendor/d3-selection.min.js');
   state.d3select = select;
   state.zoomIdentity = zoomIdentity;
+  state.pinnedSlugs = new Set();
+  state.viewTransform = { k: 1, tx: 0, ty: 0 };
 
   const { nodes, edges } = applyFilters();
   const w = canvas.clientWidth || 320;
@@ -305,9 +307,22 @@ async function buildSimulation(canvas) {
   if (cacheHit) {
     nodes.forEach(n => {
       const p = cachedBySlug.get(n.slug);
-      n.x = p.x; n.y = p.y;
-      // pinned + view restoration handled in Task 7 (drag/zoom not yet wired)
+      n.x = p.x;
+      n.y = p.y;
+      if (p.pinned) {
+        n.fx = p.x;
+        n.fy = p.y;
+        state.pinnedSlugs.add(n.slug);
+      }
     });
+    // Apply cached view transform to the wrapper and sync d3-zoom's internal state
+    const v = cached.view;
+    contentGroup.setAttribute('transform', `translate(${v.tx},${v.ty}) scale(${v.k})`);
+    state.viewTransform = { k: v.k, tx: v.tx, ty: v.ty };
+    select(svg).call(
+      zoomBehavior.transform,
+      zoomIdentity.translate(v.tx, v.ty).scale(v.k)
+    );
   }
 
   const sim = forceSimulation(nodes)
