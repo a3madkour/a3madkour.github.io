@@ -224,10 +224,12 @@ async function buildSimulation(canvas) {
         d.wasDragged = true;
         state.pinnedSlugs.add(d.slug);
       } else {
-        // Pure click — release the pin we just set in 'start' so a click on
-        // an un-dragged node doesn't accidentally pin it at its current spot.
+        // Pure click — release any pin (either the one we just set in 'start'
+        // for an un-dragged node, or a pin from a previous drag if the user
+        // is now clicking the same node without moving).
         d.fx = null;
         d.fy = null;
+        state.pinnedSlugs.delete(d.slug);
       }
       persistCacheDebounced();
     });
