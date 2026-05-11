@@ -153,6 +153,8 @@ Three Google Fonts loaded in a single `<link>`: **Petrona** (body, italic + upri
 - **Phase 2 polish — tag two-tier filter plan**: `docs/superpowers/plans/2026-05-08-garden-tag-search.md`
 - **Phase 4 garden interactions spec**: `docs/superpowers/specs/2026-05-08-garden-interactions-design.md`
 - **Phase 4 garden interactions plan**: `docs/superpowers/plans/2026-05-08-garden-interactions.md`
+- **Phase 4 follow-up — graph manipulation spec**: `docs/superpowers/specs/2026-05-11-graph-manipulation-design.md`
+- **Phase 4 follow-up — graph manipulation plan**: `docs/superpowers/plans/2026-05-11-graph-manipulation.md`
 - The site spec's §14 is the master phase list.
 
 ## Project status (2026-05-08)
