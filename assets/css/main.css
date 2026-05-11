@@ -1290,6 +1290,30 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   width: 100%;
   height: 100%;
 }
+
+/* Cursor states for zoom/pan on the panel canvas */
+.garden-graph-panel-canvas svg {
+  cursor: grab;
+}
+.garden-graph-panel-canvas svg:active {
+  cursor: grabbing;
+}
+
+/* Toolbar divider between filter chips and action chips */
+.garden-graph-panel-toolbar .toolbar-divider {
+  display: inline-block;
+  width: 1px;
+  height: 1rem;
+  background: var(--color-rule);
+  margin: 0 0.4rem;
+  vertical-align: middle;
+}
+
+/* Action chip variant: italic to visually separate from filter chips */
+.garden-graph-panel-toolbar .chip.chip-action {
+  font-style: italic;
+}
+
 .garden-graph-panel-legend {
   list-style: none;
   margin: 0;
@@ -1316,6 +1340,9 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   cursor: pointer;
   stroke: transparent;
   stroke-width: 1;
+}
+.garden-graph-node:active circle {
+  cursor: grabbing;
 }
 .garden-graph-node.in-stack circle {
   stroke: var(--color-ink);
@@ -1387,6 +1414,25 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   width: 100%;
   height: 70vh;
 }
+.garden-graph-page .garden-graph-canvas svg {
+  cursor: grab;
+}
+.garden-graph-page .garden-graph-canvas svg:active {
+  cursor: grabbing;
+}
+
+.garden-graph-page .garden-graph-toolbar .toolbar-divider {
+  display: inline-block;
+  width: 1px;
+  height: 1rem;
+  background: var(--color-rule);
+  margin: 0 0.4rem;
+  vertical-align: middle;
+}
+.garden-graph-page .garden-graph-toolbar .chip.chip-action {
+  font-style: italic;
+}
+
 .garden-graph-page .garden-graph-legend {
   list-style: none;
   margin: 1rem 0 0;
