@@ -21,6 +21,7 @@ const state = {
   panelOpen: false,
   svg: null,
   simulation: null,
+  contentGroup: null,
   filters: { tag: 'all', stage: 'all', local: 'all' /* all | 1-hop | 2-hop */ },
   inStack: new Set(),
   page: { isMobile: false, isNotePage: false, currentSlug: null },
@@ -135,12 +136,16 @@ async function buildSimulation(canvas) {
   desc.textContent = `Garden graph with ${nodes.length} nodes and ${edges.length} edges. Click a node to open it in a stack.`;
   svg.appendChild(desc);
 
+  const contentGroup = document.createElementNS(SVG_NS, 'g');
+  contentGroup.setAttribute('class', 'graph-content');
+  svg.appendChild(contentGroup);
+
   const edgeLayer = document.createElementNS(SVG_NS, 'g');
   edgeLayer.setAttribute('class', 'garden-graph-edges');
-  svg.appendChild(edgeLayer);
+  contentGroup.appendChild(edgeLayer);
   const nodeLayer = document.createElementNS(SVG_NS, 'g');
   nodeLayer.setAttribute('class', 'garden-graph-nodes');
-  svg.appendChild(nodeLayer);
+  contentGroup.appendChild(nodeLayer);
 
   // Build edge elements
   const edgeEls = edges.map(e => {
@@ -225,7 +230,7 @@ async function buildSimulation(canvas) {
   }
   renderTick();
 
-  return { svg, simulation: sim };
+  return { svg, simulation: sim, contentGroup };
 }
 
 function rebuildGraph() {
@@ -238,9 +243,10 @@ function rebuildGraph() {
   }
   if (!canvas) return;
   if (state.simulation) state.simulation.stop();
-  buildSimulation(canvas).then(({ svg, simulation }) => {
+  buildSimulation(canvas).then(({ svg, simulation, contentGroup }) => {
     state.svg = svg;
     state.simulation = simulation;
+    state.contentGroup = contentGroup;
   });
 }
 
