@@ -328,6 +328,8 @@ async function buildSimulation(canvas) {
     });
   }
 
+  sim.on('tick', renderTick);
+
   // On cache hit, nodes already start at their settled positions — render
   // directly without ticking. On cache miss, pre-tick to convergence and
   // store the result for the next mount within this session.
