@@ -30,6 +30,10 @@ const state = {
   // click was in a column), Esc clears the stack; otherwise the open panel
   // claims Esc.
   lastPointerInStack: false,
+  // Added this slice:
+  viewTransform: { k: 1, tx: 0, ty: 0 },
+  pinnedSlugs: new Set(),
+  zoomBehavior: null,
 };
 
 function reducedMotion() {
@@ -50,15 +54,32 @@ function loadCachedPositions(canvas) {
     const raw = sessionStorage.getItem(POSITIONS_KEY);
     if (!raw) return null;
     const cache = JSON.parse(raw);
-    return cache[positionsCacheKey(canvas)] || null;
+    const entry = cache[positionsCacheKey(canvas)];
+    if (!entry) return null;
+    // Legacy shape: bare array of {slug, x, y}. Normalize to new shape.
+    if (Array.isArray(entry)) {
+      return {
+        nodes: entry.map(n => ({ slug: n.slug, x: n.x, y: n.y, pinned: false })),
+        view: { k: 1, tx: 0, ty: 0 },
+      };
+    }
+    return entry;
   } catch { return null; }
 }
 
-function saveCachedPositions(canvas, nodes) {
+function saveCachedPositions(canvas, nodes, view, pinned) {
   try {
     const raw = sessionStorage.getItem(POSITIONS_KEY);
     const cache = raw ? JSON.parse(raw) : {};
-    cache[positionsCacheKey(canvas)] = nodes.map(n => ({ slug: n.slug, x: n.x, y: n.y }));
+    cache[positionsCacheKey(canvas)] = {
+      nodes: nodes.map(n => ({
+        slug: n.slug,
+        x: n.x,
+        y: n.y,
+        pinned: pinned.has(n.slug),
+      })),
+      view: { k: view.k, tx: view.tx, ty: view.ty },
+    };
     sessionStorage.setItem(POSITIONS_KEY, JSON.stringify(cache));
   } catch {}
 }
@@ -193,12 +214,13 @@ async function buildSimulation(canvas) {
   // Hit → skip the simulation entirely (instant, byte-stable layout).
   // Miss or partial → run a fresh settle and save the result.
   const cached = loadCachedPositions(canvas);
-  const cachedBySlug = cached ? new Map(cached.map(p => [p.slug, p])) : null;
+  const cachedBySlug = cached ? new Map(cached.nodes.map(p => [p.slug, p])) : null;
   const cacheHit = cachedBySlug && nodes.every(n => cachedBySlug.has(n.slug));
   if (cacheHit) {
     nodes.forEach(n => {
       const p = cachedBySlug.get(n.slug);
       n.x = p.x; n.y = p.y;
+      // pinned + view restoration handled in Task 7 (drag/zoom not yet wired)
     });
   }
 
@@ -226,7 +248,7 @@ async function buildSimulation(canvas) {
   sim.stop();
   if (!cacheHit) {
     for (let i = 0; i < 300; i++) sim.tick();
-    saveCachedPositions(canvas, nodes);
+    saveCachedPositions(canvas, nodes, state.viewTransform, state.pinnedSlugs);
   }
   renderTick();
 
