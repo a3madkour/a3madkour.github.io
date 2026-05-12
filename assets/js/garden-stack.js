@@ -17,6 +17,12 @@ const state = {
   consent: 'unset', // 'unset' | 'yes' | 'session' | 'no'
 };
 
+// Slugs currently being fetched. Guards against rapid duplicate clicks while
+// fetchColumn() is in flight — without this, two fast clicks on the same
+// link both pass the state.slugs.includes() gate, both fetch, and we end up
+// appending the column twice.
+const pending = new Set();
+
 function isMobile() {
   return window.matchMedia(MOBILE_QUERY).matches;
 }
@@ -197,19 +203,31 @@ async function appendColumn(slug) {
     focusColumn(slug);
     return;
   }
+  if (pending.has(slug)) return;
   const cols = document.querySelector(COLUMNS);
   if (!cols) return;
-  const col = await fetchColumn(slug);
-  if (!col) return;
-  const wasOne = state.slugs.length === 1;
-  cols.appendChild(col);
-  state.slugs.push(slug);
-  rewriteURL();
-  focusColumn(slug);
-  updatePathLog();
-  dispatchStackChanged();
-  persistVisited(slug);
-  if (wasOne) showConsentBanner();
+  pending.add(slug);
+  try {
+    const col = await fetchColumn(slug);
+    if (!col) return;
+    // Re-check after the await — another append may have landed the same slug
+    // while we were fetching (rare but possible if a parallel restoration ran).
+    if (state.slugs.includes(slug)) {
+      focusColumn(slug);
+      return;
+    }
+    const wasOne = state.slugs.length === 1;
+    cols.appendChild(col);
+    state.slugs.push(slug);
+    rewriteURL();
+    focusColumn(slug);
+    updatePathLog();
+    dispatchStackChanged();
+    persistVisited(slug);
+    if (wasOne) showConsentBanner();
+  } finally {
+    pending.delete(slug);
+  }
 }
 
 function clearStack() {
