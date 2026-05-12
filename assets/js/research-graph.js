@@ -3,24 +3,6 @@
 
 const PANEL_KEY = 'research-graph-open';
 const POSITIONS_KEY = 'research-graph-positions';
-// Hand-curated map from known tags to existing site palette tokens. Ordering
-// has no effect; lookup is by exact key match. Multiple tags may
-// intentionally share a token (e.g. reading + calvino both ride --color-warn,
-// games + play both ride --color-steel) — they're semantically adjacent and
-// expanding the palette just to disambiguate would hurt graph legibility more
-// than it helps. Unmapped tags fall through to --color-ink-fade by design;
-// this is the signal "we haven't curated a color for this tag yet", not a
-// bug. To add a new mapping, pick an existing token from the :root palette
-// (don't introduce new ones here).
-const TAG_PALETTE = {
-  'narrative': 'var(--color-burgundy)',
-  'memory':    'var(--color-green)',
-  'games':     'var(--color-steel)',
-  'reading':   'var(--color-warn)',
-  'calvino':   'var(--color-warn)',
-  'play':      'var(--color-steel)',
-  'aesthetics':'var(--color-ink-soft)',
-};
 
 const state = {
   data: null,
@@ -128,10 +110,6 @@ function saveCachedPositions(canvas, nodes, view, pinned) {
 
 function isMobile() {
   return window.matchMedia('(max-width: 720px)').matches;
-}
-
-function tagColor(tag) {
-  return TAG_PALETTE[tag] || 'var(--color-ink-fade)';
 }
 
 // Node radius is the contract that backs the legend's "size = link count":
