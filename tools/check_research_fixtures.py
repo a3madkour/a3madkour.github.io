@@ -133,7 +133,7 @@ def validate_unique_theme_weights(themes: list[dict]) -> list[str]:
 
     Returns a list of error strings (empty if all weights are distinct or absent).
     """
-    seen: dict = {}
+    seen: dict[int, str] = {}
     errors: list[str] = []
     for theme in themes:
         w = theme.get("weight")
