@@ -2399,3 +2399,131 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   font-size: 1.4rem;
   margin: 0 0 0.6rem 0;
 }
+
+/* =========================================================
+ * §34 Works — music
+ * Music index list rows + per-music page.
+ * ========================================================= */
+
+.works-music-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.works-music-row {
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 6px;
+  background: var(--color-stone);
+  overflow: hidden;
+}
+.works-music-row[hidden] { display: none; }
+.works-music-row-link {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 1rem;
+  padding: 0.8rem;
+  align-items: center;
+  color: inherit;
+  text-decoration: none;
+}
+.works-music-row-cover {
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--color-ink-soft);
+}
+.works-music-row-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.works-music-row-title {
+  font-family: var(--font-body);
+  margin: 0 0 0.2em 0;
+}
+.works-music-row-meta {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  color: var(--color-ink-soft);
+  margin: 0 0 0.3em 0;
+}
+.works-music-row-tagline {
+  font-style: italic;
+  color: var(--color-ink-soft);
+  margin: 0;
+}
+
+/* Music single */
+.works-music-hero {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+  margin-bottom: 1.5rem;
+}
+@media (max-width: 600px) {
+  .works-music-hero { grid-template-columns: 1fr; }
+}
+.works-music-hero-art {
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 4px;
+}
+.works-music-hero-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.works-music-tagline {
+  font-style: italic;
+  color: var(--color-ink-soft);
+  margin: 0 0 0.6em 0;
+}
+.works-music-meta-row {
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  color: var(--color-ink-soft);
+  margin: 0;
+}
+.works-music-player {
+  margin: 1.5rem 0;
+}
+.works-audio-link {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  padding: 0.4em 0.9em;
+  border: 1px solid var(--color-burgundy);
+  color: var(--color-burgundy);
+  text-decoration: none;
+  border-radius: 999px;
+}
+.works-audio-link:hover {
+  background: var(--color-burgundy);
+  color: var(--color-stone);
+}
+.works-music-tracks-list {
+  font-family: var(--font-ui);
+  padding-left: 1.5em;
+}
+.works-music-tracks-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1em;
+  padding: 0.3em 0;
+}
+.works-music-track-duration {
+  color: var(--color-ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.works-music-lyrics,
+.works-music-made-with {
+  margin-top: 2rem;
+}
+.works-music-lyrics h2,
+.works-music-made-with h2 {
+  font-family: var(--font-body);
+  font-size: 1.4rem;
+  margin: 0 0 0.6rem 0;
+}
