@@ -90,12 +90,16 @@ function showConsentBanner() {
   banner.className = 'garden-consent-banner';
   banner.setAttribute('role', 'dialog');
   banner.setAttribute('aria-label', 'Track reading path');
+  // Button order is privacy-first by intent: keyboard focus and reading order
+  // land on "No, never" first, then the session-only middle ground, then the
+  // most-retentive option. Avoiding the dark-pattern shape where the
+  // data-retentive choice is anchored leftmost.
   banner.innerHTML = `
     <span>Track your reading path across visits?</span>
     <span class="opts">
-      <button type="button" data-choice="yes">Yes, persist</button>
-      <button type="button" data-choice="session">Just this session</button>
       <button type="button" data-choice="no">No, never</button>
+      <button type="button" data-choice="session">Just this session</button>
+      <button type="button" data-choice="yes">Yes, persist</button>
     </span>
   `;
   log.parentNode.insertBefore(banner, log);
