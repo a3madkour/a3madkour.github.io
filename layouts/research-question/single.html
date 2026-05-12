@@ -1,0 +1,158 @@
+{{ define "main" }}
+{{- $thisSlug := path.Base .File.Dir -}}
+{{- $themeSlug := .Params.theme -}}
+{{- /* Look up the parent theme page */ -}}
+{{- $themePages := where site.RegularPages "Type" "research-theme" -}}
+{{- $themePage := "" -}}
+{{- range $themePages -}}
+  {{- if eq (path.Base .File.Dir) $themeSlug -}}
+    {{- $themePage = . -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* Same-theme questions */ -}}
+{{- $allQs := where site.RegularPages "Type" "research-question" -}}
+{{- $themeQs := where $allQs "Params.theme" $themeSlug -}}
+
+{{- /* Sub-questions: questions whose parent_question == this slug */ -}}
+{{- $subQs := where $themeQs "Params.parent_question" $thisSlug -}}
+
+{{- /* Siblings: same-theme, not this, not parent, not children */ -}}
+{{- $parentSlug := .Params.parent_question | default "" -}}
+{{- $siblings := slice -}}
+{{- range $themeQs -}}
+  {{- $candidateSlug := path.Base .File.Dir -}}
+  {{- $isThis := eq $candidateSlug $thisSlug -}}
+  {{- $isParent := and (ne $parentSlug "") (eq $candidateSlug $parentSlug) -}}
+  {{- $isChild := eq (.Params.parent_question | default "") $thisSlug -}}
+  {{- if and (not $isThis) (not $isParent) (not $isChild) -}}
+    {{- $siblings = $siblings | append . -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* Backlinks lookup */ -}}
+{{- $backlinksData := partialCached "research/backlinks-data.html" . -}}
+{{- $myBacklinks := index $backlinksData $thisSlug | default slice -}}
+
+<main class="reading-column research-question-hub">
+
+  <nav class="research-breadcrumb" aria-label="Breadcrumb">
+    <a href="/research/">Research</a> ›
+    {{ if $themePage }}
+      <a href="{{ $themePage.RelPermalink }}">{{ $themePage.Title }}</a> ›
+    {{ else }}
+      <span>{{ $themeSlug }}</span> ›
+    {{ end }}
+    <span aria-current="page">{{ .Title }}</span>
+  </nav>
+
+  <header class="research-question-status-strip">
+    {{ partial "research/status-pill.html" .Params.status }}
+    <span class="last-tended">Last tended: <time>{{ .Params.last_modified }}</time></span>
+    {{ with .Params.started }}<span class="started">Started: <time>{{ . }}</time></span>{{ end }}
+    {{ with .Params.tags }}
+      <ul class="question-tags">{{ range . }}<li>{{ . }}</li>{{ end }}</ul>
+    {{ end }}
+  </header>
+
+  <h1 class="question-statement">{{ .Title }}</h1>
+
+  <section class="research-current-thinking">
+    <h2>Current thinking</h2>
+    {{ .Content }}
+  </section>
+
+  {{ if $subQs }}
+  <section class="research-sub-questions">
+    <h2>Sub-questions</h2>
+    <ul>
+      {{ range $subQs.ByWeight }}
+        <li>
+          <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+          <span class="q-desc">{{ .Params.description }}</span>
+        </li>
+      {{ end }}
+    </ul>
+  </section>
+  {{ end }}
+
+  {{ if $siblings }}
+  <section class="research-siblings">
+    <h2>Sibling questions</h2>
+    <ul>
+      {{ range sort $siblings "Params.weight" "asc" }}
+        <li>
+          {{ partial "research/status-pill.html" .Params.status }}
+          <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+        </li>
+      {{ end }}
+    </ul>
+  </section>
+  {{ end }}
+
+  {{ with .Params.supporting_notes }}
+  <section class="research-supporting-notes">
+    <h2>Supporting notes</h2>
+    <div class="garden-tiles">
+      {{ range . }}
+        {{- $slug := . -}}
+        {{- $note := "" -}}
+        {{- range where site.RegularPages "Section" "garden" -}}
+          {{- if eq (path.Base .File.Dir) $slug -}}{{- $note = . -}}{{- end -}}
+        {{- end -}}
+        {{ with $note }}{{ partial "garden/note-tile.html" (dict "page" .) }}{{ end }}
+      {{ end }}
+    </div>
+  </section>
+  {{ end }}
+
+  {{ with .Params.related_essays }}
+  <section class="research-related-essays">
+    <h2>Related essays</h2>
+    <ul>
+      {{ range . }}
+        {{- $slug := . -}}
+        {{- $essay := "" -}}
+        {{- range where site.RegularPages "Section" "essays" -}}
+          {{- if eq (path.Base .File.Dir) $slug -}}{{- $essay = . -}}{{- end -}}
+        {{- end -}}
+        {{ with $essay }}
+          <li>
+            <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+            {{ partial "essay-meta.html" . }}
+          </li>
+        {{ end }}
+      {{ end }}
+    </ul>
+  </section>
+  {{ end }}
+
+  {{ with .Params.outputs }}
+  <section class="research-outputs">
+    <h2>Outputs</h2>
+    <ul class="outputs-list">
+      {{ range sort . "year" "desc" }}
+        {{ partial "research/output-item.html" . }}
+      {{ end }}
+    </ul>
+  </section>
+  {{ end }}
+
+  <section class="research-backlinks">
+    <h2>Backlinks</h2>
+    {{ if $myBacklinks }}
+      <ul>
+        {{ range $myBacklinks }}
+          <li>
+            <span class="backlink-kind">{{ .kind }}</span>
+            <a href="{{ .url }}">{{ .title }}</a>
+          </li>
+        {{ end }}
+      </ul>
+    {{ else }}
+      <p class="research-backlinks-empty">No backlinks yet.</p>
+    {{ end }}
+  </section>
+
+</main>
+{{ end }}
