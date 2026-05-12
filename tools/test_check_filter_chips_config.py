@@ -47,12 +47,58 @@ has_video_sync: false
 Body.
 """
 
+GAME_NOTE = """\
+---
+title: "Example game"
+date: 2026-01-01
+lastmod: 2026-01-01
+draft: false
+status: playable
+game_kind: full-release
+tagline: "A game."
+year: 2026
+tags: ["example", "demo"]
+---
+
+Body.
+"""
+
+MUSIC_NOTE = """\
+---
+title: "Example album"
+date: 2026-01-01
+lastmod: 2026-01-01
+draft: false
+format: album
+year: 2026
+tags: ["example", "ambient"]
+---
+
+Body.
+"""
+
+POEM_NOTE = """\
+---
+title: "Example poem"
+date: 2026-01-01
+lastmod: 2026-01-01
+draft: false
+lines: 4
+tags: ["example", "lyric"]
+---
+
+Body.
+"""
+
 
 class TempRepo:
     def __init__(self) -> None:
         self.root = Path(tempfile.mkdtemp())
         (self.root / "content" / "garden").mkdir(parents=True)
         (self.root / "content" / "essays").mkdir(parents=True)
+        (self.root / "content" / "works" / "games").mkdir(parents=True)
+        (self.root / "content" / "works" / "music").mkdir(parents=True)
+        (self.root / "content" / "works" / "poetry").mkdir(parents=True)
         (self.root / "data").mkdir(parents=True)
 
     def write_garden(self, slug: str, body: str = GARDEN_NOTE) -> None:
@@ -62,6 +108,21 @@ class TempRepo:
 
     def write_essay(self, slug: str, body: str = ESSAY_NOTE) -> None:
         d = self.root / "content" / "essays" / slug
+        d.mkdir(exist_ok=True)
+        (d / "index.md").write_text(body)
+
+    def write_game(self, slug: str, body: str = GAME_NOTE) -> None:
+        d = self.root / "content" / "works" / "games" / slug
+        d.mkdir(exist_ok=True)
+        (d / "index.md").write_text(body)
+
+    def write_music(self, slug: str, body: str = MUSIC_NOTE) -> None:
+        d = self.root / "content" / "works" / "music" / slug
+        d.mkdir(exist_ok=True)
+        (d / "index.md").write_text(body)
+
+    def write_poem(self, slug: str, body: str = POEM_NOTE) -> None:
+        d = self.root / "content" / "works" / "poetry" / slug
         d.mkdir(exist_ok=True)
         (d / "index.md").write_text(body)
 
@@ -219,6 +280,50 @@ class FilterChipsLinterTest(unittest.TestCase):
         self.assertTrue(
             any("primary_tag" in e and "is not a recognized key" in e for e in errors)
         )
+
+    # --- works subsection path mapping ---
+
+    def test_valid_games_curation_passes(self) -> None:
+        self.repo.write_game("example-game")
+        self.repo.write_config(
+            'games:\n'
+            '  primary_tags: ["example", "demo"]\n'
+            '  primary_top_k: 10\n'
+        )
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 0, msg=f"unexpected: {errors}")
+
+    def test_valid_music_curation_passes(self) -> None:
+        self.repo.write_music("example-album")
+        self.repo.write_config(
+            'music:\n'
+            '  primary_tags: ["example", "ambient"]\n'
+            '  primary_top_k: 10\n'
+        )
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 0, msg=f"unexpected: {errors}")
+
+    def test_valid_poetry_curation_passes(self) -> None:
+        self.repo.write_poem("example-poem")
+        self.repo.write_config(
+            'poetry:\n'
+            '  primary_tags: ["example", "lyric"]\n'
+            '  primary_top_k: 10\n'
+        )
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 0, msg=f"unexpected: {errors}")
+
+    def test_stale_games_tag_fails(self) -> None:
+        self.repo.write_game("example-game")
+        self.repo.write_config(
+            'games:\n'
+            '  primary_tags: ["example", "ghost-game-tag"]\n'
+        )
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        joined = "\n".join(errors)
+        self.assertIn("ghost-game-tag", joined)
+        self.assertIn("games", joined)
 
 
 if __name__ == "__main__":

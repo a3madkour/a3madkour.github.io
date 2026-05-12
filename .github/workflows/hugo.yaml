@@ -76,6 +76,14 @@ jobs:
         run: python3 tools/check_citations.py
       - name: Run citation linter unit tests
         run: python3 -m unittest tools/test_check_citations.py -v
+      - name: Verify works fixtures
+        run: python3 tools/check_works_fixtures.py
+      - name: Run works fixture linter unit tests
+        run: python3 -m unittest tools/test_check_works_fixtures.py -v
+      - name: Verify works links
+        run: python3 tools/check_works_links.py
+      - name: Run works links linter unit tests
+        run: python3 -m unittest tools/test_check_works_links.py -v
       - name: Build with Hugo
         env:
           HUGO_CACHEDIR: ${{ runner.temp }}/hugo_cache
