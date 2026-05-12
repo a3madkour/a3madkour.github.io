@@ -74,10 +74,19 @@ function persistVisited(slug) {
   let list;
   try {
     list = JSON.parse(store.getItem(VISITED_KEY) || '[]');
-  } catch { list = []; }
+  } catch (e) {
+    // Corrupt JSON in the visited list. Log + reset so the next write
+    // rebuilds it cleanly instead of failing every navigation.
+    console.warn('garden-stack: dropping corrupt visited list', e);
+    list = [];
+  }
   list.push(slug);
   if (list.length > VISITED_CAP) list = list.slice(-VISITED_CAP);
   try { store.setItem(VISITED_KEY, JSON.stringify(list)); } catch {}
+  // The setItem catch is intentionally silent — same rationale as the
+  // localStorage swallows in readConsent/writeConsent above: in restricted
+  // contexts (private browsing strict, sandboxed iframes) persistence is
+  // genuinely unavailable, not a bug.
 }
 
 function showConsentBanner() {
@@ -90,12 +99,16 @@ function showConsentBanner() {
   banner.className = 'garden-consent-banner';
   banner.setAttribute('role', 'dialog');
   banner.setAttribute('aria-label', 'Track reading path');
+  // Button order is privacy-first by intent: keyboard focus and reading order
+  // land on "No, never" first, then the session-only middle ground, then the
+  // most-retentive option. Avoiding the dark-pattern shape where the
+  // data-retentive choice is anchored leftmost.
   banner.innerHTML = `
     <span>Track your reading path across visits?</span>
     <span class="opts">
-      <button type="button" data-choice="yes">Yes, persist</button>
-      <button type="button" data-choice="session">Just this session</button>
       <button type="button" data-choice="no">No, never</button>
+      <button type="button" data-choice="session">Just this session</button>
+      <button type="button" data-choice="yes">Yes, persist</button>
     </span>
   `;
   log.parentNode.insertBefore(banner, log);
@@ -145,7 +158,12 @@ function updatePathLog() {
       a.setAttribute('aria-current', 'page');
     }
     const col = document.querySelector(`${COLUMN}[data-slug="${CSS.escape(slug)}"]`);
-    a.textContent = col ? col.querySelector('.garden-note-title').textContent.trim() : slug;
+    // Fall back to the slug if the column is missing OR the title element is
+    // missing (template change, partial-render failure). The outer ternary
+    // already guards `col`; without the inner guard, a templates regression
+    // breaks updatePathLog for the whole stack instead of just one crumb.
+    const titleEl = col ? col.querySelector('.garden-note-title') : null;
+    a.textContent = titleEl ? titleEl.textContent.trim() : slug;
     log.insertBefore(a, actions);
   });
 

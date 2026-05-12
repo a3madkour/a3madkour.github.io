@@ -3,9 +3,16 @@
 
 const PANEL_KEY = 'garden-graph-open';
 const POSITIONS_KEY = 'garden-graph-positions';
+// Hand-curated map from known tags to existing site palette tokens. Ordering
+// has no effect; lookup is by exact key match. Multiple tags may
+// intentionally share a token (e.g. reading + calvino both ride --color-warn,
+// games + play both ride --color-steel) — they're semantically adjacent and
+// expanding the palette just to disambiguate would hurt graph legibility more
+// than it helps. Unmapped tags fall through to --color-ink-fade by design;
+// this is the signal "we haven't curated a color for this tag yet", not a
+// bug. To add a new mapping, pick an existing token from the :root palette
+// (don't introduce new ones here).
 const TAG_PALETTE = {
-  // Map well-known tags to existing site tokens.
-  // Anything else falls back to --color-ink-fade.
   'narrative': 'var(--color-burgundy)',
   'memory':    'var(--color-green)',
   'games':     'var(--color-steel)',
@@ -46,14 +53,22 @@ function persistCacheDebounced() {
     flushCache();
   }, 200);
 }
-function flushCache() {
-  let canvas;
-  const isGraphPage = !!document.querySelector('.garden-graph-page');
-  if (isGraphPage) {
-    canvas = document.querySelector('.garden-graph-page .garden-graph-canvas');
-  } else if (state.panel) {
-    canvas = state.panel.querySelector('.garden-graph-panel-canvas');
+// Returns the active graph canvas element (the standalone /garden/graph/
+// page's canvas, or the side panel's canvas), or null if neither is
+// mounted. The standalone page takes precedence because it can coexist
+// with state.panel = null.
+function getActiveCanvas() {
+  if (document.querySelector('.garden-graph-page')) {
+    return document.querySelector('.garden-graph-page .garden-graph-canvas');
   }
+  if (state.panel) {
+    return state.panel.querySelector('.garden-graph-panel-canvas');
+  }
+  return null;
+}
+
+function flushCache() {
+  const canvas = getActiveCanvas();
   if (!canvas || !state.simulation) return;
   saveCachedPositions(canvas, state.simulation.nodes(), state.viewTransform, state.pinnedSlugs);
 }
@@ -90,7 +105,13 @@ function loadCachedPositions(canvas) {
       };
     }
     return entry;
-  } catch { return null; }
+  } catch (e) {
+    // Corrupt JSON or a SecurityError on sessionStorage. Drop the whole key
+    // rather than fail every page load; the next save will rebuild it.
+    console.warn('garden-graph: dropping unreadable positions cache', e);
+    try { sessionStorage.removeItem(POSITIONS_KEY); } catch {}
+    return null;
+  }
 }
 
 function saveCachedPositions(canvas, nodes, view, pinned) {
@@ -107,7 +128,13 @@ function saveCachedPositions(canvas, nodes, view, pinned) {
       view: { k: view.k, tx: view.tx, ty: view.ty },
     };
     sessionStorage.setItem(POSITIONS_KEY, JSON.stringify(cache));
-  } catch {}
+  } catch (e) {
+    // QuotaExceededError on small-budget sessionStorage (rare for ~14 KB),
+    // SecurityError in locked-down contexts, or JSON.stringify on a node
+    // with a custom toJSON throwing. Don't blow up the graph runtime; just
+    // log so a developer can spot it.
+    console.warn('garden-graph: positions cache write failed', e);
+  }
 }
 
 function isMobile() {
@@ -118,8 +145,15 @@ function tagColor(tag) {
   return TAG_PALETTE[tag] || 'var(--color-ink-fade)';
 }
 
+// Node radius is the contract that backs the legend's "size = link count":
+// r = NODE_R_MIN + (degree × NODE_R_PER_DEGREE), clamped to NODE_R_MAX.
+// Tweak these if a future fixture set makes high-degree nodes feel too
+// uniform or low-degree ones too thin to click.
+const NODE_R_MIN = 5;
+const NODE_R_MAX = 16;
+const NODE_R_PER_DEGREE = 1.5;
 function nodeRadius(degree) {
-  return Math.min(16, Math.max(5, 5 + degree * 1.5));
+  return Math.min(NODE_R_MAX, Math.max(NODE_R_MIN, NODE_R_MIN + degree * NODE_R_PER_DEGREE));
 }
 
 function parseData() {
@@ -262,7 +296,7 @@ async function buildSimulation(canvas) {
       persistCacheDebounced();
     });
 
-  // Build node elements (each is a <g> with circle + text)
+  // Build node elements (each is a <g> with circle + text).
   const nodeEls = nodes.map(n => {
     const g = document.createElementNS(SVG_NS, 'g');
     g.setAttribute('class', 'garden-graph-node' + (state.inStack.has(n.slug) ? ' in-stack' : ''));
@@ -285,34 +319,44 @@ async function buildSimulation(canvas) {
     g.__data__ = n;
     select(g).call(dragBehavior);
 
-    const openSlug = () => {
-      // If a stack root is mounted on this page, append/refocus a column
-      // rather than do a hard navigation — preserves the reader's path.
-      // On the standalone /garden/graph/ page there is no stack, so navigate.
-      if (document.querySelector('.garden-stack')) {
-        window.dispatchEvent(new CustomEvent('garden:graph-navigate', {
-          detail: { slug: n.slug }
-        }));
-      } else {
-        window.location.assign(`/garden/${n.slug}/`);
-      }
-    };
-    g.addEventListener('click', () => {
-      if (n.wasDragged) {
-        n.wasDragged = false;
-        return;
-      }
-      openSlug();
-    });
-    g.addEventListener('keydown', (ev) => {
-      if (ev.key === 'Enter' || ev.key === ' ') {
-        ev.preventDefault();
-        openSlug();
-      }
-    });
-
     nodeLayer.appendChild(g);
     return { n, g };
+  });
+
+  // Delegate click + keydown for all nodes onto the node layer instead of
+  // attaching two listeners per node. Node identity comes from the SVG
+  // element's `__data__` (set above) and its `dataset.slug`, not from a
+  // per-node closure — so the listeners survive a rebuild and don't grow
+  // with the graph.
+  function openSlugForElement(g) {
+    const slug = g.dataset.slug;
+    // If a stack root is mounted on this page, append/refocus a column rather
+    // than do a hard navigation — preserves the reader's path. On the
+    // standalone /garden/graph/ page there's no stack, so navigate.
+    if (document.querySelector('.garden-stack')) {
+      window.dispatchEvent(new CustomEvent('garden:graph-navigate', {
+        detail: { slug }
+      }));
+    } else {
+      window.location.assign(`/garden/${slug}/`);
+    }
+  }
+  nodeLayer.addEventListener('click', (e) => {
+    const g = e.target.closest('.garden-graph-node');
+    if (!g || !nodeLayer.contains(g)) return;
+    const d = g.__data__;
+    if (d && d.wasDragged) {
+      d.wasDragged = false;
+      return;
+    }
+    openSlugForElement(g);
+  });
+  nodeLayer.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const g = e.target.closest('.garden-graph-node');
+    if (!g || !nodeLayer.contains(g)) return;
+    e.preventDefault();
+    openSlugForElement(g);
   });
 
   canvas.replaceChildren(svg);
@@ -403,13 +447,7 @@ async function buildSimulation(canvas) {
 }
 
 function rebuildGraph() {
-  let canvas;
-  const isGraphPage = !!document.querySelector('.garden-graph-page');
-  if (isGraphPage) {
-    canvas = document.querySelector('.garden-graph-page .garden-graph-canvas');
-  } else if (state.panel) {
-    canvas = state.panel.querySelector('.garden-graph-panel-canvas');
-  }
+  const canvas = getActiveCanvas();
   if (!canvas) return;
   if (state.simulation) state.simulation.stop();
   buildSimulation(canvas).then(({ svg, simulation, contentGroup }) => {
@@ -528,67 +566,83 @@ function setupPanelResize() {
   });
 }
 
-function buildToolbar(host) {
-  if (!state.data) return;
+// Filter chips use aria-pressed toggle semantics (each chip is "currently
+// selected or not" within its dimension); action chips are one-shot buttons.
+// Different semantics, different visual treatment (.chip vs .chip-action),
+// different builder concerns — separate them.
+
+function makeFilterChip(host, label, dim, value) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'chip';
+  b.dataset.dim = dim;
+  b.dataset.value = value;
+  b.setAttribute('aria-pressed', state.filters[dim] === value ? 'true' : 'false');
+  b.textContent = label;
+  b.addEventListener('click', () => {
+    state.filters[dim] = value;
+    host.querySelectorAll(`button[data-dim="${dim}"]`).forEach(c => {
+      c.setAttribute('aria-pressed', c.dataset.value === value ? 'true' : 'false');
+    });
+    rebuildGraph();
+  });
+  return b;
+}
+
+function makeActionChip(label, onClick) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'chip chip-action';
+  b.textContent = label;
+  b.addEventListener('click', onClick);
+  return b;
+}
+
+function buildFilterChips(host) {
   const tags = new Set();
   const stages = new Set();
   state.data.nodes.forEach(n => { if (n.tag) tags.add(n.tag); stages.add(n.stage); });
 
-  const mkChip = (label, dim, value) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'chip';
-    b.dataset.dim = dim;
-    b.dataset.value = value;
-    b.setAttribute('aria-pressed', state.filters[dim] === value ? 'true' : 'false');
-    b.textContent = label;
-    b.addEventListener('click', () => {
-      state.filters[dim] = value;
-      host.querySelectorAll(`button[data-dim="${dim}"]`).forEach(c => {
-        c.setAttribute('aria-pressed', c.dataset.value === value ? 'true' : 'false');
-      });
-      rebuildGraph();
-    });
-    return b;
-  };
-
-  host.replaceChildren();
-
   // Tag dim
   const tagLabel = document.createElement('span'); tagLabel.className = 'label'; tagLabel.textContent = 'Tag:';
-  host.append(tagLabel, mkChip('All', 'tag', 'all'));
-  Array.from(tags).sort().forEach(t => host.appendChild(mkChip(t, 'tag', t)));
+  host.append(tagLabel, makeFilterChip(host, 'All', 'tag', 'all'));
+  Array.from(tags).sort().forEach(t => host.appendChild(makeFilterChip(host, t, 'tag', t)));
 
   // Stage dim
   const stageLabel = document.createElement('span'); stageLabel.className = 'label'; stageLabel.textContent = 'Stage:';
-  host.append(stageLabel, mkChip('All', 'stage', 'all'));
-  ['seedling', 'budding', 'evergreen'].filter(s => stages.has(s)).forEach(s => host.appendChild(mkChip(s, 'stage', s)));
+  host.append(stageLabel, makeFilterChip(host, 'All', 'stage', 'all'));
+  ['seedling', 'budding', 'evergreen']
+    .filter(s => stages.has(s))
+    .forEach(s => host.appendChild(makeFilterChip(host, s, 'stage', s)));
 
   // Local dim — note pages only
   if (state.page.isNotePage) {
     const localLabel = document.createElement('span'); localLabel.className = 'label'; localLabel.textContent = 'Scope:';
-    host.append(localLabel, mkChip('All', 'local', 'all'), mkChip('1-hop', 'local', '1-hop'), mkChip('2-hop', 'local', '2-hop'));
+    host.append(
+      localLabel,
+      makeFilterChip(host, 'All', 'local', 'all'),
+      makeFilterChip(host, '1-hop', 'local', '1-hop'),
+      makeFilterChip(host, '2-hop', 'local', '2-hop'),
+    );
   }
+}
 
-  // Action chips: visually separated from filter chips
+function buildActionChips(host) {
   const divider = document.createElement('span');
   divider.className = 'toolbar-divider';
   divider.setAttribute('aria-hidden', 'true');
-  host.append(divider);
+  host.append(
+    divider,
+    makeActionChip('Reset view', resetView),
+    makeActionChip('Reset positions', resetPositions),
+  );
+}
 
-  const resetViewBtn = document.createElement('button');
-  resetViewBtn.type = 'button';
-  resetViewBtn.className = 'chip chip-action';
-  resetViewBtn.textContent = 'Reset view';
-  resetViewBtn.addEventListener('click', resetView);
-  host.append(resetViewBtn);
-
-  const resetPosBtn = document.createElement('button');
-  resetPosBtn.type = 'button';
-  resetPosBtn.className = 'chip chip-action';
-  resetPosBtn.textContent = 'Reset positions';
-  resetPosBtn.addEventListener('click', resetPositions);
-  host.append(resetPosBtn);
+function buildToolbar(host) {
+  if (!state.data) return;
+  host.replaceChildren();
+  buildFilterChips(host);
+  buildActionChips(host);
 }
 
 function buildLegend(host) {
