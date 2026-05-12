@@ -1,8 +1,8 @@
-// Garden graph runtime. Uses d3-force for layout; renders to SVG.
-// Spec: docs/superpowers/specs/2026-05-08-garden-interactions-design.md §6.
+// Research graph runtime. Uses d3-force for layout; renders to SVG.
+// Spec: docs/superpowers/specs/2026-05-11-research-graph-design.md §5.6.
 
-const PANEL_KEY = 'garden-graph-open';
-const POSITIONS_KEY = 'garden-graph-positions';
+const PANEL_KEY = 'research-graph-open';
+const POSITIONS_KEY = 'research-graph-positions';
 // Hand-curated map from known tags to existing site palette tokens. Ordering
 // has no effect; lookup is by exact key match. Multiple tags may
 // intentionally share a token (e.g. reading + calvino both ride --color-warn,
@@ -58,8 +58,8 @@ function persistCacheDebounced() {
 // mounted. The standalone page takes precedence because it can coexist
 // with state.panel = null.
 function getActiveCanvas() {
-  if (document.querySelector('.garden-graph-page')) {
-    return document.querySelector('.garden-graph-page .garden-graph-canvas');
+  if (document.querySelector('.research-graph-page')) {
+    return document.querySelector('.research-graph-page .research-graph-canvas');
   }
   if (state.panel) {
     return state.panel.querySelector('.graph-panel-canvas');
@@ -108,7 +108,7 @@ function loadCachedPositions(canvas) {
   } catch (e) {
     // Corrupt JSON or a SecurityError on sessionStorage. Drop the whole key
     // rather than fail every page load; the next save will rebuild it.
-    console.warn('garden-graph: dropping unreadable positions cache', e);
+    console.warn('research-graph: dropping unreadable positions cache', e);
     try { sessionStorage.removeItem(POSITIONS_KEY); } catch {}
     return null;
   }
@@ -133,7 +133,7 @@ function saveCachedPositions(canvas, nodes, view, pinned) {
     // SecurityError in locked-down contexts, or JSON.stringify on a node
     // with a custom toJSON throwing. Don't blow up the graph runtime; just
     // log so a developer can spot it.
-    console.warn('garden-graph: positions cache write failed', e);
+    console.warn('research-graph: positions cache write failed', e);
   }
 }
 
@@ -157,7 +157,7 @@ function nodeRadius(degree) {
 }
 
 function parseData() {
-  const tag = document.getElementById('garden-graph-data');
+  const tag = document.getElementById('research-graph-data');
   if (!tag) return null;
   try { return JSON.parse(tag.textContent); } catch { return null; }
 }
@@ -238,16 +238,16 @@ async function buildSimulation(canvas) {
   svg.appendChild(contentGroup);
 
   const edgeLayer = document.createElementNS(SVG_NS, 'g');
-  edgeLayer.setAttribute('class', 'garden-graph-edges');
+  edgeLayer.setAttribute('class', 'research-graph-edges');
   contentGroup.appendChild(edgeLayer);
   const nodeLayer = document.createElementNS(SVG_NS, 'g');
-  nodeLayer.setAttribute('class', 'garden-graph-nodes');
+  nodeLayer.setAttribute('class', 'research-graph-nodes');
   contentGroup.appendChild(nodeLayer);
 
   // Build edge elements
   const edgeEls = edges.map(e => {
     const line = document.createElementNS(SVG_NS, 'line');
-    line.setAttribute('class', 'garden-graph-edge' + (e.crossTopic ? ' cross-topic' : ''));
+    line.setAttribute('class', 'research-graph-edge' + (e.crossTopic ? ' cross-topic' : ''));
     edgeLayer.appendChild(line);
     return { e, line };
   });
@@ -342,7 +342,7 @@ async function buildSimulation(canvas) {
     }
   }
   nodeLayer.addEventListener('click', (e) => {
-    const g = e.target.closest('.garden-graph-node');
+    const g = e.target.closest('.research-graph-node');
     if (!g || !nodeLayer.contains(g)) return;
     const d = g.__data__;
     if (d && d.wasDragged) {
@@ -353,7 +353,7 @@ async function buildSimulation(canvas) {
   });
   nodeLayer.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
-    const g = e.target.closest('.garden-graph-node');
+    const g = e.target.closest('.research-graph-node');
     if (!g || !nodeLayer.contains(g)) return;
     e.preventDefault();
     openSlugForElement(g);
@@ -363,7 +363,7 @@ async function buildSimulation(canvas) {
 
   const zoomBehavior = zoom()
     .scaleExtent([0.3, 4])
-    .filter(event => !event.target.closest('.garden-graph-node'))
+    .filter(event => !event.target.closest('.research-graph-node'))
     .on('start', (event) => {
       // Wheel-zoom also fires start/end; only flip the cursor for drag-pan.
       if (event.sourceEvent && event.sourceEvent.type !== 'wheel') {
@@ -459,7 +459,7 @@ function rebuildGraph() {
 
 function updateInStackMarkers() {
   if (!state.svg) return;
-  state.svg.querySelectorAll('.garden-graph-node').forEach(g => {
+  state.svg.querySelectorAll('.research-graph-node').forEach(g => {
     const slug = g.dataset.slug;
     g.classList.toggle('in-stack', state.inStack.has(slug));
   });
@@ -498,7 +498,7 @@ function resetPositions() {
   });
 }
 
-const PANEL_WIDTH_KEY = 'garden-graph-panel-width';
+const PANEL_WIDTH_KEY = 'research-graph-panel-width';
 const PANEL_MIN = 240;
 function panelMaxWidth() { return Math.round(window.innerWidth * 0.8); }
 
@@ -697,7 +697,7 @@ function closePanel() {
 function init() {
   state.data = parseData();
   if (!state.data) return;
-  state.panel = document.getElementById('garden-graph-panel');
+  state.panel = document.getElementById('research-graph-panel');
   state.page.isMobile = isMobile();
   const stackRoot = document.querySelector('.garden-stack-columns .garden-column');
   state.page.isNotePage = !!stackRoot;
@@ -708,12 +708,12 @@ function init() {
     state.inStack.add(c.dataset.slug);
   });
 
-  const isGraphPage = !!document.querySelector('.garden-graph-page');
+  const isGraphPage = !!document.querySelector('.research-graph-page');
 
   if (isGraphPage) {
-    // Standalone /garden/graph/ — render immediately; no panel.
-    const toolbar = document.querySelector('.garden-graph-page .garden-graph-toolbar');
-    const legend = document.querySelector('.garden-graph-page .garden-graph-legend');
+    // Standalone /research/graph/ — render immediately; no panel.
+    const toolbar = document.querySelector('.research-graph-page .research-graph-toolbar');
+    const legend = document.querySelector('.research-graph-page .research-graph-legend');
     if (toolbar) buildToolbar(toolbar);
     if (legend) buildLegend(legend);
     rebuildGraph();
