@@ -652,15 +652,8 @@ function buildToolbar(host) {
 
 function buildLegend(host) {
   host.replaceChildren();
-  const tags = new Map();
-  (state.data.nodes || []).forEach(n => { if (n.tag) tags.set(n.tag, true); });
-  Array.from(tags.keys()).slice(0, 4).forEach(tag => {
-    const li = document.createElement('li');
-    li.innerHTML = `<span class="swatch" style="background:${tagColor(tag)}"></span>${tag}`;
-    host.appendChild(li);
-  });
   const note = document.createElement('li');
-  note.textContent = 'size = link count · solid = same topic · dashed = cross-topic';
+  note.textContent = 'square = theme · circle = question · size = link count · dashed = cross-theme';
   host.appendChild(note);
 }
 
