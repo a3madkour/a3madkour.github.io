@@ -146,9 +146,47 @@ function nodeRadius(degree) {
 }
 
 function parseData() {
-  const tag = document.getElementById('research-graph-data');
-  if (!tag) return null;
-  try { return JSON.parse(tag.textContent); } catch { return null; }
+  const el = document.getElementById('research-graph-data');
+  if (!el) return null;
+  try {
+    const raw = JSON.parse(el.textContent);
+    // Build deterministic palette index from themePaletteOrder (sorted by weight).
+    const paletteOrder = raw.themePaletteOrder || [];
+    const paletteIndex = (slug) => {
+      const idx = paletteOrder.indexOf(slug);
+      return idx >= 0 ? idx : 0;
+    };
+    // Flatten themes + questions into a unified nodes array.
+    const nodes = [
+      ...(raw.themes || []).map(t => ({
+        slug: t.slug,
+        title: t.title,
+        kind: 'theme',
+        status: t.status,
+        tags: t.tags || [],
+        themeColorIdx: paletteIndex(t.slug),
+        degree: t.degree || 0,
+      })),
+      ...(raw.questions || []).map(q => ({
+        slug: q.slug,
+        title: q.title,
+        kind: 'question',
+        theme: q.theme,
+        status: q.status,
+        tags: q.tags || [],
+        themeColorIdx: paletteIndex(q.theme),
+        degree: q.degree || 0,
+      })),
+    ];
+    // Normalize edges: kind field replaces the boolean crossTopic.
+    const edges = (raw.edges || []).map(e => ({
+      source: e.source,
+      target: e.target,
+      kind: e.kind || 'parent-child',
+      via: e.via || null,
+    }));
+    return { nodes, edges };
+  } catch { return null; }
 }
 
 function applyFilters() {
