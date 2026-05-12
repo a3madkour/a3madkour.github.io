@@ -1,0 +1,79 @@
+{{ define "main" }}
+<main class="reading-column about-page">
+
+  <section class="about-hero">
+    <div class="monogram" aria-hidden="true">
+      {{ with resources.Get "images/icons/monogram-am.svg" }}{{ .Content | safeHTML }}{{ end }}
+    </div>
+    <div class="about-hero-text">
+      <h1>Abdelrahman Madkour</h1>
+      <p class="role">Games researcher, writer, occasional maker of music and poems.</p>
+      <p class="placeholder">Pronouns — to be added · Location — to be added</p>
+    </div>
+  </section>
+
+  <section class="about-section">
+    <h2>Bio</h2>
+    <p class="placeholder">Bio paragraph 1 — to be authored in org-mode.</p>
+    <p class="placeholder">Bio paragraph 2 — to be authored in org-mode.</p>
+    <p class="placeholder">Bio paragraph 3 — to be authored in org-mode.</p>
+  </section>
+
+  <section class="about-section">
+    <h2>Where</h2>
+
+    <h3>Affiliations</h3>
+    <ul>
+      <li class="placeholder">Affiliation 1 — to be added</li>
+      <li class="placeholder">Affiliation 2 — to be added</li>
+    </ul>
+
+    <h3>Other places I keep things</h3>
+    <ul>
+      <li>CV — <span class="placeholder">link to be added</span></li>
+      <li>Google Scholar — <span class="placeholder">link to be added</span></li>
+      <li>ORCID — <span class="placeholder">link to be added</span></li>
+      <li>DBLP — <span class="placeholder">link to be added</span></li>
+    </ul>
+  </section>
+
+  <section class="about-section">
+    <h2>Connect</h2>
+    <dl class="connect-list">
+      <dt>Email</dt>
+      <dd><a href="mailto:a3madkour@gmail.com">a3madkour@gmail.com</a> — preferred for substantial things</dd>
+
+      <dt>GitHub</dt>
+      <dd><a href="https://github.com/a3madkour">@a3madkour</a></dd>
+
+      <dt>RSS</dt>
+      <dd><a href="/index.xml">/index.xml</a> — site-wide; per-section feeds at
+        <a href="/essays/index.xml">/essays/</a> and
+        <a href="/garden/index.xml">/garden/</a></dd>
+
+      <dt>Bluesky</dt>
+      <dd><span class="placeholder">handle to be added</span></dd>
+
+      <dt>Mastodon</dt>
+      <dd><span class="placeholder">handle to be added</span></dd>
+
+      <dt>itch.io</dt>
+      <dd><span class="placeholder">handle to be added</span></dd>
+    </dl>
+  </section>
+
+  <section class="about-section">
+    <h2>Colophon</h2>
+    <ul>
+      <li><span class="placeholder">Built with — to be authored</span></li>
+      <li><span class="placeholder">Authored in — to be authored</span></li>
+      <li><span class="placeholder">Set in — to be authored</span></li>
+      <li><span class="placeholder">Hosted on — to be authored</span></li>
+      <li><span class="placeholder">No-AI claim — to be authored</span></li>
+      <li><span class="placeholder">Privacy disclosure — to be authored</span></li>
+    </ul>
+    <p class="about-licenses">© 2026{{ if gt now.Year 2026 }}&ndash;{{ now.Year }}{{ end }} · CC BY-NC-SA 4.0 (writing) · MIT (code)</p>
+  </section>
+
+</main>
+{{ end }}
