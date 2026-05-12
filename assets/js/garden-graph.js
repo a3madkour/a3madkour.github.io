@@ -227,16 +227,23 @@ async function buildSimulation(canvas) {
       d.__startX = d.x;
       d.__startY = d.y;
       d.wasDragged = false;
-      if (!reducedMotion()) sim.alphaTarget(0.3).restart();
+      d.__reheated = false;
+      // Do NOT reheat here — every click triggers start, and reheating on a
+      // click makes neighbors visibly drift during the navigation that follows.
+      // Defer the reheat to the first real `drag` event below.
     })
     .on('drag', function(event) {
       const d = event.subject;
       d.fx = event.x;
       d.fy = event.y;
+      if (!d.__reheated && !reducedMotion()) {
+        sim.alphaTarget(0.3).restart();
+        d.__reheated = true;
+      }
     })
     .on('end', function(event) {
       const d = event.subject;
-      if (!reducedMotion()) sim.alphaTarget(0);
+      if (d.__reheated && !reducedMotion()) sim.alphaTarget(0);
       const dx = d.fx - d.__startX;
       const dy = d.fy - d.__startY;
       if ((dx * dx + dy * dy) > 9) {
