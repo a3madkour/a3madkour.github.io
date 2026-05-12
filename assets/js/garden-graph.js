@@ -62,7 +62,7 @@ function getActiveCanvas() {
     return document.querySelector('.garden-graph-page .garden-graph-canvas');
   }
   if (state.panel) {
-    return state.panel.querySelector('.garden-graph-panel-canvas');
+    return state.panel.querySelector('.graph-panel-canvas');
   }
   return null;
 }
@@ -516,10 +516,10 @@ function applySavedPanelWidth() {
 
 function setupPanelResize() {
   if (!state.panel) return;
-  if (state.panel.querySelector('.garden-graph-panel-resize')) return;
+  if (state.panel.querySelector('.graph-panel-resize')) return;
 
   const handle = document.createElement('div');
-  handle.className = 'garden-graph-panel-resize';
+  handle.className = 'graph-panel-resize';
   handle.setAttribute('role', 'separator');
   handle.setAttribute('aria-orientation', 'vertical');
   handle.setAttribute('aria-label', 'Resize graph panel');
@@ -673,10 +673,10 @@ function openPanel({ animate = true } = {}) {
   state.panel.setAttribute('aria-hidden', 'false');
   state.panelOpen = true;
   try { sessionStorage.setItem(PANEL_KEY, '1'); } catch {}
-  document.querySelectorAll('.garden-graph-toggle').forEach(b => b.setAttribute('aria-expanded', 'true'));
+  document.querySelectorAll('.graph-toggle').forEach(b => b.setAttribute('aria-expanded', 'true'));
 
-  const toolbar = state.panel.querySelector('.garden-graph-panel-toolbar');
-  const legend = state.panel.querySelector('.garden-graph-panel-legend');
+  const toolbar = state.panel.querySelector('.graph-panel-toolbar');
+  const legend = state.panel.querySelector('.graph-panel-legend');
   if (toolbar && !toolbar.children.length) buildToolbar(toolbar);
   if (legend && !legend.children.length) buildLegend(legend);
   rebuildGraph();
@@ -689,8 +689,8 @@ function closePanel() {
   state.panel.setAttribute('aria-hidden', 'true');
   state.panelOpen = false;
   try { sessionStorage.removeItem(PANEL_KEY); } catch {}
-  document.querySelectorAll('.garden-graph-toggle').forEach(b => b.setAttribute('aria-expanded', 'false'));
-  const toggle = document.querySelector('.garden-graph-toggle');
+  document.querySelectorAll('.graph-toggle').forEach(b => b.setAttribute('aria-expanded', 'false'));
+  const toggle = document.querySelector('.graph-toggle');
   if (toggle) toggle.focus();
 }
 
@@ -728,7 +728,7 @@ function init() {
   }
 
   // Toggle button(s)
-  document.querySelectorAll('.garden-graph-toggle').forEach(btn => {
+  document.querySelectorAll('.graph-toggle').forEach(btn => {
     btn.addEventListener('click', () => {
       if (state.panelOpen) closePanel(); else openPanel();
     });
@@ -736,7 +736,7 @@ function init() {
 
   // Close button inside panel
   if (state.panel) {
-    const close = state.panel.querySelector('.garden-graph-panel-close');
+    const close = state.panel.querySelector('.graph-panel-close');
     if (close) close.addEventListener('click', closePanel);
   }
 
