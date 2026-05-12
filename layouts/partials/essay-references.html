@@ -13,6 +13,7 @@
           <em>{{ $entry.title }}</em>.
           {{ $entry.venue }}.
           {{ with $entry.url }}<a href="{{ . }}" rel="noopener">→ source</a>{{ end }}
+          {{ with $entry.notes_ref }}<a href="/garden/{{ . }}/" class="ref-note">→ related note</a>{{ end }}
         </li>
       {{- end -}}
     </ol>
