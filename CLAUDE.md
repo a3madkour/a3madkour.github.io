@@ -66,6 +66,7 @@ Three-state cycle: **system → light → dark → system**.
   - `layouts/essays/{list,single,rss.xml}.html` — essays index (variable-tile Bento grid + filter chips), essay post (three-zone layout: TOC | body | sidenote rail), per-section RSS feed.
   - `layouts/garden/{list,single,graph,rss.xml}.html` — garden index (topic-map sections + Other notes + multi-dim filter strip + ⊞ Graph toggle), single note page (single template wrapped in `.garden-stack` for Matuschak-style retrieval), `/garden/graph/` standalone page (mobile fallback + deep link), per-section RSS feed.
   - `layouts/blog/{list,single}.html` — legacy.
+  - `layouts/about/single.html` — About page (Phase 2 bio half — Hero / Bio / Where / Connect / Colophon; Now widget deferred to Phase 3). All prose content rendered as `.placeholder` scaffolding awaiting org-mode authoring; Email / GitHub / RSS populated from verifiable sources.
   - `layouts/404.html`.
   - `baseof.html` is a thin semantic wrapper (`.page` div around header/main/footer); per-section layouts override `{{ block "main" }}`.
 - **Partials**:
@@ -181,8 +182,10 @@ Three Google Fonts loaded in a single `<link>`: **Petrona** (body, italic + upri
 
 **Phase 4 follow-up — graph manipulation complete (2026-05-11).** d3-force graph gains hands-on interaction: wheel zoom (0.3×–4×) toward the cursor, drag-pan on empty SVG, drag-to-reposition for any node with Obsidian-style stay-put release. New toolbar buttons **[Reset view]** restores zoom + pan and **[Reset positions]** releases all pinned nodes back to the simulation. Zoom, pan, and pin state persist per filter+viewport in the existing positions cache (`{nodes, view}` shape); legacy cache entries (bare arrays) auto-migrate to the new shape on first read. `d3-zoom`, `d3-drag`, and `d3-selection` vendored alongside `d3-force.min.js`. Added `sim.on('tick', renderTick)` so user-driven simulation reheats (drag-start, Reset positions) actually animate — the prior static-only graph design lacked this. No template changes, no fixture changes, no new CI gates.
 
-**Phase 2 — remaining slices (not started).** Spec §14's Phase 2 also called for About; that's still pending. Beyond Phase 2:
-- About page rewrite (real bio, Now widget, affiliations, connect block, full colophon) — Phase 3-dependent for the Now widget.
+**Phase 2 — About page (bio half) complete (2026-05-11).** Five of six sections from parent spec §4.2 shipped (Hero, Bio, Where, Connect, Colophon); Now widget remains Phase 3-blocked. New `layouts/about/single.html` renders the page; new hand-authored `assets/images/icons/monogram-am.svg` anchors the hero; new CSS §29 introduces the load-bearing `.placeholder` class (muted + italic + dotted underline, `--color-ink-soft` AA-compliant in both modes). Email + GitHub + RSS are populated from verifiable sources; everything else is a marker placeholder for later org-mode authoring. No new CI gates (About is a singleton page).
+
+**Phase 2 — remaining slices (not started).** Beyond Phase 2:
+- About page **Now widget** (the one section from spec §4.2 not yet shipped) — Phase 3-dependent. The other five sections shipped 2026-05-11 as scaffolding.
 - Research theme cards + question hubs + research graph — Phase 5.
 - Works (games + music + poetry) — Phase 6.
 - Library (reading / listening / playing) — data-driven from `data/*.yaml`, Phase 7.
