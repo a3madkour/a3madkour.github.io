@@ -1,0 +1,65 @@
+{{ define "main" }}
+<article class="page works-music-page">
+  {{- $cover := "" -}}
+  {{- with .Params.cover -}}
+    {{- $coverRes := $.Resources.Get . -}}
+    {{- if $coverRes -}}{{- $cover = $coverRes.RelPermalink -}}{{- end -}}
+  {{- end -}}
+
+  <header class="works-music-hero">
+    {{ if $cover }}<div class="works-music-hero-art"><img src="{{ $cover }}" alt=""></div>{{ end }}
+    <div class="works-music-hero-meta">
+      <h1>{{ .Title }}</h1>
+      {{- with .Params.tagline }}<p class="works-music-tagline">{{ . }}</p>{{- end }}
+      <p class="works-music-meta-row">
+        <span class="works-music-format">{{ humanize .Params.format }}</span>
+        {{- with .Params.duration }} · <span class="works-music-duration">{{ . }}</span>{{- end }}
+        · <span class="works-music-year">{{ .Params.year }}</span>
+        {{- with .Params.collaborators }} · <span class="works-music-collaborators">with {{ delimit . ", " }}</span>{{- end }}
+      </p>
+    </div>
+  </header>
+
+  <section class="works-music-player">
+    {{- if .Params.platform_embed }}
+      {{ partial "works/audio-link.html" (dict "platform_embed" .Params.platform_embed) }}
+    {{- else if .Params.audio_url }}
+      <div class="works-player-stub" data-pending>&rarr; Listen (player coming soon)</div>
+    {{- end }}
+  </section>
+
+  <section class="works-music-about">
+    {{ .Content }}
+  </section>
+
+  {{- with .Params.tracks }}
+  <section class="works-music-tracks">
+    <h2>Tracks</h2>
+    <ol class="works-music-tracks-list">
+      {{- range . }}
+      <li><span class="works-music-track-title">{{ index . "title" }}</span>{{ with index . "duration" }}<span class="works-music-track-duration">{{ . }}</span>{{ end }}</li>
+      {{- end }}
+    </ol>
+  </section>
+  {{- end }}
+
+  {{- with .Params.lyrics_poem }}
+    {{- $poem := site.GetPage (printf "/works/poetry/%s" .) }}
+    {{- if $poem }}
+    <section class="works-music-lyrics">
+      <h2>Lyrics</h2>
+      <div class="synced-lyrics-stub" data-pending>Lyrics: <a href="{{ $poem.RelPermalink }}">{{ $poem.Title }}</a></div>
+    </section>
+    {{- end }}
+  {{- end }}
+
+  {{- with .Params.made_with }}
+  <section class="works-music-made-with">
+    <h2>Made with</h2>
+    <p>{{ delimit . ", " }}</p>
+  </section>
+  {{- end }}
+
+  {{ partial "works/connections.html" (dict "page" .) }}
+</article>
+{{ end }}

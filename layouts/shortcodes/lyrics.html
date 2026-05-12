@@ -1,0 +1,5 @@
+{{- /* Synced-lyrics shortcode stub. Future runtime parses [mm:ss] timestamps
+       and binds to an <audio> element via timeupdate. For now, emits a styled
+       block with raw line text and the data-pending marker so fixtures exercise
+       the shape end-to-end. */ -}}
+<div class="synced-lyrics-stub" data-pending>{{ .Inner | safeHTML }}</div>
