@@ -12,12 +12,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from check_fixtures import (  # noqa: E402
-    FRONTMATTER_RE,
-    _parse_block_item,
-    parse_frontmatter,
-    parse_scalar,
-)
+from check_fixtures import parse_frontmatter  # noqa: E402
 
 # --- contracts ---
 
@@ -46,74 +41,6 @@ POEM_OPTIONAL = {"tags", "collection", "set_to_music", "summary"}
 POEM_FIELDS = POEM_REQUIRED | POEM_OPTIONAL
 
 
-def _parse_works_fields(text: str) -> dict[str, object] | None:
-    """Parse frontmatter AND scan the document body for top-level key: value lines.
-
-    Works fixtures sometimes have extra fields appended after the closing '---' for
-    test-fixture convenience; this helper merges both regions.  Frontmatter fields
-    take precedence.  Inline-dict string values ('{ k: v }') are coerced to dicts.
-    """
-    fm = parse_frontmatter(text)
-    if fm is None:
-        return None
-
-    # Coerce any top-level values that are inline-dict strings
-    for key, val in list(fm.items()):
-        if isinstance(val, str) and val.startswith("{") and val.endswith("}"):
-            fm[key] = _parse_block_item(val)
-
-    # Also scan the body for top-level key: value lines
-    m = FRONTMATTER_RE.match(text)
-    if m:
-        body = text[m.end():]
-        lines = body.splitlines()
-        i = 0
-        while i < len(lines):
-            raw = lines[i]
-            stripped = raw.strip()
-            if not stripped or stripped.startswith("#"):
-                i += 1
-                continue
-            if raw.startswith((" ", "\t")) or ":" not in stripped:
-                i += 1
-                continue
-            key, _, value = stripped.partition(":")
-            key = key.strip()
-            value = value.strip()
-            if key in fm:  # frontmatter wins
-                i += 1
-                continue
-            if value != "":
-                parsed = parse_scalar(value)
-                if isinstance(parsed, str) and parsed.startswith("{") and parsed.endswith("}"):
-                    parsed = _parse_block_item(parsed)
-                fm[key] = parsed
-                i += 1
-                continue
-            # Empty value — look for an indented block sequence
-            items: list[object] = []
-            j = i + 1
-            while j < len(lines):
-                nxt = lines[j]
-                nxt_stripped = nxt.strip()
-                if not nxt_stripped:
-                    j += 1
-                    continue
-                if nxt.startswith((" ", "\t")) and nxt_stripped.startswith("-"):
-                    item_text = nxt_stripped[1:].strip()
-                    items.append(_parse_block_item(item_text))
-                    j += 1
-                    continue
-                break
-            if items:
-                fm[key] = items
-                i = j
-            else:
-                fm[key] = ""
-                i += 1
-    return fm
-
-
 def lint_file(md: Path) -> list[str]:
     """Return a list of error strings for a single fixture index.md.
 
@@ -130,7 +57,7 @@ def lint_file(md: Path) -> list[str]:
         return [f"{md}: file does not exist"]
 
     text = md.read_text()
-    fm = _parse_works_fields(text)
+    fm = parse_frontmatter(text)
     if fm is None:
         return [f"{md}: no frontmatter"]
 

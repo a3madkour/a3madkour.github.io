@@ -57,7 +57,10 @@ def parse_frontmatter(text: str) -> dict[str, object] | None:
         key = key.strip()
         value = value.strip()
         if value != "":
-            out[key] = parse_scalar(value)
+            if value.startswith("{") and value.endswith("}"):
+                out[key] = _parse_flow_mapping(value[1:-1])
+            else:
+                out[key] = parse_scalar(value)
             i += 1
             continue
         # Empty value — look for an indented block sequence on the next lines.

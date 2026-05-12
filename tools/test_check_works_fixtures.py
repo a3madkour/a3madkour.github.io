@@ -158,33 +158,42 @@ Body.
         self.assertTrue(any("format='cassette'" in e for e in errs))
 
     def test_music_platform_embed_bad_kind(self):
-        body = MUSIC_VALID + "platform_embed: { kind: spotify, url: 'https://example.com' }\n"
+        body = MUSIC_VALID.replace(
+            "year: 2026\n",
+            "year: 2026\nplatform_embed: { kind: spotify, url: 'https://example.com' }\n",
+        )
         p = self._write("music", "bad-embed-kind", body)
         errs = lint.lint_file(p)
         self.assertTrue(any("platform_embed.kind='spotify'" in e for e in errs))
 
     def test_music_platform_embed_missing_url(self):
-        body = MUSIC_VALID + "platform_embed: { kind: bandcamp }\n"
+        body = MUSIC_VALID.replace(
+            "year: 2026\n",
+            "year: 2026\nplatform_embed: { kind: bandcamp }\n",
+        )
         p = self._write("music", "embed-no-url", body)
         errs = lint.lint_file(p)
         self.assertTrue(any("platform_embed.url" in e and "missing" in e for e in errs))
 
     def test_music_tracks_shape(self):
-        body = MUSIC_VALID + """tracks:
-  - { title: "Track 1", duration: "3:14" }
-  - { title: "Track 2", duration: "4:20" }
-"""
+        body = MUSIC_VALID.replace(
+            "year: 2026\n",
+            'year: 2026\ntracks:\n  - { title: "Track 1", duration: "3:14" }\n  - { title: "Track 2", duration: "4:20" }\n',
+        )
         p = self._write("music", "good-tracks", body)
         self.assertEqual(lint.lint_file(p), [])
 
     def test_music_track_missing_duration(self):
-        body = MUSIC_VALID + 'tracks:\n  - { title: "Track 1" }\n'
+        body = MUSIC_VALID.replace(
+            "year: 2026\n",
+            'year: 2026\ntracks:\n  - { title: "Track 1" }\n',
+        )
         p = self._write("music", "bad-track", body)
         errs = lint.lint_file(p)
         self.assertTrue(any("tracks[0]" in e for e in errs))
 
     def test_music_unknown_field(self):
-        body = MUSIC_VALID + "bpm: 128\n"
+        body = MUSIC_VALID.replace("year: 2026\n", "year: 2026\nbpm: 128\n")
         p = self._write("music", "extra-field", body)
         errs = lint.lint_file(p)
         self.assertTrue(any("unknown field 'bpm'" in e for e in errs))
