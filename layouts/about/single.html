@@ -1,0 +1,16 @@
+{{ define "main" }}
+<main class="reading-column about-page">
+
+  <section class="about-hero">
+    <div class="monogram" aria-hidden="true">
+      {{ with resources.Get "images/icons/monogram-am.svg" }}{{ .Content | safeHTML }}{{ end }}
+    </div>
+    <div class="about-hero-text">
+      <h1>Abdelrahman Madkour</h1>
+      <p class="role">Games researcher, writer, occasional maker of music and poems.</p>
+      <p class="placeholder">Pronouns — to be added · Location — to be added</p>
+    </div>
+  </section>
+
+</main>
+{{ end }}
