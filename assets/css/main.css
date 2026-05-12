@@ -1490,3 +1490,97 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   margin-right: 0.25rem;
   vertical-align: middle;
 }
+
+/* ------------------------------------------------------------------
+ * 29. About page
+ *
+ * The .placeholder class is load-bearing scaffolding for the About
+ * page (Phase 2 leftover slice): it visibly marks the prose blocks
+ * that need real authored content via org-mode. Muted color +
+ * italic + dotted underline so a visitor reads the page as
+ * mid-build, not broken. --color-ink-soft was chosen for AA
+ * contrast against --color-stone (6.27:1 light / 7.83:1 dark);
+ * --color-ink-fade fails AA in light mode.
+ * ------------------------------------------------------------------ */
+
+.about-page {
+  padding-top: 2rem;
+  padding-bottom: 4rem;
+}
+
+.about-hero {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+.about-hero .monogram {
+  flex-shrink: 0;
+  width: 96px;
+  height: 96px;
+  color: var(--color-burgundy);
+}
+.about-hero .monogram svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.about-hero h1 {
+  margin: 0;
+  font-size: var(--text-2xl);
+}
+.about-hero .role {
+  margin: 0.35rem 0 0;
+  font-style: italic;
+  color: var(--color-ink-soft);
+}
+
+.about-section {
+  margin-top: 2.5rem;
+}
+.about-section h2 {
+  margin: 0 0 0.5rem;
+  font-size: var(--text-xl);
+}
+.about-section h3 {
+  margin: 1.25rem 0 0.4rem;
+  font-size: var(--text-base);
+  color: var(--color-ink-soft);
+}
+.about-section ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+.about-section li {
+  margin: 0.2rem 0;
+}
+
+.placeholder {
+  color: var(--color-ink-soft);
+  font-style: italic;
+  text-decoration: underline dotted var(--color-rule);
+  text-underline-offset: 3px;
+}
+
+.connect-list {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: 1rem;
+  row-gap: 0.35rem;
+}
+.connect-list dt {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+.connect-list dd {
+  margin: 0;
+}
+
+.about-licenses {
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-rule);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+}
