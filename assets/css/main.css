@@ -1309,11 +1309,14 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   background: var(--color-rule);
 }
 
-/* Cursor states for zoom/pan on the panel canvas */
+/* Cursor states for zoom/pan on the panel canvas.
+   Class-based — :active is unreliable under pointer capture (d3-drag) and
+   on some browsers during d3-zoom drag-pan. JS toggles .is-panning on the
+   svg during zoom drag and .is-dragging-node during d3-drag on a node. */
 .garden-graph-panel-canvas svg {
   cursor: grab;
 }
-.garden-graph-panel-canvas svg:active {
+.garden-graph-panel-canvas svg.is-panning {
   cursor: grabbing;
 }
 
@@ -1359,7 +1362,8 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   stroke: transparent;
   stroke-width: 1;
 }
-.garden-graph-node:active circle {
+.garden-graph-panel-canvas svg.is-dragging-node .garden-graph-node circle,
+.garden-graph-page .garden-graph-canvas svg.is-dragging-node .garden-graph-node circle {
   cursor: grabbing;
 }
 .garden-graph-node.in-stack circle {
@@ -1435,7 +1439,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 .garden-graph-page .garden-graph-canvas svg {
   cursor: grab;
 }
-.garden-graph-page .garden-graph-canvas svg:active {
+.garden-graph-page .garden-graph-canvas svg.is-panning {
   cursor: grabbing;
 }
 

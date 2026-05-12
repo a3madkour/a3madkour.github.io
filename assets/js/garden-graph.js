@@ -228,6 +228,7 @@ async function buildSimulation(canvas) {
       d.__startY = d.y;
       d.wasDragged = false;
       d.__reheated = false;
+      svg.classList.add('is-dragging-node');
       // Do NOT reheat here — every click triggers start, and reheating on a
       // click makes neighbors visibly drift during the navigation that follows.
       // Defer the reheat to the first real `drag` event below.
@@ -243,6 +244,7 @@ async function buildSimulation(canvas) {
     })
     .on('end', function(event) {
       const d = event.subject;
+      svg.classList.remove('is-dragging-node');
       if (d.__reheated && !reducedMotion()) sim.alphaTarget(0);
       const dx = d.fx - d.__startX;
       const dy = d.fy - d.__startY;
@@ -318,6 +320,12 @@ async function buildSimulation(canvas) {
   const zoomBehavior = zoom()
     .scaleExtent([0.3, 4])
     .filter(event => !event.target.closest('.garden-graph-node'))
+    .on('start', (event) => {
+      // Wheel-zoom also fires start/end; only flip the cursor for drag-pan.
+      if (event.sourceEvent && event.sourceEvent.type !== 'wheel') {
+        svg.classList.add('is-panning');
+      }
+    })
     .on('zoom', ({ transform }) => {
       contentGroup.setAttribute(
         'transform',
@@ -325,6 +333,9 @@ async function buildSimulation(canvas) {
       );
       state.viewTransform = { k: transform.k, tx: transform.x, ty: transform.y };
       persistCacheDebounced();
+    })
+    .on('end', () => {
+      svg.classList.remove('is-panning');
     });
 
   select(svg).call(zoomBehavior).on('dblclick.zoom', null);
@@ -376,6 +387,7 @@ async function buildSimulation(canvas) {
   }
 
   sim.on('tick', renderTick);
+  state.renderTick = renderTick;
 
   // On cache hit, nodes already start at their settled positions — render
   // directly without ticking. On cache miss, pre-tick to convergence and
@@ -424,13 +436,28 @@ function resetView() {
 
 function resetPositions() {
   if (!state.simulation) return;
-  state.simulation.nodes().forEach(n => {
+  const sim = state.simulation;
+  sim.nodes().forEach(n => {
     n.fx = null;
     n.fy = null;
   });
   state.pinnedSlugs.clear();
-  state.simulation.alpha(0.5).restart();
-  persistCacheDebounced();
+  // Under reduced motion, settle synchronously and persist immediately —
+  // matches the build-time fast path and skips the unwanted animation.
+  if (reducedMotion()) {
+    sim.alpha(0.5);
+    for (let i = 0; i < 300; i++) sim.tick();
+    if (state.renderTick) state.renderTick();
+    flushCache();
+    return;
+  }
+  // Animate to convergence, then persist once — debounced persist would
+  // capture mid-settle positions and bake them into the cache.
+  sim.alpha(0.5).restart();
+  sim.on('end.reset', () => {
+    sim.on('end.reset', null);
+    flushCache();
+  });
 }
 
 const PANEL_WIDTH_KEY = 'garden-graph-panel-width';
