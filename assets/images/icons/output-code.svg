@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 24 24"
+     role="img"
+     aria-label="code"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="1.8"
+     stroke-linecap="round"
+     stroke-linejoin="round">
+  <path d="M9 8 L4 12 L9 16"/>
+  <path d="M15 8 L20 12 L15 16"/>
+</svg>
