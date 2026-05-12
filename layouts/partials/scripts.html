@@ -30,3 +30,9 @@
 {{- $research := resources.Get "js/entry-research.js" | js.Build $researchOpts | fingerprint }}
 <script src="{{ $research.RelPermalink }}" integrity="{{ $research.Data.Integrity }}" defer></script>
 {{- end }}
+
+{{- if eq .Section "works" }}
+{{- $worksOpts := dict "targetPath" "js/works.js" "minify" true -}}
+{{- $works := resources.Get "js/entry-works.js" | js.Build $worksOpts | fingerprint }}
+<script src="{{ $works.RelPermalink }}" integrity="{{ $works.Data.Integrity }}" defer></script>
+{{- end }}
