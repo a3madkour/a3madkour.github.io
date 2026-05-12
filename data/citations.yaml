@@ -14,7 +14,7 @@ citations:
     title: "Consectetur adipiscing elit"
     venue: "Proceedings of Things"
     url: "https://example.invalid/2"
-    notes_ref: "example-note-slug"
+    notes_ref: "story-atoms"
   example-source-3:
     authors: ["Tertius, T.", "Quartus, Q.", "Quintus, Q."]
     year: 2018
