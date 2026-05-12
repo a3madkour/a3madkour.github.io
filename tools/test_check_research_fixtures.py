@@ -11,7 +11,6 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import check_research_fixtures as lint  # noqa: E402
-from check_research_fixtures import validate_unique_theme_weights  # noqa: E402
 
 
 THEME_OK = """\
@@ -210,7 +209,7 @@ class ValidateUniqueThemeWeightsTests(unittest.TestCase):
             {'slug': 'theme-a', 'weight': 10, 'title': 'A', 'status': 'active', 'last_modified': '2026-05-11'},
             {'slug': 'theme-b', 'weight': 10, 'title': 'B', 'status': 'active', 'last_modified': '2026-05-11'},
         ]
-        errors = validate_unique_theme_weights(themes)
+        errors = lint.validate_unique_theme_weights(themes)
         self.assertEqual(len(errors), 1)
         self.assertIn('weight 10 duplicated', errors[0])
         self.assertIn('theme-a', errors[0])
@@ -223,7 +222,7 @@ class ValidateUniqueThemeWeightsTests(unittest.TestCase):
             {'slug': 'theme-b', 'weight': 20},
             {'slug': 'theme-c', 'weight': 30},
         ]
-        errors = validate_unique_theme_weights(themes)
+        errors = lint.validate_unique_theme_weights(themes)
         self.assertEqual(errors, [])
 
     def test_unique_theme_weights_skips_missing(self):
@@ -232,7 +231,7 @@ class ValidateUniqueThemeWeightsTests(unittest.TestCase):
             {'slug': 'theme-a'},
             {'slug': 'theme-b', 'weight': 20},
         ]
-        errors = validate_unique_theme_weights(themes)
+        errors = lint.validate_unique_theme_weights(themes)
         self.assertEqual(errors, [])
 
 
