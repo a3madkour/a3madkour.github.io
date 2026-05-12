@@ -63,12 +63,16 @@ function reducedMotion() {
 }
 
 // Cache key encodes everything that would change a node's settled position:
-// the active filters, the focused note (for local-graph mode), and the
-// canvas viewport. Different (panel vs page) viewports legitimately have
-// different layouts so they get separate cache entries.
+// the active filters, the canvas viewport, and — only when local-graph mode
+// is active — the focused note (since local mode renders a different
+// subgraph per focal note). With scope=all the full graph is the same
+// regardless of which note page is displaying it, so the cache is shared
+// across all notes and the standalone /garden/graph/ page; dragged
+// positions persist as the reader traverses.
 function positionsCacheKey(canvas) {
   const f = state.filters;
-  return `${f.tag}|${f.stage}|${f.local}|${state.page.currentSlug || ''}|${canvas.clientWidth}x${canvas.clientHeight}`;
+  const focus = f.local === 'all' ? '' : (state.page.currentSlug || '');
+  return `${f.tag}|${f.stage}|${f.local}|${focus}|${canvas.clientWidth}x${canvas.clientHeight}`;
 }
 
 function loadCachedPositions(canvas) {
