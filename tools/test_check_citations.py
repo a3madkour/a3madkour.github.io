@@ -57,6 +57,218 @@ class CitationLinterTests(unittest.TestCase):
         p.write_text(yaml_text)
         return p
 
+    def test_happy_path_passes(self):
+        self._write_citations("""\
+citations:
+  source-1:
+    authors: ["Lastname, F."]
+    year: 2020
+    title: "Lorem ipsum"
+    venue: "Journal of Examples"
+""")
+        errors = lint.lint_citations(self.data / "citations.yaml", self.garden)
+        self.assertEqual(errors, [])
+
+    def test_missing_authors_fails(self):
+        self._write_citations("""\
+citations:
+  source-1:
+    year: 2020
+    title: "T"
+    venue: "V"
+""")
+        errors = lint.lint_citations(self.data / "citations.yaml", self.garden)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("authors", errors[0])
+
+    def test_missing_year_fails(self):
+        self._write_citations("""\
+citations:
+  source-1:
+    authors: ["A"]
+    title: "T"
+    venue: "V"
+""")
+        errors = lint.lint_citations(self.data / "citations.yaml", self.garden)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("year", errors[0])
+
+    def test_missing_title_fails(self):
+        self._write_citations("""\
+citations:
+  source-1:
+    authors: ["A"]
+    year: 2020
+    venue: "V"
+""")
+        errors = lint.lint_citations(self.data / "citations.yaml", self.garden)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("title", errors[0])
+
+    def test_missing_venue_fails(self):
+        self._write_citations("""\
+citations:
+  source-1:
+    authors: ["A"]
+    year: 2020
+    title: "T"
+""")
+        errors = lint.lint_citations(self.data / "citations.yaml", self.garden)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("venue", errors[0])
+
+    def test_empty_authors_list_rejected(self):
+        self._write_citations("""\
+citations:
+  source-1:
+    authors: []
+    year: 2020
+    title: "T"
+    venue: "V"
+""")
+        errors = lint.lint_citations(self.data / "citations.yaml", self.garden)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("authors", errors[0])
+
+    def test_year_as_string_rejected(self):
+        self._write_citations("""\
+citations:
+  source-1:
+    authors: ["A"]
+    year: "2020"
+    title: "T"
+    venue: "V"
+""")
+        errors = lint.lint_citations(self.data / "citations.yaml", self.garden)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("year", errors[0])
+
+    def test_year_too_low_rejected(self):
+        self._write_citations("""\
+citations:
+  source-1:
+    authors: ["A"]
+    year: 1499
+    title: "T"
+    venue: "V"
+""")
+        errors = lint.lint_citations(self.data / "citations.yaml", self.garden)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("year", errors[0])
+
+    def test_year_too_high_rejected(self):
+        from datetime import date
+        too_high = date.today().year + 3
+        self._write_citations(f"""\
+citations:
+  source-1:
+    authors: ["A"]
+    year: {too_high}
+    title: "T"
+    venue: "V"
+""")
+        errors = lint.lint_citations(self.data / "citations.yaml", self.garden)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("year", errors[0])
+
+    def test_non_http_url_rejected(self):
+        self._write_citations("""\
+citations:
+  source-1:
+    authors: ["A"]
+    year: 2020
+    title: "T"
+    venue: "V"
+    url: "ftp://example.invalid/x"
+""")
+        errors = lint.lint_citations(self.data / "citations.yaml", self.garden)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("url", errors[0])
+
+    def test_unknown_field_rejected(self):
+        self._write_citations("""\
+citations:
+  source-1:
+    authors: ["A"]
+    year: 2020
+    title: "T"
+    venue: "V"
+    year_published: 2020
+""")
+        errors = lint.lint_citations(self.data / "citations.yaml", self.garden)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("year_published", errors[0])
+
+    def test_bad_key_format_rejected(self):
+        self._write_citations("""\
+citations:
+  Bad_Key:
+    authors: ["A"]
+    year: 2020
+    title: "T"
+    venue: "V"
+""")
+        errors = lint.lint_citations(self.data / "citations.yaml", self.garden)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("Bad_Key", errors[0])
+
+    def test_notes_ref_resolved_passes(self):
+        self._write_garden("story-atoms")
+        self._write_citations("""\
+citations:
+  source-1:
+    authors: ["A"]
+    year: 2020
+    title: "T"
+    venue: "V"
+    notes_ref: story-atoms
+""")
+        errors = lint.lint_citations(self.data / "citations.yaml", self.garden)
+        self.assertEqual(errors, [])
+
+    def test_notes_ref_to_missing_slug_fails(self):
+        self._write_citations("""\
+citations:
+  source-1:
+    authors: ["A"]
+    year: 2020
+    title: "T"
+    venue: "V"
+    notes_ref: does-not-exist
+""")
+        errors = lint.lint_citations(self.data / "citations.yaml", self.garden)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("does-not-exist", errors[0])
+
+    def test_notes_ref_to_draft_fails(self):
+        self._write_garden("drafty", GARDEN_NOTE_DRAFT)
+        self._write_citations("""\
+citations:
+  source-1:
+    authors: ["A"]
+    year: 2020
+    title: "T"
+    venue: "V"
+    notes_ref: drafty
+""")
+        errors = lint.lint_citations(self.data / "citations.yaml", self.garden)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("drafty", errors[0])
+        self.assertIn("draft", errors[0].lower())
+
+    def test_empty_notes_ref_ignored(self):
+        self._write_citations("""\
+citations:
+  source-1:
+    authors: ["A"]
+    year: 2020
+    title: "T"
+    venue: "V"
+    notes_ref: ""
+""")
+        errors = lint.lint_citations(self.data / "citations.yaml", self.garden)
+        self.assertEqual(errors, [])
+
 
 if __name__ == "__main__":
     unittest.main()
