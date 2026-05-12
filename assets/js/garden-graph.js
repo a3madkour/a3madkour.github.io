@@ -97,7 +97,13 @@ function loadCachedPositions(canvas) {
       };
     }
     return entry;
-  } catch { return null; }
+  } catch (e) {
+    // Corrupt JSON or a SecurityError on sessionStorage. Drop the whole key
+    // rather than fail every page load; the next save will rebuild it.
+    console.warn('garden-graph: dropping unreadable positions cache', e);
+    try { sessionStorage.removeItem(POSITIONS_KEY); } catch {}
+    return null;
+  }
 }
 
 function saveCachedPositions(canvas, nodes, view, pinned) {
@@ -114,7 +120,13 @@ function saveCachedPositions(canvas, nodes, view, pinned) {
       view: { k: view.k, tx: view.tx, ty: view.ty },
     };
     sessionStorage.setItem(POSITIONS_KEY, JSON.stringify(cache));
-  } catch {}
+  } catch (e) {
+    // QuotaExceededError on small-budget sessionStorage (rare for ~14 KB),
+    // SecurityError in locked-down contexts, or JSON.stringify on a node
+    // with a custom toJSON throwing. Don't blow up the graph runtime; just
+    // log so a developer can spot it.
+    console.warn('garden-graph: positions cache write failed', e);
+  }
 }
 
 function isMobile() {

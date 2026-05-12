@@ -74,10 +74,19 @@ function persistVisited(slug) {
   let list;
   try {
     list = JSON.parse(store.getItem(VISITED_KEY) || '[]');
-  } catch { list = []; }
+  } catch (e) {
+    // Corrupt JSON in the visited list. Log + reset so the next write
+    // rebuilds it cleanly instead of failing every navigation.
+    console.warn('garden-stack: dropping corrupt visited list', e);
+    list = [];
+  }
   list.push(slug);
   if (list.length > VISITED_CAP) list = list.slice(-VISITED_CAP);
   try { store.setItem(VISITED_KEY, JSON.stringify(list)); } catch {}
+  // The setItem catch is intentionally silent — same rationale as the
+  // localStorage swallows in readConsent/writeConsent above: in restricted
+  // contexts (private browsing strict, sandboxed iframes) persistence is
+  // genuinely unavailable, not a bug.
 }
 
 function showConsentBanner() {
