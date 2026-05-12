@@ -566,67 +566,83 @@ function setupPanelResize() {
   });
 }
 
-function buildToolbar(host) {
-  if (!state.data) return;
+// Filter chips use aria-pressed toggle semantics (each chip is "currently
+// selected or not" within its dimension); action chips are one-shot buttons.
+// Different semantics, different visual treatment (.chip vs .chip-action),
+// different builder concerns — separate them.
+
+function makeFilterChip(host, label, dim, value) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'chip';
+  b.dataset.dim = dim;
+  b.dataset.value = value;
+  b.setAttribute('aria-pressed', state.filters[dim] === value ? 'true' : 'false');
+  b.textContent = label;
+  b.addEventListener('click', () => {
+    state.filters[dim] = value;
+    host.querySelectorAll(`button[data-dim="${dim}"]`).forEach(c => {
+      c.setAttribute('aria-pressed', c.dataset.value === value ? 'true' : 'false');
+    });
+    rebuildGraph();
+  });
+  return b;
+}
+
+function makeActionChip(label, onClick) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'chip chip-action';
+  b.textContent = label;
+  b.addEventListener('click', onClick);
+  return b;
+}
+
+function buildFilterChips(host) {
   const tags = new Set();
   const stages = new Set();
   state.data.nodes.forEach(n => { if (n.tag) tags.add(n.tag); stages.add(n.stage); });
 
-  const mkChip = (label, dim, value) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'chip';
-    b.dataset.dim = dim;
-    b.dataset.value = value;
-    b.setAttribute('aria-pressed', state.filters[dim] === value ? 'true' : 'false');
-    b.textContent = label;
-    b.addEventListener('click', () => {
-      state.filters[dim] = value;
-      host.querySelectorAll(`button[data-dim="${dim}"]`).forEach(c => {
-        c.setAttribute('aria-pressed', c.dataset.value === value ? 'true' : 'false');
-      });
-      rebuildGraph();
-    });
-    return b;
-  };
-
-  host.replaceChildren();
-
   // Tag dim
   const tagLabel = document.createElement('span'); tagLabel.className = 'label'; tagLabel.textContent = 'Tag:';
-  host.append(tagLabel, mkChip('All', 'tag', 'all'));
-  Array.from(tags).sort().forEach(t => host.appendChild(mkChip(t, 'tag', t)));
+  host.append(tagLabel, makeFilterChip(host, 'All', 'tag', 'all'));
+  Array.from(tags).sort().forEach(t => host.appendChild(makeFilterChip(host, t, 'tag', t)));
 
   // Stage dim
   const stageLabel = document.createElement('span'); stageLabel.className = 'label'; stageLabel.textContent = 'Stage:';
-  host.append(stageLabel, mkChip('All', 'stage', 'all'));
-  ['seedling', 'budding', 'evergreen'].filter(s => stages.has(s)).forEach(s => host.appendChild(mkChip(s, 'stage', s)));
+  host.append(stageLabel, makeFilterChip(host, 'All', 'stage', 'all'));
+  ['seedling', 'budding', 'evergreen']
+    .filter(s => stages.has(s))
+    .forEach(s => host.appendChild(makeFilterChip(host, s, 'stage', s)));
 
   // Local dim — note pages only
   if (state.page.isNotePage) {
     const localLabel = document.createElement('span'); localLabel.className = 'label'; localLabel.textContent = 'Scope:';
-    host.append(localLabel, mkChip('All', 'local', 'all'), mkChip('1-hop', 'local', '1-hop'), mkChip('2-hop', 'local', '2-hop'));
+    host.append(
+      localLabel,
+      makeFilterChip(host, 'All', 'local', 'all'),
+      makeFilterChip(host, '1-hop', 'local', '1-hop'),
+      makeFilterChip(host, '2-hop', 'local', '2-hop'),
+    );
   }
+}
 
-  // Action chips: visually separated from filter chips
+function buildActionChips(host) {
   const divider = document.createElement('span');
   divider.className = 'toolbar-divider';
   divider.setAttribute('aria-hidden', 'true');
-  host.append(divider);
+  host.append(
+    divider,
+    makeActionChip('Reset view', resetView),
+    makeActionChip('Reset positions', resetPositions),
+  );
+}
 
-  const resetViewBtn = document.createElement('button');
-  resetViewBtn.type = 'button';
-  resetViewBtn.className = 'chip chip-action';
-  resetViewBtn.textContent = 'Reset view';
-  resetViewBtn.addEventListener('click', resetView);
-  host.append(resetViewBtn);
-
-  const resetPosBtn = document.createElement('button');
-  resetPosBtn.type = 'button';
-  resetPosBtn.className = 'chip chip-action';
-  resetPosBtn.textContent = 'Reset positions';
-  resetPosBtn.addEventListener('click', resetPositions);
-  host.append(resetPosBtn);
+function buildToolbar(host) {
+  if (!state.data) return;
+  host.replaceChildren();
+  buildFilterChips(host);
+  buildActionChips(host);
 }
 
 function buildLegend(host) {
