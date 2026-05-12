@@ -1,11 +1,12 @@
 // Essay-specific progressive enhancements.
 // - Sidenote/footnote popup on narrow viewports
 // - Smooth-scroll on TOC clicks (respects prefers-reduced-motion)
-// - Citation hover-card hook (no-op placeholder for Phase 3)
+// - Citation hover-card runtime (singleton, hover/focus/tap)
 //
 // Guards on .essay-body presence; bails on non-essay pages.
 
 import { setupFilterChips } from './filter-chips.js';
+import { setupCitationCards } from './citation-card.js';
 
 const RAIL_BREAKPOINT = 1100;
 
@@ -67,19 +68,11 @@ function setupTocSmoothScroll() {
   });
 }
 
-function setupCitationHook() {
-  // Placeholder — Phase 3 will attach a hover-card here. For now we just
-  // mark the elements so future code can find them without a markup change.
-  document.querySelectorAll('[data-cite-key]').forEach((el) => {
-    el.classList.add('citation-hookable');
-  });
-}
-
 function init() {
   if (!document.querySelector('.essay-body') && !document.querySelector('.essay-grid')) return;
   setupSidenotePopups();
   setupTocSmoothScroll();
-  setupCitationHook();
+  setupCitationCards();
   setupFilterChips({
     containerSelector: '.filter-chips',
     cardSelector: '.essay-card',
