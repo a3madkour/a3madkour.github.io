@@ -1378,10 +1378,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   stroke: transparent;
   stroke-width: 1;
 }
-.graph-panel-canvas svg.is-dragging-node .garden-graph-node circle,
-.garden-graph-page .garden-graph-canvas svg.is-dragging-node .garden-graph-node circle {
-  cursor: grabbing;
-}
 .garden-graph-node.in-stack circle {
   stroke: var(--color-ink);
   stroke-width: 2.5;
@@ -1413,6 +1409,14 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 /* ------------------------------------------------------------------
  * 28. Garden graph standalone page (/garden/graph/)
  * ------------------------------------------------------------------ */
+
+/* Node cursor during drag — garden-specific (targets .garden-graph-node).
+   The analogous rule for research nodes will live in §31. */
+.graph-panel-canvas svg.is-dragging-node .garden-graph-node circle,
+.garden-graph-page .graph-panel-canvas svg.is-dragging-node .garden-graph-node circle {
+  cursor: grabbing;
+}
+
 .garden-graph-page .garden-graph-toolbar {
   display: flex;
   flex-wrap: wrap;
