@@ -1,0 +1,36 @@
+{{ define "main" }}
+<main class="reading-column research-page">
+
+  <header class="research-hero">
+    <h1>{{ .Title }}</h1>
+    {{ with .Content }}<div class="research-framing">{{ . }}</div>{{ end }}
+  </header>
+
+  {{- /* All theme + question pages */ -}}
+  {{- $themes := where site.RegularPages "Type" "research-theme" -}}
+  {{- $questions := where site.RegularPages "Type" "research-question" -}}
+
+  {{- /* Filter chips: tag dim only for v1 */ -}}
+  {{- $tags := slice -}}
+  {{- range $themes -}}
+    {{- range .Params.tags -}}
+      {{- if not (in $tags .) -}}{{- $tags = $tags | append . -}}{{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $dims := slice -}}
+  {{- if ge (len $tags) 2 -}}
+    {{- $dims = $dims | append (dict "key" "tag" "label" "Tag" "values" (sort $tags)) -}}
+  {{- end -}}
+  {{ partial "filter-chips.html" (dict "dimensions" $dims "section" "research") }}
+
+  <div class="research-grid">
+    {{- range $themes.ByWeight -}}
+      {{- $thisTheme := . -}}
+      {{- $thisSlug := path.Base $thisTheme.File.Dir -}}
+      {{- $themeQs := where $questions "Params.theme" $thisSlug -}}
+      {{ partial "research/theme-card.html" (dict "theme" $thisTheme "questions" $themeQs) }}
+    {{- end -}}
+  </div>
+
+</main>
+{{ end }}

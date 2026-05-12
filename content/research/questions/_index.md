@@ -2,7 +2,7 @@
 title: 'Research questions'
 cascade:
   type: research-question
-_build:
-  render: false
+build:
+  render: never
   list: never
 ---

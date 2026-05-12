@@ -2,7 +2,7 @@
 title: 'Research themes'
 cascade:
   type: research-theme
-_build:
-  render: false
+build:
+  render: never
   list: never
 ---
