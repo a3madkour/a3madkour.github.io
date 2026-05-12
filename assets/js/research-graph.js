@@ -303,23 +303,37 @@ async function buildSimulation(canvas) {
       persistCacheDebounced();
     });
 
-  // Build node elements (each is a <g> with circle + text).
+  // Build node elements — themes get <rect>, questions get <circle>.
+  // data-theme-color drives fill via CSS §31; data-status surfaces for filtering.
   const nodeEls = nodes.map(n => {
     const g = document.createElementNS(SVG_NS, 'g');
-    g.setAttribute('class', 'research-graph-node');
+    g.setAttribute('class', `research-graph-node research-graph-node-${n.kind}`);
+    g.setAttribute('data-theme-color', String(n.themeColorIdx));
+    g.setAttribute('data-status', n.status || '');
     g.setAttribute('tabindex', '0');
     g.setAttribute('role', 'link');
     g.setAttribute('aria-label', n.title);
     g.dataset.slug = n.slug;
 
-    const c = document.createElementNS(SVG_NS, 'circle');
-    c.setAttribute('r', String(nodeRadius(n.degree)));
-    c.setAttribute('fill', tagColor(n.tag));
-    g.appendChild(c);
+    const r = nodeRadius(n.degree);
+    if (n.kind === 'theme') {
+      // Themes render as squares (rect centered on the node's position).
+      const rect = document.createElementNS(SVG_NS, 'rect');
+      rect.setAttribute('width',  String(r * 1.6));
+      rect.setAttribute('height', String(r * 1.6));
+      rect.setAttribute('x', String(-r * 0.8));
+      rect.setAttribute('y', String(-r * 0.8));
+      g.appendChild(rect);
+    } else {
+      // Questions render as circles.
+      const c = document.createElementNS(SVG_NS, 'circle');
+      c.setAttribute('r', String(r));
+      g.appendChild(c);
+    }
 
     const t = document.createElementNS(SVG_NS, 'text');
     t.textContent = n.title;
-    t.setAttribute('x', String(nodeRadius(n.degree) + 3));
+    t.setAttribute('x', String(r + 3));
     t.setAttribute('y', '3');
     g.appendChild(t);
 
