@@ -53,14 +53,22 @@ function persistCacheDebounced() {
     flushCache();
   }, 200);
 }
-function flushCache() {
-  let canvas;
-  const isGraphPage = !!document.querySelector('.garden-graph-page');
-  if (isGraphPage) {
-    canvas = document.querySelector('.garden-graph-page .garden-graph-canvas');
-  } else if (state.panel) {
-    canvas = state.panel.querySelector('.garden-graph-panel-canvas');
+// Returns the active graph canvas element (the standalone /garden/graph/
+// page's canvas, or the side panel's canvas), or null if neither is
+// mounted. The standalone page takes precedence because it can coexist
+// with state.panel = null.
+function getActiveCanvas() {
+  if (document.querySelector('.garden-graph-page')) {
+    return document.querySelector('.garden-graph-page .garden-graph-canvas');
   }
+  if (state.panel) {
+    return state.panel.querySelector('.garden-graph-panel-canvas');
+  }
+  return null;
+}
+
+function flushCache() {
+  const canvas = getActiveCanvas();
   if (!canvas || !state.simulation) return;
   saveCachedPositions(canvas, state.simulation.nodes(), state.viewTransform, state.pinnedSlugs);
 }
@@ -439,13 +447,7 @@ async function buildSimulation(canvas) {
 }
 
 function rebuildGraph() {
-  let canvas;
-  const isGraphPage = !!document.querySelector('.garden-graph-page');
-  if (isGraphPage) {
-    canvas = document.querySelector('.garden-graph-page .garden-graph-canvas');
-  } else if (state.panel) {
-    canvas = state.panel.querySelector('.garden-graph-panel-canvas');
-  }
+  const canvas = getActiveCanvas();
   if (!canvas) return;
   if (state.simulation) state.simulation.stop();
   buildSimulation(canvas).then(({ svg, simulation, contentGroup }) => {
