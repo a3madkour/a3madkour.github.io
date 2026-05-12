@@ -125,8 +125,15 @@ function tagColor(tag) {
   return TAG_PALETTE[tag] || 'var(--color-ink-fade)';
 }
 
+// Node radius is the contract that backs the legend's "size = link count":
+// r = NODE_R_MIN + (degree × NODE_R_PER_DEGREE), clamped to NODE_R_MAX.
+// Tweak these if a future fixture set makes high-degree nodes feel too
+// uniform or low-degree ones too thin to click.
+const NODE_R_MIN = 5;
+const NODE_R_MAX = 16;
+const NODE_R_PER_DEGREE = 1.5;
 function nodeRadius(degree) {
-  return Math.min(16, Math.max(5, 5 + degree * 1.5));
+  return Math.min(NODE_R_MAX, Math.max(NODE_R_MIN, NODE_R_MIN + degree * NODE_R_PER_DEGREE));
 }
 
 function parseData() {
