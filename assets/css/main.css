@@ -2527,3 +2527,82 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   font-size: 1.4rem;
   margin: 0 0 0.6rem 0;
 }
+
+/* =========================================================
+ * §35 Works — poetry
+ * Narrow-column index rows + poem page.
+ * ========================================================= */
+
+.works-poetry-index .page-header,
+.works-poetry-index .filter-chips,
+.works-poetry-list {
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.works-poetry-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
+}
+.works-poem-row {
+  padding: 0.6em 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+.works-poem-row[hidden] { display: none; }
+.works-poem-row-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+.works-poem-row-title {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.2rem;
+  margin: 0 0 0.2em 0;
+}
+.works-poem-row-meta {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  color: var(--color-ink-soft);
+  margin: 0;
+}
+.works-poem-row-collection,
+.works-poem-row-music {
+  display: inline-block;
+  margin-left: 0.2em;
+}
+.works-poem-row-music {
+  color: var(--color-burgundy);
+}
+
+/* Poem single */
+.works-poem-page {
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.works-poem-header h1 {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 2rem;
+  margin: 0 0 0.3em 0;
+}
+.works-poem-meta {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--color-ink-soft);
+  margin: 0 0 1rem 0;
+}
+.works-poem-body {
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  line-height: 2.1;
+  margin-top: 1.5rem;
+}
+.works-poem-body p {
+  margin: 0 0 1.3em 0;
+}
