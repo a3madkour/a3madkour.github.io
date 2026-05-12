@@ -1,0 +1,35 @@
+{{- /* Inputs:
+       .theme       — the theme Page
+       .questions   — slice of question Pages for this theme (already filtered)
+*/ -}}
+{{- $theme := .theme -}}
+{{- $questions := .questions -}}
+{{- $active := where $questions "Params.status" "active" -}}
+{{- $dormant := where $questions "Params.status" "dormant" -}}
+{{- $answered := where $questions "Params.status" "answered" -}}
+{{- $supportingSet := dict -}}
+{{- range $questions -}}
+  {{- range .Params.supporting_notes -}}
+    {{- $supportingSet = merge $supportingSet (dict . true) -}}
+  {{- end -}}
+{{- end -}}
+
+<article class="research-card" data-theme-slug="{{ path.Base $theme.File.Dir }}">
+  {{ partial "research/status-pill.html" $theme.Params.status }}
+  <h2 class="research-card-title">
+    <a href="{{ $theme.RelPermalink }}">{{ $theme.Title }}</a>
+  </h2>
+  {{ if $theme.Params.garden_topic_ref }}
+    <span class="research-card-badge">↗ also a Garden topic</span>
+  {{ end }}
+  <p class="research-card-description">{{ $theme.Params.description }}</p>
+  {{ with $theme.Params.tags }}
+    <ul class="research-card-tags">
+      {{ range . }}<li>{{ . }}</li>{{ end }}
+    </ul>
+  {{ end }}
+  <div class="research-card-counts">
+    {{ len $active }}/{{ len $dormant }}/{{ len $answered }} questions
+    · {{ len $supportingSet }} supporting notes
+  </div>
+</article>
