@@ -1026,6 +1026,18 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 
 /* ------------------------------------------------------------------
  * 24. Garden path log + consent banner
+ *
+ * z-index scale used across the garden UI (and the essay sidenote
+ * popover, included for reference):
+ *   1   — graph panel resize handle (inside .garden-graph-panel, so
+ *         it's already scoped under z=20; this value is intra-panel)
+ *   5   — garden path log (sticky breadcrumb at top of stack)
+ *  10   — essay narrow-viewport sidenote popover (§12)
+ *  20   — garden graph side panel (slides over the page)
+ *
+ * Add a new overlay above 20 only if it should sit on top of the graph
+ * panel (modal, toast). Keep increments to round 5s so future additions
+ * have headroom without renumbering.
  * ------------------------------------------------------------------ */
 .garden-path-log {
   display: flex;
