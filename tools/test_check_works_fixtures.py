@@ -20,7 +20,7 @@ date: 2026-01-01
 lastmod: 2026-01-02
 draft: false
 status: playable
-type: full-release
+kind: full-release
 tagline: "Example tagline."
 year: 2026
 ---

@@ -128,7 +128,7 @@ date: 2026-01-01
 lastmod: 2026-01-02
 draft: false
 status: playable
-type: full-release
+kind: full-release
 tagline: "Example tagline."
 year: 2026
 ---
@@ -236,11 +236,11 @@ Insert the following methods inside `class WorksFixturesLinterTests:` (above the
         errs = lint.lint_file(p)
         self.assertTrue(any("status='shipped'" in e for e in errs))
 
-    def test_game_bad_type_enum(self):
-        body = GAME_VALID.replace("type: full-release", "type: walking-sim")
-        p = self._write("games", "bad-type", body)
+    def test_game_bad_kind_enum(self):
+        body = GAME_VALID.replace("kind: full-release", "kind: walking-sim")
+        p = self._write("games", "bad-kind", body)
         errs = lint.lint_file(p)
-        self.assertTrue(any("type='walking-sim'" in e for e in errs))
+        self.assertTrue(any("kind='walking-sim'" in e for e in errs))
 
     def test_game_year_not_int(self):
         body = GAME_VALID.replace("year: 2026", "year: 'twenty-six'")
@@ -262,7 +262,7 @@ date: 2026-01-01
 lastmod: 2026-01-02
 draft: false
 status: in-progress
-type: research-prototype
+kind: research-prototype
 tagline: "All the fields."
 year: 2026
 tags: [example, demo]
@@ -433,7 +433,7 @@ from check_fixtures import parse_frontmatter  # noqa: E402
 
 # --- contracts ---
 
-GAME_REQUIRED = {"title", "date", "lastmod", "draft", "status", "type", "tagline", "year"}
+GAME_REQUIRED = {"title", "date", "lastmod", "draft", "status", "kind", "tagline", "year"}
 GAME_OPTIONAL = {
     "tags", "summary", "hero", "embed_url", "source_url", "itch_url",
     "collaborators", "tech_stack", "length", "screenshots",
@@ -441,7 +441,7 @@ GAME_OPTIONAL = {
 }
 GAME_FIELDS = GAME_REQUIRED | GAME_OPTIONAL
 GAME_STATUSES = {"playable", "in-progress", "archived"}
-GAME_TYPES = {"full-release", "jam", "research-prototype", "experiment"}
+GAME_KINDS = {"full-release", "jam", "research-prototype", "experiment"}
 
 MUSIC_REQUIRED = {"title", "date", "lastmod", "draft", "format", "year"}
 MUSIC_OPTIONAL = {
@@ -498,9 +498,9 @@ def _lint_game(md: Path, fm: dict[str, object]) -> list[str]:
     if status is not None and status not in GAME_STATUSES:
         errs.append(f"{md}: status='{status}' not in {sorted(GAME_STATUSES)}")
 
-    gtype = fm.get("type")
-    if gtype is not None and gtype not in GAME_TYPES:
-        errs.append(f"{md}: type='{gtype}' not in {sorted(GAME_TYPES)}")
+    gkind = fm.get("kind")
+    if gkind is not None and gkind not in GAME_KINDS:
+        errs.append(f"{md}: kind='{gkind}' not in {sorted(GAME_KINDS)}")
 
     year = fm.get("year")
     if year is not None and not isinstance(year, int):
@@ -790,7 +790,7 @@ EOF
         })
         self._write("works/games/game-a", {
             "title": "Game A", "date": "2026-01-01", "lastmod": "2026-01-02",
-            "draft": "false", "status": "playable", "type": "full-release",
+            "draft": "false", "status": "playable", "kind": "full-release",
             "tagline": "ok", "year": 2026,
             "research_questions": ["/research/questions/q-a/"],
         })
@@ -800,7 +800,7 @@ EOF
     def test_game_research_questions_dangling_fails(self):
         self._write("works/games/game-a", {
             "title": "Game A", "date": "2026-01-01", "lastmod": "2026-01-02",
-            "draft": "false", "status": "playable", "type": "full-release",
+            "draft": "false", "status": "playable", "kind": "full-release",
             "tagline": "ok", "year": 2026,
             "research_questions": ["/research/questions/missing/"],
         })
@@ -811,7 +811,7 @@ EOF
     def test_game_related_essays_dangling_fails(self):
         self._write("works/games/game-a", {
             "title": "Game A", "date": "2026-01-01", "lastmod": "2026-01-02",
-            "draft": "false", "status": "playable", "type": "full-release",
+            "draft": "false", "status": "playable", "kind": "full-release",
             "tagline": "ok", "year": 2026,
             "related_essays": ["/essays/nonexistent/"],
         })
@@ -822,7 +822,7 @@ EOF
     def test_game_related_notes_dangling_fails(self):
         self._write("works/games/game-a", {
             "title": "Game A", "date": "2026-01-01", "lastmod": "2026-01-02",
-            "draft": "false", "status": "playable", "type": "full-release",
+            "draft": "false", "status": "playable", "kind": "full-release",
             "tagline": "ok", "year": 2026,
             "related_notes": ["/garden/nonexistent/"],
         })
@@ -837,7 +837,7 @@ EOF
         })
         self._write("works/games/game-a", {
             "title": "Game A", "date": "2026-01-01", "lastmod": "2026-01-02",
-            "draft": "false", "status": "playable", "type": "full-release",
+            "draft": "false", "status": "playable", "kind": "full-release",
             "tagline": "ok", "year": 2026,
             "research_questions": ["/research/questions/draft-q/"],
         })
@@ -1123,7 +1123,7 @@ date: 2026-03-01
 lastmod: 2026-03-02
 draft: false
 status: playable
-type: full-release
+kind: full-release
 tagline: "Example tagline — lorem ipsum dolor sit amet."
 year: 2026
 tags: [example, demo]
@@ -1239,7 +1239,7 @@ date: 2026-02-10
 lastmod: 2026-02-11
 draft: false
 status: playable
-type: jam
+kind: jam
 tagline: "Lorem ipsum dolor sit amet."
 year: 2026
 hero: hero.svg
@@ -1258,7 +1258,7 @@ date: 2026-04-05
 lastmod: 2026-04-08
 draft: false
 status: in-progress
-type: research-prototype
+kind: research-prototype
 tagline: "Example Two — lorem ipsum."
 year: 2026
 hero: hero.svg
@@ -1278,7 +1278,7 @@ date: 2024-06-15
 lastmod: 2024-06-15
 draft: false
 status: archived
-type: experiment
+kind: experiment
 tagline: "Lorem ipsum — early experiment."
 year: 2024
 hero: hero.svg
@@ -1759,7 +1759,7 @@ EOF
 {{- end -}}
 <article class="works-game-card"
          data-status="{{ .Params.status }}"
-         data-type="{{ .Params.type }}"
+         data-kind="{{ .Params.kind }}"
          data-tags="{{ delimit (.Params.tags | default slice) "," }}">
   <a class="works-game-card-link" href="{{ .RelPermalink }}">
     <div class="works-game-card-preview">
@@ -1767,7 +1767,7 @@ EOF
       {{- if .Params.embed_url }}<span class="works-game-card-embed-pill">▶ Play in browser</span>{{- end }}
       <span class="works-game-card-status-badge">
         <span class="works-game-card-year">{{ .Params.year }}</span>
-        <span class="works-game-card-type">{{ humanize .Params.type }}</span>
+        <span class="works-game-card-kind">{{ humanize .Params.kind }}</span>
       </span>
     </div>
     <div class="works-game-card-body">
@@ -1803,13 +1803,13 @@ The filter-chips partial expects each dim's `values` to be a pre-collected slice
 
   {{- /* ----- Build dimension value sets ----- */ -}}
   {{- $statuses := slice -}}
-  {{- $types := slice -}}
+  {{- $kinds := slice -}}
   {{- $tagCounts := dict -}}
   {{- range $items -}}
     {{- $s := .Params.status -}}
     {{- if and $s (not (in $statuses $s)) -}}{{- $statuses = $statuses | append $s -}}{{- end -}}
-    {{- $t := .Params.type -}}
-    {{- if and $t (not (in $types $t)) -}}{{- $types = $types | append $t -}}{{- end -}}
+    {{- $k := .Params.kind -}}
+    {{- if and $k (not (in $kinds $k)) -}}{{- $kinds = $kinds | append $k -}}{{- end -}}
     {{- range .Params.tags -}}
       {{- $cur := index $tagCounts . | default 0 -}}
       {{- $tagCounts = merge $tagCounts (dict . (add $cur 1)) -}}
@@ -1830,8 +1830,8 @@ The filter-chips partial expects each dim's `values` to be a pre-collected slice
   {{- if ge (len $statuses) 2 -}}
     {{- $dims = $dims | append (dict "key" "status" "label" "Status" "values" $statuses) -}}
   {{- end -}}
-  {{- if ge (len $types) 2 -}}
-    {{- $dims = $dims | append (dict "key" "type" "label" "Type" "values" $types) -}}
+  {{- if ge (len $kinds) 2 -}}
+    {{- $dims = $dims | append (dict "key" "kind" "label" "Kind" "values" $kinds) -}}
   {{- end -}}
   {{- if ge (len $tags) 2 -}}
     {{- $dims = $dims | append (dict "key" "tag" "label" "Tag" "values" $tags) -}}
@@ -1871,8 +1871,8 @@ git add layouts/works-games/list.html layouts/partials/works/
 git commit -m "$(cat <<'EOF'
 layouts: games index + game-card + status-pill partials
 
-2-col card grid with shared filter-chips strip (status, type, tag).
-Cards carry data-status/data-type/data-tags for the chip JS to filter
+2-col card grid with shared filter-chips strip (status, kind, tag).
+Cards carry data-status/data-kind/data-tags for the chip JS to filter
 client-side.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
@@ -1967,7 +1967,7 @@ EOF
       <p class="works-game-meta-row">
         {{ partial "works/status-pill.html" (dict "status" .Params.status) }}
         <span class="works-game-year">{{ .Params.year }}</span>
-        <span class="works-game-type">{{ humanize .Params.type }}</span>
+        <span class="works-game-kind">{{ humanize .Params.kind }}</span>
         {{- with .Params.length }}<span class="works-game-length">{{ . }}</span>{{- end }}
       </p>
       {{- with .Params.collaborators }}<p class="works-game-collaborators">with {{ delimit . ", " }}</p>{{- end }}
@@ -3582,7 +3582,7 @@ hugo server --buildDrafts
 Open in browser and eyeball each of:
 
 1. `/works/` — three umbrella cards render with counts (4 / 4 / 4) and recent-3 titles
-2. `/works/games/` — 4 game cards in 2-col grid; filter chips show status (3 values) + type (4 values) + tag dim; click "playable" → 2 cards remain; click "playable" again → all 4 return
+2. `/works/games/` — 4 game cards in 2-col grid; filter chips show status (3 values) + kind (4 values) + tag dim; click "playable" → 2 cards remain; click "playable" again → all 4 return
 3. `/works/games/example-playable-full-release/` — hero SVG renders, "Play in browser" stub link visible (italic + dotted), screens 3-up grid renders, connections block shows 3 columns
 4. `/works/games/example-playable-jam/` — hero SVG only, no screens, no connections block (graceful empty)
 5. `/works/music/` — 4 music rows render with cover thumbs and meta
