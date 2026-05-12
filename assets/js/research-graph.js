@@ -28,7 +28,7 @@ function persistCacheDebounced() {
     flushCache();
   }, 200);
 }
-// Returns the active graph canvas element (the standalone /garden/graph/
+// Returns the active graph canvas element (the standalone /research/graph/
 // page's canvas, or the side panel's canvas), or null if neither is
 // mounted. The standalone page takes precedence because it can coexist
 // with state.panel = null.
@@ -332,9 +332,8 @@ async function buildSimulation(canvas) {
   function openSlugForElement(g) {
     const slug = g.dataset.slug;
     const d = g.__data__;
-    // Navigation target differs by node kind: themes go to /research/themes/<slug>/,
-    // questions go to /research/questions/<slug>/. Handled fully in sub-step 8;
-    // the data object carries the kind field.
+    // Navigate by node kind: themes → /research/themes/<slug>/;
+    // questions → /research/questions/<slug>/.
     const url = d && d.kind === 'theme'
       ? `/research/themes/${slug}/`
       : `/research/questions/${slug}/`;
@@ -638,7 +637,7 @@ function buildLegend(host) {
 function openPanel({ animate = true } = {}) {
   if (!state.panel) return;
   if (isMobile()) {
-    window.location.assign('/garden/graph/');
+    window.location.assign('/research/graph/');
     return;
   }
   // Adding `.is-animating` enables the CSS transition for the slide. We add
