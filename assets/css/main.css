@@ -1584,3 +1584,287 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   font-size: var(--text-xs);
   color: var(--color-ink-soft);
 }
+
+/* ------------------------------------------------------------------
+ * 30. Research surface
+ *
+ * Slice 1 ships /research/, /research/themes/<slug>/, and
+ * /research/questions/<slug>/. Graph runtime + "Open graph"
+ * toggle come in Slice 2. Status pills (active/dormant/answered)
+ * use existing palette tokens — no new contrast pair introduced.
+ * ------------------------------------------------------------------ */
+
+/* Shared status pill (used on theme cards, theme hero, question status strip, sibling list) */
+.status-pill {
+  display: inline-block;
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+  border: 1px solid currentColor;
+  background: transparent;
+}
+.status-pill.status-active   { color: var(--color-burgundy); }
+.status-pill.status-dormant  { color: var(--color-warn); }
+.status-pill.status-answered { color: var(--color-green); }
+
+/* Index page */
+.research-page { padding-top: 2rem; padding-bottom: 4rem; }
+.research-hero h1 { margin: 0 0 0.5rem; }
+.research-framing { color: var(--color-ink-soft); margin-bottom: 1.5rem; }
+
+.research-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+@media (max-width: 720px) {
+  .research-grid { grid-template-columns: 1fr; }
+}
+
+.research-card {
+  position: relative;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--color-rule);
+  border-radius: 6px;
+  background: var(--color-tile);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.research-card .status-pill { align-self: flex-start; }
+.research-card-title {
+  margin: 0;
+  font-size: var(--text-xl);
+}
+.research-card-title a {
+  color: var(--color-ink);
+  text-decoration: none;
+}
+.research-card-title a:hover { text-decoration: underline; }
+.research-card-badge {
+  align-self: flex-start;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  padding: 0.05rem 0.45rem;
+  border: 1px dotted var(--color-rule);
+  border-radius: 4px;
+}
+.research-card-description {
+  margin: 0;
+  color: var(--color-ink);
+}
+.research-card-tags {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+}
+.research-card-tags li {
+  padding: 0.02rem 0.45rem;
+  border: 1px solid var(--color-rule);
+  border-radius: 4px;
+  color: var(--color-ink-soft);
+}
+.research-card-counts {
+  margin-top: auto;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+}
+
+/* Breadcrumb (used on theme page + question hub) */
+.research-breadcrumb {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  margin: 1.5rem 0 0.5rem;
+}
+.research-breadcrumb a { color: var(--color-ink-soft); }
+.research-breadcrumb [aria-current="page"] { color: var(--color-ink); }
+
+/* Theme page */
+.research-theme-page { padding-top: 1rem; padding-bottom: 4rem; }
+.research-theme-hero { margin-bottom: 2rem; }
+.research-theme-hero h1 { margin: 0 0 0.5rem; display: inline-block; margin-right: 0.7rem; }
+.research-theme-description { margin: 0.4rem 0 0; }
+.research-theme-summary { margin: 0.6rem 0 0; color: var(--color-ink-soft); font-style: italic; }
+.research-theme-cross-link {
+  margin: 0.6rem 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+}
+
+.three-col-questions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+}
+@media (max-width: 720px) {
+  .three-col-questions { grid-template-columns: 1fr; }
+}
+.three-col-questions h3 {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.three-col-questions ul { list-style: none; margin: 0; padding: 0; }
+.three-col-questions li { margin: 0.4rem 0; }
+.three-col-questions li a {
+  display: block;
+  font-weight: 600;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+.three-col-questions li a:hover { text-decoration: underline; }
+.three-col-questions .q-desc {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  margin-top: 0.15rem;
+}
+
+.research-garden-embed { margin-top: 2.5rem; }
+.research-garden-embed h2 { margin-bottom: 0.6rem; }
+
+/* Question hub */
+.research-question-hub { padding-top: 1rem; padding-bottom: 4rem; }
+.research-question-status-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 0.5rem;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+}
+.research-question-status-strip .last-tended,
+.research-question-status-strip .started { white-space: nowrap; }
+.research-question-status-strip .question-tags {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; gap: 0.4rem; flex-wrap: wrap;
+}
+.research-question-status-strip .question-tags li {
+  padding: 0.02rem 0.45rem;
+  border: 1px solid var(--color-rule);
+  border-radius: 4px;
+}
+
+.question-statement {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--text-2xl);
+  margin: 1.5rem 0 2rem;
+  line-height: 1.25;
+}
+
+.research-current-thinking { margin-bottom: 2rem; }
+.research-current-thinking h2 { margin-bottom: 0.6rem; }
+.research-current-thinking p { margin: 0.6rem 0; }
+
+.research-sub-questions, .research-siblings {
+  margin: 1.5rem 0;
+}
+.research-sub-questions h2, .research-siblings h2 {
+  margin: 0 0 0.6rem;
+  font-size: var(--text-xl);
+}
+.research-sub-questions ul, .research-siblings ul {
+  list-style: none; margin: 0; padding: 0;
+}
+.research-sub-questions li, .research-siblings li { margin: 0.5rem 0; }
+.research-sub-questions a, .research-siblings a {
+  font-weight: 600;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+.research-sub-questions a:hover, .research-siblings a:hover { text-decoration: underline; }
+.research-sub-questions .q-desc {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  margin-top: 0.15rem;
+}
+.research-siblings li { display: flex; gap: 0.7rem; align-items: center; }
+
+.research-supporting-notes { margin: 1.8rem 0; }
+.research-supporting-notes h2 { margin-bottom: 0.6rem; }
+
+.research-related-essays { margin: 1.8rem 0; }
+.research-related-essays h2 { margin-bottom: 0.6rem; }
+.research-related-essays ul { list-style: none; margin: 0; padding: 0; }
+.research-related-essays li { margin: 0.5rem 0; }
+.research-related-essays li a {
+  font-weight: 600;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+.research-related-essays li a:hover { text-decoration: underline; }
+
+/* Outputs (used on theme page + question hub) */
+.research-outputs { margin: 1.8rem 0; }
+.research-outputs h2 { margin-bottom: 0.6rem; }
+.outputs-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.output-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--color-rule);
+}
+.output-item:last-child { border-bottom: none; }
+.output-icon {
+  display: inline-flex;
+  width: 18px; height: 18px;
+  color: var(--color-ink-soft);
+  flex-shrink: 0;
+}
+.output-icon svg { width: 100%; height: 100%; }
+.output-title { flex: 1; color: var(--color-ink); text-decoration: none; }
+.output-title:hover { text-decoration: underline; }
+.output-year {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+}
+
+/* Backlinks */
+.research-backlinks { margin: 2rem 0 1rem; }
+.research-backlinks h2 { margin-bottom: 0.6rem; }
+.research-backlinks ul { list-style: none; margin: 0; padding: 0; }
+.research-backlinks li {
+  display: flex; gap: 0.6rem; align-items: baseline;
+  padding: 0.25rem 0;
+  font-size: var(--text-sm);
+}
+.research-backlinks .backlink-kind {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  text-transform: lowercase;
+  width: 5rem;
+  flex-shrink: 0;
+}
+.research-backlinks-empty {
+  font-style: italic;
+  color: var(--color-ink-soft);
+}

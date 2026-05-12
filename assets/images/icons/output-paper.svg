@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 24 24"
+     role="img"
+     aria-label="paper"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="1.6"
+     stroke-linecap="round"
+     stroke-linejoin="round">
+  <path d="M6 3 H15 L18 6 V21 H6 Z"/>
+  <path d="M15 3 V6 H18"/>
+  <path d="M9 11 H15"/>
+  <path d="M9 14 H15"/>
+  <path d="M9 17 H13"/>
+</svg>

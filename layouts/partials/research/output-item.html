@@ -1,0 +1,13 @@
+{{- /* Inputs:
+       .kind  — "paper" | "talk" | "code"
+       .title — string
+       .url   — string
+       .year  — int
+*/ -}}
+<li class="output-item output-item-{{ .kind }}">
+  <span class="output-icon" aria-hidden="true">
+    {{ with resources.Get (printf "images/icons/output-%s.svg" .kind) }}{{ .Content | safeHTML }}{{ end }}
+  </span>
+  <a href="{{ .url }}" class="output-title">{{ .title }}</a>
+  <span class="output-year">{{ .year }}</span>
+</li>

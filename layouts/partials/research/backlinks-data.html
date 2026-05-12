@@ -1,0 +1,36 @@
+{{- /* Builds a map { question-slug: [{ title, url, kind }, ...] }
+       at build time by scanning every page's .RawContent for internal
+       /research/questions/<slug>/ references. partialCached — runs once.
+
+       Usage from a question hub template:
+         {{ $data := partialCached "research/backlinks-data.html" . }}
+         {{ $thisSlug := path.Base .File.Dir }}
+         {{ $thisBacklinks := index $data $thisSlug }}
+*/ -}}
+{{- $linkRE := `/research/questions/([a-z0-9][a-z0-9-]*)/` -}}
+{{- $byQuestion := dict -}}
+{{- range site.RegularPages -}}
+  {{- $thisPage := . -}}
+  {{- $kind := "page" -}}
+  {{- if eq .Section "essays" -}}{{- $kind = "essay" -}}{{- end -}}
+  {{- if eq .Section "garden" -}}{{- $kind = "garden" -}}{{- end -}}
+  {{- if eq .Type "research-question" -}}{{- $kind = "question" -}}{{- end -}}
+  {{- $thisSlug := "" -}}
+  {{- if eq .Type "research-question" -}}
+    {{- $thisSlug = path.Base .File.Dir -}}
+  {{- end -}}
+  {{- $seen := dict -}}
+  {{- range findRE $linkRE .RawContent -}}
+    {{- $slug := replaceRE `^/research/questions/(.*)/$` "$1" . -}}
+    {{- if and (ne $slug $thisSlug) (not (index $seen $slug)) -}}
+      {{- $seen = merge $seen (dict $slug true) -}}
+      {{- $existing := index $byQuestion $slug | default slice -}}
+      {{- $entry := dict
+            "title" $thisPage.Title
+            "url" $thisPage.RelPermalink
+            "kind" $kind -}}
+      {{- $byQuestion = merge $byQuestion (dict $slug (append $entry $existing)) -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- return $byQuestion -}}

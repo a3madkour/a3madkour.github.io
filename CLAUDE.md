@@ -19,6 +19,10 @@ Personal website for Abdelrahman Madkour, built as a Hugo static site with hand-
 - `python3 -m unittest tools/test_check_garden_links.py -v` — garden links linter unit tests (CI gate)
 - `python3 tools/check_filter_chips_config.py` — filter-chips config linter (CI gate)
 - `python3 -m unittest tools/test_check_filter_chips_config.py -v` — filter-chips linter unit tests (CI gate)
+- `python3 tools/check_research_fixtures.py` — research theme + question fixture frontmatter linter (CI gate)
+- `python3 -m unittest tools/test_check_research_fixtures.py -v` — research fixture linter unit tests (CI gate)
+- `python3 tools/check_research_links.py` — research cross-reference linter (CI gate)
+- `python3 -m unittest tools/test_check_research_links.py -v` — research links linter unit tests (CI gate)
 
 There is no npm step. The Python tooling (linter + contrast) is stdlib-only.
 
@@ -67,6 +71,9 @@ Three-state cycle: **system → light → dark → system**.
   - `layouts/garden/{list,single,graph,rss.xml}.html` — garden index (topic-map sections + Other notes + multi-dim filter strip + ⊞ Graph toggle), single note page (single template wrapped in `.garden-stack` for Matuschak-style retrieval), `/garden/graph/` standalone page (mobile fallback + deep link), per-section RSS feed.
   - `layouts/blog/{list,single}.html` — legacy.
   - `layouts/about/single.html` — About page (Phase 2 bio half — Hero / Bio / Where / Connect / Colophon; Now widget deferred to Phase 3). All prose content rendered as `.placeholder` scaffolding awaiting org-mode authoring; Email / GitHub / RSS populated from verifiable sources.
+  - `layouts/research/list.html` — `/research/` index (theme cards grid + tag filter chips; "Open graph" toggle deferred to Slice 2).
+  - `layouts/research-theme/single.html` — `/research/themes/<slug>/` (hero + three-column questions block + aggregated outputs + optional embedded garden topic via `partials/garden/topic-section.html` when `garden_topic_ref` is set). Type discrimination via `cascade: { type: research-theme }` on `content/research/themes/_index.md`.
+  - `layouts/research-question/single.html` — `/research/questions/<slug>/` (status strip, question statement, current thinking, sub-questions, siblings, supporting notes, related essays, outputs, backlinks). Type via `cascade: { type: research-question }`. Bare section URLs `/research/themes/` + `/research/questions/` hidden via `build: render: never`.
   - `layouts/404.html`.
   - `baseof.html` is a thin semantic wrapper (`.page` div around header/main/footer); per-section layouts override `{{ block "main" }}`.
 - **Partials**:
@@ -90,6 +97,10 @@ Three-state cycle: **system → light → dark → system**.
   - `garden/graph-data.html` (build-time data partial — walks all garden pages, extracts internal links via `findRE`, classifies edges by `topic_map` membership, returns JSON; `partialCached`)
   - `garden/graph-script.html` (wraps the JSON in `<script type="application/json" id="garden-graph-data">` with `safeJS`; consumed by client-side JS)
   - `garden/graph-panel.html` (side-panel scaffolding; empty until `garden-graph.js` mounts)
+  - `research/status-pill.html` (active/dormant/answered colored badge — `--color-burgundy`/`--color-warn`/`--color-green`)
+  - `research/output-item.html` (single output entry: hand-authored SVG icon + linked title + year; takes `{kind, title, url, year}` dict)
+  - `research/theme-card.html` (single theme card for the `/research/` index grid; computes `active/dormant/answered` counts + unique supporting-notes count from the passed question slice)
+  - `research/backlinks-data.html` (build-time `partialCached`: walks `site.RegularPages`, extracts `/research/questions/<slug>/` references via `findRE`, returns a `{slug: [{title, url, kind}]}` map consumed by question hubs)
 - **Shortcodes**:
   - `cite.html` — looks up `site.Data.citations.citations[key]`, emits `<cite class="citation" data-cite-key>`, errors if key missing
   - `sidenote.html` — auto-numbered marker + aside via page scratch
@@ -150,7 +161,7 @@ Three Google Fonts loaded in a single `<link>`: **Petrona** (body, italic + upri
 
 ### Deployment
 
-`.github/workflows/hugo.yaml` builds with Hugo extended and deploys `public/` to GitHub Pages on pushes to `master`. The build job runs: Install Hugo CLI → Checkout → Setup Pages → **Verify CSS contrast (WCAG)** → **Verify essay fixtures** → **Run essay linter unit tests** → **Verify garden fixtures** → **Run garden linter unit tests** → **Verify garden links** → **Run garden links linter unit tests** → **Verify filter-chips config** → **Run filter-chips linter unit tests** → Build with Hugo → Upload artifact → Deploy. All nine Python checks must pass before the Hugo build.
+`.github/workflows/hugo.yaml` builds with Hugo extended and deploys `public/` to GitHub Pages on pushes to `master`. The build job runs: Install Hugo CLI → Checkout → Setup Pages → **Verify CSS contrast (WCAG)** → **Verify essay fixtures** → **Run essay linter unit tests** → **Verify garden fixtures** → **Run garden linter unit tests** → **Verify garden links** → **Run garden links linter unit tests** → **Verify filter-chips config** → **Run filter-chips linter unit tests** → **Verify research fixtures** → **Run research fixture linter unit tests** → **Verify research links** → **Run research links linter unit tests** → Build with Hugo → Upload artifact → Deploy. All thirteen Python checks must pass before the Hugo build.
 
 ## Reference docs
 
@@ -183,6 +194,8 @@ Three Google Fonts loaded in a single `<link>`: **Petrona** (body, italic + upri
 **Phase 4 follow-up — graph manipulation complete (2026-05-11).** d3-force graph gains hands-on interaction: wheel zoom (0.3×–4×) toward the cursor, drag-pan on empty SVG, drag-to-reposition for any node with Obsidian-style stay-put release. New toolbar buttons **[Reset view]** restores zoom + pan and **[Reset positions]** releases all pinned nodes back to the simulation. Zoom, pan, and pin state persist per filter+viewport in the existing positions cache (`{nodes, view}` shape); legacy cache entries (bare arrays) auto-migrate to the new shape on first read. `d3-zoom`, `d3-drag`, and `d3-selection` vendored alongside `d3-force.min.js`. Added `sim.on('tick', renderTick)` so user-driven simulation reheats (drag-start, Reset positions) actually animate — the prior static-only graph design lacked this. No template changes, no fixture changes, no new CI gates.
 
 **Phase 2 — About page (bio half) complete (2026-05-11).** Five of six sections from parent spec §4.2 shipped (Hero, Bio, Where, Connect, Colophon); Now widget remains Phase 3-blocked. New `layouts/about/single.html` renders the page; new hand-authored `assets/images/icons/monogram-am.svg` anchors the hero; new CSS §29 introduces the load-bearing `.placeholder` class (muted + italic + dotted underline, `--color-ink-soft` AA-compliant in both modes). Email + GitHub + RSS are populated from verifiable sources; everything else is a marker placeholder for later org-mode authoring. No new CI gates (About is a singleton page).
+
+**Phase 5 — research surface (Slice 1) complete (2026-05-11).** Three new layouts (`/research/`, `/research/themes/<slug>/`, `/research/questions/<slug>/`), three hand-authored output icons (`output-paper.svg` / `output-talk.svg` / `output-code.svg`), four new partials in `partials/research/` (`status-pill`, `output-item`, `theme-card`, `backlinks-data`), new CSS §30 (~250 lines, shared `.status-pill` with `--color-burgundy`/`--color-warn`/`--color-green`), 3-theme + 6-question fixture set exercising every variant (with/without `garden_topic_ref`, all 3 statuses, top-level + sub-question, with/without `supporting_notes`/`related_essays`/`outputs`). Two new CI gates: `tools/check_research_fixtures.py` (frontmatter contract + status/output-kind enums + forbidden-field detection) and `tools/check_research_links.py` (resolves `garden_topic_ref` → garden topic-map note, `theme` → theme, `parent_question` → same-theme question, `supporting_notes` → garden, `related_essays` → essays). Theme pages with `garden_topic_ref` embed the referenced garden topic-map via the existing `partials/garden/topic-section.html` — full visual re-use, no duplication of the tile renderer. Backlinks computed at build time via `partialCached` data partial scanning `.RawContent` (same architecture as `garden/graph-data.html`). Frontmatter parser in `tools/check_fixtures.py` was extended in this slice to handle YAML block sequences with flow-style mapping items (`outputs: \n  - { kind: paper, ... }`) — additive extension; all 53 existing unit tests still pass. "Open graph" toggle + force-directed research graph deferred to Slice 2.
 
 **Phase 2 — remaining slices (not started).** Beyond Phase 2:
 - About page **Now widget** (the one section from spec §4.2 not yet shipped) — Phase 3-dependent. The other five sections shipped 2026-05-11 as scaffolding.
