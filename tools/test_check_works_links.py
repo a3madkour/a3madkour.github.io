@@ -48,6 +48,121 @@ class WorksLinksLinterTests(unittest.TestCase):
         p.write_text(_md(fm))
         return p
 
+    def test_round_trip_lyrics_passes(self):
+        self._write("works/music/track-a", {
+            "title": "Track A", "date": "2026-01-01", "lastmod": "2026-01-02",
+            "draft": "false", "format": "track", "year": 2026,
+            "lyrics_poem": "poem-a",
+        })
+        self._write("works/poetry/poem-a", {
+            "title": "Poem A", "date": "2026-01-01", "lastmod": "2026-01-02",
+            "draft": "false", "lines": 8,
+            "set_to_music": "track-a",
+        })
+        rc, errs = lint.run(self.tmp)
+        self.assertEqual(rc, 0, errs)
+
+    def test_round_trip_asymmetric_fails(self):
+        self._write("works/music/track-a", {
+            "title": "Track A", "date": "2026-01-01", "lastmod": "2026-01-02",
+            "draft": "false", "format": "track", "year": 2026,
+            "lyrics_poem": "poem-a",
+        })
+        self._write("works/poetry/poem-a", {
+            "title": "Poem A", "date": "2026-01-01", "lastmod": "2026-01-02",
+            "draft": "false", "lines": 8,
+        })
+        rc, errs = lint.run(self.tmp)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("asymmetric" in e.lower() or "round-trip" in e.lower() for e in errs))
+
+    def test_lyrics_poem_dangling_fails(self):
+        self._write("works/music/track-a", {
+            "title": "Track A", "date": "2026-01-01", "lastmod": "2026-01-02",
+            "draft": "false", "format": "track", "year": 2026,
+            "lyrics_poem": "nonexistent-poem",
+        })
+        rc, errs = lint.run(self.tmp)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("nonexistent-poem" in e for e in errs))
+
+    def test_set_to_music_dangling_fails(self):
+        self._write("works/poetry/poem-a", {
+            "title": "Poem A", "date": "2026-01-01", "lastmod": "2026-01-02",
+            "draft": "false", "lines": 8,
+            "set_to_music": "nonexistent-track",
+        })
+        rc, errs = lint.run(self.tmp)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("nonexistent-track" in e for e in errs))
+
+    def test_game_research_questions_resolved(self):
+        self._write("research/questions/q-a", {
+            "title": "Q A", "date": "2026-01-01", "lastmod": "2026-01-02",
+            "draft": "false",
+        })
+        self._write("works/games/game-a", {
+            "title": "Game A", "date": "2026-01-01", "lastmod": "2026-01-02",
+            "draft": "false", "status": "playable", "kind": "full-release",
+            "tagline": "ok", "year": 2026,
+            "research_questions": ["/research/questions/q-a/"],
+        })
+        rc, errs = lint.run(self.tmp)
+        self.assertEqual(rc, 0, errs)
+
+    def test_game_research_questions_dangling_fails(self):
+        self._write("works/games/game-a", {
+            "title": "Game A", "date": "2026-01-01", "lastmod": "2026-01-02",
+            "draft": "false", "status": "playable", "kind": "full-release",
+            "tagline": "ok", "year": 2026,
+            "research_questions": ["/research/questions/missing/"],
+        })
+        rc, errs = lint.run(self.tmp)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("missing" in e for e in errs))
+
+    def test_game_related_essays_dangling_fails(self):
+        self._write("works/games/game-a", {
+            "title": "Game A", "date": "2026-01-01", "lastmod": "2026-01-02",
+            "draft": "false", "status": "playable", "kind": "full-release",
+            "tagline": "ok", "year": 2026,
+            "related_essays": ["/essays/nonexistent/"],
+        })
+        rc, errs = lint.run(self.tmp)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("/essays/nonexistent/" in e for e in errs))
+
+    def test_game_related_notes_dangling_fails(self):
+        self._write("works/games/game-a", {
+            "title": "Game A", "date": "2026-01-01", "lastmod": "2026-01-02",
+            "draft": "false", "status": "playable", "kind": "full-release",
+            "tagline": "ok", "year": 2026,
+            "related_notes": ["/garden/nonexistent/"],
+        })
+        rc, errs = lint.run(self.tmp)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("/garden/nonexistent/" in e for e in errs))
+
+    def test_draft_target_treated_as_missing(self):
+        self._write("research/questions/draft-q", {
+            "title": "Draft Q", "date": "2026-01-01", "lastmod": "2026-01-02",
+            "draft": "true",
+        })
+        self._write("works/games/game-a", {
+            "title": "Game A", "date": "2026-01-01", "lastmod": "2026-01-02",
+            "draft": "false", "status": "playable", "kind": "full-release",
+            "tagline": "ok", "year": 2026,
+            "research_questions": ["/research/questions/draft-q/"],
+        })
+        rc, errs = lint.run(self.tmp)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("draft" in e.lower() for e in errs))
+
+    def test_empty_tree_passes(self):
+        rc, errs = lint.run(self.tmp)
+        self.assertEqual(rc, 0)
+        self.assertEqual(errs, [])
+
 
 if __name__ == "__main__":
     unittest.main()
