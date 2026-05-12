@@ -1413,7 +1413,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 /* Node cursor during drag — garden-specific (targets .garden-graph-node).
    The analogous rule for research nodes will live in §31. */
 .graph-panel-canvas svg.is-dragging-node .garden-graph-node circle,
-.garden-graph-page .graph-panel-canvas svg.is-dragging-node .garden-graph-node circle {
+.garden-graph-page .garden-graph-canvas svg.is-dragging-node .garden-graph-node circle {
   cursor: grabbing;
 }
 
