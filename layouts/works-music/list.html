@@ -1,0 +1,48 @@
+{{ define "main" }}
+<article class="page works-music-index">
+  <header class="page-header">
+    <h1>{{ .Title }}</h1>
+    {{ with .Description }}<p class="page-description">{{ . }}</p>{{ end }}
+  </header>
+
+  {{ .Content }}
+
+  {{ $items := .Pages.ByDate.Reverse }}
+
+  {{- $formats := slice -}}
+  {{- $tagCounts := dict -}}
+  {{- range $items -}}
+    {{- $f := .Params.format -}}
+    {{- if and $f (not (in $formats $f)) -}}{{- $formats = $formats | append $f -}}{{- end -}}
+    {{- range .Params.tags -}}
+      {{- $cur := index $tagCounts . | default 0 -}}
+      {{- $tagCounts = merge $tagCounts (dict . (add $cur 1)) -}}
+    {{- end -}}
+  {{- end -}}
+
+  {{- $tagPairs := slice -}}
+  {{- range $name, $count := $tagCounts -}}
+    {{- $tagPairs = $tagPairs | append (dict "name" $name "count" $count) -}}
+  {{- end -}}
+  {{- $tags := slice -}}
+  {{- range (sort (sort $tagPairs "name" "asc") "count" "desc") -}}
+    {{- $tags = $tags | append .name -}}
+  {{- end -}}
+
+  {{- $dims := slice -}}
+  {{- if ge (len $formats) 2 -}}
+    {{- $dims = $dims | append (dict "key" "format" "label" "Format" "values" $formats) -}}
+  {{- end -}}
+  {{- if ge (len $tags) 2 -}}
+    {{- $dims = $dims | append (dict "key" "tag" "label" "Tag" "values" $tags) -}}
+  {{- end -}}
+
+  {{ partial "filter-chips.html" (dict "dimensions" $dims "section" "music") }}
+
+  <section class="works-music-list">
+    {{- range $items }}
+      {{- partial "works/music-row.html" . }}
+    {{- end }}
+  </section>
+</article>
+{{ end }}
