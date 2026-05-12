@@ -1111,6 +1111,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   border-radius: 4px;
   padding: 0.15rem 0.55rem;
   font: inherit;
+  color: var(--color-ink);
   cursor: pointer;
 }
 
