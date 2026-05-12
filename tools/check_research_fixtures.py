@@ -128,6 +128,26 @@ def lint_question(question_dir: Path) -> list[str]:
     return errors
 
 
+def validate_unique_theme_weights(themes: list[dict]) -> list[str]:
+    """Theme weights must be unique so themePaletteOrder is deterministic.
+
+    Returns a list of error strings (empty if all weights are distinct or absent).
+    """
+    seen: dict = {}
+    errors: list[str] = []
+    for theme in themes:
+        w = theme.get("weight")
+        if w is None:
+            continue
+        if w in seen:
+            errors.append(
+                f"theme weight {w} duplicated: {seen[w]} and {theme['slug']}"
+            )
+        else:
+            seen[w] = theme["slug"]
+    return errors
+
+
 def main() -> int:
     repo_root = Path(__file__).resolve().parent.parent
     themes_dir = repo_root / "content" / "research" / "themes"
@@ -140,10 +160,18 @@ def main() -> int:
         return 1
 
     errors: list[str] = []
+    themes: list[dict] = []
     for d in sorted(themes_dir.iterdir()):
         if not d.is_dir() or d.name.startswith("_"):
             continue
         errors.extend(lint_theme(d))
+        md = d / "index.md"
+        if md.exists():
+            fm = parse_frontmatter(md.read_text())
+            if fm is not None:
+                fm["slug"] = d.name
+                themes.append(fm)
+    errors.extend(validate_unique_theme_weights(themes))
     for d in sorted(questions_dir.iterdir()):
         if not d.is_dir() or d.name.startswith("_"):
             continue
