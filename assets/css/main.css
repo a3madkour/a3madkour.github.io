@@ -1067,8 +1067,12 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 .garden-path-log .path-log-count {
   color: var(--color-ink-soft);
 }
+/* .garden-graph-toggle appears in two places: inside .garden-path-log on note
+   pages, and standalone on the garden index. Style both — without the
+   explicit color, the standalone button falls back to UA ButtonText which
+   doesn't respect dark mode. */
 .garden-path-log .path-log-clear,
-.garden-path-log .garden-graph-toggle {
+.garden-graph-toggle {
   background: transparent;
   border: 1px solid var(--color-rule);
   border-radius: 4px;
@@ -1078,11 +1082,11 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   cursor: pointer;
 }
 .garden-path-log .path-log-clear:hover,
-.garden-path-log .garden-graph-toggle:hover {
+.garden-graph-toggle:hover {
   background: var(--color-stone);
   color: var(--color-ink);
 }
-.garden-path-log .garden-graph-toggle[aria-expanded="true"] {
+.garden-graph-toggle[aria-expanded="true"] {
   background: var(--color-burgundy);
   color: var(--color-tile);
   border-color: var(--color-burgundy);
@@ -1309,11 +1313,14 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   background: var(--color-rule);
 }
 
-/* Cursor states for zoom/pan on the panel canvas */
+/* Cursor states for zoom/pan on the panel canvas.
+   Class-based — :active is unreliable under pointer capture (d3-drag) and
+   on some browsers during d3-zoom drag-pan. JS toggles .is-panning on the
+   svg during zoom drag and .is-dragging-node during d3-drag on a node. */
 .garden-graph-panel-canvas svg {
   cursor: grab;
 }
-.garden-graph-panel-canvas svg:active {
+.garden-graph-panel-canvas svg.is-panning {
   cursor: grabbing;
 }
 
@@ -1359,7 +1366,8 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   stroke: transparent;
   stroke-width: 1;
 }
-.garden-graph-node:active circle {
+.garden-graph-panel-canvas svg.is-dragging-node .garden-graph-node circle,
+.garden-graph-page .garden-graph-canvas svg.is-dragging-node .garden-graph-node circle {
   cursor: grabbing;
 }
 .garden-graph-node.in-stack circle {
@@ -1435,7 +1443,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 .garden-graph-page .garden-graph-canvas svg {
   cursor: grab;
 }
-.garden-graph-page .garden-graph-canvas svg:active {
+.garden-graph-page .garden-graph-canvas svg.is-panning {
   cursor: grabbing;
 }
 

@@ -1,3 +1,21 @@
-{{- $options := dict "targetPath" "js/bundle.js" -}}
-{{- $jsBundle := resources.Get "js/index.js" | js.Build $options | resources.Minify | fingerprint -}}
-<script src="{{ $jsBundle.RelPermalink }}" integrity="{{ $jsBundle.Data.Integrity }}" defer></script>
+{{- /* Multi-entry bundling: one core bundle on every page, plus a
+       section-scoped bundle on /essays/ and /garden/. Hugo's js.Build can't
+       emit code-split chunks from a single entry (esbuild's splitting
+       requires outdir mode), so we get per-section payloads by building
+       independent entries. Each call gets its own fingerprint + SRI. */ -}}
+
+{{- $coreOpts := dict "targetPath" "js/core.js" "minify" true -}}
+{{- $core := resources.Get "js/index.js" | js.Build $coreOpts | fingerprint -}}
+<script src="{{ $core.RelPermalink }}" integrity="{{ $core.Data.Integrity }}" defer></script>
+
+{{- if eq .Section "essays" }}
+{{- $essayOpts := dict "targetPath" "js/essay.js" "minify" true -}}
+{{- $essay := resources.Get "js/entry-essay.js" | js.Build $essayOpts | fingerprint }}
+<script src="{{ $essay.RelPermalink }}" integrity="{{ $essay.Data.Integrity }}" defer></script>
+{{- end }}
+
+{{- if eq .Section "garden" }}
+{{- $gardenOpts := dict "targetPath" "js/garden.js" "minify" true -}}
+{{- $garden := resources.Get "js/entry-garden.js" | js.Build $gardenOpts | fingerprint }}
+<script src="{{ $garden.RelPermalink }}" integrity="{{ $garden.Data.Integrity }}" defer></script>
+{{- end }}

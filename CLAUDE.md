@@ -36,7 +36,17 @@ Hugo **extended** (≥ 0.148.0) is required — the GitHub Actions workflow pins
 
 ### JS pipeline
 
-`assets/js/index.js` is bundled by Hugo's `js.Build` (esbuild) into `js/bundle.<hash>.js`, minified, fingerprinted, and loaded with `defer`. Entry imports `toggle-theme.js`, `nav.js` (TOC scroll-spy via `IntersectionObserver`), `essay.js`, `garden.js`, `garden-stack.js`, and `garden-graph.js`. Both `essay.js` and `garden.js` import the shared `filter-chips.js` module (multi-dim AND filter behavior). `garden-stack.js` runs the eager-Matuschak stacked-column app (click intercept → fetch → DOMParser → append; URL synced to `?stack=`); `garden-graph.js` mounts the d3-force graph (panel slide-in on desktop, separate `/garden/graph/` page on mobile). The two coordinate via the `garden:stack-changed` custom event; neither imports the other. d3-force, d3-zoom, d3-drag, and d3-selection are vendored under `assets/js/vendor/` (no npm). `garden-graph.js` dynamically imports all four on first graph open. As with d3-force at the predecessor slice, `js.Build` without `splitting: true` inlines these dynamic imports into the main bundle — the total ~95 KB of d3 modules rides along with every page until/unless the build is refactored to emit code-split chunks. Each page-level module guards on its own selector and bails on irrelevant pages.
+**Multi-entry bundling.** `layouts/partials/scripts.html` runs Hugo's `js.Build` (esbuild) three times — one bundle per `.Section` scope — minified + fingerprinted, classic-script with SRI:
+
+- `js/index.js` → `js/core.<hash>.js` (~1.4 KB) — `toggle-theme.js` + `nav.js`; loaded on every page.
+- `js/entry-essay.js` → `js/essay.<hash>.js` (~5 KB) — `essay.js` (which imports `filter-chips.js`); loaded only when `.Section == "essays"`.
+- `js/entry-garden.js` → `js/garden.<hash>.js` (~119 KB) — `garden.js` + `garden-stack.js` + `garden-graph.js` (and the ~95 KB of vendored d3 modules that `garden-graph.js` dynamically imports); loaded only when `.Section == "garden"`. Non-garden pages don't ship d3 at all.
+
+Each call to `js.Build` is independent — no code-split chunks. `filter-chips.js` is bundled into both the essay and the garden bundle (small duplication, ~8 KB).
+
+**Why three bundles, not one with `splitting: true`?** esbuild requires `outdir` mode for code splitting, but Hugo's `js.Build` is `outfile`-only. Setting `splitting: true` on a single entry silently inlines dynamic imports rather than emitting chunks. Multi-entry sidesteps the limitation entirely. Confirmed with a minimal repro.
+
+**Module roles:** `essay.js` and `garden.js` both import the shared `filter-chips.js` module (multi-dim AND filter behavior). `garden-stack.js` runs the eager-Matuschak stacked-column app (click intercept → fetch → DOMParser → append; URL synced to `?stack=`); `garden-graph.js` mounts the d3-force graph (panel slide-in on desktop, separate `/garden/graph/` page on mobile). The two coordinate via the `garden:stack-changed` custom event; neither imports the other. d3-force, d3-zoom, d3-drag, and d3-selection are vendored under `assets/js/vendor/` (no npm). `garden-graph.js` dynamically imports all four on first graph open — these inline into the garden bundle (no further splitting), so the d3 modules ride along with the first byte of `js/garden.*.js` on every garden page rather than being lazy. Each page-level module guards on its own selector and bails on irrelevant pages.
 
 ### Theme toggle
 
