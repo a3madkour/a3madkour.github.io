@@ -158,7 +158,12 @@ function updatePathLog() {
       a.setAttribute('aria-current', 'page');
     }
     const col = document.querySelector(`${COLUMN}[data-slug="${CSS.escape(slug)}"]`);
-    a.textContent = col ? col.querySelector('.garden-note-title').textContent.trim() : slug;
+    // Fall back to the slug if the column is missing OR the title element is
+    // missing (template change, partial-render failure). The outer ternary
+    // already guards `col`; without the inner guard, a templates regression
+    // breaks updatePathLog for the whole stack instead of just one crumb.
+    const titleEl = col ? col.querySelector('.garden-note-title') : null;
+    a.textContent = titleEl ? titleEl.textContent.trim() : slug;
     log.insertBefore(a, actions);
   });
 
