@@ -482,6 +482,61 @@ main { flex-grow: 1; }
 .essay-references li { margin-bottom: 0.75rem; line-height: 1.5; }
 .essay-references li:target { background: rgba(107, 31, 44, 0.08); padding: 0.25rem 0.5rem; border-radius: 4px; }
 
+/* Citation hover-card (singleton popover on desktop, bottom sheet on mobile).
+ * Content is cloned at runtime from #ref-<key> by citation-card.js. */
+.citation-card {
+  position: absolute;
+  z-index: 50;
+  max-width: 320px;
+  padding: 1rem 1.25rem;
+  background: var(--color-stone);
+  border: 1px solid var(--color-rule);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  color: var(--color-ink);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  transition: opacity 120ms ease-out;
+}
+.citation-card[hidden] { display: none; }
+.citation-card em { font-style: italic; }
+.citation-card a { color: var(--color-burgundy); }
+.citation-card a:hover { text-decoration: underline; }
+.citation-card-close {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .citation-card {
+    position: fixed;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    top: auto;
+    max-width: none;
+    padding: 1.25rem 1.25rem 1rem;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.16);
+    border-radius: 8px;
+  }
+  .citation-card-close {
+    display: block;
+    position: absolute;
+    top: 0.5rem;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--color-ink-soft);
+    cursor: pointer;
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .citation-card { transition: none; }
+}
+
 /* ------------------------------------------------------------------
  * 14. Figures
  * ------------------------------------------------------------------ */
