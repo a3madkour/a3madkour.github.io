@@ -269,7 +269,7 @@ async function buildSimulation(canvas) {
       persistCacheDebounced();
     });
 
-  // Build node elements (each is a <g> with circle + text)
+  // Build node elements (each is a <g> with circle + text).
   const nodeEls = nodes.map(n => {
     const g = document.createElementNS(SVG_NS, 'g');
     g.setAttribute('class', 'garden-graph-node' + (state.inStack.has(n.slug) ? ' in-stack' : ''));
@@ -292,34 +292,44 @@ async function buildSimulation(canvas) {
     g.__data__ = n;
     select(g).call(dragBehavior);
 
-    const openSlug = () => {
-      // If a stack root is mounted on this page, append/refocus a column
-      // rather than do a hard navigation — preserves the reader's path.
-      // On the standalone /garden/graph/ page there is no stack, so navigate.
-      if (document.querySelector('.garden-stack')) {
-        window.dispatchEvent(new CustomEvent('garden:graph-navigate', {
-          detail: { slug: n.slug }
-        }));
-      } else {
-        window.location.assign(`/garden/${n.slug}/`);
-      }
-    };
-    g.addEventListener('click', () => {
-      if (n.wasDragged) {
-        n.wasDragged = false;
-        return;
-      }
-      openSlug();
-    });
-    g.addEventListener('keydown', (ev) => {
-      if (ev.key === 'Enter' || ev.key === ' ') {
-        ev.preventDefault();
-        openSlug();
-      }
-    });
-
     nodeLayer.appendChild(g);
     return { n, g };
+  });
+
+  // Delegate click + keydown for all nodes onto the node layer instead of
+  // attaching two listeners per node. Node identity comes from the SVG
+  // element's `__data__` (set above) and its `dataset.slug`, not from a
+  // per-node closure — so the listeners survive a rebuild and don't grow
+  // with the graph.
+  function openSlugForElement(g) {
+    const slug = g.dataset.slug;
+    // If a stack root is mounted on this page, append/refocus a column rather
+    // than do a hard navigation — preserves the reader's path. On the
+    // standalone /garden/graph/ page there's no stack, so navigate.
+    if (document.querySelector('.garden-stack')) {
+      window.dispatchEvent(new CustomEvent('garden:graph-navigate', {
+        detail: { slug }
+      }));
+    } else {
+      window.location.assign(`/garden/${slug}/`);
+    }
+  }
+  nodeLayer.addEventListener('click', (e) => {
+    const g = e.target.closest('.garden-graph-node');
+    if (!g || !nodeLayer.contains(g)) return;
+    const d = g.__data__;
+    if (d && d.wasDragged) {
+      d.wasDragged = false;
+      return;
+    }
+    openSlugForElement(g);
+  });
+  nodeLayer.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const g = e.target.closest('.garden-graph-node');
+    if (!g || !nodeLayer.contains(g)) return;
+    e.preventDefault();
+    openSlugForElement(g);
   });
 
   canvas.replaceChildren(svg);
