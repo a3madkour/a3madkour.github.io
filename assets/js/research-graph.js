@@ -71,16 +71,12 @@ function reducedMotion() {
 }
 
 // Cache key encodes everything that would change a node's settled position:
-// the active filters, the canvas viewport, and — only when local-graph mode
-// is active — the focused note (since local mode renders a different
-// subgraph per focal note). With scope=all the full graph is the same
-// regardless of which note page is displaying it, so the cache is shared
-// across all notes and the standalone /garden/graph/ page; dragged
-// positions persist as the reader traverses.
+// the active filters and the canvas viewport. Research graph always renders
+// all nodes (no local N-hop mode), so the cache is shared across /research/
+// and /research/graph/.
 function positionsCacheKey(canvas) {
   const f = state.filters;
-  const focus = f.local === 'all' ? '' : (state.page.currentSlug || '');
-  return `${f.tag}|${f.stage}|${f.local}|${focus}|${canvas.clientWidth}x${canvas.clientHeight}`;
+  return `${f.tag}|${f.status}|${canvas.clientWidth}x${canvas.clientHeight}`;
 }
 
 function loadCachedPositions(canvas) {
@@ -155,38 +151,18 @@ function parseData() {
   try { return JSON.parse(tag.textContent); } catch { return null; }
 }
 
-function bfsNeighborhood(focus, hops, edges) {
-  const adj = new Map();
-  for (const e of edges) {
-    if (!adj.has(e.source)) adj.set(e.source, new Set());
-    if (!adj.has(e.target)) adj.set(e.target, new Set());
-    adj.get(e.source).add(e.target);
-    adj.get(e.target).add(e.source);
-  }
-  const visited = new Set([focus]);
-  let frontier = new Set([focus]);
-  for (let i = 0; i < hops; i++) {
-    const next = new Set();
-    frontier.forEach(s => {
-      (adj.get(s) || new Set()).forEach(t => {
-        if (!visited.has(t)) { next.add(t); visited.add(t); }
-      });
-    });
-    frontier = next;
-  }
-  return visited;
-}
-
 function applyFilters() {
   if (!state.data) return { nodes: [], edges: [] };
   const f = state.filters;
   let nodes = state.data.nodes;
-  if (f.tag !== 'all') nodes = nodes.filter(n => n.tag === f.tag);
-  if (f.stage !== 'all') nodes = nodes.filter(n => n.stage === f.stage);
-  if (state.page.isNotePage && f.local !== 'all') {
-    const hops = f.local === '1-hop' ? 1 : 2;
-    const allowed = bfsNeighborhood(state.page.currentSlug, hops, state.data.edges);
-    nodes = nodes.filter(n => allowed.has(n.slug));
+  // Tag filter: multi-select (stored as comma-joined string 'tag1,tag2' or 'all').
+  if (f.tag !== 'all') {
+    const tags = f.tag.split(',').filter(Boolean);
+    nodes = nodes.filter(n => tags.some(t => (n.tags || []).includes(t)));
+  }
+  // Status filter: single-select; applies to questions only (themes always visible).
+  if (f.status !== 'all') {
+    nodes = nodes.filter(n => n.kind === 'theme' || n.status === f.status);
   }
   const allowed = new Set(nodes.map(n => n.slug));
   const edges = state.data.edges.filter(e => allowed.has(e.source) && allowed.has(e.target));
@@ -583,31 +559,23 @@ function makeActionChip(label, onClick) {
 
 function buildFilterChips(host) {
   const tags = new Set();
-  const stages = new Set();
-  state.data.nodes.forEach(n => { if (n.tag) tags.add(n.tag); stages.add(n.stage); });
+  const statuses = new Set();
+  state.data.nodes.forEach(n => {
+    (n.tags || []).forEach(t => tags.add(t));
+    if (n.status) statuses.add(n.status);
+  });
 
-  // Tag dim
+  // Tag dim — multi-select
   const tagLabel = document.createElement('span'); tagLabel.className = 'label'; tagLabel.textContent = 'Tag:';
   host.append(tagLabel, makeFilterChip(host, 'All', 'tag', 'all'));
   Array.from(tags).sort().forEach(t => host.appendChild(makeFilterChip(host, t, 'tag', t)));
 
-  // Stage dim
-  const stageLabel = document.createElement('span'); stageLabel.className = 'label'; stageLabel.textContent = 'Stage:';
-  host.append(stageLabel, makeFilterChip(host, 'All', 'stage', 'all'));
-  ['seedling', 'budding', 'evergreen']
-    .filter(s => stages.has(s))
-    .forEach(s => host.appendChild(makeFilterChip(host, s, 'stage', s)));
-
-  // Local dim — note pages only
-  if (state.page.isNotePage) {
-    const localLabel = document.createElement('span'); localLabel.className = 'label'; localLabel.textContent = 'Scope:';
-    host.append(
-      localLabel,
-      makeFilterChip(host, 'All', 'local', 'all'),
-      makeFilterChip(host, '1-hop', 'local', '1-hop'),
-      makeFilterChip(host, '2-hop', 'local', '2-hop'),
-    );
-  }
+  // Status dim — single-select; applies to questions only
+  const statusLabel = document.createElement('span'); statusLabel.className = 'label'; statusLabel.textContent = 'Status:';
+  host.append(statusLabel, makeFilterChip(host, 'All', 'status', 'all'));
+  ['active', 'dormant', 'answered']
+    .filter(s => statuses.has(s))
+    .forEach(s => host.appendChild(makeFilterChip(host, s, 'status', s)));
 }
 
 function buildActionChips(host) {
