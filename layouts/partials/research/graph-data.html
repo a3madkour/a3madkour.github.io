@@ -30,8 +30,9 @@
     ) -}}
 {{- end -}}
 
-{{- /* themePaletteOrder: sort by weight asc, slug for ties */ -}}
-{{- $themesSorted := sort $themes "weight" "asc" -}}
+{{- /* themePaletteOrder: sort by weight asc, slug for ties (two-pass: stable sort preserves slug order within equal weights). */ -}}
+{{- $themesBySlug := sort $themes "slug" "asc" -}}
+{{- $themesSorted := sort $themesBySlug "weight" "asc" -}}
 {{- $themePaletteOrder := slice -}}
 {{- range $themesSorted -}}
   {{- $themePaletteOrder = $themePaletteOrder | append .slug -}}
