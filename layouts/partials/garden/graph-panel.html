@@ -11,5 +11,9 @@
     {{- /* Tag/stage chips populated by garden-graph.js once data is parsed */ -}}
   </div>
   <div class="garden-graph-panel-canvas"></div>
-  <ul class="garden-graph-panel-legend" aria-hidden="true"></ul>
+  {{- /* No aria-hidden — the legend explains the visual encoding (color =
+         tag, size = link count, solid = same topic, dashed = cross-topic).
+         The SVG <desc> only gives node/edge counts; without this list a
+         screen-reader user has no key to what the graph is showing. */ -}}
+  <ul class="garden-graph-panel-legend"></ul>
 </aside>
