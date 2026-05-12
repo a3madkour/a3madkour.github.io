@@ -4,7 +4,7 @@ date: 2026-03-01
 lastmod: 2026-03-02
 draft: false
 status: playable
-kind: full-release
+game_kind: full-release
 tagline: "Example tagline — lorem ipsum dolor sit amet."
 year: 2026
 tags: [example, demo]

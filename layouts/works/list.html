@@ -1,0 +1,16 @@
+{{ define "main" }}
+<article class="page works-umbrella">
+  <header class="page-header">
+    <h1>{{ .Title }}</h1>
+    {{ with .Description }}<p class="page-description">{{ . }}</p>{{ end }}
+  </header>
+
+  {{ .Content }}
+
+  <section class="works-umbrella-grid">
+    {{ partial "works/section-card.html" (dict "sub" "games") }}
+    {{ partial "works/section-card.html" (dict "sub" "music") }}
+    {{ partial "works/section-card.html" (dict "sub" "poetry") }}
+  </section>
+</article>
+{{ end }}

@@ -4,7 +4,7 @@ date: 2026-02-10
 lastmod: 2026-02-11
 draft: false
 status: playable
-kind: jam
+game_kind: jam
 tagline: "Lorem ipsum dolor sit amet."
 year: 2026
 hero: hero.svg

@@ -16,7 +16,7 @@ from check_fixtures import parse_frontmatter  # noqa: E402
 
 # --- contracts ---
 
-GAME_REQUIRED = {"title", "date", "lastmod", "draft", "status", "kind", "tagline", "year"}
+GAME_REQUIRED = {"title", "date", "lastmod", "draft", "status", "game_kind", "tagline", "year"}
 GAME_OPTIONAL = {
     "tags", "summary", "hero", "embed_url", "source_url", "itch_url",
     "collaborators", "tech_stack", "length", "screenshots",
@@ -81,9 +81,9 @@ def _lint_game(md: Path, fm: dict[str, object]) -> list[str]:
     if status is not None and status not in GAME_STATUSES:
         errs.append(f"{md}: status='{status}' not in {sorted(GAME_STATUSES)}")
 
-    gkind = fm.get("kind")
+    gkind = fm.get("game_kind")
     if gkind is not None and gkind not in GAME_KINDS:
-        errs.append(f"{md}: kind='{gkind}' not in {sorted(GAME_KINDS)}")
+        errs.append(f"{md}: game_kind='{gkind}' not in {sorted(GAME_KINDS)}")
 
     year = fm.get("year")
     if year is not None and not isinstance(year, int):

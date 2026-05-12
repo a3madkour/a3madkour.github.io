@@ -20,7 +20,7 @@ date: 2026-01-01
 lastmod: 2026-01-02
 draft: false
 status: playable
-kind: full-release
+game_kind: full-release
 tagline: "Example tagline."
 year: 2026
 ---
@@ -91,10 +91,10 @@ class WorksFixturesLinterTests(unittest.TestCase):
         self.assertTrue(any("status='shipped'" in e for e in errs))
 
     def test_game_bad_kind_enum(self):
-        body = GAME_VALID.replace("kind: full-release", "kind: walking-sim")
+        body = GAME_VALID.replace("game_kind: full-release", "game_kind: walking-sim")
         p = self._write("games", "bad-kind", body)
         errs = lint.lint_file(p)
-        self.assertTrue(any("kind='walking-sim'" in e for e in errs))
+        self.assertTrue(any("game_kind='walking-sim'" in e for e in errs))
 
     def test_game_year_not_int(self):
         body = GAME_VALID.replace("year: 2026", "year: 'twenty-six'")
@@ -116,7 +116,7 @@ date: 2026-01-01
 lastmod: 2026-01-02
 draft: false
 status: in-progress
-kind: research-prototype
+game_kind: research-prototype
 tagline: "All the fields."
 year: 2026
 tags: [example, demo]
