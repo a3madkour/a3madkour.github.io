@@ -83,7 +83,7 @@ Three contracts, all enforced by `tools/check_works_fixtures.py`. The shared `pa
 | `lastmod` | yes | YAML date | |
 | `draft` | yes | bool | |
 | `status` | yes | enum: `playable` \| `in-progress` \| `archived` | single-active filter chip |
-| `kind` | yes | enum: `full-release` \| `jam` \| `research-prototype` \| `experiment` | single-active filter chip. Named `kind` (not `type`) to avoid collision with Hugo's reserved `type` field — see note below the table. |
+| `game_kind` | yes | enum: `full-release` \| `jam` \| `research-prototype` \| `experiment` | single-active filter chip. Named `game_kind` (not `type` or `kind`) to avoid Hugo's reserved field collisions — see note below the table. |
 | `tagline` | yes | string | italic line under title |
 | `year` | yes | int | |
 | `tags` | optional | list[string] | multi-select filter chip (AND) |
@@ -100,7 +100,7 @@ Three contracts, all enforced by `tools/check_works_fixtures.py`. The shared `pa
 | `related_essays` | optional | list[string] | `/essays/<slug>/` paths |
 | `related_notes` | optional | list[string] | `/garden/<slug>/` paths |
 
-**Why `kind` instead of `type`:** Hugo reserves `type` as a built-in page variable that determines layout resolution. The sub-section `_index.md` files set `type: works-games | works-music | works-poetry` via `cascade.type` so descendant pages resolve to the right layout tree. Per Hugo's cascade docs, "cascading fields override the same fields in lower-level pages, unless they're explicitly set on the lower-level page" — meaning any per-fixture `type:` value wins over the cascade and breaks layout resolution. Naming the games game-type field `kind` sidesteps the collision entirely.
+**Why `game_kind` instead of `type` or `kind`:** Hugo reserves `type` as a built-in page variable that determines layout resolution, and `kind` collides with Hugo's `.Kind` page method (returning "page", "section", etc.) in template access patterns. The sub-section `_index.md` files set `type: works-games | works-music | works-poetry` via `cascade.type` so descendant pages resolve to the right layout tree; any per-fixture `type:` value would shadow the cascade and break layout resolution. Naming the games game-kind field `game_kind` is unambiguously a custom user field with no Hugo collision.
 
 **Music — `content/works/music/<slug>/index.md`**
 
@@ -148,7 +148,7 @@ If `music[M].lyrics_poem == P`, then `poetry[P].set_to_music == M`. Asymmetric p
 
 | Section | Dims (chip-strip order) | Multi-select | Notes |
 |---|---|---|---|
-| Games | status, kind, tag | tag only | All three single-active except tag |
+| Games | status, game_kind, tag | tag only | All three single-active except tag |
 | Music | format, tag | tag only | |
 | Poetry | collection, tag | tag only | `set_to_music` is a badge on the card, not a filter dim |
 
@@ -211,14 +211,14 @@ No new tokens. Status colors map to existing palette:
 
 ### Games (under `content/works/games/`)
 
-| Slug | status | kind | What it exercises |
+| Slug | status | game_kind | What it exercises |
 |---|---|---|---|
 | `example-playable-full-release` | playable | full-release | The "everything filled in" fixture — `embed_url`, `screenshots` (3-up), `research_questions`, `related_essays`, `related_notes` cross-refs |
 | `example-playable-jam` | playable | jam | Minimal — no embed, no screenshots, no cross-refs; graceful-empty path |
 | `example-in-progress-research-prototype` | in-progress | research-prototype | `research_questions` only; in-progress status pill |
 | `example-archived-experiment` | archived | experiment | `itch_url` + `source_url`, no `embed_url`; external-link-only path |
 
-All 3 status values + all 4 kind values covered. Screenshots rendered by fixture #1 only.
+All 3 status values + all 4 game_kind values covered. Screenshots rendered by fixture #1 only.
 
 ### Music (under `content/works/music/`)
 
@@ -274,7 +274,7 @@ Validations per type:
 **Games:**
 - Required fields present, types correct
 - `status ∈ {playable, in-progress, archived}`
-- `kind ∈ {full-release, jam, research-prototype, experiment}`
+- `game_kind ∈ {full-release, jam, research-prototype, experiment}`
 - `year` is int
 - `screenshots` is list of strings (file references)
 - `research_questions` / `related_essays` / `related_notes` are lists of strings (path strings); existence resolution is `check_works_links.py`'s job
@@ -324,7 +324,7 @@ Total Python gates: **15 → 19**.
 
 ## Hugo config
 
-No new taxonomies. `collection`, `status`, `format`, `kind` are frontmatter facets only (consistent with how `flavor`, `stage`, `status` work on garden — filter dims are not Hugo taxonomies).
+No new taxonomies. `collection`, `status`, `format`, `game_kind` are frontmatter facets only (consistent with how `flavor`, `stage`, `status` work on garden — filter dims are not Hugo taxonomies).
 
 ## File tree summary
 

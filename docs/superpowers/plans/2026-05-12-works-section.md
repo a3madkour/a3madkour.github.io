@@ -1759,7 +1759,7 @@ EOF
 {{- end -}}
 <article class="works-game-card"
          data-status="{{ .Params.status }}"
-         data-kind="{{ .Params.kind }}"
+         data-kind="{{ .Params.game_kind }}"
          data-tags="{{ delimit (.Params.tags | default slice) "," }}">
   <a class="works-game-card-link" href="{{ .RelPermalink }}">
     <div class="works-game-card-preview">
@@ -1767,7 +1767,7 @@ EOF
       {{- if .Params.embed_url }}<span class="works-game-card-embed-pill">▶ Play in browser</span>{{- end }}
       <span class="works-game-card-status-badge">
         <span class="works-game-card-year">{{ .Params.year }}</span>
-        <span class="works-game-card-kind">{{ humanize .Params.kind }}</span>
+        <span class="works-game-card-kind">{{ humanize .Params.game_kind }}</span>
       </span>
     </div>
     <div class="works-game-card-body">
@@ -1808,7 +1808,7 @@ The filter-chips partial expects each dim's `values` to be a pre-collected slice
   {{- range $items -}}
     {{- $s := .Params.status -}}
     {{- if and $s (not (in $statuses $s)) -}}{{- $statuses = $statuses | append $s -}}{{- end -}}
-    {{- $k := .Params.kind -}}
+    {{- $k := .Params.game_kind -}}
     {{- if and $k (not (in $kinds $k)) -}}{{- $kinds = $kinds | append $k -}}{{- end -}}
     {{- range .Params.tags -}}
       {{- $cur := index $tagCounts . | default 0 -}}
@@ -1967,7 +1967,7 @@ EOF
       <p class="works-game-meta-row">
         {{ partial "works/status-pill.html" (dict "status" .Params.status) }}
         <span class="works-game-year">{{ .Params.year }}</span>
-        <span class="works-game-kind">{{ humanize .Params.kind }}</span>
+        <span class="works-game-kind">{{ humanize .Params.game_kind }}</span>
         {{- with .Params.length }}<span class="works-game-length">{{ . }}</span>{{- end }}
       </p>
       {{- with .Params.collaborators }}<p class="works-game-collaborators">with {{ delimit . ", " }}</p>{{- end }}
