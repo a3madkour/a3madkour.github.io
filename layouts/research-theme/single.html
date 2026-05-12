@@ -1,0 +1,111 @@
+{{ define "main" }}
+{{- $thisSlug := path.Base .File.Dir -}}
+{{- $questions := where site.RegularPages "Type" "research-question" -}}
+{{- $themeQs := where $questions "Params.theme" $thisSlug -}}
+{{- $active := where $themeQs "Params.status" "active" -}}
+{{- $dormant := where $themeQs "Params.status" "dormant" -}}
+{{- $answered := where $themeQs "Params.status" "answered" -}}
+
+{{- /* Aggregated outputs across this theme's questions */ -}}
+{{- $allOutputs := slice -}}
+{{- range $themeQs -}}
+  {{- range .Params.outputs -}}
+    {{- $allOutputs = $allOutputs | append . -}}
+  {{- end -}}
+{{- end -}}
+
+<main class="reading-column research-theme-page">
+
+  <nav class="research-breadcrumb" aria-label="Breadcrumb">
+    <a href="/research/">Research</a> ›
+    <span aria-current="page">{{ .Title }}</span>
+  </nav>
+
+  <header class="research-theme-hero">
+    <h1>{{ .Title }}</h1>
+    {{ partial "research/status-pill.html" .Params.status }}
+    <p class="research-theme-description">{{ .Params.description }}</p>
+    {{ with .Params.summary }}<p class="research-theme-summary">{{ . }}</p>{{ end }}
+    {{ if .Params.garden_topic_ref }}
+      <p class="research-theme-cross-link">
+        ↗ also at
+        <a href="/garden/{{ .Params.garden_topic_ref }}/">/garden/{{ .Params.garden_topic_ref }}/</a>
+      </p>
+    {{ end }}
+  </header>
+
+  <section class="three-col-questions">
+    {{ if $active }}
+    <div class="col-active">
+      <h3>Active</h3>
+      <ul>
+        {{ range $active.ByWeight }}
+          <li>
+            <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+            <span class="q-desc">{{ .Params.description }}</span>
+          </li>
+        {{ end }}
+      </ul>
+    </div>
+    {{ end }}
+    {{ if $dormant }}
+    <div class="col-dormant">
+      <h3>Dormant</h3>
+      <ul>
+        {{ range $dormant.ByWeight }}
+          <li>
+            <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+            <span class="q-desc">{{ .Params.description }}</span>
+          </li>
+        {{ end }}
+      </ul>
+    </div>
+    {{ end }}
+    {{ if $answered }}
+    <div class="col-answered">
+      <h3>Answered</h3>
+      <ul>
+        {{ range $answered.ByWeight }}
+          <li>
+            <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+            <span class="q-desc">{{ .Params.description }}</span>
+          </li>
+        {{ end }}
+      </ul>
+    </div>
+    {{ end }}
+  </section>
+
+  {{ if $allOutputs }}
+  <section class="research-outputs">
+    <h2>Outputs</h2>
+    <ul class="outputs-list">
+      {{ range sort $allOutputs "year" "desc" }}
+        {{ partial "research/output-item.html" . }}
+      {{ end }}
+    </ul>
+  </section>
+  {{ end }}
+
+  {{ if .Params.garden_topic_ref }}
+    {{- $gardenSlug := .Params.garden_topic_ref -}}
+    {{- $gardenPage := "" -}}
+    {{- range where site.RegularPages "Section" "garden" -}}
+      {{- if eq (path.Base .File.Dir) $gardenSlug -}}{{- $gardenPage = . -}}{{- end -}}
+    {{- end -}}
+    {{ if $gardenPage }}
+    <section class="research-garden-embed">
+      <h2>From the Garden</h2>
+      {{ partial "garden/topic-section.html" (dict "context" $gardenPage) }}
+    </section>
+    {{ end }}
+  {{ end }}
+
+  {{ if .Content }}
+  <section class="research-theme-body">
+    {{ .Content }}
+  </section>
+  {{ end }}
+
+</main>
+{{ end }}
