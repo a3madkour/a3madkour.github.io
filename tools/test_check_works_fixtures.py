@@ -163,6 +163,12 @@ Body.
         errs = lint.lint_file(p)
         self.assertTrue(any("platform_embed.kind='spotify'" in e for e in errs))
 
+    def test_music_platform_embed_missing_url(self):
+        body = MUSIC_VALID + "platform_embed: { kind: bandcamp }\n"
+        p = self._write("music", "embed-no-url", body)
+        errs = lint.lint_file(p)
+        self.assertTrue(any("platform_embed.url" in e and "missing" in e for e in errs))
+
     def test_music_tracks_shape(self):
         body = MUSIC_VALID + """tracks:
   - { title: "Track 1", duration: "3:14" }
@@ -170,6 +176,12 @@ Body.
 """
         p = self._write("music", "good-tracks", body)
         self.assertEqual(lint.lint_file(p), [])
+
+    def test_music_track_missing_duration(self):
+        body = MUSIC_VALID + 'tracks:\n  - { title: "Track 1" }\n'
+        p = self._write("music", "bad-track", body)
+        errs = lint.lint_file(p)
+        self.assertTrue(any("tracks[0]" in e for e in errs))
 
     def test_music_unknown_field(self):
         body = MUSIC_VALID + "bpm: 128\n"
