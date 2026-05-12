@@ -561,18 +561,50 @@ function setupPanelResize() {
 // Different semantics, different visual treatment (.chip vs .chip-action),
 // different builder concerns — separate them.
 
+// Returns true when the chip's value is "active" for the given dim.
+// Tag dim: comma-joined multi-select — value is active when it appears in the
+// joined string (or the joined string equals 'all' and this is the All chip).
+// Other dims: single-select — active when the stored value equals chip value.
+function chipIsActive(dim, value) {
+  if (dim === 'tag') {
+    if (value === 'all') return state.filters.tag === 'all' || state.filters.tag === '';
+    const active = state.filters.tag.split(',').filter(Boolean);
+    return active.includes(value);
+  }
+  return state.filters[dim] === value;
+}
+
 function makeFilterChip(host, label, dim, value) {
   const b = document.createElement('button');
   b.type = 'button';
   b.className = 'chip';
   b.dataset.dim = dim;
   b.dataset.value = value;
-  b.setAttribute('aria-pressed', state.filters[dim] === value ? 'true' : 'false');
+  b.setAttribute('aria-pressed', chipIsActive(dim, value) ? 'true' : 'false');
   b.textContent = label;
   b.addEventListener('click', () => {
-    state.filters[dim] = value;
+    if (dim === 'tag') {
+      if (value === 'all') {
+        // All chip clears the tag selection.
+        state.filters.tag = 'all';
+      } else {
+        // Toggle: add when absent, remove when present.
+        const current = state.filters.tag === 'all' ? [] : state.filters.tag.split(',').filter(Boolean);
+        const idx = current.indexOf(value);
+        if (idx >= 0) {
+          current.splice(idx, 1);
+        } else {
+          current.push(value);
+        }
+        state.filters.tag = current.length ? current.join(',') : 'all';
+      }
+    } else {
+      // Single-select: replace.
+      state.filters[dim] = value;
+    }
+    // Re-sync aria-pressed on all chips for this dimension.
     host.querySelectorAll(`button[data-dim="${dim}"]`).forEach(c => {
-      c.setAttribute('aria-pressed', c.dataset.value === value ? 'true' : 'false');
+      c.setAttribute('aria-pressed', chipIsActive(dim, c.dataset.value) ? 'true' : 'false');
     });
     rebuildGraph();
   });
