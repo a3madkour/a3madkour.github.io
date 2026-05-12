@@ -19,3 +19,12 @@
 {{- $garden := resources.Get "js/entry-garden.js" | js.Build $gardenOpts | fingerprint }}
 <script src="{{ $garden.RelPermalink }}" integrity="{{ $garden.Data.Integrity }}" defer></script>
 {{- end }}
+
+{{- $loadResearch := or
+     (and (eq .Section "research") (eq .Kind "section"))
+     (and (eq .Section "research") (eq .Layout "graph")) -}}
+{{- if $loadResearch }}
+{{- $researchOpts := dict "targetPath" "js/research.js" "minify" true -}}
+{{- $research := resources.Get "js/entry-research.js" | js.Build $researchOpts | fingerprint }}
+<script src="{{ $research.RelPermalink }}" integrity="{{ $research.Data.Integrity }}" defer></script>
+{{- end }}
