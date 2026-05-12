@@ -1,0 +1,153 @@
+{{- /*
+  Research graph data — emitted once per build, consumed by research-graph.js.
+
+  Shape:
+    {
+      themes: [ {slug, title, status, tags, weight, degree} ],
+      questions: [ {slug, title, theme, status, tags, degree} ],
+      edges: [ {source, target, kind, via?} ],
+      themePaletteOrder: [slug, ...]   // sorted by weight asc, then slug for ties
+    }
+
+  Edges:
+    - parent-child (solid): theme→question (from question.theme), question→sub-question (from question.parent_question)
+    - cross-theme (dashed): two questions in different themes citing the same garden slug in supporting_notes
+*/ -}}
+
+{{- $themesIn := where site.RegularPages "Type" "research-theme" -}}
+{{- $questionsIn := where site.RegularPages "Type" "research-question" -}}
+
+{{- /* ---------- themes ---------- */ -}}
+{{- $themes := slice -}}
+{{- range $themesIn -}}
+  {{- $slug := path.Base .File.Dir -}}
+  {{- $themes = $themes | append (dict
+      "slug" $slug
+      "title" .Title
+      "status" .Params.status
+      "tags" (default (slice) .Params.tags)
+      "weight" (default 0 .Params.weight)
+    ) -}}
+{{- end -}}
+
+{{- /* themePaletteOrder: sort by weight asc, slug for ties */ -}}
+{{- $themesSorted := sort $themes "weight" "asc" -}}
+{{- $themePaletteOrder := slice -}}
+{{- range $themesSorted -}}
+  {{- $themePaletteOrder = $themePaletteOrder | append .slug -}}
+{{- end -}}
+
+{{- /* ---------- questions + supporting-notes index ---------- */ -}}
+{{- $questions := slice -}}
+{{- $supportingIndex := dict -}}
+{{- range $questionsIn -}}
+  {{- $slug := path.Base .File.Dir -}}
+  {{- $q := dict
+      "slug" $slug
+      "title" .Title
+      "theme" .Params.theme
+      "parent" (default "" .Params.parent_question)
+      "status" .Params.status
+      "tags" (default (slice) .Params.tags)
+  -}}
+  {{- $questions = $questions | append $q -}}
+  {{- range (default (slice) .Params.supporting_notes) -}}
+    {{- $note := . -}}
+    {{- $existing := index $supportingIndex $note -}}
+    {{- if $existing -}}
+      {{- $supportingIndex = merge $supportingIndex (dict $note ($existing | append $slug)) -}}
+    {{- else -}}
+      {{- $supportingIndex = merge $supportingIndex (dict $note (slice $slug)) -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* question slug → theme slug, for cross-theme detection */ -}}
+{{- $qTheme := dict -}}
+{{- range $questions -}}
+  {{- $qTheme = merge $qTheme (dict .slug .theme) -}}
+{{- end -}}
+
+{{- /* ---------- edges ---------- */ -}}
+{{- $edges := slice -}}
+
+{{- /* parent-child: theme → its questions */ -}}
+{{- range $q := $questions -}}
+  {{- if $q.theme -}}
+    {{- $edges = $edges | append (dict "source" $q.theme "target" $q.slug "kind" "parent-child") -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* parent-child: question → sub-question */ -}}
+{{- range $q := $questions -}}
+  {{- if $q.parent -}}
+    {{- $edges = $edges | append (dict "source" $q.parent "target" $q.slug "kind" "parent-child") -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* cross-theme: per garden slug, all distinct cross-theme pairs */ -}}
+{{- $seenPairs := dict -}}
+{{- range $note, $qs := $supportingIndex -}}
+  {{- if ge (len $qs) 2 -}}
+    {{- range $i, $a := $qs -}}
+      {{- range $j, $b := $qs -}}
+        {{- if gt $j $i -}}
+          {{- $themeA := index $qTheme $a -}}
+          {{- $themeB := index $qTheme $b -}}
+          {{- if ne $themeA $themeB -}}
+            {{- $pairKey := printf "%s|%s" $a $b -}}
+            {{- if not (isset $seenPairs $pairKey) -}}
+              {{- $seenPairs = merge $seenPairs (dict $pairKey true) -}}
+              {{- $edges = $edges | append (dict "source" $a "target" $b "kind" "cross-theme" "via" $note) -}}
+            {{- end -}}
+          {{- end -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* ---------- degree per node ---------- */ -}}
+{{- $degree := dict -}}
+{{- range $e := $edges -}}
+  {{- $sCur := default 0 (index $degree $e.source) -}}
+  {{- $tCur := default 0 (index $degree $e.target) -}}
+  {{- $degree = merge $degree (dict $e.source (add $sCur 1)) -}}
+  {{- $degree = merge $degree (dict $e.target (add $tCur 1)) -}}
+{{- end -}}
+
+{{- /* fold degree back into questions */ -}}
+{{- $questionsOut := slice -}}
+{{- range $q := $questions -}}
+  {{- $deg := default 0 (index $degree $q.slug) -}}
+  {{- $questionsOut = $questionsOut | append (dict
+      "slug" $q.slug
+      "title" $q.title
+      "theme" $q.theme
+      "status" $q.status
+      "tags" $q.tags
+      "degree" $deg
+    ) -}}
+{{- end -}}
+
+{{- $themesOut := slice -}}
+{{- range $t := $themes -}}
+  {{- $deg := default 0 (index $degree $t.slug) -}}
+  {{- $themesOut = $themesOut | append (dict
+      "slug" $t.slug
+      "title" $t.title
+      "status" $t.status
+      "tags" $t.tags
+      "weight" $t.weight
+      "degree" $deg
+    ) -}}
+{{- end -}}
+
+{{- $payload := dict
+    "themes" $themesOut
+    "questions" $questionsOut
+    "edges" $edges
+    "themePaletteOrder" $themePaletteOrder
+-}}
+
+{{- return $payload -}}

@@ -1,0 +1,4 @@
+{{- $data := partialCached "research/graph-data.html" . -}}
+<script type="application/json" id="research-graph-data">
+{{- $data | jsonify | safeJS -}}
+</script>
