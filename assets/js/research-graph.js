@@ -235,9 +235,9 @@ async function buildSimulation(canvas) {
   const svg = document.createElementNS(SVG_NS, 'svg');
   svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', `Force-directed graph of ${nodes.length} note(s)`);
+  svg.setAttribute('aria-label', `Force-directed research graph of ${nodes.length} node(s)`);
   const desc = document.createElementNS(SVG_NS, 'desc');
-  desc.textContent = `Garden graph with ${nodes.length} nodes and ${edges.length} edges. Click a node to open it in a stack.`;
+  desc.textContent = `Research graph with ${nodes.length} nodes and ${edges.length} edges. Click a node to navigate to its hub page.`;
   svg.appendChild(desc);
 
   const contentGroup = document.createElementNS(SVG_NS, 'g');
@@ -254,7 +254,9 @@ async function buildSimulation(canvas) {
   // Build edge elements
   const edgeEls = edges.map(e => {
     const line = document.createElementNS(SVG_NS, 'line');
-    line.setAttribute('class', 'research-graph-edge' + (e.crossTopic ? ' cross-topic' : ''));
+    line.setAttribute('class', e.kind === 'cross-theme'
+      ? 'research-graph-edge research-graph-edge-cross-theme'
+      : 'research-graph-edge');
     edgeLayer.appendChild(line);
     return { e, line };
   });
