@@ -1,0 +1,56 @@
+{{ define "main" }}
+<article class="page works-games-index">
+  <header class="page-header">
+    <h1>{{ .Title }}</h1>
+    {{ with .Description }}<p class="page-description">{{ . }}</p>{{ end }}
+  </header>
+
+  {{ .Content }}
+
+  {{ $items := .Pages.ByDate.Reverse }}
+
+  {{- /* ----- Build dimension value sets ----- */ -}}
+  {{- $statuses := slice -}}
+  {{- $kinds := slice -}}
+  {{- $tagCounts := dict -}}
+  {{- range $items -}}
+    {{- $s := .Params.status -}}
+    {{- if and $s (not (in $statuses $s)) -}}{{- $statuses = $statuses | append $s -}}{{- end -}}
+    {{- $k := .Params.game_kind -}}
+    {{- if and $k (not (in $kinds $k)) -}}{{- $kinds = $kinds | append $k -}}{{- end -}}
+    {{- range .Params.tags -}}
+      {{- $cur := index $tagCounts . | default 0 -}}
+      {{- $tagCounts = merge $tagCounts (dict . (add $cur 1)) -}}
+    {{- end -}}
+  {{- end -}}
+
+  {{- /* Rank tags by count desc, alphabetical for ties */ -}}
+  {{- $tagPairs := slice -}}
+  {{- range $name, $count := $tagCounts -}}
+    {{- $tagPairs = $tagPairs | append (dict "name" $name "count" $count) -}}
+  {{- end -}}
+  {{- $tags := slice -}}
+  {{- range (sort (sort $tagPairs "name" "asc") "count" "desc") -}}
+    {{- $tags = $tags | append .name -}}
+  {{- end -}}
+
+  {{- $dims := slice -}}
+  {{- if ge (len $statuses) 2 -}}
+    {{- $dims = $dims | append (dict "key" "status" "label" "Status" "values" $statuses) -}}
+  {{- end -}}
+  {{- if ge (len $kinds) 2 -}}
+    {{- $dims = $dims | append (dict "key" "kind" "label" "Kind" "values" $kinds) -}}
+  {{- end -}}
+  {{- if ge (len $tags) 2 -}}
+    {{- $dims = $dims | append (dict "key" "tag" "label" "Tag" "values" $tags) -}}
+  {{- end -}}
+
+  {{ partial "filter-chips.html" (dict "dimensions" $dims "section" "games") }}
+
+  <section class="works-games-grid">
+    {{- range $items }}
+      {{- partial "works/game-card.html" . }}
+    {{- end }}
+  </section>
+</article>
+{{ end }}

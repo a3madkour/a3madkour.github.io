@@ -1,0 +1,30 @@
+{{- /* Renders one card for the /works/games/ index. */ -}}
+{{- $hero := "" -}}
+{{- with .Params.hero -}}
+  {{- $heroRes := $.Resources.Get . -}}
+  {{- if $heroRes -}}{{- $hero = $heroRes.RelPermalink -}}{{- end -}}
+{{- end -}}
+<article class="works-game-card"
+         data-status="{{ .Params.status }}"
+         data-kind="{{ .Params.game_kind }}"
+         data-tags="{{ delimit (.Params.tags | default slice) "," }}">
+  <a class="works-game-card-link" href="{{ .RelPermalink }}">
+    <div class="works-game-card-preview">
+      {{- if $hero }}<img src="{{ $hero }}" alt="" loading="lazy">{{- end }}
+      {{- if .Params.embed_url }}<span class="works-game-card-embed-pill">&#9654; Play in browser</span>{{- end }}
+      <span class="works-game-card-status-badge">
+        <span class="works-game-card-year">{{ .Params.year }}</span>
+        <span class="works-game-card-kind">{{ humanize .Params.game_kind }}</span>
+      </span>
+    </div>
+    <div class="works-game-card-body">
+      <h3 class="works-game-card-title">{{ .Title }}</h3>
+      {{- with .Params.tagline }}<p class="works-game-card-tagline">{{ . }}</p>{{- end }}
+      <p class="works-game-card-meta">
+        {{ partial "works/status-pill.html" (dict "status" .Params.status) }}
+        {{- with .Params.tech_stack }}<span class="works-game-card-tech">{{ delimit . " · " }}</span>{{- end }}
+      </p>
+      {{- with .Params.tags }}<p class="works-game-card-tags">{{ range . }}<span class="works-game-card-tag">{{ . }}</span>{{ end }}</p>{{- end }}
+    </div>
+  </a>
+</article>
