@@ -1,0 +1,51 @@
+{{- /* Two-column connections block: research/essays/notes/works refs.
+       Expects a `.page` (passed via dict) or `.` for current page. */ -}}
+{{- $p := .page | default . -}}
+{{- $research := $p.Params.research_questions | default slice -}}
+{{- $essays := $p.Params.related_essays | default slice -}}
+{{- $notes := $p.Params.related_notes | default slice -}}
+{{- $works := $p.Params.related_works | default slice -}}
+{{- if or (gt (len $research) 0) (gt (len $essays) 0) (gt (len $notes) 0) (gt (len $works) 0) -}}
+<section class="works-connections">
+  <h2>Connections</h2>
+  <div class="works-connections-grid">
+    {{- if gt (len $research) 0 }}
+    <div class="works-connections-col">
+      <h3>Research questions</h3>
+      <ul>
+        {{- range $research }}
+          {{- $page := site.GetPage . }}
+          <li>{{ if $page }}<a href="{{ $page.RelPermalink }}">{{ $page.Title }}</a>{{ else }}<span>{{ . }}</span>{{ end }}</li>
+        {{- end }}
+      </ul>
+    </div>
+    {{- end }}
+    {{- if or (gt (len $essays) 0) (gt (len $notes) 0) }}
+    <div class="works-connections-col">
+      <h3>Essays &amp; notes</h3>
+      <ul>
+        {{- range $essays }}
+          {{- $page := site.GetPage . }}
+          <li>{{ if $page }}<a href="{{ $page.RelPermalink }}">{{ $page.Title }}</a>{{ else }}<span>{{ . }}</span>{{ end }}</li>
+        {{- end }}
+        {{- range $notes }}
+          {{- $page := site.GetPage . }}
+          <li>{{ if $page }}<a href="{{ $page.RelPermalink }}">{{ $page.Title }}</a>{{ else }}<span>{{ . }}</span>{{ end }}</li>
+        {{- end }}
+      </ul>
+    </div>
+    {{- end }}
+    {{- if gt (len $works) 0 }}
+    <div class="works-connections-col">
+      <h3>Related works</h3>
+      <ul>
+        {{- range $works }}
+          {{- $page := site.GetPage . }}
+          <li>{{ if $page }}<a href="{{ $page.RelPermalink }}">{{ $page.Title }}</a>{{ else }}<span>{{ . }}</span>{{ end }}</li>
+        {{- end }}
+      </ul>
+    </div>
+    {{- end }}
+  </div>
+</section>
+{{- end -}}

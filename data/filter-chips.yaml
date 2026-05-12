@@ -15,3 +15,14 @@ garden:
   # Auto top-10 fallback applies until curated.
 essays:
   # Auto top-10 fallback applies until curated.
+games:
+  primary_tags: [example, demo, prototype]
+  primary_top_k: 10
+
+music:
+  primary_tags: [example, ambient, lyric]
+  primary_top_k: 10
+
+poetry:
+  primary_tags: [example, lyric, collected]
+  primary_top_k: 10

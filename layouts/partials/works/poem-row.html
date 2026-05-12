@@ -1,0 +1,13 @@
+{{- /* One row in the /works/poetry/ list. */ -}}
+<article class="works-poem-row"
+         data-collection="{{ .Params.collection | default "" }}"
+         data-tags="{{ delimit (.Params.tags | default slice) "," }}">
+  <a class="works-poem-row-link" href="{{ .RelPermalink }}">
+    <h3 class="works-poem-row-title">{{ .Title }}</h3>
+    <p class="works-poem-row-meta">
+      <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2006" }}</time>
+      {{- with .Params.collection }} · <span class="works-poem-row-collection">{{ . }}</span>{{- end }}
+      {{- if .Params.set_to_music }} · <span class="works-poem-row-music">set to music</span>{{- end }}
+    </p>
+  </a>
+</article>

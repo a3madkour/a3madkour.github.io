@@ -1,0 +1,8 @@
+{{- /* Pill linking from a poem to its music piece when set_to_music is present. */ -}}
+{{- $music := site.GetPage (printf "/works/music/%s" .) -}}
+{{- if $music -}}
+<a class="works-audio-pill" href="{{ $music.RelPermalink }}">
+  <span class="works-audio-pill-dot"></span>
+  Set to music — listen on "{{ $music.Title }}"
+</a>
+{{- end -}}

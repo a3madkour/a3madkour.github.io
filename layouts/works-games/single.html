@@ -1,0 +1,64 @@
+{{ define "main" }}
+<article class="page works-game-page">
+  {{- $hero := "" -}}
+  {{- with .Params.hero -}}
+    {{- $heroRes := $.Resources.Get . -}}
+    {{- if $heroRes -}}{{- $hero = $heroRes.RelPermalink -}}{{- end -}}
+  {{- end -}}
+
+  <header class="works-game-hero">
+    {{ if $hero }}<div class="works-game-hero-art"><img src="{{ $hero }}" alt=""></div>{{ end }}
+    <div class="works-game-hero-meta">
+      <h1>{{ .Title }}</h1>
+      {{- with .Params.tagline }}<p class="works-game-tagline">{{ . }}</p>{{- end }}
+      <p class="works-game-meta-row">
+        {{ partial "works/status-pill.html" (dict "status" .Params.status) }}
+        <span class="works-game-year">{{ .Params.year }}</span>
+        <span class="works-game-kind">{{ humanize .Params.game_kind }}</span>
+        {{- with .Params.length }}<span class="works-game-length">{{ . }}</span>{{- end }}
+      </p>
+      {{- with .Params.collaborators }}<p class="works-game-collaborators">with {{ delimit . ", " }}</p>{{- end }}
+      {{- with .Params.tech_stack }}<p class="works-game-tech">{{ delimit . " · " }}</p>{{- end }}
+    </div>
+  </header>
+
+  <section class="works-game-embed">
+    {{- if .Params.embed_url }}
+    <a class="works-embed-stub" data-pending href="{{ .Params.embed_url }}">&rarr; Play in browser</a>
+    {{- end }}
+    {{- if .Params.itch_url }}
+    <a class="works-game-external" href="{{ .Params.itch_url }}">Open on itch.io</a>
+    {{- end }}
+    {{- if .Params.source_url }}
+    <a class="works-game-external" href="{{ .Params.source_url }}">Source on GitHub</a>
+    {{- end }}
+  </section>
+
+  <section class="works-game-about">
+    {{ .Content }}
+  </section>
+
+  {{- with .Params.screenshots }}
+  <section class="works-game-screens">
+    <h2>Screens</h2>
+    <div class="works-game-screens-grid">
+      {{- range . }}
+        {{- $res := $.Resources.Get . }}
+        {{- if $res }}<img src="{{ $res.RelPermalink }}" alt="" loading="lazy">{{- end }}
+      {{- end }}
+    </div>
+  </section>
+  {{- end }}
+
+  {{ partial "works/connections.html" (dict "page" .) }}
+
+  {{- if or .Params.itch_url .Params.source_url .Params.tech_stack }}
+  <section class="works-game-credits">
+    <h2>Credits &amp; links</h2>
+    {{- with .Params.tech_stack }}<p><strong>Made with:</strong> {{ delimit . ", " }}</p>{{- end }}
+    {{- with .Params.itch_url }}<p><a href="{{ . }}">itch.io</a></p>{{- end }}
+    {{- with .Params.source_url }}<p><a href="{{ . }}">GitHub</a></p>{{- end }}
+  </section>
+  {{- end }}
+</article>
+{{ end }}

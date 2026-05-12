@@ -1,0 +1,24 @@
+{{- /* One row in the /works/music/ list. */ -}}
+{{- $cover := "" -}}
+{{- with .Params.cover -}}
+  {{- $coverRes := $.Resources.Get . -}}
+  {{- if $coverRes -}}{{- $cover = $coverRes.RelPermalink -}}{{- end -}}
+{{- end -}}
+<article class="works-music-row"
+         data-format="{{ .Params.format }}"
+         data-tags="{{ delimit (.Params.tags | default slice) "," }}">
+  <a class="works-music-row-link" href="{{ .RelPermalink }}">
+    <div class="works-music-row-cover">
+      {{- if $cover }}<img src="{{ $cover }}" alt="" loading="lazy">{{- end }}
+    </div>
+    <div class="works-music-row-body">
+      <h3 class="works-music-row-title">{{ .Title }}</h3>
+      <p class="works-music-row-meta">
+        <span class="works-music-row-format">{{ humanize .Params.format }}</span>
+        {{- with .Params.duration }} · <span class="works-music-row-duration">{{ . }}</span>{{- end }}
+        · <span class="works-music-row-year">{{ .Params.year }}</span>
+      </p>
+      {{- with .Params.tagline }}<p class="works-music-row-tagline">{{ . }}</p>{{- end }}
+    </div>
+  </a>
+</article>

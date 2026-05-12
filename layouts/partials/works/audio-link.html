@@ -1,0 +1,9 @@
+{{- /* Renders a "Listen on <kind>" link from a music page's platform_embed dict. */ -}}
+{{- $pe := .platform_embed -}}
+{{- if $pe -}}
+  {{- $kind := index $pe "kind" -}}
+  {{- $url := index $pe "url" -}}
+  {{- if and $kind $url -}}
+    <a class="works-audio-link" href="{{ $url }}">Listen on {{ humanize $kind }}</a>
+  {{- end -}}
+{{- end -}}

@@ -100,6 +100,23 @@ def collect_tags(section_dir: Path) -> set[str]:
     return tags
 
 
+# Sections whose content lives at a path other than `content/<section>/`.
+# Keys must match the top-level YAML key; values are relative to repo_root.
+SECTION_PATH_OVERRIDES: dict[str, str] = {
+    "games": "content/works/games",
+    "music": "content/works/music",
+    "poetry": "content/works/poetry",
+}
+
+
+def _section_content_path(repo_root: Path, section: str) -> Path:
+    """Return the content directory for a section key."""
+    override = SECTION_PATH_OVERRIDES.get(section)
+    if override:
+        return repo_root / override
+    return repo_root / "content" / section
+
+
 def run(repo_root: Path) -> tuple[int, list[str]]:
     config_path = repo_root / "data" / "filter-chips.yaml"
     errors: list[str] = []
@@ -138,13 +155,15 @@ def run(repo_root: Path) -> tuple[int, list[str]]:
                 f"must be a list, got {type(primary).__name__}"
             )
             continue
-        live = collect_tags(repo_root / "content" / section)
+        content_path = _section_content_path(repo_root, section)
+        display_path = str(content_path.relative_to(repo_root))
+        live = collect_tags(content_path)
         for entry in primary:
             if str(entry) not in live:
                 errors.append(
                     f"data/filter-chips.yaml:{section}.primary_tags: "
                     f'"{entry}" is not used by any non-draft note '
-                    f"in /content/{section}/"
+                    f"in /{display_path}/"
                 )
 
     return (1 if errors else 0, errors)

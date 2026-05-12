@@ -12,7 +12,7 @@ Personal website for Abdelrahman Madkour, built as a Hugo static site with hand-
 - `hugo --minify` — production build to `public/`
 - `python3 tools/check-contrast.py` — WCAG 2.1 contrast verifier (CI gate)
 - `python3 tools/check_fixtures.py` — essay fixture frontmatter linter (CI gate)
-- `python3 -m unittest tools/test_check_fixtures.py -v` — essay linter unit tests (CI gate)
+- [ ] `python3 -m unittest tools/test_check_fixtures.py -v` — essay linter unit tests (CI gate)
 - `python3 tools/check_garden_fixtures.py` — garden fixture frontmatter linter (CI gate)
 - `python3 -m unittest tools/test_check_garden_fixtures.py -v` — garden linter unit tests (CI gate)
 - `python3 tools/check_garden_links.py` — garden internal-link linter (CI gate)
@@ -25,6 +25,10 @@ Personal website for Abdelrahman Madkour, built as a Hugo static site with hand-
 - `python3 -m unittest tools/test_check_research_links.py -v` — research links linter unit tests (CI gate)
 - `python3 tools/check_citations.py` — citations data linter (CI gate)
 - `python3 -m unittest tools/test_check_citations.py -v` — citation linter unit tests (CI gate)
+- `python3 tools/check_works_fixtures.py` — works fixture frontmatter linter (CI gate)
+- `python3 -m unittest tools/test_check_works_fixtures.py -v` — works linter unit tests (CI gate)
+- `python3 tools/check_works_links.py` — works cross-reference linter (CI gate)
+- `python3 -m unittest tools/test_check_works_links.py -v` — works links linter unit tests (CI gate)
 
 There is no npm step. The Python tooling (linter + contrast) is stdlib-only.
 
@@ -34,7 +38,7 @@ Hugo **extended** (≥ 0.148.0) is required — the GitHub Actions workflow pins
 
 ### CSS pipeline — hand-rolled, processed by Hugo
 
-`assets/css/main.css` is a single hand-rolled stylesheet, organized into numbered sections (1 reset → 2 tokens → 3 typography → 4 layout primitives → 5 site header → 6 site footer → 7 hero/role → 8 reduced-motion → 9 page lists/meta + TOC active → 10 essay meta → 11 essay grid + cards → 12 sidenotes → 13 citations + references (including hover-card + bottom-sheet) → 14 figures → 15 essay three-zone layout → 16 filter chips (multi-dim, shared by essays + garden) → 17 series nav → 18 homepage essays strip → 19 garden index (topic sections + tiles + single-note page elements) → 20 garden note header strip + status pill → 21 garden note tile → 22 spoiler runtime → 23 garden empty-state placeholder → 24 garden path log + consent banner → 25 garden stacked-column container → 26 garden links section → 27 graph (shared — toggle, panel chrome, toolbar, canvas, legend, resize handle) → 28 garden graph standalone page → 29 about-page placeholder → 30 research surface → 31 research graph). Consumed by `layouts/partials/head.html` via `resources.Get` + (production) `minify | fingerprint` with SRI integrity.
+`assets/css/main.css` is a single hand-rolled stylesheet, organized into numbered sections (1 reset → 2 tokens → 3 typography → 4 layout primitives → 5 site header → 6 site footer → 7 hero/role → 8 reduced-motion → 9 page lists/meta + TOC active → 10 essay meta → 11 essay grid + cards → 12 sidenotes → 13 citations + references (including hover-card + bottom-sheet) → 14 figures → 15 essay three-zone layout → 16 filter chips (multi-dim, shared by essays + garden) → 17 series nav → 18 homepage essays strip → 19 garden index (topic sections + tiles + single-note page elements) → 20 garden note header strip + status pill → 21 garden note tile → 22 spoiler runtime → 23 garden empty-state placeholder → 24 garden path log + consent banner → 25 garden stacked-column container → 26 garden links section → 27 graph (shared — toggle, panel chrome, toolbar, canvas, legend, resize handle) → 28 garden graph standalone page → 29 about-page placeholder → 30 research surface → 31 research graph → 32 works shared chrome (status pill, audio pill, data-pending stubs, connections block) → 33 works umbrella + games (overview cards, game index card grid, game page hero/screens/credits) → 34 works music (index list rows, music page hero/player/tracks/lyrics-stub) → 35 works poetry (narrow-column index rows, poem page narrow column)). Consumed by `layouts/partials/head.html` via `resources.Get` + (production) `minify | fingerprint` with SRI integrity.
 
 - **Tokens** are CSS custom properties on `:root` (light) and `:root[data-theme="dark"]` (dark). System dark is handled by `@media (prefers-color-scheme: dark) :root:not([data-theme])`. The `:root[data-theme="dark"]` block and the media-query block carry duplicate values — both must be updated together when the palette changes.
 - **WCAG contrast**: `tools/check-contrast.py` parses the `:root` blocks and verifies four documented pairings (ink/stone AAA, ink-soft/stone AA, burgundy/stone AA, steel/stone AA) in both modes. Failure blocks deploy. Additional tokens `--color-green` (evergreen stage glyph + finished status pill) and `--color-warn` (queued status pill) ride along but aren't checked.
@@ -42,14 +46,15 @@ Hugo **extended** (≥ 0.148.0) is required — the GitHub Actions workflow pins
 
 ### JS pipeline
 
-**Multi-entry bundling.** `layouts/partials/scripts.html` runs Hugo's `js.Build` (esbuild) four times — minified + fingerprinted, classic-script with SRI:
+**Multi-entry bundling.** `layouts/partials/scripts.html` runs Hugo's `js.Build` (esbuild) five times — minified + fingerprinted, classic-script with SRI:
 
 - `js/index.js` → `js/core.<hash>.js` (~1.4 KB) — `toggle-theme.js` + `nav.js`; loaded on every page.
 - `js/entry-essay.js` → `js/essay.<hash>.js` (~4.8 KB) — `essay.js` (which imports `filter-chips.js`); loaded only when `.Section == "essays"`.
 - `js/entry-garden.js` → `js/garden.<hash>.js` (~117 KB) — `garden.js` + `garden-stack.js` + `garden-graph.js` (and the ~95 KB of vendored d3 modules that `garden-graph.js` dynamically imports); loaded only when `.Section == "garden"`. Non-garden pages don't ship d3 at all.
 - `js/entry-research.js` → `js/research.<hash>.js` (~107 KB) — `research-graph.js` (a copy + trim of `garden-graph.js`, sharing the same vendored d3 modules); loaded only on `/research/` (index) and `/research/graph/` (standalone). Theme + question pages stay on the core bundle. Page-narrow predicate over section-wide.
+- `js/entry-works.js` → `js/works.<hash>.js` (~6 KB) — `works.js` (which imports `filter-chips.js`); loaded only on `.Section == "works"`. Per-item pages no-op via internal selector guards.
 
-Each call to `js.Build` is independent — no code-split chunks. `filter-chips.js` is bundled into both the essay and the garden bundle (small duplication, ~8 KB).
+Each call to `js.Build` is independent — no code-split chunks. `filter-chips.js` is bundled into the essay, garden, and works bundles (small duplication, ~8 KB).
 
 **Why three bundles, not one with `splitting: true`?** esbuild requires `outdir` mode for code splitting, but Hugo's `js.Build` is `outfile`-only. Setting `splitting: true` on a single entry silently inlines dynamic imports rather than emitting chunks. Multi-entry sidesteps the limitation entirely. Confirmed with a minimal repro.
 
@@ -78,6 +83,10 @@ Three-state cycle: **system → light → dark → system**.
   - `layouts/research-theme/single.html` — `/research/themes/<slug>/` (hero + three-column questions block + aggregated outputs + optional embedded garden topic via `partials/garden/topic-section.html` when `garden_topic_ref` is set). Type discrimination via `cascade: { type: research-theme }` on `content/research/themes/_index.md`.
   - `layouts/research-question/single.html` — `/research/questions/<slug>/` (status strip, question statement, current thinking, sub-questions, siblings, supporting notes, related essays, outputs, backlinks). Type via `cascade: { type: research-question }`. Bare section URLs `/research/themes/` + `/research/questions/` hidden via `build: render: never`.
   - `layouts/research/graph.html` — standalone `/research/graph/` page (mobile fallback + deep link). Mirrors `layouts/garden/graph.html` with a breadcrumb + summary + toolbar + canvas + legend; populated by `research-graph.js`.
+  - `layouts/works/list.html` — `/works/` umbrella (3-card overview).
+  - `layouts/works-games/{list,single}.html` — `/works/games/` index (filter chips + 2-col card grid) and per-game page (hero + embed-stub + screens + connections + credits).
+  - `layouts/works-music/{list,single}.html` — `/works/music/` index (filter chips + list rows) and per-music page (hero + player-stub + tracks + lyrics-stub + connections).
+  - `layouts/works-poetry/{list,single}.html` — `/works/poetry/` index (filter chips + narrow-column list) and per-poem page (narrow column + optional audio pill).
   - `layouts/404.html`.
   - `baseof.html` is a thin semantic wrapper (`.page` div around header/main/footer); per-section layouts override `{{ block "main" }}`.
 - **Partials**:
@@ -108,12 +117,21 @@ Three-state cycle: **system → light → dark → system**.
   - `research/graph-data.html` (build-time `partialCached` data partial — walks themes + questions, emits `{themes, questions, edges, themePaletteOrder}` JSON; parent-child edges from `theme` + `parent_question`, cross-theme edges derived from shared `supporting_notes`)
   - `research/graph-script.html` (wraps the JSON in `<script type="application/json" id="research-graph-data">` via `safeJS`; cache key is the fixed string `"research-graph"` so multi-page callers share one cache entry)
   - `research/graph-panel.html` (side-panel scaffolding `<aside id="research-graph-panel" class="graph-panel" hidden role="region">`; populated by `research-graph.js` on first toggle)
+  - `works/section-card.html` (umbrella card for one sub-section)
+  - `works/game-card.html` (game-index card)
+  - `works/music-row.html` (music-index row)
+  - `works/poem-row.html` (poetry-index row)
+  - `works/status-pill.html` (game status pill — three colors via existing tokens)
+  - `works/audio-pill.html` (poem-page pill linking to a music piece)
+  - `works/audio-link.html` (music-page "Listen on <platform>" link from `platform_embed`)
+  - `works/connections.html` (shared two-column connections block — research/essays/notes/works refs)
 - **Shortcodes**:
   - `cite.html` — looks up `site.Data.citations.citations[key]`, emits `<cite class="citation" data-cite-key>`, errors if key missing
   - `sidenote.html` — auto-numbered marker + aside via page scratch
   - `figure.html` — overrides Hugo default; semantic `<figure><img><figcaption>`; supports `class="wide"` breakout
   - `spoiler.html` — `<details>`-based click-to-reveal; takes `summary` + `level` (`light`/`heavy`); native semantics, no JS, reduced-motion respected
   - `math.html` / `video-sync.html` / `widget.html` — **deferred-feature stubs**: emit a container with a `data-*` hook so fixtures can exercise them; later slices will replace the stub bodies with real renderers (KaTeX, IntersectionObserver, per-page widgets).
+  - `lyrics.html` — **deferred-feature stub**: emits a `<div class="synced-lyrics-stub" data-pending>` container with raw inner text. Future synced-lyrics runtime parses `[mm:ss]` timestamps and binds to an `<audio>` element via `timeupdate`.
 - **Top nav** (locked): Essays / Garden / Research / Works / About. Active item gets `aria-current="page"` via `hasPrefix` match.
 
 ### Frontmatter contract for essays
@@ -208,10 +226,21 @@ Three Google Fonts loaded in a single `<link>`: **Petrona** (body, italic + upri
 
 **Phase 3 — citation hover-card runtime complete (2026-05-12).** New singleton card runtime (`assets/js/citation-card.js`, ~2.7 KB added to the existing essay bundle, page-scoped to `/essays/`) shows the full citation content on hover/focus (desktop) or first tap (mobile bottom sheet). Content is cloned at runtime from the server-rendered references-list `<li>` — no JSON blob, single source of truth. Mobile behavior: first tap opens the card, second tap on the same citation passes through to the references jump (preserving the existing `:target` highlight). `essay-references.html` partial now emits a `related note` link when `notes_ref` is set on a citation entry; `data/citations.yaml` fixture `example-source-2.notes_ref` updated from the dangling `example-note-slug` to `story-atoms`. New CI gate `tools/check_citations.py` (~140 LOC stdlib-only) validates `data/citations.yaml` shape (required fields, year type + range [1500, current_year + 2], url scheme, citation-key kebab-case format, unknown-field rejection) and resolves `notes_ref` against the garden tree; 16-test unit suite mirrors the existing linter test pattern. No template / fixture / CSS-token changes beyond the §13 card subsection. The remaining Phase 3 piece (Now widget) is still blocked on the elisp pipeline.
 
+**Phase 6 — works section slice complete (2026-05-12).** Works umbrella (`/works/`), three sub-section indexes (`/works/games/`, `/works/music/`, `/works/poetry/`), and per-item page templates for all three. 12 fixtures (4 + 4 + 4) covering every status/kind/format value, with a round-trip `lyrics_poem ↔ set_to_music` pair between music and poetry. Shared `partials/filter-chips.html` reused on all three indexes — games (status, kind, tag), music (format, tag), poetry (collection, tag). The games-kind enum field is named `game_kind` in frontmatter (Hugo reserves both `type` and `kind` as built-in page attributes). CSS §32–§35 (~380 lines) appended; no new tokens. Two new CI gates: `tools/check_works_fixtures.py` (per-type frontmatter contract + enum + integer + list-of-dict validation) and `tools/check_works_links.py` (resolves every cross-ref against the live content tree; enforces music↔poetry round-trip symmetry; drafts treated as missing). The `check_filter_chips_config.py` gained section-path overrides so the works sub-sections at `content/works/<sub>/` resolve correctly. Total Python gates: 15 → 19. **Amends parent spec §4.19:** poetry index uses shared filter chips instead of the originally-specified three view tabs.
+
+**Runtime deferred (fixtures exercise the shape; stubs carry `data-pending` for future swap-in):**
+
+- Game iframe embed (itch / Bitsy / WebGL) — `works-embed-stub` anchor
+- Music platform iframe (Bandcamp / SoundCloud / YouTube) — `works-audio-link` text link only (no iframe)
+- Music custom audio player — `works-player-stub` block
+- Synced-lyrics runtime + two-column lyrics layout (parent §4.18) — `synced-lyrics-stub` block; `lyrics` shortcode is a no-op container
+- Audio-pill pulse animation — pill renders without animation
+- Gif-vs-hero toggle on game cards (parent §4.14) — hero SVG only
+
 **Phase 2 — remaining slices (not started).** Beyond Phase 2:
 - About page **Now widget** (the one section from spec §4.2 not yet shipped) — Phase 3-dependent. The other five sections shipped 2026-05-11 as scaffolding.
 - ~~Research theme cards + question hubs + research graph — Phase 5.~~ Complete: Slice 1 (2026-05-11), Slice 2 (2026-05-11).
-- Works (games + music + poetry) — Phase 6.
+- ~~Works (games + music + poetry) — Phase 6.~~ Complete (2026-05-12). Runtime-heavy pieces (iframes, custom audio widget, synced-lyrics playback) tracked separately as follow-up slices.
 - Library (reading / listening / playing) — data-driven from `data/*.yaml`, Phase 7.
 - Homepage v3 final assembly (Currently strip + Studio strip + Garden+Studio columns) — Phase 7. The current homepage has the role line and the essays strip; the rest of v3 is pending.
 - Phase 3: org-mode pipeline (elisp helpers + ox-hugo) — wires real content into the fixture-shaped data files.
@@ -233,6 +262,10 @@ These capabilities ship as no-op stubs (or are deliberately omitted from renderi
 | Print stylesheet | Phase 8 polish | n/a |
 | Library cross-linking from media garden notes | Phase 7 | media-flavor garden notes are the canonical source; library will be a filtered view |
 | `single` mode in shared filter-chips JS | Removed once both essays + garden have shipped on `and` mode (this slice) | follow-up — no fixture hook |
+| Game iframe embed | Future works runtime slice | game fixture #1 `embed_url` |
+| Music platform iframe + custom audio player | Future works runtime slice | music fixtures #1 / #2 / #4 |
+| Synced-lyrics runtime | Future works runtime slice | music fixture #2 ↔ poem fixture #1 |
+| Gif-vs-hero toggle on game cards | When real gif assets land | n/a (no fixture hook) |
 
 ## Hard constraints (from spec §1)
 

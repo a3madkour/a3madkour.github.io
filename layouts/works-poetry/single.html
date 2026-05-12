@@ -1,0 +1,18 @@
+{{ define "main" }}
+<article class="page works-poem-page">
+  <header class="works-poem-header">
+    <h1>{{ .Title }}</h1>
+    <p class="works-poem-meta">
+      <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2006" }}</time>
+      {{- with .Params.collection }} · <span class="works-poem-collection">{{ . }}</span>{{- end }}
+    </p>
+    {{- with .Params.set_to_music }}
+      {{ partial "works/audio-pill.html" . }}
+    {{- end }}
+  </header>
+
+  <section class="works-poem-body">
+    {{ .Content }}
+  </section>
+</article>
+{{ end }}

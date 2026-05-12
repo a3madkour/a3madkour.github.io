@@ -1,0 +1,3 @@
+{{- /* Renders a works status pill. Expects .status (one of: playable, in-progress, archived). */ -}}
+{{- $status := .status | default "playable" -}}
+<span class="works-status-pill" data-status="{{ $status }}">{{ humanize $status }}</span>

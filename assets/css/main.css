@@ -2074,3 +2074,535 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   font-size: var(--text-xs);
   color: var(--color-ink-soft);
 }
+
+/* =========================================================
+ * §32 Works — shared chrome
+ * Status pill, audio pill, data-pending stub anchors,
+ * connections block. Used by all three sub-section pages.
+ * ========================================================= */
+
+.works-status-pill {
+  display: inline-block;
+  padding: 0.15em 0.6em;
+  border-radius: 999px;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: var(--color-ink-soft);
+  color: var(--color-stone);
+}
+.works-status-pill[data-status="playable"]   { background: var(--color-burgundy); }
+.works-status-pill[data-status="in-progress"] { background: var(--color-warn); color: var(--color-ink); }
+.works-status-pill[data-status="archived"]   { background: var(--color-ink-soft); }
+
+/* Stub anchors: italic + dotted underline + ink-soft.
+   Same convention as .placeholder from §29. */
+.works-embed-stub,
+.works-player-stub,
+.synced-lyrics-stub {
+  display: inline-block;
+  font-style: italic;
+  color: var(--color-ink-soft);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 0.2em;
+}
+.works-player-stub,
+.synced-lyrics-stub {
+  display: block;
+  padding: 0.6em 0.9em;
+  border: 1px dashed var(--color-ink-soft);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.02);
+}
+.synced-lyrics-stub a {
+  font-style: normal;
+  color: var(--color-burgundy);
+}
+
+/* Audio pill on poem pages */
+.works-audio-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.4em 0.9em;
+  border-radius: 999px;
+  background: var(--color-burgundy);
+  color: var(--color-stone);
+  text-decoration: none;
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+}
+.works-audio-pill-dot {
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: var(--color-stone);
+}
+.works-audio-pill:hover {
+  filter: brightness(1.05);
+}
+
+/* Connections block (game + music pages) */
+.works-connections {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-ink-soft);
+}
+.works-connections h2 {
+  font-family: var(--font-body);
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+}
+.works-connections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+.works-connections-col h3 {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-ink-soft);
+  margin: 0 0 0.5rem 0;
+}
+.works-connections-col ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.works-connections-col li {
+  margin-bottom: 0.4em;
+}
+
+/* =========================================================
+ * §33 Works — umbrella + games
+ * /works/ overview cards; /works/games/ grid; per-game page.
+ * ========================================================= */
+
+/* Umbrella */
+.works-umbrella-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+.works-section-card {
+  padding: 1.5rem;
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 6px;
+  background: var(--color-stone);
+}
+.works-section-card-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.works-section-card-header h2 {
+  margin: 0;
+  font-family: var(--font-body);
+}
+.works-section-card-header h2 a {
+  color: var(--color-ink);
+  text-decoration: none;
+}
+.works-section-card-count {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--color-ink-soft);
+}
+.works-section-card-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem 0;
+}
+.works-section-card-list li {
+  font-style: italic;
+  margin-bottom: 0.3em;
+}
+.works-section-card-list a {
+  color: var(--color-ink);
+}
+.works-section-card-all {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--color-burgundy);
+}
+
+/* Games index */
+.works-games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+@media (max-width: 720px) {
+  .works-games-grid { grid-template-columns: 1fr; }
+}
+.works-game-card {
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--color-stone);
+}
+.works-game-card[hidden] { display: none; }
+.works-game-card-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+.works-game-card-preview {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--color-ink-soft);
+  overflow: hidden;
+}
+.works-game-card-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.works-game-card-embed-pill {
+  position: absolute;
+  top: 0.7em;
+  right: 0.7em;
+  padding: 0.25em 0.7em;
+  border-radius: 999px;
+  background: var(--color-burgundy);
+  color: var(--color-stone);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.works-game-card-status-badge {
+  position: absolute;
+  bottom: 0.7em;
+  left: 0.7em;
+  display: inline-flex;
+  gap: 0.4em;
+  padding: 0.2em 0.6em;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.55);
+  color: var(--color-stone);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+}
+.works-game-card-body {
+  padding: 1rem 1.2rem 1.2rem 1.2rem;
+}
+.works-game-card-title {
+  font-family: var(--font-body);
+  margin: 0 0 0.25em 0;
+}
+.works-game-card-tagline {
+  font-style: italic;
+  color: var(--color-ink-soft);
+  margin: 0 0 0.6em 0;
+}
+.works-game-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  flex-wrap: wrap;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  color: var(--color-ink-soft);
+  margin: 0 0 0.6em 0;
+}
+.works-game-card-tag {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  margin-right: 0.4em;
+  background: rgba(107, 31, 44, 0.08);
+  border-radius: 3px;
+  color: var(--color-burgundy);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+}
+
+/* Game single page */
+.works-game-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 400px) 1fr;
+  gap: 2rem;
+  align-items: start;
+  margin-bottom: 2rem;
+}
+@media (max-width: 720px) {
+  .works-game-hero { grid-template-columns: 1fr; }
+}
+.works-game-hero-art {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 6px;
+}
+.works-game-hero-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.works-game-tagline {
+  font-style: italic;
+  color: var(--color-ink-soft);
+  margin: 0 0 1em 0;
+}
+.works-game-meta-row {
+  display: flex;
+  gap: 0.6em;
+  flex-wrap: wrap;
+  align-items: center;
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  color: var(--color-ink-soft);
+  margin: 0 0 0.5em 0;
+}
+.works-game-embed {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+.works-game-external {
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+}
+.works-game-screens-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.8rem;
+  margin-top: 0.8rem;
+}
+@media (max-width: 720px) {
+  .works-game-screens-grid { grid-template-columns: 1fr; }
+}
+.works-game-screens-grid img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 4px;
+  display: block;
+}
+.works-game-credits {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-ink-soft);
+}
+.works-game-credits h2 {
+  font-family: var(--font-body);
+  font-size: 1.4rem;
+  margin: 0 0 0.6rem 0;
+}
+
+/* =========================================================
+ * §34 Works — music
+ * Music index list rows + per-music page.
+ * ========================================================= */
+
+.works-music-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.works-music-row {
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 6px;
+  background: var(--color-stone);
+  overflow: hidden;
+}
+.works-music-row[hidden] { display: none; }
+.works-music-row-link {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 1rem;
+  padding: 0.8rem;
+  align-items: center;
+  color: inherit;
+  text-decoration: none;
+}
+.works-music-row-cover {
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--color-ink-soft);
+}
+.works-music-row-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.works-music-row-title {
+  font-family: var(--font-body);
+  margin: 0 0 0.2em 0;
+}
+.works-music-row-meta {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  color: var(--color-ink-soft);
+  margin: 0 0 0.3em 0;
+}
+.works-music-row-tagline {
+  font-style: italic;
+  color: var(--color-ink-soft);
+  margin: 0;
+}
+
+/* Music single */
+.works-music-hero {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+  margin-bottom: 1.5rem;
+}
+@media (max-width: 600px) {
+  .works-music-hero { grid-template-columns: 1fr; }
+}
+.works-music-hero-art {
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 4px;
+}
+.works-music-hero-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.works-music-tagline {
+  font-style: italic;
+  color: var(--color-ink-soft);
+  margin: 0 0 0.6em 0;
+}
+.works-music-meta-row {
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  color: var(--color-ink-soft);
+  margin: 0;
+}
+.works-music-player {
+  margin: 1.5rem 0;
+}
+.works-audio-link {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  padding: 0.4em 0.9em;
+  border: 1px solid var(--color-burgundy);
+  color: var(--color-burgundy);
+  text-decoration: none;
+  border-radius: 999px;
+}
+.works-audio-link:hover {
+  background: var(--color-burgundy);
+  color: var(--color-stone);
+}
+.works-music-tracks-list {
+  font-family: var(--font-ui);
+  padding-left: 1.5em;
+}
+.works-music-tracks-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1em;
+  padding: 0.3em 0;
+}
+.works-music-track-duration {
+  color: var(--color-ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.works-music-lyrics,
+.works-music-made-with {
+  margin-top: 2rem;
+}
+.works-music-lyrics h2,
+.works-music-made-with h2 {
+  font-family: var(--font-body);
+  font-size: 1.4rem;
+  margin: 0 0 0.6rem 0;
+}
+
+/* =========================================================
+ * §35 Works — poetry
+ * Narrow-column index rows + poem page.
+ * ========================================================= */
+
+.works-poetry-index .page-header,
+.works-poetry-index .filter-chips,
+.works-poetry-list {
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.works-poetry-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
+}
+.works-poem-row {
+  padding: 0.6em 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+.works-poem-row[hidden] { display: none; }
+.works-poem-row-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+.works-poem-row-title {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.2rem;
+  margin: 0 0 0.2em 0;
+}
+.works-poem-row-meta {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  color: var(--color-ink-soft);
+  margin: 0;
+}
+.works-poem-row-collection,
+.works-poem-row-music {
+  display: inline-block;
+  margin-left: 0.2em;
+}
+.works-poem-row-music {
+  color: var(--color-burgundy);
+}
+
+/* Poem single */
+.works-poem-page {
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.works-poem-header h1 {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 2rem;
+  margin: 0 0 0.3em 0;
+}
+.works-poem-meta {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--color-ink-soft);
+  margin: 0 0 1rem 0;
+}
+.works-poem-body {
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  line-height: 2.1;
+  margin-top: 1.5rem;
+}
+.works-poem-body p {
+  margin: 0 0 1.3em 0;
+}

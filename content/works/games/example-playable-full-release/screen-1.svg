@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 225" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Placeholder screenshot">
+  <rect width="400" height="225" fill="#fdfcf8"/>
+  <rect x="50" y="50" width="300" height="125" fill="none" stroke="#6b1f2c" stroke-width="2"/>
+  <circle cx="200" cy="112" r="30" fill="#6b1f2c" opacity="0.5"/>
+</svg>
