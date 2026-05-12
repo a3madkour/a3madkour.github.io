@@ -286,6 +286,14 @@ async function init() {
     appendColumn(slug);
   });
 
+  // Graph node clicks: garden-graph.js dispatches this when a node is
+  // clicked on a page that has a stack mounted. Route through the same
+  // append/refocus path used by internal link clicks.
+  window.addEventListener('garden:graph-navigate', (e) => {
+    const slug = e.detail && e.detail.slug;
+    if (slug) appendColumn(slug);
+  });
+
   // Path-log clear button
   const clear = document.querySelector(`${PATHLOG} .path-log-clear`);
   if (clear) clear.addEventListener('click', clearStack);

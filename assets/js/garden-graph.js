@@ -283,17 +283,29 @@ async function buildSimulation(canvas) {
     g.__data__ = n;
     select(g).call(dragBehavior);
 
+    const openSlug = () => {
+      // If a stack root is mounted on this page, append/refocus a column
+      // rather than do a hard navigation — preserves the reader's path.
+      // On the standalone /garden/graph/ page there is no stack, so navigate.
+      if (document.querySelector('.garden-stack')) {
+        window.dispatchEvent(new CustomEvent('garden:graph-navigate', {
+          detail: { slug: n.slug }
+        }));
+      } else {
+        window.location.assign(`/garden/${n.slug}/`);
+      }
+    };
     g.addEventListener('click', () => {
       if (n.wasDragged) {
         n.wasDragged = false;
         return;
       }
-      window.location.assign(`/garden/${n.slug}/`);
+      openSlug();
     });
     g.addEventListener('keydown', (ev) => {
       if (ev.key === 'Enter' || ev.key === ' ') {
         ev.preventDefault();
-        window.location.assign(`/garden/${n.slug}/`);
+        openSlug();
       }
     });
 
