@@ -57,8 +57,9 @@ def parse_citations_yaml(text: str) -> dict[str, dict[str, object]]:
             continue
         m = ENTRY_HEADER_RE.match(raw)
         if m:
-            current_key = m.group(1)
-            entries[current_key] = {}
+            key = m.group(1)
+            current_key = key
+            entries[key] = {}
             continue
         m = FIELD_RE.match(raw)
         if m and current_key is not None:
