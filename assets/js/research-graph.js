@@ -174,7 +174,7 @@ function applyFilters() {
   // Tag filter: multi-select (stored as comma-joined string 'tag1,tag2' or 'all').
   if (f.tag !== 'all') {
     const tags = f.tag.split(',').filter(Boolean);
-    nodes = nodes.filter(n => tags.some(t => (n.tags || []).includes(t)));
+    nodes = nodes.filter(n => tags.every(t => (n.tags || []).includes(t)));
   }
   // Status filter: single-select; applies to questions only (themes always visible).
   if (f.status !== 'all') {
