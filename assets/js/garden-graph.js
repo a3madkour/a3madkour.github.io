@@ -433,6 +433,74 @@ function resetPositions() {
   persistCacheDebounced();
 }
 
+const PANEL_WIDTH_KEY = 'garden-graph-panel-width';
+const PANEL_MIN = 240;
+function panelMaxWidth() { return Math.round(window.innerWidth * 0.8); }
+
+function applySavedPanelWidth() {
+  if (!state.panel) return;
+  try {
+    const saved = localStorage.getItem(PANEL_WIDTH_KEY);
+    if (!saved) return;
+    const w = parseInt(saved, 10);
+    if (!Number.isFinite(w)) return;
+    const clamped = Math.max(PANEL_MIN, Math.min(panelMaxWidth(), w));
+    state.panel.style.width = `${clamped}px`;
+  } catch {}
+}
+
+function setupPanelResize() {
+  if (!state.panel) return;
+  if (state.panel.querySelector('.garden-graph-panel-resize')) return;
+
+  const handle = document.createElement('div');
+  handle.className = 'garden-graph-panel-resize';
+  handle.setAttribute('role', 'separator');
+  handle.setAttribute('aria-orientation', 'vertical');
+  handle.setAttribute('aria-label', 'Resize graph panel');
+  state.panel.appendChild(handle);
+
+  let startX = 0;
+  let startWidth = 0;
+  let pointerId = null;
+
+  function onMove(ev) {
+    const dx = startX - ev.clientX; // dragging left widens the panel
+    const next = Math.max(PANEL_MIN, Math.min(panelMaxWidth(), startWidth + dx));
+    state.panel.style.width = `${next}px`;
+  }
+  function onUp() {
+    if (pointerId !== null) {
+      try { handle.releasePointerCapture(pointerId); } catch {}
+      pointerId = null;
+    }
+    handle.classList.remove('is-resizing');
+    document.body.style.removeProperty('cursor');
+    handle.removeEventListener('pointermove', onMove);
+    handle.removeEventListener('pointerup', onUp);
+    handle.removeEventListener('pointercancel', onUp);
+    try {
+      const finalWidth = parseInt(state.panel.style.width, 10);
+      if (Number.isFinite(finalWidth)) {
+        localStorage.setItem(PANEL_WIDTH_KEY, String(finalWidth));
+      }
+    } catch {}
+  }
+
+  handle.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    startX = e.clientX;
+    startWidth = state.panel.getBoundingClientRect().width;
+    pointerId = e.pointerId;
+    try { handle.setPointerCapture(pointerId); } catch {}
+    handle.classList.add('is-resizing');
+    document.body.style.cursor = 'ew-resize';
+    handle.addEventListener('pointermove', onMove);
+    handle.addEventListener('pointerup', onUp);
+    handle.addEventListener('pointercancel', onUp);
+  });
+}
+
 function buildToolbar(host) {
   if (!state.data) return;
   const tags = new Set();
@@ -569,6 +637,13 @@ function init() {
     if (legend) buildLegend(legend);
     rebuildGraph();
     return;
+  }
+
+  // Apply persisted width + attach resize handle (desktop only — the panel is
+  // hidden under 720px via CSS).
+  if (state.panel && !isMobile()) {
+    applySavedPanelWidth();
+    setupPanelResize();
   }
 
   // Toggle button(s)
