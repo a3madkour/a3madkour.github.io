@@ -1,8 +1,10 @@
-{{- /* Multi-entry bundling: one core bundle on every page, plus a
-       section-scoped bundle on /essays/ and /garden/. Hugo's js.Build can't
-       emit code-split chunks from a single entry (esbuild's splitting
-       requires outdir mode), so we get per-section payloads by building
-       independent entries. Each call gets its own fingerprint + SRI. */ -}}
+{{- /* Multi-entry bundling: one core bundle on every page; a section-scoped
+       bundle on /essays/ and /garden/; a page-narrow bundle on /research/
+       (index + standalone graph page only — theme/question pages stay on
+       core). Hugo's js.Build can't emit code-split chunks from a single
+       entry (esbuild's splitting requires outdir mode), so we get per-
+       payload binaries by building independent entries. Each call gets its
+       own fingerprint + SRI. */ -}}
 
 {{- $coreOpts := dict "targetPath" "js/core.js" "minify" true -}}
 {{- $core := resources.Get "js/index.js" | js.Build $coreOpts | fingerprint -}}
@@ -18,4 +20,13 @@
 {{- $gardenOpts := dict "targetPath" "js/garden.js" "minify" true -}}
 {{- $garden := resources.Get "js/entry-garden.js" | js.Build $gardenOpts | fingerprint }}
 <script src="{{ $garden.RelPermalink }}" integrity="{{ $garden.Data.Integrity }}" defer></script>
+{{- end }}
+
+{{- $loadResearch := or
+     (and (eq .Section "research") (eq .Kind "section"))
+     (and (eq .Section "research") (eq .Layout "graph")) -}}
+{{- if $loadResearch }}
+{{- $researchOpts := dict "targetPath" "js/research.js" "minify" true -}}
+{{- $research := resources.Get "js/entry-research.js" | js.Build $researchOpts | fingerprint }}
+<script src="{{ $research.RelPermalink }}" integrity="{{ $research.Data.Integrity }}" defer></script>
 {{- end }}

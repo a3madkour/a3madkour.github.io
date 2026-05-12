@@ -1,26 +1,8 @@
-// Garden graph runtime. Uses d3-force for layout; renders to SVG.
-// Spec: docs/superpowers/specs/2026-05-08-garden-interactions-design.md §6.
+// Research graph runtime. Uses d3-force for layout; renders to SVG.
+// Spec: docs/superpowers/specs/2026-05-11-research-graph-design.md §5.6.
 
-const PANEL_KEY = 'garden-graph-open';
-const POSITIONS_KEY = 'garden-graph-positions';
-// Hand-curated map from known tags to existing site palette tokens. Ordering
-// has no effect; lookup is by exact key match. Multiple tags may
-// intentionally share a token (e.g. reading + calvino both ride --color-warn,
-// games + play both ride --color-steel) — they're semantically adjacent and
-// expanding the palette just to disambiguate would hurt graph legibility more
-// than it helps. Unmapped tags fall through to --color-ink-fade by design;
-// this is the signal "we haven't curated a color for this tag yet", not a
-// bug. To add a new mapping, pick an existing token from the :root palette
-// (don't introduce new ones here).
-const TAG_PALETTE = {
-  'narrative': 'var(--color-burgundy)',
-  'memory':    'var(--color-green)',
-  'games':     'var(--color-steel)',
-  'reading':   'var(--color-warn)',
-  'calvino':   'var(--color-warn)',
-  'play':      'var(--color-steel)',
-  'aesthetics':'var(--color-ink-soft)',
-};
+const PANEL_KEY = 'research-graph-open';
+const POSITIONS_KEY = 'research-graph-positions';
 
 const state = {
   data: null,
@@ -29,15 +11,8 @@ const state = {
   svg: null,
   simulation: null,
   contentGroup: null,
-  filters: { tag: 'all', stage: 'all', local: 'all' /* all | 1-hop | 2-hop */ },
-  inStack: new Set(),
-  page: { isMobile: false, isNotePage: false, currentSlug: null },
-  // Tracks user's last pointer interaction: was it inside the stack columns?
-  // Used to disambiguate Esc — if user's "attention" is on the stack (last
-  // click was in a column), Esc clears the stack; otherwise the open panel
-  // claims Esc.
-  lastPointerInStack: false,
-  // Added this slice:
+  filters: { tag: 'all', status: 'all' },
+  page: { isMobile: false },
   viewTransform: { k: 1, tx: 0, ty: 0 },
   pinnedSlugs: new Set(),
   zoomBehavior: null,
@@ -53,13 +28,13 @@ function persistCacheDebounced() {
     flushCache();
   }, 200);
 }
-// Returns the active graph canvas element (the standalone /garden/graph/
+// Returns the active graph canvas element (the standalone /research/graph/
 // page's canvas, or the side panel's canvas), or null if neither is
 // mounted. The standalone page takes precedence because it can coexist
 // with state.panel = null.
 function getActiveCanvas() {
-  if (document.querySelector('.garden-graph-page')) {
-    return document.querySelector('.garden-graph-page .garden-graph-canvas');
+  if (document.querySelector('.research-graph-page')) {
+    return document.querySelector('.research-graph-page .research-graph-canvas');
   }
   if (state.panel) {
     return state.panel.querySelector('.graph-panel-canvas');
@@ -78,16 +53,12 @@ function reducedMotion() {
 }
 
 // Cache key encodes everything that would change a node's settled position:
-// the active filters, the canvas viewport, and — only when local-graph mode
-// is active — the focused note (since local mode renders a different
-// subgraph per focal note). With scope=all the full graph is the same
-// regardless of which note page is displaying it, so the cache is shared
-// across all notes and the standalone /garden/graph/ page; dragged
-// positions persist as the reader traverses.
+// the active filters and the canvas viewport. Research graph always renders
+// all nodes (no local N-hop mode), so the cache is shared across /research/
+// and /research/graph/.
 function positionsCacheKey(canvas) {
   const f = state.filters;
-  const focus = f.local === 'all' ? '' : (state.page.currentSlug || '');
-  return `${f.tag}|${f.stage}|${f.local}|${focus}|${canvas.clientWidth}x${canvas.clientHeight}`;
+  return `${f.tag}|${f.status}|${canvas.clientWidth}x${canvas.clientHeight}`;
 }
 
 function loadCachedPositions(canvas) {
@@ -108,7 +79,7 @@ function loadCachedPositions(canvas) {
   } catch (e) {
     // Corrupt JSON or a SecurityError on sessionStorage. Drop the whole key
     // rather than fail every page load; the next save will rebuild it.
-    console.warn('garden-graph: dropping unreadable positions cache', e);
+    console.warn('research-graph: dropping unreadable positions cache', e);
     try { sessionStorage.removeItem(POSITIONS_KEY); } catch {}
     return null;
   }
@@ -133,16 +104,12 @@ function saveCachedPositions(canvas, nodes, view, pinned) {
     // SecurityError in locked-down contexts, or JSON.stringify on a node
     // with a custom toJSON throwing. Don't blow up the graph runtime; just
     // log so a developer can spot it.
-    console.warn('garden-graph: positions cache write failed', e);
+    console.warn('research-graph: positions cache write failed', e);
   }
 }
 
 function isMobile() {
   return window.matchMedia('(max-width: 720px)').matches;
-}
-
-function tagColor(tag) {
-  return TAG_PALETTE[tag] || 'var(--color-ink-fade)';
 }
 
 // Node radius is the contract that backs the legend's "size = link count":
@@ -157,43 +124,61 @@ function nodeRadius(degree) {
 }
 
 function parseData() {
-  const tag = document.getElementById('garden-graph-data');
-  if (!tag) return null;
-  try { return JSON.parse(tag.textContent); } catch { return null; }
-}
-
-function bfsNeighborhood(focus, hops, edges) {
-  const adj = new Map();
-  for (const e of edges) {
-    if (!adj.has(e.source)) adj.set(e.source, new Set());
-    if (!adj.has(e.target)) adj.set(e.target, new Set());
-    adj.get(e.source).add(e.target);
-    adj.get(e.target).add(e.source);
-  }
-  const visited = new Set([focus]);
-  let frontier = new Set([focus]);
-  for (let i = 0; i < hops; i++) {
-    const next = new Set();
-    frontier.forEach(s => {
-      (adj.get(s) || new Set()).forEach(t => {
-        if (!visited.has(t)) { next.add(t); visited.add(t); }
-      });
-    });
-    frontier = next;
-  }
-  return visited;
+  const el = document.getElementById('research-graph-data');
+  if (!el) return null;
+  try {
+    const raw = JSON.parse(el.textContent);
+    // Build deterministic palette index from themePaletteOrder (sorted by weight).
+    const paletteOrder = raw.themePaletteOrder || [];
+    const paletteIndex = (slug) => {
+      const idx = paletteOrder.indexOf(slug);
+      return idx >= 0 ? idx : 0;
+    };
+    // Flatten themes + questions into a unified nodes array.
+    const nodes = [
+      ...(raw.themes || []).map(t => ({
+        slug: t.slug,
+        title: t.title,
+        kind: 'theme',
+        status: t.status,
+        tags: t.tags || [],
+        themeColorIdx: paletteIndex(t.slug),
+        degree: t.degree || 0,
+      })),
+      ...(raw.questions || []).map(q => ({
+        slug: q.slug,
+        title: q.title,
+        kind: 'question',
+        theme: q.theme,
+        status: q.status,
+        tags: q.tags || [],
+        themeColorIdx: paletteIndex(q.theme),
+        degree: q.degree || 0,
+      })),
+    ];
+    // Normalize edges: kind field replaces the boolean crossTopic.
+    const edges = (raw.edges || []).map(e => ({
+      source: e.source,
+      target: e.target,
+      kind: e.kind || 'parent-child',
+      via: e.via || null,
+    }));
+    return { nodes, edges };
+  } catch { return null; }
 }
 
 function applyFilters() {
   if (!state.data) return { nodes: [], edges: [] };
   const f = state.filters;
   let nodes = state.data.nodes;
-  if (f.tag !== 'all') nodes = nodes.filter(n => n.tag === f.tag);
-  if (f.stage !== 'all') nodes = nodes.filter(n => n.stage === f.stage);
-  if (state.page.isNotePage && f.local !== 'all') {
-    const hops = f.local === '1-hop' ? 1 : 2;
-    const allowed = bfsNeighborhood(state.page.currentSlug, hops, state.data.edges);
-    nodes = nodes.filter(n => allowed.has(n.slug));
+  // Tag filter: multi-select (stored as comma-joined string 'tag1,tag2' or 'all').
+  if (f.tag !== 'all') {
+    const tags = f.tag.split(',').filter(Boolean);
+    nodes = nodes.filter(n => tags.every(t => (n.tags || []).includes(t)));
+  }
+  // Status filter: single-select; applies to questions only (themes always visible).
+  if (f.status !== 'all') {
+    nodes = nodes.filter(n => n.kind === 'theme' || n.status === f.status);
   }
   const allowed = new Set(nodes.map(n => n.slug));
   const edges = state.data.edges.filter(e => allowed.has(e.source) && allowed.has(e.target));
@@ -228,9 +213,9 @@ async function buildSimulation(canvas) {
   const svg = document.createElementNS(SVG_NS, 'svg');
   svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', `Force-directed graph of ${nodes.length} note(s)`);
+  svg.setAttribute('aria-label', `Force-directed research graph of ${nodes.length} node(s)`);
   const desc = document.createElementNS(SVG_NS, 'desc');
-  desc.textContent = `Garden graph with ${nodes.length} nodes and ${edges.length} edges. Click a node to open it in a stack.`;
+  desc.textContent = `Research graph with ${nodes.length} nodes and ${edges.length} edges. Click a node to navigate to its hub page.`;
   svg.appendChild(desc);
 
   const contentGroup = document.createElementNS(SVG_NS, 'g');
@@ -238,16 +223,18 @@ async function buildSimulation(canvas) {
   svg.appendChild(contentGroup);
 
   const edgeLayer = document.createElementNS(SVG_NS, 'g');
-  edgeLayer.setAttribute('class', 'garden-graph-edges');
+  edgeLayer.setAttribute('class', 'research-graph-edges');
   contentGroup.appendChild(edgeLayer);
   const nodeLayer = document.createElementNS(SVG_NS, 'g');
-  nodeLayer.setAttribute('class', 'garden-graph-nodes');
+  nodeLayer.setAttribute('class', 'research-graph-nodes');
   contentGroup.appendChild(nodeLayer);
 
   // Build edge elements
   const edgeEls = edges.map(e => {
     const line = document.createElementNS(SVG_NS, 'line');
-    line.setAttribute('class', 'garden-graph-edge' + (e.crossTopic ? ' cross-topic' : ''));
+    line.setAttribute('class', e.kind === 'cross-theme'
+      ? 'research-graph-edge research-graph-edge-cross-theme'
+      : 'research-graph-edge');
     edgeLayer.appendChild(line);
     return { e, line };
   });
@@ -296,23 +283,37 @@ async function buildSimulation(canvas) {
       persistCacheDebounced();
     });
 
-  // Build node elements (each is a <g> with circle + text).
+  // Build node elements — themes get <rect>, questions get <circle>.
+  // data-theme-color drives fill via CSS §31; data-status surfaces for filtering.
   const nodeEls = nodes.map(n => {
     const g = document.createElementNS(SVG_NS, 'g');
-    g.setAttribute('class', 'garden-graph-node' + (state.inStack.has(n.slug) ? ' in-stack' : ''));
+    g.setAttribute('class', `research-graph-node research-graph-node-${n.kind}`);
+    g.setAttribute('data-theme-color', String(n.themeColorIdx));
+    g.setAttribute('data-status', n.status || '');
     g.setAttribute('tabindex', '0');
     g.setAttribute('role', 'link');
-    g.setAttribute('aria-label', `Open ${n.title} in stack`);
+    g.setAttribute('aria-label', n.title);
     g.dataset.slug = n.slug;
 
-    const c = document.createElementNS(SVG_NS, 'circle');
-    c.setAttribute('r', String(nodeRadius(n.degree)));
-    c.setAttribute('fill', tagColor(n.tag));
-    g.appendChild(c);
+    const r = nodeRadius(n.degree);
+    if (n.kind === 'theme') {
+      // Themes render as squares (rect centered on the node's position).
+      const rect = document.createElementNS(SVG_NS, 'rect');
+      rect.setAttribute('width',  String(r * 1.6));
+      rect.setAttribute('height', String(r * 1.6));
+      rect.setAttribute('x', String(-r * 0.8));
+      rect.setAttribute('y', String(-r * 0.8));
+      g.appendChild(rect);
+    } else {
+      // Questions render as circles.
+      const c = document.createElementNS(SVG_NS, 'circle');
+      c.setAttribute('r', String(r));
+      g.appendChild(c);
+    }
 
     const t = document.createElementNS(SVG_NS, 'text');
     t.textContent = n.title;
-    t.setAttribute('x', String(nodeRadius(n.degree) + 3));
+    t.setAttribute('x', String(r + 3));
     t.setAttribute('y', '3');
     g.appendChild(t);
 
@@ -330,19 +331,16 @@ async function buildSimulation(canvas) {
   // with the graph.
   function openSlugForElement(g) {
     const slug = g.dataset.slug;
-    // If a stack root is mounted on this page, append/refocus a column rather
-    // than do a hard navigation — preserves the reader's path. On the
-    // standalone /garden/graph/ page there's no stack, so navigate.
-    if (document.querySelector('.garden-stack')) {
-      window.dispatchEvent(new CustomEvent('garden:graph-navigate', {
-        detail: { slug }
-      }));
-    } else {
-      window.location.assign(`/garden/${slug}/`);
-    }
+    const d = g.__data__;
+    // Navigate by node kind: themes → /research/themes/<slug>/;
+    // questions → /research/questions/<slug>/.
+    const url = d && d.kind === 'theme'
+      ? `/research/themes/${slug}/`
+      : `/research/questions/${slug}/`;
+    window.location.assign(url);
   }
   nodeLayer.addEventListener('click', (e) => {
-    const g = e.target.closest('.garden-graph-node');
+    const g = e.target.closest('.research-graph-node');
     if (!g || !nodeLayer.contains(g)) return;
     const d = g.__data__;
     if (d && d.wasDragged) {
@@ -353,7 +351,7 @@ async function buildSimulation(canvas) {
   });
   nodeLayer.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
-    const g = e.target.closest('.garden-graph-node');
+    const g = e.target.closest('.research-graph-node');
     if (!g || !nodeLayer.contains(g)) return;
     e.preventDefault();
     openSlugForElement(g);
@@ -363,7 +361,7 @@ async function buildSimulation(canvas) {
 
   const zoomBehavior = zoom()
     .scaleExtent([0.3, 4])
-    .filter(event => !event.target.closest('.garden-graph-node'))
+    .filter(event => !event.target.closest('.research-graph-node'))
     .on('start', (event) => {
       // Wheel-zoom also fires start/end; only flip the cursor for drag-pan.
       if (event.sourceEvent && event.sourceEvent.type !== 'wheel') {
@@ -457,14 +455,6 @@ function rebuildGraph() {
   });
 }
 
-function updateInStackMarkers() {
-  if (!state.svg) return;
-  state.svg.querySelectorAll('.garden-graph-node').forEach(g => {
-    const slug = g.dataset.slug;
-    g.classList.toggle('in-stack', state.inStack.has(slug));
-  });
-}
-
 function resetView() {
   if (!state.zoomBehavior || !state.svg || !state.d3select || !state.zoomIdentity) return;
   state.d3select(state.svg).call(state.zoomBehavior.transform, state.zoomIdentity);
@@ -498,7 +488,7 @@ function resetPositions() {
   });
 }
 
-const PANEL_WIDTH_KEY = 'garden-graph-panel-width';
+const PANEL_WIDTH_KEY = 'research-graph-panel-width';
 const PANEL_MIN = 240;
 function panelMaxWidth() { return Math.round(window.innerWidth * 0.8); }
 
@@ -571,18 +561,50 @@ function setupPanelResize() {
 // Different semantics, different visual treatment (.chip vs .chip-action),
 // different builder concerns — separate them.
 
+// Returns true when the chip's value is "active" for the given dim.
+// Tag dim: comma-joined multi-select — value is active when it appears in the
+// joined string (or the joined string equals 'all' and this is the All chip).
+// Other dims: single-select — active when the stored value equals chip value.
+function chipIsActive(dim, value) {
+  if (dim === 'tag') {
+    if (value === 'all') return state.filters.tag === 'all' || state.filters.tag === '';
+    const active = state.filters.tag.split(',').filter(Boolean);
+    return active.includes(value);
+  }
+  return state.filters[dim] === value;
+}
+
 function makeFilterChip(host, label, dim, value) {
   const b = document.createElement('button');
   b.type = 'button';
   b.className = 'chip';
   b.dataset.dim = dim;
   b.dataset.value = value;
-  b.setAttribute('aria-pressed', state.filters[dim] === value ? 'true' : 'false');
+  b.setAttribute('aria-pressed', chipIsActive(dim, value) ? 'true' : 'false');
   b.textContent = label;
   b.addEventListener('click', () => {
-    state.filters[dim] = value;
+    if (dim === 'tag') {
+      if (value === 'all') {
+        // All chip clears the tag selection.
+        state.filters.tag = 'all';
+      } else {
+        // Toggle: add when absent, remove when present.
+        const current = state.filters.tag === 'all' ? [] : state.filters.tag.split(',').filter(Boolean);
+        const idx = current.indexOf(value);
+        if (idx >= 0) {
+          current.splice(idx, 1);
+        } else {
+          current.push(value);
+        }
+        state.filters.tag = current.length ? current.join(',') : 'all';
+      }
+    } else {
+      // Single-select: replace.
+      state.filters[dim] = value;
+    }
+    // Re-sync aria-pressed on all chips for this dimension.
     host.querySelectorAll(`button[data-dim="${dim}"]`).forEach(c => {
-      c.setAttribute('aria-pressed', c.dataset.value === value ? 'true' : 'false');
+      c.setAttribute('aria-pressed', chipIsActive(dim, c.dataset.value) ? 'true' : 'false');
     });
     rebuildGraph();
   });
@@ -600,31 +622,23 @@ function makeActionChip(label, onClick) {
 
 function buildFilterChips(host) {
   const tags = new Set();
-  const stages = new Set();
-  state.data.nodes.forEach(n => { if (n.tag) tags.add(n.tag); stages.add(n.stage); });
+  const statuses = new Set();
+  state.data.nodes.forEach(n => {
+    (n.tags || []).forEach(t => tags.add(t));
+    if (n.status) statuses.add(n.status);
+  });
 
-  // Tag dim
+  // Tag dim — multi-select
   const tagLabel = document.createElement('span'); tagLabel.className = 'label'; tagLabel.textContent = 'Tag:';
   host.append(tagLabel, makeFilterChip(host, 'All', 'tag', 'all'));
   Array.from(tags).sort().forEach(t => host.appendChild(makeFilterChip(host, t, 'tag', t)));
 
-  // Stage dim
-  const stageLabel = document.createElement('span'); stageLabel.className = 'label'; stageLabel.textContent = 'Stage:';
-  host.append(stageLabel, makeFilterChip(host, 'All', 'stage', 'all'));
-  ['seedling', 'budding', 'evergreen']
-    .filter(s => stages.has(s))
-    .forEach(s => host.appendChild(makeFilterChip(host, s, 'stage', s)));
-
-  // Local dim — note pages only
-  if (state.page.isNotePage) {
-    const localLabel = document.createElement('span'); localLabel.className = 'label'; localLabel.textContent = 'Scope:';
-    host.append(
-      localLabel,
-      makeFilterChip(host, 'All', 'local', 'all'),
-      makeFilterChip(host, '1-hop', 'local', '1-hop'),
-      makeFilterChip(host, '2-hop', 'local', '2-hop'),
-    );
-  }
+  // Status dim — single-select; applies to questions only
+  const statusLabel = document.createElement('span'); statusLabel.className = 'label'; statusLabel.textContent = 'Status:';
+  host.append(statusLabel, makeFilterChip(host, 'All', 'status', 'all'));
+  ['active', 'dormant', 'answered']
+    .filter(s => statuses.has(s))
+    .forEach(s => host.appendChild(makeFilterChip(host, s, 'status', s)));
 }
 
 function buildActionChips(host) {
@@ -647,22 +661,15 @@ function buildToolbar(host) {
 
 function buildLegend(host) {
   host.replaceChildren();
-  const tags = new Map();
-  (state.data.nodes || []).forEach(n => { if (n.tag) tags.set(n.tag, true); });
-  Array.from(tags.keys()).slice(0, 4).forEach(tag => {
-    const li = document.createElement('li');
-    li.innerHTML = `<span class="swatch" style="background:${tagColor(tag)}"></span>${tag}`;
-    host.appendChild(li);
-  });
   const note = document.createElement('li');
-  note.textContent = 'size = link count · solid = same topic · dashed = cross-topic';
+  note.textContent = 'square = theme · circle = question · size = link count · dashed = cross-theme';
   host.appendChild(note);
 }
 
 function openPanel({ animate = true } = {}) {
   if (!state.panel) return;
   if (isMobile()) {
-    window.location.assign('/garden/graph/');
+    window.location.assign('/research/graph/');
     return;
   }
   // Adding `.is-animating` enables the CSS transition for the slide. We add
@@ -697,23 +704,15 @@ function closePanel() {
 function init() {
   state.data = parseData();
   if (!state.data) return;
-  state.panel = document.getElementById('garden-graph-panel');
+  state.panel = document.getElementById('research-graph-panel');
   state.page.isMobile = isMobile();
-  const stackRoot = document.querySelector('.garden-stack-columns .garden-column');
-  state.page.isNotePage = !!stackRoot;
-  state.page.currentSlug = stackRoot ? stackRoot.dataset.slug : null;
 
-  // Initial in-stack set
-  document.querySelectorAll('.garden-stack-columns .garden-column').forEach(c => {
-    state.inStack.add(c.dataset.slug);
-  });
-
-  const isGraphPage = !!document.querySelector('.garden-graph-page');
+  const isGraphPage = !!document.querySelector('.research-graph-page');
 
   if (isGraphPage) {
-    // Standalone /garden/graph/ — render immediately; no panel.
-    const toolbar = document.querySelector('.garden-graph-page .garden-graph-toolbar');
-    const legend = document.querySelector('.garden-graph-page .garden-graph-legend');
+    // Standalone /research/graph/ — render immediately; no panel.
+    const toolbar = document.querySelector('.research-graph-page .research-graph-toolbar');
+    const legend = document.querySelector('.research-graph-page .research-graph-legend');
     if (toolbar) buildToolbar(toolbar);
     if (legend) buildLegend(legend);
     rebuildGraph();
@@ -744,28 +743,8 @@ function init() {
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     if (!state.panelOpen) return;
-    // Panel claims Esc UNLESS the user's last pointer-down was in the stack
-    // (they're reading a column — let Esc clear the stack instead).
-    // stopImmediatePropagation prevents garden-stack's keydown handler from
-    // also firing — necessary because both listeners attach to `document` and
-    // would otherwise both run on the same event.
-    if (state.lastPointerInStack) return;
     e.stopImmediatePropagation();
     closePanel();
-  });
-
-  // Track whether the user's last pointer interaction was inside the stack
-  // columns. Capture phase so this fires before any click handlers can
-  // consume the event.
-  document.addEventListener('pointerdown', (e) => {
-    const stack = document.querySelector('.garden-stack');
-    state.lastPointerInStack = stack ? stack.contains(e.target) : false;
-  }, true);
-
-  // Listen for stack changes
-  window.addEventListener('garden:stack-changed', (e) => {
-    state.inStack = new Set(e.detail.slugs);
-    updateInStackMarkers();
   });
 
   // Restore panel state

@@ -1,0 +1,15 @@
+{{ define "main" }}
+<section class="reading-column research-graph-page">
+  <p class="crumb"><a href="{{ "/research/" | relURL }}">Research</a> ›</p>
+  <h1>{{ .Title }}</h1>
+  <p class="research-graph-summary">Click a node to open its theme or question page.</p>
+  <nav class="research-graph-toolbar" aria-label="Graph filters">
+    {{- /* populated by research-graph.js */ -}}
+  </nav>
+  <div class="research-graph-canvas" role="img" aria-label="Force-directed graph of research themes and questions">
+    {{- /* SVG mounted by research-graph.js */ -}}
+  </div>
+  <ul class="research-graph-legend"></ul>
+</section>
+{{ partial "research/graph-script.html" .Site }}
+{{ end }}
