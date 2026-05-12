@@ -2074,3 +2074,107 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   font-size: var(--text-xs);
   color: var(--color-ink-soft);
 }
+
+/* =========================================================
+ * §32 Works — shared chrome
+ * Status pill, audio pill, data-pending stub anchors,
+ * connections block. Used by all three sub-section pages.
+ * ========================================================= */
+
+.works-status-pill {
+  display: inline-block;
+  padding: 0.15em 0.6em;
+  border-radius: 999px;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: var(--color-ink-soft);
+  color: var(--color-stone);
+}
+.works-status-pill[data-status="playable"]   { background: var(--color-burgundy); }
+.works-status-pill[data-status="in-progress"] { background: var(--color-warn); color: var(--color-ink); }
+.works-status-pill[data-status="archived"]   { background: var(--color-ink-soft); }
+
+/* Stub anchors: italic + dotted underline + ink-soft.
+   Same convention as .placeholder from §29. */
+.works-embed-stub,
+.works-player-stub,
+.synced-lyrics-stub {
+  display: inline-block;
+  font-style: italic;
+  color: var(--color-ink-soft);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 0.2em;
+}
+.works-player-stub,
+.synced-lyrics-stub {
+  display: block;
+  padding: 0.6em 0.9em;
+  border: 1px dashed var(--color-ink-soft);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.02);
+}
+.synced-lyrics-stub a {
+  font-style: normal;
+  color: var(--color-burgundy);
+}
+
+/* Audio pill on poem pages */
+.works-audio-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.4em 0.9em;
+  border-radius: 999px;
+  background: var(--color-burgundy);
+  color: var(--color-stone);
+  text-decoration: none;
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+}
+.works-audio-pill-dot {
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: var(--color-stone);
+}
+.works-audio-pill:hover {
+  filter: brightness(1.05);
+}
+
+/* Connections block (game + music pages) */
+.works-connections {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-ink-soft);
+}
+.works-connections h2 {
+  font-family: var(--font-body);
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+}
+.works-connections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+.works-connections-col h3 {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-ink-soft);
+  margin: 0 0 0.5rem 0;
+}
+.works-connections-col ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.works-connections-col li {
+  margin-bottom: 0.4em;
+}
