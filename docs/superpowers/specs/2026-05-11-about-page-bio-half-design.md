@@ -239,7 +239,12 @@ Roughly 50–80 lines. Key rules:
 }
 
 .placeholder {
-  color: var(--color-ink-fade);
+  /* --color-ink-soft passes AA on --color-stone in both modes (6.27:1 light,
+     7.83:1 dark). --color-ink-fade fails AA in light mode (2.56:1) and was
+     the original proposal; rejected. The dotted underline + italic style
+     differentiate the placeholder from regular muted text. */
+  color: var(--color-ink-soft);
+  font-style: italic;
   text-decoration: underline dotted var(--color-rule);
   text-underline-offset: 3px;
 }
@@ -334,7 +339,7 @@ The layout's render logic (in the Phase 3 slice, not this one) becomes: *if* the
 5. Every other prose-content section uses a `.placeholder` element with self-describing text. Reading the page top to bottom, a visitor can tell what each section will eventually contain.
 6. All five CI linters pass; their unit tests pass.
 7. `hugo --minify` builds cleanly with no warnings (modulo the pre-existing `.Site.Data` deprecation).
-8. CSS contrast verifier still passes (the `.placeholder` color must clear AA against `--color-stone` for accent text).
+8. CSS contrast verifier still passes. The `.placeholder` color (`--color-ink-soft`) is already in the verifier's checked set and clears AA against `--color-stone` in both modes (verified: 6.27:1 light, 7.83:1 dark) — no contrast-tool change is needed.
 9. The Now widget (parent spec §4.2 section 3) is intentionally absent; no marker, no heading. Phase 3 adds it.
 
 ---
