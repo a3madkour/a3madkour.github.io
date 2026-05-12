@@ -22,6 +22,7 @@
     {{- $dims = $dims | append (dict "key" "tag" "label" "Tag" "values" (sort $tags)) -}}
   {{- end -}}
   {{ partial "filter-chips.html" (dict "dimensions" $dims "section" "research") }}
+  <button type="button" class="graph-toggle" aria-expanded="false" aria-controls="research-graph-panel">⊞ Graph</button>
 
   <div class="research-grid">
     {{- range $themes.ByWeight -}}
@@ -31,6 +32,9 @@
       {{ partial "research/theme-card.html" (dict "theme" $thisTheme "questions" $themeQs) }}
     {{- end -}}
   </div>
+
+  {{ partial "research/graph-panel.html" . }}
+  {{ partial "research/graph-script.html" .Site }}
 
 </main>
 {{ end }}
