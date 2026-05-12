@@ -29,15 +29,8 @@ const state = {
   svg: null,
   simulation: null,
   contentGroup: null,
-  filters: { tag: 'all', stage: 'all', local: 'all' /* all | 1-hop | 2-hop */ },
-  inStack: new Set(),
-  page: { isMobile: false, isNotePage: false, currentSlug: null },
-  // Tracks user's last pointer interaction: was it inside the stack columns?
-  // Used to disambiguate Esc — if user's "attention" is on the stack (last
-  // click was in a column), Esc clears the stack; otherwise the open panel
-  // claims Esc.
-  lastPointerInStack: false,
-  // Added this slice:
+  filters: { tag: 'all', status: 'all' },
+  page: { isMobile: false },
   viewTransform: { k: 1, tx: 0, ty: 0 },
   pinnedSlugs: new Set(),
   zoomBehavior: null,
@@ -299,10 +292,10 @@ async function buildSimulation(canvas) {
   // Build node elements (each is a <g> with circle + text).
   const nodeEls = nodes.map(n => {
     const g = document.createElementNS(SVG_NS, 'g');
-    g.setAttribute('class', 'garden-graph-node' + (state.inStack.has(n.slug) ? ' in-stack' : ''));
+    g.setAttribute('class', 'research-graph-node');
     g.setAttribute('tabindex', '0');
     g.setAttribute('role', 'link');
-    g.setAttribute('aria-label', `Open ${n.title} in stack`);
+    g.setAttribute('aria-label', n.title);
     g.dataset.slug = n.slug;
 
     const c = document.createElementNS(SVG_NS, 'circle');
@@ -330,16 +323,14 @@ async function buildSimulation(canvas) {
   // with the graph.
   function openSlugForElement(g) {
     const slug = g.dataset.slug;
-    // If a stack root is mounted on this page, append/refocus a column rather
-    // than do a hard navigation — preserves the reader's path. On the
-    // standalone /garden/graph/ page there's no stack, so navigate.
-    if (document.querySelector('.garden-stack')) {
-      window.dispatchEvent(new CustomEvent('garden:graph-navigate', {
-        detail: { slug }
-      }));
-    } else {
-      window.location.assign(`/garden/${slug}/`);
-    }
+    const d = g.__data__;
+    // Navigation target differs by node kind: themes go to /research/themes/<slug>/,
+    // questions go to /research/questions/<slug>/. Handled fully in sub-step 8;
+    // the data object carries the kind field.
+    const url = d && d.kind === 'theme'
+      ? `/research/themes/${slug}/`
+      : `/research/questions/${slug}/`;
+    window.location.assign(url);
   }
   nodeLayer.addEventListener('click', (e) => {
     const g = e.target.closest('.research-graph-node');
@@ -454,14 +445,6 @@ function rebuildGraph() {
     state.svg = svg;
     state.simulation = simulation;
     state.contentGroup = contentGroup;
-  });
-}
-
-function updateInStackMarkers() {
-  if (!state.svg) return;
-  state.svg.querySelectorAll('.research-graph-node').forEach(g => {
-    const slug = g.dataset.slug;
-    g.classList.toggle('in-stack', state.inStack.has(slug));
   });
 }
 
@@ -699,14 +682,6 @@ function init() {
   if (!state.data) return;
   state.panel = document.getElementById('research-graph-panel');
   state.page.isMobile = isMobile();
-  const stackRoot = document.querySelector('.garden-stack-columns .garden-column');
-  state.page.isNotePage = !!stackRoot;
-  state.page.currentSlug = stackRoot ? stackRoot.dataset.slug : null;
-
-  // Initial in-stack set
-  document.querySelectorAll('.garden-stack-columns .garden-column').forEach(c => {
-    state.inStack.add(c.dataset.slug);
-  });
 
   const isGraphPage = !!document.querySelector('.research-graph-page');
 
@@ -744,28 +719,8 @@ function init() {
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     if (!state.panelOpen) return;
-    // Panel claims Esc UNLESS the user's last pointer-down was in the stack
-    // (they're reading a column — let Esc clear the stack instead).
-    // stopImmediatePropagation prevents garden-stack's keydown handler from
-    // also firing — necessary because both listeners attach to `document` and
-    // would otherwise both run on the same event.
-    if (state.lastPointerInStack) return;
     e.stopImmediatePropagation();
     closePanel();
-  });
-
-  // Track whether the user's last pointer interaction was inside the stack
-  // columns. Capture phase so this fires before any click handlers can
-  // consume the event.
-  document.addEventListener('pointerdown', (e) => {
-    const stack = document.querySelector('.garden-stack');
-    state.lastPointerInStack = stack ? stack.contains(e.target) : false;
-  }, true);
-
-  // Listen for stack changes
-  window.addEventListener('garden:stack-changed', (e) => {
-    state.inStack = new Set(e.detail.slugs);
-    updateInStackMarkers();
   });
 
   // Restore panel state
