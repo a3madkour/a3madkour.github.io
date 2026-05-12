@@ -173,6 +173,15 @@ async function buildSimulation(canvas) {
   state.pinnedSlugs = new Set();
   state.viewTransform = { k: 1, tx: 0, ty: 0 };
 
+  // d3-zoom calls selection.interrupt() inside its transform setter to cancel
+  // in-progress zoom transitions. That method lives in d3-transition, which we
+  // don't vendor. Stub it as a chainable no-op on the d3-selection prototype
+  // so zoomBehavior.transform(...) works without dragging in d3-transition.
+  const selProto = Object.getPrototypeOf(select(document.body));
+  if (typeof selProto.interrupt !== 'function') {
+    selProto.interrupt = function() { return this; };
+  }
+
   const { nodes, edges } = applyFilters();
   const w = canvas.clientWidth || 320;
   const h = canvas.clientHeight || 360;
