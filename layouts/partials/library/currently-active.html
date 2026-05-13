@@ -1,0 +1,58 @@
+{{- /* Currently-active highlight strip above year sections.
+       Input: dict { items (active items, len 1..3) }.
+       Layout: 1 → full width; 2-3 → 2-col grid (data-active-count). */ -}}
+{{- $items := .items -}}
+{{- if $items -}}
+<section class="library-currently" data-active-count="{{ len $items }}">
+  <header class="library-section-rule">Currently active</header>
+  <div class="library-currently-grid">
+    {{- range $items -}}
+      {{- $item := . -}}
+      <article class="library-curr-card" data-media-type="{{ $item.media_type }}">
+        {{ partial "library/type-glyph.html" (dict "media_type" $item.media_type "size" "large") }}
+        <div class="library-curr-content">
+          <h3 class="library-curr-title">{{ $item.title }}</h3>
+          <div class="library-curr-meta">
+            {{ $item.creator }}{{ with $item.year }} · {{ . }}{{ end }}
+            {{- with $item.extras.platform }} · {{ . }}{{ end -}}
+            {{- with $item.extras.hours_played }} · {{ . }}h played{{ end -}}
+            {{- if eq $item.spoiler_level "heavy" }} · <span class="library-spoiler-heavy">spoilers: heavy</span>{{ end -}}
+            {{- if eq $item.spoiler_level "light" }} · <span class="library-spoiler-light">spoilers: light</span>{{ end -}}
+          </div>
+          {{- /* Progress bar: book uses extras.progress_pct;
+                 series uses current_episode / episode_count. */ -}}
+          {{- $pct := 0 -}}
+          {{- $showBar := false -}}
+          {{- $progLabel := "" -}}
+          {{- if eq $item.media_type "book" -}}
+            {{- with $item.extras.progress_pct }}{{- $pct = . -}}{{- $showBar = true -}}{{- end -}}
+            {{- $progLabel = $item.extras.progress_label | default "" -}}
+          {{- else if eq $item.media_type "series" -}}
+            {{- $ce := $item.extras.current_episode | default 0 -}}
+            {{- $ec := $item.extras.episode_count | default 0 -}}
+            {{- if and (gt $ec 0) (gt $ce 0) -}}
+              {{- $pct = mul (div (mul $ce 100) $ec) 1 -}}
+              {{- $showBar = true -}}
+              {{- $progLabel = printf "ep %d / %d" $ce $ec -}}
+            {{- end -}}
+          {{- end -}}
+          {{- if $showBar -}}
+            <div class="library-progress" role="progressbar" aria-valuenow="{{ $pct }}" aria-valuemin="0" aria-valuemax="100"><span style="width:{{ $pct }}%"></span></div>
+            <div class="library-progress-meta">
+              {{- with $item.started }}started {{ . }}{{ end -}}
+              {{- if and $item.started $progLabel }} · {{ $progLabel }}{{ else }}{{ $progLabel }}{{ end -}}
+            </div>
+          {{- else -}}
+            {{- with $item.started }}<div class="library-progress-meta">started {{ . }}</div>{{ end -}}
+          {{- end -}}
+          {{- with $item.preview }}<p class="library-curr-takeaway">{{ . }}</p>{{ end -}}
+          <div class="library-row-links">
+            {{- with $item.note_slug }}<a href="{{ printf "/garden/%s/" . | relURL }}">→ my notes</a>{{ end -}}
+            {{- with $item.canonical_url }}<a href="{{ . }}">→ original</a>{{ end -}}
+          </div>
+        </div>
+      </article>
+    {{- end -}}
+  </div>
+</section>
+{{- end -}}
