@@ -20,3 +20,37 @@ window.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]')
     .forEach((heading) => observer.observe(heading));
 });
+
+// Page sidebar — section observer + click handler.
+// Activates on any page that calls partials/page-sidebar.html.
+window.addEventListener('DOMContentLoaded', () => {
+  const sidebarLinks = document.querySelectorAll('.page-sidebar a[href^="#"]');
+  if (sidebarLinks.length === 0) return;
+
+  const sectionObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      const id = entry.target.id;
+      sidebarLinks.forEach((a) => {
+        a.classList.toggle('is-active', a.getAttribute('href') === `#${id}`);
+      });
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+
+  sidebarLinks.forEach((a) => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) sectionObserver.observe(target);
+  });
+
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  sidebarLinks.forEach((a) => {
+    a.addEventListener('click', (e) => {
+      const href = a.getAttribute('href');
+      const target = document.querySelector(href);
+      if (!target) return;
+      e.preventDefault();
+      target.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+      history.pushState(null, '', href);
+    });
+  });
+});

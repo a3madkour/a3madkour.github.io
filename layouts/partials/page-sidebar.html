@@ -1,0 +1,22 @@
+{{- /* Inputs:
+       .sections — slice of dicts {id, label}, in DOM order.
+                   If <2 entries, the partial emits nothing.
+   Emits both a desktop rotated-labels rail and a mobile sticky dots strip.
+   CSS in §41 hides one per breakpoint; JS in assets/js/nav.js toggles
+   .is-active on matching anchors as the user scrolls.
+*/ -}}
+{{- $sections := .sections | default slice -}}
+{{- if ge (len $sections) 2 -}}
+<aside class="page-sidebar" aria-label="Page sections">
+  <nav class="page-sidebar--rail">
+    {{- range $sections -}}
+      <a href="#{{ .id }}" class="page-sidebar-label">{{ .label }}</a>
+    {{- end -}}
+  </nav>
+  <nav class="page-sidebar--strip">
+    {{- range $sections -}}
+      <a href="#{{ .id }}" class="page-sidebar-dot" aria-label="{{ .label }}"></a>
+    {{- end -}}
+  </nav>
+</aside>
+{{- end -}}
