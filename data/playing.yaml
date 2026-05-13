@@ -61,28 +61,29 @@ items:
     extras:
       hours_played: 4
       platform: PS5
-  - slug: lorem-game-v
-    title: Lorem Game V
-    creator: Studio V
+  - slug: hades
+    title: Hades
+    creator: Supergiant Games
     year: 2020
     media_type: game
     status: finished
-    started: 2026-01-10
-    finished: 2026-02-22
-    last_modified: 2026-02-23
-    canonical_url: "https://example.com/lorem-game-v"
-    preview: "Lorem ipsum dolor sit amet."
-    tags: [strategy]
+    finished: 2024-09-15
+    last_modified: 2026-05-12
+    canonical_url: "https://www.supergiantgames.com/games/hades"
+    preview: "Example notes line one. Lorem ipsum dolor sit amet."
+    tags: [roguelike, mythology]
     extras:
-      hours_played: 30
-      platform: PC
-  - slug: lorem-game-vi
-    title: Lorem Game VI
-    creator: Studio VI
-    year: 2025
+      cover_url: "https://upload.wikimedia.org/wikipedia/en/c/cc/Hades_cover_art.jpg"
+  - slug: celeste
+    title: Celeste
+    creator: Maddy Makes Games
+    year: 2018
     media_type: game
-    status: queued
-    last_modified: 2026-04-20
-    tags: [adventure]
+    status: finished
+    finished: 2023-04-02
+    last_modified: 2026-05-12
+    canonical_url: "https://www.celestegame.com/"
+    preview: "Example notes line two. Lorem ipsum dolor sit amet."
+    tags: [platformer]
     extras:
-      platform: Web
+      cover_url: "https://upload.wikimedia.org/wikipedia/en/3/3b/Celeste_box_art_full.png"

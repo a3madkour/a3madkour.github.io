@@ -67,19 +67,33 @@ items:
     canonical_url: "https://example.com/lorem-v"
     preview: "Lorem ipsum dolor sit amet, consectetur."
     tags: [memoir, architecture]
-  - slug: lorem-ipsum-vi
-    title: Lorem Ipsum VI
-    creator: Author VI
-    year: 2023
+  - slug: wizard-of-oz
+    title: The Wonderful Wizard of Oz
+    creator: L. Frank Baum
+    year: 1900
     media_type: book
-    status: queued
-    last_modified: 2026-04-15
-    tags: [fiction]
-  - slug: lorem-ipsum-vii
-    title: Lorem Ipsum VII
-    creator: Author VII
-    year: 2020
+    status: finished
+    started: 2024-11-01
+    finished: 2024-11-18
+    last_modified: 2026-05-12
+    canonical_url: "https://en.wikipedia.org/wiki/The_Wonderful_Wizard_of_Oz"
+    preview: "Example notes line one. Lorem ipsum dolor sit amet."
+    tags: [fiction, classic]
+    extras:
+      isbn: "9780486291161"
+      cover_url: "https://upload.wikimedia.org/wikipedia/commons/2/27/Wizard_title_page.jpg"
+  - slug: pride-and-prejudice
+    title: Pride and Prejudice
+    creator: Jane Austen
+    year: 1813
     media_type: book
-    status: queued
-    last_modified: 2026-03-20
-    tags: [non-fiction, design]
+    status: finished
+    started: 2025-01-04
+    finished: 2025-01-22
+    last_modified: 2026-05-12
+    canonical_url: "https://en.wikipedia.org/wiki/Pride_and_Prejudice"
+    preview: "Example notes line two. Lorem ipsum dolor sit amet."
+    tags: [fiction, classic]
+    extras:
+      isbn: "9780141439518"
+      cover_url: "https://upload.wikimedia.org/wikipedia/commons/1/17/PrideAndPrejudiceTitlePage.jpg"

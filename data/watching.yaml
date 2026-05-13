@@ -58,27 +58,29 @@ items:
     tags: [documentary]
     extras:
       runtime_min: 96
-  - slug: lorem-series-v
-    title: Lorem Series V
-    creator: Network V
-    year: 2024
-    media_type: series
-    status: dropped
-    started: 2025-11-01
-    finished: 2025-11-15
-    last_modified: 2025-11-16
-    canonical_url: "https://example.com/lorem-series-v"
-    preview: "Lorem ipsum dolor sit amet."
-    tags: [horror]
-    extras:
-      episode_count: 6
-      current_episode: 2
-      current_season: 1
-  - slug: lorem-film-vi
-    title: Lorem Film VI
-    creator: Director VI
-    year: 2026
+  - slug: the-general
+    title: The General
+    creator: Buster Keaton
+    year: 1926
     media_type: film
-    status: queued
-    last_modified: 2026-05-02
-    tags: [sci-fi]
+    status: finished
+    finished: 2024-12-29
+    last_modified: 2026-05-12
+    canonical_url: "https://en.wikipedia.org/wiki/The_General_(1926_film)"
+    preview: "Example notes line one. Lorem ipsum dolor sit amet."
+    tags: [silent, comedy]
+    extras:
+      cover_url: "https://upload.wikimedia.org/wikipedia/commons/8/89/The_General_poster.jpg"
+  - slug: nosferatu
+    title: Nosferatu
+    creator: F.W. Murnau
+    year: 1922
+    media_type: film
+    status: finished
+    finished: 2025-10-31
+    last_modified: 2026-05-12
+    canonical_url: "https://en.wikipedia.org/wiki/Nosferatu"
+    preview: "Example notes line two. Lorem ipsum dolor sit amet."
+    tags: [silent, horror]
+    extras:
+      cover_url: "https://upload.wikimedia.org/wikipedia/commons/2/2e/Nosferatu_%281922%29_poster.jpg"
