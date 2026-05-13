@@ -2965,6 +2965,19 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 .library-glyph-block.game    { background: linear-gradient(180deg, var(--color-green) 0%, color-mix(in srgb, var(--color-green) 70%, black) 100%); }
 .library-glyph-block.watching { background: linear-gradient(180deg, var(--color-violet) 0%, color-mix(in srgb, var(--color-violet) 70%, black) 100%); }
 
+/* §37.x — Cover thumbnails (per-section native aspect)
+   Listening leaf uses [data-library-page="listening"] from layouts/library-listening/list.html. */
+.library-cover-block { display: inline-block; overflow: hidden; border-radius: 3px; vertical-align: top; flex-shrink: 0; }
+.library-cover-block.mini  { width: 44px; height: 56px; }
+.library-cover-block.large { width: 56px; height: 72px; }
+.library-cover { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* listening leaf: square tiles for both glyph and cover */
+[data-library-page="listening"] .library-cover-block.mini,
+[data-library-page="listening"] .library-glyph-block:not(.is-large) { width: 44px; height: 44px; }
+[data-library-page="listening"] .library-cover-block.large,
+[data-library-page="listening"] .library-glyph-block.is-large { width: 56px; height: 56px; }
+
 /* Currently-active highlight */
 .library-currently-grid {
   display: grid;
