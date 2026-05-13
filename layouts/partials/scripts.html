@@ -10,6 +10,11 @@
 {{- $core := resources.Get "js/index.js" | js.Build $coreOpts | fingerprint -}}
 <script src="{{ $core.RelPermalink }}" integrity="{{ $core.Data.Integrity }}" defer></script>
 
+{{- /* Search modal — loaded on every page (the `/` shortcut works everywhere) */ -}}
+{{- $searchOpts := dict "targetPath" "js/search.js" "minify" true -}}
+{{- $search := resources.Get "js/entry-search.js" | js.Build $searchOpts | fingerprint -}}
+<script src="{{ $search.RelPermalink }}" integrity="{{ $search.Data.Integrity }}" defer></script>
+
 {{- if eq .Section "essays" }}
 {{- $essayOpts := dict "targetPath" "js/essay.js" "minify" true -}}
 {{- $essay := resources.Get "js/entry-essay.js" | js.Build $essayOpts | fingerprint }}

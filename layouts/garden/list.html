@@ -1,5 +1,7 @@
 {{ define "main" }}
 <section class="garden-grid reading-column">
+  <span data-pagefind-meta="section:garden" hidden></span>
+  <span data-pagefind-filter="section:garden" hidden></span>
   <header class="garden-hero">
     <h1>{{ .Title }}</h1>
     {{ with .Content }}<div class="framing">{{ . }}</div>{{ end }}

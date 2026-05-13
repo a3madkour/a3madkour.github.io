@@ -1,5 +1,7 @@
 {{ define "main" }}
 <section class="essays-index">
+  <span data-pagefind-meta="section:essays" hidden></span>
+  <span data-pagefind-filter="section:essays" hidden></span>
   <header class="essays-hero reading-column">
     <h1>{{ .Title }}</h1>
     {{ with .Content }}<div class="framing">{{ . }}</div>{{ end }}

@@ -1,0 +1,45 @@
+{{- /* Site-wide search modal. Included once in baseof.html.
+       Markup is hidden until JS opens the <dialog> via showModal().
+       JS lazy-loads /pagefind/pagefind.js on first open.
+*/ -}}
+<dialog class="search-modal" aria-label="Search">
+  <form class="search-modal-form" role="search" data-search-form>
+    <span class="search-modal-icon" aria-hidden="true">
+      {{ with resources.Get "images/icons/search.svg" }}{{ .Content | safeHTML }}{{ end }}
+    </span>
+    <input
+      type="search"
+      class="search-modal-input"
+      data-search-input
+      placeholder="Search the site…"
+      autocomplete="off"
+      spellcheck="false"
+      aria-label="Search query"
+    />
+    <kbd class="search-modal-esc-hint">Esc</kbd>
+  </form>
+  <nav class="search-modal-filters" aria-label="Filter by section">
+    <button type="button" class="search-modal-chip is-active" data-section="all">All</button>
+    <button type="button" class="search-modal-chip" data-section="essays">Essays</button>
+    <button type="button" class="search-modal-chip" data-section="garden">Garden</button>
+    <button type="button" class="search-modal-chip" data-section="research">Research</button>
+    <button type="button" class="search-modal-chip" data-section="works">Works</button>
+    <button type="button" class="search-modal-chip" data-section="library">Library</button>
+  </nav>
+  <div
+    class="search-modal-results"
+    data-search-results
+    role="region"
+    aria-live="polite"
+    aria-atomic="false"
+  ></div>
+  <footer class="search-modal-footer">
+    <div class="search-modal-kbd-hints">
+      <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+      <span><kbd>↵</kbd> open</span>
+      <span><kbd>⌘</kbd><kbd>↵</kbd> new tab</span>
+      <span><kbd>Esc</kbd> close</span>
+    </div>
+    <div class="search-modal-status" data-search-status aria-live="polite"></div>
+  </footer>
+</dialog>

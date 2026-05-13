@@ -35,6 +35,10 @@
 {{- $myBacklinks := index $backlinksData $thisSlug | default slice -}}
 
 <main class="reading-column research-question-hub">
+  <span data-pagefind-meta="section:research" hidden></span>
+  <span data-pagefind-meta="subtype:question" hidden></span>
+  <span data-pagefind-meta="status:{{ .Params.status }}" hidden></span>
+  <span data-pagefind-filter="section:research" hidden></span>
 
   {{- $sections := slice -}}
   {{- if .Content -}}

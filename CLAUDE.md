@@ -11,7 +11,7 @@ Personal website for Abdelrahman Madkour, built as a Hugo static site with hand-
 - `hugo server --buildDrafts` — dev server with drafts visible.
 - `hugo --minify` — production build to `public/`. **Do not run with a dev server alive**; it poisons the dev-server CSS via a MIME mismatch.
 - `python3 tools/check-contrast.py` — WCAG 2.1 contrast verifier (CI gate).
-- Twelve linter pairs under `tools/check_*.py` + `tools/test_check_*.py` (CI runs each linter then its unit-test sibling): essay fixtures, garden fixtures, garden links, filter-chips config, research fixtures, research links, citations, works fixtures, works links, library fixtures, library links, library covers.
+- Thirteen linter pairs under `tools/check_*.py` + `tools/test_check_*.py` (CI runs each linter then its unit-test sibling): essay fixtures, garden fixtures, garden links, filter-chips config, research fixtures, research links, citations, works fixtures, works links, library fixtures, library links, library covers, pagefind metadata.
 
 No npm. Python tooling is stdlib-only. Hugo **extended** (≥ 0.148.0) is required — `.github/workflows/hugo.yaml` pins `HUGO_VERSION=0.148.0`.
 
@@ -19,15 +19,15 @@ No npm. Python tooling is stdlib-only. Hugo **extended** (≥ 0.148.0) is requir
 
 ### CSS pipeline — hand-rolled, processed by Hugo
 
-`assets/css/main.css` is a single hand-rolled stylesheet, organized into numbered sections §1–§41 (see the file's top-of-file index for the list; §32–§36 are reserved for past works-section additions that landed without numbered headers; §38–§40 cover the homepage hero, Currently widget, and homepage strips; §41 covers the cross-template page sidebar). Consumed by `layouts/partials/head.html` via `resources.Get` + (production) `minify | fingerprint` with SRI integrity.
+`assets/css/main.css` is a single hand-rolled stylesheet, organized into numbered sections §1–§42 (see the file's top-of-file index for the list; §32–§36 are reserved for past works-section additions that landed without numbered headers; §38–§40 cover the homepage hero, Currently widget, and homepage strips; §41 covers the cross-template page sidebar; §42 covers the search modal). Consumed by `layouts/partials/head.html` via `resources.Get` + (production) `minify | fingerprint` with SRI integrity.
 
 - **Tokens** are CSS custom properties on `:root` (light) and `:root[data-theme="dark"]` (dark). System dark via `@media (prefers-color-scheme: dark) :root:not([data-theme])`. The `[data-theme="dark"]` block and the media-query block carry **duplicate values** — both must be updated together when the palette changes.
-- **WCAG contrast**: `tools/check-contrast.py` parses the `:root` blocks and verifies four pairings (ink/stone AAA, ink-soft/stone AA, burgundy/stone AA, steel/stone AA) in both modes. Failure blocks deploy. Tokens `--color-green` (evergreen / finished pill) and `--color-warn` (queued pill) ride along but aren't checked.
+- **WCAG contrast**: `tools/check-contrast.py` parses the `:root` blocks and verifies four pairings (ink/stone AAA, ink-soft/stone AA, burgundy/stone AA, steel/stone AA) in both modes. Failure blocks deploy. Tokens `--color-green` (evergreen / finished pill), `--color-warn` (queued pill), and `--color-paper` (floating panel surface — search modal; light `#fdfcf8`, dark `#2a2a2a`; semantically distinct from `--color-tile` which is the grid-item surface) ride along but aren't checked.
 - **No Tailwind, no PostCSS, no Node.** Class names are semantic.
 
 ### JS pipeline — multi-entry bundling
 
-`layouts/partials/scripts.html` runs Hugo's `js.Build` (esbuild) five times — minified + fingerprinted, classic-script with SRI:
+`layouts/partials/scripts.html` runs Hugo's `js.Build` (esbuild) eight times — minified + fingerprinted, classic-script with SRI:
 
 | Entry | Output | Loaded on | Notes |
 |---|---|---|---|
@@ -38,6 +38,7 @@ No npm. Python tooling is stdlib-only. Hugo **extended** (≥ 0.148.0) is requir
 | `js/entry-works.js` | `works.<hash>.js` (~4 KB) | `.Section == "works"` AND NOT `/works/`-or-`/works/graph/` | imports `filter-chips.js`; per-item pages only |
 | `js/entry-works-umbrella.js` | `works-umbrella.<hash>.js` (~112 KB) | `/works/` and `/works/graph/` only | `works.js` + `works-graph.js` (copy + trim of `research-graph.js`) + vendored d3 modules |
 | `js/entry-library.js` | `library.<hash>.js` (~5 KB) | `.Section == "library"` AND NOT `/library/` | imports `filter-chips.js`; per-leaf pages only (no graph) |
+| `js/entry-search.js` | `search.<hash>.js` (~4 KB) | every page | search modal open/close logic; lazy-loads `/pagefind/pagefind.js` on first open |
 
 **Why multi-entry, not `splitting: true`?** esbuild requires `outdir` for code splitting, but Hugo's `js.Build` is `outfile`-only. `splitting: true` on a single entry silently inlines dynamic imports rather than emitting chunks. Confirmed with a minimal repro. `filter-chips.js` is duplicated into essay/garden/works bundles (~8 KB).
 
@@ -52,11 +53,36 @@ Three-state cycle: **system → light → dark → system**.
 - An inline `<script>` at the top of `<head>` reads `theme-pref` synchronously during HTML parse and applies `data-theme` before any rendering — prevents FOUC. Storage access is wrapped in `try/catch` so restricted contexts (private browsing strict, sandboxed iframes) degrade gracefully.
 - Bundled `toggle-theme.js` handles the click cycle, button label updates, and idempotent re-apply.
 
+### Search modal
+
+`layouts/partials/search-modal.html` is included once from `baseof.html`. It renders a `<dialog>` element that opens via the header magnifier button or the `/` key. On first open, `entry-search.js` lazy-loads `/pagefind/pagefind.js` from the CI-built Pagefind index (never bundled; always served from `public/pagefind/`). Section filter chips (All / Essays / Garden / Research / Works / Library) map to `data-pagefind-filter="section:<name>"` values emitted by per-layout templates.
+
+**Pagefind 1.x gotchas** (non-obvious from the code; essential for maintaining or extending search):
+
+- `data-pagefind-meta` is **one key per element**. Multiple meta keys require multiple hidden `<span>` elements — comma-separated multi-key syntax on one element is not supported in Pagefind 1.x. All per-layout meta emissions follow this pattern.
+- `data-pagefind-filter` is **separate from** `data-pagefind-meta`. Filter chips need their own explicit `data-pagefind-filter="section:<name>"` element in addition to the meta span.
+- Calling `pagefindInstance.search(query, { filters: {} })` with an **empty filters object filters out everything** — zero results. When no filter is active, omit the second argument entirely (or don't pass a `filters` key).
+- `data.title` is **not at the top level** of a Pagefind result data object; it lives at `data.meta.title`.
+
+**Per-layout meta keys emitted:**
+
+| Layout family | `section` | Additional keys |
+|---|---|---|
+| Essays | `essays` | `date` |
+| Garden | `garden` | `growth_stage`, `flavor` (concept\|media\|reference, derived from `media_type`) |
+| Research theme | `research` | `subtype:theme`, `status` |
+| Research question | `research` | `subtype:question`, `status` |
+| Works (game/music/poem) | `works` | `medium` |
+| Library leaves | `library` | `medium`, `status` (leaf name: reading\|listening\|playing\|watching) |
+| About / Home / Blog (legacy) | section name only | — |
+
+**Indexing controls**: `<main data-pagefind-body>` in `baseof.html` scopes the indexed body. `data-pagefind-ignore` on `.spoiler-body` (in `spoiler` shortcode) excludes spoiler content from the index.
+
 ### Content & layouts
 
 - **Content sections** in `content/`: `_index.html`, `about/`, `blog/` (legacy), `essays/`, `garden/`, `research/`, `works/`.
 - **Layouts** under `layouts/`: base templates in `_default/`; per-section `{list,single}.html` plus `rss.xml` for essays + garden and standalone `graph.html` pages for garden + research + works. Works splits into `works/`, `works-games/`, `works-music/`, `works-poetry/`. Research splits into `research/`, `research-theme/`, `research-question/` with type discrimination via `cascade: { type: research-theme|research-question }` on `content/research/{themes,questions}/_index.md` (bare section URLs hidden via `build: render: never`). `baseof.html` is a thin semantic wrapper; per-section layouts override `{{ block "main" }}`.
-- **Partials** under `layouts/partials/`: site chrome (`head`, `header`, `footer`, `scripts`); essays (`essay-card{,-featured}`, `essay-meta`, `essay-toc`, `essay-references`, `essay-series-nav`); shared `filter-chips.html`, `page-sidebar.html` (cross-template rotated-labels rail + mobile dots strip); `home/` subfolder (`hero`, `currently`, `research-strip`, `garden-strip`, `studio-strip` — homepage v3 sections); `garden/` subfolder (`note-header`, `stage-glyph`, `note-tile`, `topic-section`, `relative-date`, `path-log`, `links-section`, `graph-{data,script,panel}`); `research/` subfolder (`status-pill`, `output-item`, `theme-card`, `backlinks-data`, `graph-{data,script,panel}`); `works/` subfolder (`tile`, `glyph-sprite`, `game-card`, `music-row`, `poem-row`, `status-pill`, `audio-pill`, `audio-link`, `connections`, `graph-{data,data-inner,script,panel}`).
+- **Partials** under `layouts/partials/`: site chrome (`head`, `header`, `footer`, `scripts`); essays (`essay-card{,-featured}`, `essay-meta`, `essay-toc`, `essay-references`, `essay-series-nav`); shared `filter-chips.html`, `page-sidebar.html` (cross-template rotated-labels rail + mobile dots strip), `search-modal.html` (included once in `baseof.html`); `home/` subfolder (`hero`, `currently`, `research-strip`, `garden-strip`, `studio-strip` — homepage v3 sections); `garden/` subfolder (`note-header`, `stage-glyph`, `note-tile`, `topic-section`, `relative-date`, `path-log`, `links-section`, `graph-{data,script,panel}`); `research/` subfolder (`status-pill`, `output-item`, `theme-card`, `backlinks-data`, `graph-{data,script,panel}`); `works/` subfolder (`tile`, `glyph-sprite`, `game-card`, `music-row`, `poem-row`, `status-pill`, `audio-pill`, `audio-link`, `connections`, `graph-{data,data-inner,script,panel}`).
 - **Shortcodes** under `layouts/shortcodes/`: `cite` (looks up `site.Data.citations.citations[key]`, errors if missing), `sidenote` (auto-numbered marker + aside via page scratch), `figure` (semantic, supports `class="wide"`), `spoiler` (`<details>`-based, no JS). Deferred-feature stubs: `math`, `video-sync`, `widget`, `lyrics` — each emits a `data-pending` container so fixtures exercise the shape.
 - **Top nav** (locked): Essays / Garden / Research / Works / Library / About. Active item gets `aria-current="page"` via `hasPrefix` match.
 
@@ -121,7 +147,7 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 
 ### Deployment
 
-`.github/workflows/hugo.yaml` builds with Hugo extended and deploys `public/` to GitHub Pages on pushes to `master`. CI runs all Python checks (contrast + 12 linter pairs = 25 verification steps) before the Hugo build; any failure blocks deploy.
+`.github/workflows/hugo.yaml` builds with Hugo extended and deploys `public/` to GitHub Pages on pushes to `master`. CI step order: pre-build linters (contrast + 13 linter pairs) → `hugo --minify` → pagefind metadata linter unit tests → verify pagefind metadata on built pages → install Pagefind 1.5.2 binary → build Pagefind index into `public/pagefind/` → upload artifact → deploy. Any failure blocks deploy. `public/pagefind/` is gitignored and CI-regenerated each run.
 
 ## Reference docs
 
@@ -132,6 +158,7 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 - **Library cover-fetch spec**: `docs/superpowers/specs/2026-05-12-library-cover-fetch-design.md`. Phase 7 Slice 1 (infra shipped; live IGDB + TMDB paths deferred to a future slice).
 - **Homepage v3 spec**: `docs/superpowers/specs/2026-05-13-homepage-v3-design.md`. Phase 7 Slice 2 (closes Phase 7).
 - **Page sidebar spec**: `docs/superpowers/specs/2026-05-13-page-sidebar-design.md`. Phase 7 polish slice (rotated-labels rail across 5 layout families).
+- **Phase 8 spec**: `docs/superpowers/specs/2026-05-13-phase-8-design.md`. Pagefind search runtime (Slice 1 shipped), Lighthouse CI, final QA.
 
 ## Project status (as of 2026-05-13)
 
@@ -147,12 +174,13 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 - **Library cover-fetch** (Phase 7 Slice 1): cover infra (data shape via `extras.cover_url`/`isbn`/`mbid`/`igdb_id`/`tmdb_id`/`cover_file`; Hugo `<img>` template with glyph fallback; per-section aspect — listening square, others portrait; `tools/fetch_library_covers.py` with 4 live source paths + IGDB/TMDB `NotImplementedError` stubs; 12th linter pair gating schema + cache + audit consistency + freshness; sha256 audit log at `tools/.cover-cache.json`). 8 PD/fair-use cover thumbnails seeded via Wikimedia thumb URLs (~588 KB total). Live IGDB + TMDB API paths defer to a future slice that pairs with real items + API keys.
 - **Homepage v3** (Phase 7 Slice 2): closes Phase 7. New hero (2-col grid, `home_lede` frontmatter split from `description`, hand-authored burgundy mark SVG) + Currently widget (4 rows reading/listening/playing/watching, max-`last_modified` timestamp, spoiler tag only when `spoiler_level == heavy` AND `note_slug` present, empty-row + empty-widget hiding) + Research strip (top 3 active questions, theme-name lookup via `site.GetPage`) + 2-col Research section combining research questions + top-10 garden tiles under one sidebar anchor (each side keeps its own "What I'm chasing" / "From the Garden" sub-header) + standalone full-width Works section (renamed from "Lately, in the studio"; one per medium + most-recent remaining = 4 rows; reuses `works/glyph-sprite.html` rendered once guarded). CSS §38–§40 + responsive breakpoint. Studio type-badge glyphs use `var(--color-stone)` (theme-flipping) for dark-mode contrast on the burgundy/steel `color-mix` gradients.
 - **Page sidebar** (Phase 7 polish): shared `partials/page-sidebar.html` taking a `sections` slice of `(id, label)` dicts — emits a fixed-position vertical rotated-labels rail (writing-mode: vertical-rl) on the left margin at viewport ≥1220px AND a sticky horizontal dots strip below 1220px. `assets/js/nav.js` carries a scrollspy that toggles `.is-active` by `href` (so both rail label + strip dot flip together); active = last section whose top has crossed the upper-10% trigger line, with a "force last section active when scrollY + viewportHeight ≥ docHeight" fallback so short final sections still highlight at the page bottom. Integrated across 5 layout families: home, about, research themes, research questions, four library leaves. Each layout owns its anchor list; conditional sections (theme without `garden_topic_ref`, library leaves without queue) filter the slice before passing. <2 entries → partial emits nothing. CSS §41. Label font-size is fluid: `clamp(0.9rem, 0.7rem + 0.35vw, 1.2rem)`.
+- **Pagefind search** (Phase 8 Slice 1): full-text site search via Pagefind 1.5.2 (pinned in workflow env). `<dialog>`-based search modal in `layouts/partials/search-modal.html` included once from `baseof.html`; triggered by header magnifier button or `/` key; lazy-loads `/pagefind/pagefind.js` on first open. `entry-search.js` → `search.<hash>.js` (~4 KB) loads on every page. Pagefind index built in CI post-`hugo --minify` into `public/pagefind/` (gitignored, CI-regenerated). Per-layout `data-pagefind-meta` + `data-pagefind-filter` spans emitted as separate hidden elements (one key per element — see Pagefind 1.x gotchas below). Spoiler bodies excluded via `data-pagefind-ignore` on `.spoiler-body`. 13th linter pair (`tools/check_pagefind_meta.py` + `test_check_pagefind_meta.py`) runs post-build to assert every indexable page has `<main data-pagefind-body>`, a `section` meta span, and a `section` filter span. Section filter chips in modal: All / Essays / Garden / Research / Works / Library. CSS §42 + new `--color-paper` token. New `search.svg` hand-authored icon.
 
 **Not started, in phase order:**
 
 - **About Now widget** — Phase 3-blocked (needs elisp pipeline).
 - **Phase 3 — org-mode pipeline**: elisp helpers + ox-hugo that wire real content into the fixture-shaped data files. All site fixtures exist to round-trip when this lands. **Two separate publishing commands** required (per spec §14 Phase 3): a Garden/Library/Research publish that runs frequently and idempotently (the "living" surfaces — meant for daily/hourly cadence with no diff when nothing changed), and an Essay publish that's per-post and deliberate (treated as a publishing event with hero/figures/sidenotes/citations rolled in; output reviewed before commit).
-- **Phase 8 — Pagefind search + Lighthouse CI + final QA.**
+- **Phase 8 — Lighthouse CI + final QA.** (Pagefind search runtime shipped as Slice 1.)
 
 To pick up a slice: read this file + parent spec §14, run `superpowers:brainstorming` then `superpowers:writing-plans`. Confirm with the user whether the slice depends on the elisp pipeline (most do) or can build on placeholder data.
 

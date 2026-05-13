@@ -1,5 +1,8 @@
 {{ define "main" }}
 <article class="essay" data-toc="{{ if not (eq .Params.toc false) }}true{{ end }}">
+  <span data-pagefind-meta="section:essays" hidden></span>
+  <span data-pagefind-meta="date:{{ .Date.Format "2006-01-02" }}" hidden></span>
+  <span data-pagefind-filter="section:essays" hidden></span>
   <header class="essay-header reading-column">
     {{ with .Params.hero }}
       {{ $hero := $.Resources.Get . }}

@@ -33,6 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HUGO_VERSION: 0.148.0
+      PAGEFIND_VERSION: 1.5.2
     steps:
       - name: Install Hugo CLI
         run: |
@@ -106,6 +107,19 @@ jobs:
             --gc \
             --minify \
             --baseURL "${{ steps.pages.outputs.base_url }}/"
+      - name: Run pagefind metadata linter unit tests
+        run: cd tools && python3 -m unittest test_check_pagefind_meta.py -v
+      - name: Verify pagefind metadata on built pages
+        run: python3 tools/check_pagefind_meta.py
+      - name: Install Pagefind
+        run: |
+          wget -O ${{ runner.temp }}/pagefind.tar.gz \
+            https://github.com/CloudCannon/pagefind/releases/download/v${PAGEFIND_VERSION}/pagefind-v${PAGEFIND_VERSION}-x86_64-unknown-linux-musl.tar.gz
+          tar -xzf ${{ runner.temp }}/pagefind.tar.gz -C ${{ runner.temp }}
+          sudo mv ${{ runner.temp }}/pagefind /usr/local/bin/
+          pagefind --version
+      - name: Build Pagefind index
+        run: pagefind --site public/
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

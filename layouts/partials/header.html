@@ -30,6 +30,12 @@
     </a>
     <button class="icon-button"
             type="button"
+            data-search-toggle
+            aria-label="Open search">
+      {{ with resources.Get "images/icons/search.svg" }}{{ .Content | safeHTML }}{{ end }}
+    </button>
+    <button class="icon-button"
+            type="button"
             data-theme-toggle
             aria-label="Toggle theme">
       {{ with resources.Get "images/icons/sun.svg" }}{{ .Content | safeHTML }}{{ end }}

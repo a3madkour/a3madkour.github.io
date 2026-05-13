@@ -1,5 +1,7 @@
 {{ define "main" }}
 <main class="reading-column about-page">
+  <span data-pagefind-meta="section:about" hidden></span>
+  <span data-pagefind-filter="section:about" hidden></span>
 
   {{ partial "page-sidebar.html" (dict "sections" (slice
       (dict "id" "bio"      "label" "Bio")

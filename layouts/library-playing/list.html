@@ -40,6 +40,10 @@
 {{- end -}}
 
 <main class="library-leaf-page" data-library-page="playing">
+  <span data-pagefind-meta="section:library" hidden></span>
+  <span data-pagefind-meta="medium:game" hidden></span>
+  <span data-pagefind-meta="status:playing" hidden></span>
+  <span data-pagefind-filter="section:library" hidden></span>
   {{- $sections := slice -}}
   {{- if $active -}}
     {{- $sections = $sections | append (dict "id" "currently-active" "label" "Now") -}}
