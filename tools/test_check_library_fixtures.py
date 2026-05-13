@@ -66,5 +66,148 @@ class ParserTests(unittest.TestCase):
         self.assertIs(second["note_slug"], None)
 
 
+class ValidatorTests(unittest.TestCase):
+    def setUp(self):
+        self.maxDiff = None
+
+    def _run(self, file_name: str, text: str) -> list[str]:
+        return lint.lint_yaml_file(file_name, text)
+
+    def test_valid_reading_passes(self):
+        text = """\
+items:
+  - slug: invisible-cities
+    title: Invisible Cities
+    creator: Italo Calvino
+    year: 1972
+    media_type: book
+    status: reading
+    started: 2025-12-15
+    last_modified: 2026-04-22
+    tags: [fiction]
+"""
+        self.assertEqual(self._run("reading.yaml", text), [])
+
+    def test_listening_rejects_book_media_type(self):
+        text = """\
+items:
+  - slug: x
+    title: X
+    creator: Y
+    year: 2020
+    media_type: book
+    status: finished
+    finished: 2026-02-10
+    last_modified: 2026-02-11
+    tags: []
+"""
+        errs = self._run("listening.yaml", text)
+        self.assertTrue(any("media_type='book' not allowed" in e for e in errs), errs)
+
+    def test_playing_rejects_unknown_status(self):
+        text = """\
+items:
+  - slug: x
+    title: X
+    creator: Y
+    year: 2020
+    media_type: game
+    status: bogus
+    last_modified: 2026-02-11
+    tags: []
+"""
+        errs = self._run("playing.yaml", text)
+        self.assertTrue(any("status='bogus'" in e for e in errs), errs)
+
+    def test_finished_status_requires_finished_date(self):
+        text = """\
+items:
+  - slug: x
+    title: X
+    creator: Y
+    year: 2020
+    media_type: book
+    status: finished
+    last_modified: 2026-02-11
+    tags: []
+"""
+        errs = self._run("reading.yaml", text)
+        self.assertTrue(any("finished date required" in e for e in errs), errs)
+
+    def test_progress_pct_out_of_range_rejected(self):
+        text = """\
+items:
+  - slug: x
+    title: X
+    creator: Y
+    year: 2020
+    media_type: book
+    status: reading
+    started: 2025-12-15
+    last_modified: 2026-02-11
+    tags: []
+    extras:
+      progress_pct: 150
+"""
+        errs = self._run("reading.yaml", text)
+        self.assertTrue(any("progress_pct" in e and "0..100" in e for e in errs), errs)
+
+    def test_unknown_extras_key_rejected(self):
+        text = """\
+items:
+  - slug: x
+    title: X
+    creator: Y
+    year: 2020
+    media_type: book
+    status: reading
+    started: 2025-12-15
+    last_modified: 2026-02-11
+    tags: []
+    extras:
+      bogus_key: 1
+"""
+        errs = self._run("reading.yaml", text)
+        self.assertTrue(any("bogus_key" in e for e in errs), errs)
+
+    def test_duplicate_slug_rejected(self):
+        text = """\
+items:
+  - slug: dup
+    title: A
+    creator: X
+    year: 2020
+    media_type: book
+    status: queued
+    last_modified: 2026-02-11
+    tags: []
+  - slug: dup
+    title: B
+    creator: Y
+    year: 2021
+    media_type: book
+    status: queued
+    last_modified: 2026-02-11
+    tags: []
+"""
+        errs = self._run("reading.yaml", text)
+        self.assertTrue(any("duplicate slug" in e for e in errs), errs)
+
+    def test_bad_date_format_rejected(self):
+        text = """\
+items:
+  - slug: x
+    title: X
+    creator: Y
+    year: 2020
+    media_type: book
+    status: queued
+    last_modified: not-a-date
+    tags: []
+"""
+        errs = self._run("reading.yaml", text)
+        self.assertTrue(any("last_modified" in e and "YYYY-MM-DD" in e for e in errs), errs)
+
+
 if __name__ == "__main__":
     unittest.main()
