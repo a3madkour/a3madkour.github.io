@@ -297,5 +297,145 @@ items:
         self.assertTrue(any("4 active items" in w for w in warnings), warnings)
 
 
+class CoverKeyTests(unittest.TestCase):
+    def _run(self, file_name: str, text: str) -> list[str]:
+        return lint.lint_yaml_file(file_name, text)[0]
+
+    def _item(self, media_type: str, file_name: str, extras_lines: str = "") -> str:
+        slug_map = {"book": "x", "album": "x", "track": "x", "game": "x", "film": "x", "series": "x"}
+        status_map = {
+            "book": "finished\n    finished: 2026-05-12",
+            "album": "finished\n    finished: 2026-05-12",
+            "track": "finished\n    finished: 2026-05-12",
+            "game": "finished\n    finished: 2026-05-12",
+            "film": "finished\n    finished: 2026-05-12",
+            "series": "finished\n    finished: 2026-05-12",
+        }
+        extras_block = f"\n    extras:\n{extras_lines}" if extras_lines else ""
+        return (
+            "items:\n"
+            f"  - slug: {slug_map[media_type]}\n"
+            f"    title: X\n"
+            f"    creator: Y\n"
+            f"    year: 2020\n"
+            f"    media_type: {media_type}\n"
+            f"    status: {status_map[media_type]}\n"
+            f"    last_modified: 2026-05-12\n"
+            f"    tags: []{extras_block}\n"
+        )
+
+    def test_cover_file_valid(self):
+        yaml = self._item("book", "reading.yaml", "      cover_file: wizard-of-oz.jpg")
+        self.assertEqual(self._run("reading.yaml", yaml), [])
+
+    def test_cover_file_rejects_path_with_slash(self):
+        yaml = self._item("book", "reading.yaml", "      cover_file: subdir/wizard.jpg")
+        errs = self._run("reading.yaml", yaml)
+        self.assertTrue(any("cover_file" in e for e in errs), errs)
+
+    def test_cover_file_rejects_dotdot(self):
+        yaml = self._item("book", "reading.yaml", "      cover_file: ../escape.jpg")
+        errs = self._run("reading.yaml", yaml)
+        self.assertTrue(any("cover_file" in e for e in errs), errs)
+
+    def test_cover_url_valid(self):
+        yaml = self._item("album", "listening.yaml", "      cover_url: https://upload.wikimedia.org/bach.jpg")
+        self.assertEqual(self._run("listening.yaml", yaml), [])
+
+    def test_cover_url_rejects_relative(self):
+        yaml = self._item("book", "reading.yaml", "      cover_url: not-a-url")
+        errs = self._run("reading.yaml", yaml)
+        self.assertTrue(any("cover_url" in e for e in errs), errs)
+
+    def test_isbn_valid_13(self):
+        yaml = self._item("book", "reading.yaml", "      isbn: \"9780156453806\"")
+        self.assertEqual(self._run("reading.yaml", yaml), [])
+
+    def test_isbn_valid_10(self):
+        yaml = self._item("book", "reading.yaml", "      isbn: \"0156453800\"")
+        self.assertEqual(self._run("reading.yaml", yaml), [])
+
+    def test_isbn_invalid_format_fails(self):
+        yaml = self._item("book", "reading.yaml", "      isbn: not-an-isbn")
+        errs = self._run("reading.yaml", yaml)
+        self.assertTrue(any("isbn" in e for e in errs), errs)
+
+    def test_isbn_not_allowed_on_album(self):
+        # isbn is book-only; album must reject it as unknown
+        yaml = self._item("album", "listening.yaml", "      isbn: \"9780156453806\"")
+        errs = self._run("listening.yaml", yaml)
+        self.assertTrue(any("isbn" in e for e in errs), errs)
+
+    def test_igdb_id_valid(self):
+        yaml = self._item("game", "playing.yaml", "      igdb_id: 1942")
+        self.assertEqual(self._run("playing.yaml", yaml), [])
+
+    def test_igdb_id_rejects_string(self):
+        yaml = self._item("game", "playing.yaml", "      igdb_id: abc")
+        errs = self._run("playing.yaml", yaml)
+        self.assertTrue(any("igdb_id" in e for e in errs), errs)
+
+    def test_igdb_id_rejects_zero(self):
+        yaml = self._item("game", "playing.yaml", "      igdb_id: 0")
+        errs = self._run("playing.yaml", yaml)
+        self.assertTrue(any("igdb_id" in e for e in errs), errs)
+
+    def test_igdb_id_not_allowed_on_film(self):
+        yaml = self._item("film", "watching.yaml", "      igdb_id: 1942")
+        errs = self._run("watching.yaml", yaml)
+        self.assertTrue(any("igdb_id" in e for e in errs), errs)
+
+    def test_tmdb_id_valid_film(self):
+        yaml = self._item("film", "watching.yaml", "      tmdb_id: 550")
+        self.assertEqual(self._run("watching.yaml", yaml), [])
+
+    def test_tmdb_id_valid_series(self):
+        yaml = self._item("series", "watching.yaml", "      tmdb_id: 1399")
+        self.assertEqual(self._run("watching.yaml", yaml), [])
+
+    def test_tmdb_id_rejects_string(self):
+        yaml = self._item("film", "watching.yaml", "      tmdb_id: abc")
+        errs = self._run("watching.yaml", yaml)
+        self.assertTrue(any("tmdb_id" in e for e in errs), errs)
+
+    def test_tmdb_id_not_allowed_on_game(self):
+        yaml = self._item("game", "playing.yaml", "      tmdb_id: 550")
+        errs = self._run("playing.yaml", yaml)
+        self.assertTrue(any("tmdb_id" in e for e in errs), errs)
+
+    def test_mbid_valid(self):
+        yaml = self._item("album", "listening.yaml",
+                          "      musicbrainz_release_group: e27e52a2-3a34-4f42-bf2e-6f8af506d5b0")
+        self.assertEqual(self._run("listening.yaml", yaml), [])
+
+    def test_mbid_rejects_empty_string(self):
+        yaml = self._item("album", "listening.yaml",
+                          "      musicbrainz_release_group: \"\"")
+        errs = self._run("listening.yaml", yaml)
+        self.assertTrue(any("musicbrainz_release_group" in e for e in errs), errs)
+
+    def test_mbid_not_allowed_on_book(self):
+        yaml = self._item("book", "reading.yaml",
+                          "      musicbrainz_release_group: e27e52a2-3a34-4f42-bf2e-6f8af506d5b0")
+        errs = self._run("reading.yaml", yaml)
+        self.assertTrue(any("musicbrainz_release_group" in e for e in errs), errs)
+
+    def test_cover_file_valid_on_game(self):
+        # cover_file is universal — allowed on all media types
+        yaml = self._item("game", "playing.yaml", "      cover_file: doom.jpg")
+        self.assertEqual(self._run("playing.yaml", yaml), [])
+
+    def test_cover_url_valid_on_series(self):
+        yaml = self._item("series", "watching.yaml",
+                          "      cover_url: https://example.com/show.jpg")
+        self.assertEqual(self._run("watching.yaml", yaml), [])
+
+    def test_typo_cover_files_rejected(self):
+        # Ensures typos like cover_files still fail as unknown extras key
+        yaml = self._item("book", "reading.yaml", "      cover_files: wizard.jpg")
+        errs = self._run("reading.yaml", yaml)
+        self.assertTrue(any("cover_files" in e for e in errs), errs)
+
+
 if __name__ == "__main__":
     unittest.main()
