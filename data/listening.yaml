@@ -46,23 +46,29 @@ items:
     canonical_url: "https://example.com/lorem-track-iv"
     preview: "One repeat-play single."
     tags: [pop]
-  - slug: lorem-album-v
-    title: Lorem Album V
-    creator: Artist V
-    year: 2018
+  - slug: brandenburg-concertos
+    title: Brandenburg Concertos
+    creator: Johann Sebastian Bach
+    year: 1721
     media_type: album
-    status: dropped
-    started: 2025-08-01
-    finished: 2025-08-12
-    last_modified: 2025-08-13
-    canonical_url: "https://example.com/lorem-album-v"
-    preview: "Lorem ipsum dolor sit amet."
-    tags: [experimental]
-  - slug: lorem-album-vi
-    title: Lorem Album VI
-    creator: Artist VI
-    year: 2024
-    media_type: album
-    status: queued
-    last_modified: 2026-05-02
-    tags: [ambient]
+    status: finished
+    finished: 2025-03-10
+    last_modified: 2026-05-12
+    canonical_url: "https://example.com/brandenburg-concertos"
+    preview: "Example notes line one. Lorem ipsum dolor sit amet."
+    tags: [classical]
+    extras:
+      cover_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Title_page_of_Brandenburg_Concertos.png/240px-Title_page_of_Brandenburg_Concertos.png"
+  - slug: the-entertainer
+    title: The Entertainer
+    creator: Scott Joplin
+    year: 1902
+    media_type: track
+    status: finished
+    finished: 2025-05-20
+    last_modified: 2026-05-12
+    canonical_url: "https://example.com/the-entertainer"
+    preview: "Example notes line two. Lorem ipsum dolor sit amet."
+    tags: [ragtime, classical]
+    extras:
+      cover_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/EntertainerJoplinCover.JPEG/240px-EntertainerJoplinCover.JPEG"

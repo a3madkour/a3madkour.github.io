@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import re
 import sys
+import urllib.parse
 from datetime import date as Date
 from pathlib import Path
 
@@ -119,13 +120,25 @@ ALLOWED_STATUSES = {
     "watching.yaml":  {"finished", "watching", "queued", "dropped"},
 }
 
+COVER_KEYS_UNIVERSAL = {"cover_file", "cover_url"}
+COVER_KEYS_BY_MEDIA = {
+    "book":   {"isbn"},
+    "album":  {"musicbrainz_release_group"},
+    "track":  {"musicbrainz_release_group"},
+    "game":   {"igdb_id"},
+    "film":   {"tmdb_id"},
+    "series": {"tmdb_id"},
+}
+
+ISBN_RE = re.compile(r"^\d{10}$|^\d{13}$")
+
 ALLOWED_EXTRAS = {
-    "book":   {"progress_pct", "progress_label"},
-    "album":  set(),
-    "track":  set(),
-    "game":   {"hours_played", "platform"},
-    "film":   {"runtime_min"},
-    "series": {"episode_count", "current_episode", "current_season"},
+    "book":   {"progress_pct", "progress_label"} | COVER_KEYS_UNIVERSAL | COVER_KEYS_BY_MEDIA["book"],
+    "album":  COVER_KEYS_UNIVERSAL | COVER_KEYS_BY_MEDIA["album"],
+    "track":  COVER_KEYS_UNIVERSAL | COVER_KEYS_BY_MEDIA["track"],
+    "game":   {"hours_played", "platform"} | COVER_KEYS_UNIVERSAL | COVER_KEYS_BY_MEDIA["game"],
+    "film":   {"runtime_min"} | COVER_KEYS_UNIVERSAL | COVER_KEYS_BY_MEDIA["film"],
+    "series": {"episode_count", "current_episode", "current_season"} | COVER_KEYS_UNIVERSAL | COVER_KEYS_BY_MEDIA["series"],
 }
 
 REQUIRED_FIELDS = {"slug", "title", "creator", "year", "media_type", "status", "last_modified", "tags"}
@@ -137,6 +150,29 @@ SPOILER_LEVELS = {"none", "light", "heavy"}
 SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 ACTIVE_STATUSES = {"reading", "listening", "playing", "watching"}
+
+
+def _validate_extras_cover_keys(extras: dict, media_type: str, errors: list, ctx: str) -> None:
+    allowed = COVER_KEYS_UNIVERSAL | COVER_KEYS_BY_MEDIA.get(media_type, set())
+    for key, value in extras.items():
+        if key not in allowed:
+            continue
+        if key == "isbn":
+            if not isinstance(value, str) or not ISBN_RE.match(value):
+                errors.append(f"{ctx}: extras.isbn must be 10 or 13 digits, got {value!r}")
+        elif key in {"igdb_id", "tmdb_id"}:
+            if not isinstance(value, int) or value <= 0:
+                errors.append(f"{ctx}: extras.{key} must be a positive integer, got {value!r}")
+        elif key == "musicbrainz_release_group":
+            if not isinstance(value, str) or not value:
+                errors.append(f"{ctx}: extras.musicbrainz_release_group must be a non-empty string")
+        elif key == "cover_url":
+            parsed = urllib.parse.urlparse(value) if isinstance(value, str) else None
+            if not parsed or not parsed.scheme or not parsed.netloc:
+                errors.append(f"{ctx}: extras.cover_url must be an absolute URL, got {value!r}")
+        elif key == "cover_file":
+            if not isinstance(value, str) or "/" in value or ".." in value or not value:
+                errors.append(f"{ctx}: extras.cover_file must be a relative filename without '/' or '..', got {value!r}")
 
 
 def _check_date(prefix: str, field: str, value: object) -> str | None:
@@ -249,6 +285,7 @@ def lint_yaml_file(file_name: str, text: str) -> tuple[list[str], list[str]]:
                     ec = extras.get("episode_count")
                     if isinstance(ce, int) and isinstance(ec, int) and ce > ec:
                         errors.append(f"{prefix}: current_episode ({ce}) > episode_count ({ec})")
+                _validate_extras_cover_keys(extras, mt, errors, prefix)
 
     if active_count > 3:
         warnings.append(f"{file_name}: {active_count} active items, expected ≤3 in currently-active highlight")

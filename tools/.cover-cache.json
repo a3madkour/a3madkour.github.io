@@ -1,0 +1,50 @@
+{
+  "brandenburg-concertos": {
+    "fetched_at": "2026-05-13T06:23:20Z",
+    "sha256": "29cbbaaf430a9fdbbd01a4382331ce79498ef291cba7c2950caed032e451e8ae",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Title_page_of_Brandenburg_Concertos.png/240px-Title_page_of_Brandenburg_Concertos.png",
+    "source_kind": "cover_url"
+  },
+  "celeste": {
+    "fetched_at": "2026-05-13T06:23:21Z",
+    "sha256": "9a85d31cce5facb3037eb14cfdd8a0496e29500f46a0d63350aea529b6e60c71",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Celeste_box_art_full.png/240px-Celeste_box_art_full.png",
+    "source_kind": "cover_url"
+  },
+  "hades": {
+    "fetched_at": "2026-05-13T06:23:21Z",
+    "sha256": "49233d6f6596255a74422f499b7fef95ed7e4517f5d2595078f17f125c4266c3",
+    "source": "https://upload.wikimedia.org/wikipedia/en/thumb/c/cc/Hades_cover_art.jpg/240px-Hades_cover_art.jpg",
+    "source_kind": "cover_url"
+  },
+  "nosferatu": {
+    "fetched_at": "2026-05-13T06:23:22Z",
+    "sha256": "e53aeb141102a80a1d239354c5ce4804f021acdb18f64657095d949cf12e1c3f",
+    "source": "https://upload.wikimedia.org/wikipedia/en/thumb/9/90/Nosferatu_poster_%28Albin_Grau%2C_1922%29_1.jpg/240px-Nosferatu_poster_%28Albin_Grau%2C_1922%29_1.jpg",
+    "source_kind": "cover_url"
+  },
+  "pride-and-prejudice": {
+    "fetched_at": "2026-05-13T06:23:19Z",
+    "sha256": "bd5c011b01fb5eba075e3d3317187675dd23d75d7d80b64e7d42248681984562",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/PrideAndPrejudiceTitlePage.jpg/240px-PrideAndPrejudiceTitlePage.jpg",
+    "source_kind": "cover_url"
+  },
+  "the-entertainer": {
+    "fetched_at": "2026-05-13T06:23:21Z",
+    "sha256": "9dc665c683f66dc77e83273a14e70bc49dd453d1a037986702020ff21839cfee",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/EntertainerJoplinCover.JPEG/240px-EntertainerJoplinCover.JPEG",
+    "source_kind": "cover_url"
+  },
+  "the-general": {
+    "fetched_at": "2026-05-13T06:23:22Z",
+    "sha256": "1a75504260c22468840a1aa2ad2a6467239d29e619100970845f1e77e54b30e0",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/The_General_%281926%29_-_Movie_Poster_2.png/240px-The_General_%281926%29_-_Movie_Poster_2.png",
+    "source_kind": "cover_url"
+  },
+  "wizard-of-oz": {
+    "fetched_at": "2026-05-13T06:23:19Z",
+    "sha256": "8a0c7a7b6ebf6a000128ce349bed40b74007e57f60c9d29ddad095c38f9570cc",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/The_Wonderful_Wizard_of_Oz%2C_006.png/240px-The_Wonderful_Wizard_of_Oz%2C_006.png",
+    "source_kind": "cover_url"
+  }
+}
