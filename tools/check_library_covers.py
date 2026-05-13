@@ -39,7 +39,7 @@ def check_schema(items: Iterable[dict]) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     for it in items:
         extras = it.get("extras") or {}
-        media  = it.get("media_type")
+        media  = it.get("media_type") or ""
         slug   = it.get("slug", "<unknown>")
         for key, value in extras.items():
             if key not in COVER_KEYS_UNIVERSAL and key not in COVER_KEYS_BY_MEDIA.get(media, set()):
