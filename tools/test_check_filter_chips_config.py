@@ -91,6 +91,20 @@ Body.
 """
 
 
+READING_YAML_ITEM = """\
+items:
+  - slug: example-book
+    title: Example Book
+    creator: Author One
+    year: 2024
+    media_type: book
+    status: finished
+    finished: 2024-06-01
+    last_modified: 2024-06-01
+    tags: [fiction, non-fiction]
+"""
+
+
 class TempRepo:
     def __init__(self) -> None:
         self.root = Path(tempfile.mkdtemp())
@@ -128,6 +142,10 @@ class TempRepo:
 
     def write_config(self, content: str) -> None:
         (self.root / "data" / "filter-chips.yaml").write_text(content)
+
+    def write_library_yaml(self, fname: str, body: str = READING_YAML_ITEM) -> None:
+        """Write a library data yaml file (e.g., 'reading.yaml') under data/."""
+        (self.root / "data" / fname).write_text(body)
 
     def cleanup(self) -> None:
         shutil.rmtree(self.root)
@@ -351,6 +369,31 @@ class FilterChipsLinterTest(unittest.TestCase):
         rc, errors = lint.run(self.repo.root)
         self.assertEqual(rc, 1)
         self.assertTrue(any("ghost-tag" in e for e in errors), errors)
+
+    # --- library yaml-source path ---
+
+    def test_library_reading_valid_tag_passes(self) -> None:
+        # Happy path: primary_tags entry present in data/reading.yaml.
+        self.repo.write_library_yaml("reading.yaml")  # has tags [fiction, non-fiction]
+        self.repo.write_config(
+            'library-reading:\n'
+            '  primary_tags: ["fiction"]\n'
+            '  primary_top_k: 10\n'
+        )
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 0, msg=f"unexpected: {errors}")
+
+    def test_library_reading_missing_tag_fails(self) -> None:
+        # Sad path: primary_tags entry not present in data/reading.yaml.
+        self.repo.write_library_yaml("reading.yaml")  # has tags [fiction, non-fiction]
+        self.repo.write_config(
+            'library-reading:\n'
+            '  primary_tags: ["missing-tag"]\n'
+            '  primary_top_k: 10\n'
+        )
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("missing-tag" in e for e in errors), errors)
 
 
 if __name__ == "__main__":
