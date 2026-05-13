@@ -19,7 +19,7 @@ No npm. Python tooling is stdlib-only. Hugo **extended** (≥ 0.148.0) is requir
 
 ### CSS pipeline — hand-rolled, processed by Hugo
 
-`assets/css/main.css` is a single hand-rolled stylesheet, organized into numbered sections §1–§35 (see the file's top-of-file index for the list). Consumed by `layouts/partials/head.html` via `resources.Get` + (production) `minify | fingerprint` with SRI integrity.
+`assets/css/main.css` is a single hand-rolled stylesheet, organized into numbered sections §1–§36 (see the file's top-of-file index for the list). Consumed by `layouts/partials/head.html` via `resources.Get` + (production) `minify | fingerprint` with SRI integrity.
 
 - **Tokens** are CSS custom properties on `:root` (light) and `:root[data-theme="dark"]` (dark). System dark via `@media (prefers-color-scheme: dark) :root:not([data-theme])`. The `[data-theme="dark"]` block and the media-query block carry **duplicate values** — both must be updated together when the palette changes.
 - **WCAG contrast**: `tools/check-contrast.py` parses the `:root` blocks and verifies four pairings (ink/stone AAA, ink-soft/stone AA, burgundy/stone AA, steel/stone AA) in both modes. Failure blocks deploy. Tokens `--color-green` (evergreen / finished pill) and `--color-warn` (queued pill) ride along but aren't checked.

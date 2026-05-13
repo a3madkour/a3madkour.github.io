@@ -2181,58 +2181,157 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 
 /* =========================================================
  * §33 Works — umbrella + games
- * /works/ overview cards; /works/games/ grid; per-game page.
+ * /works/ Bento grid + filter strip; /works/games/ grid; per-game page.
  * ========================================================= */
 
-/* Umbrella */
-.works-umbrella-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-  margin-top: 2rem;
-}
-.works-section-card {
-  padding: 1.5rem;
-  border: 1px solid var(--color-ink-soft);
-  border-radius: 6px;
-  background: var(--color-stone);
-}
-.works-section-card-header {
+/* Umbrella controls (filter strip + toolbar) */
+.works-umbrella-controls {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 1rem;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 2rem 0 1.5rem 0;
 }
-.works-section-card-header h2 {
-  margin: 0;
-  font-family: var(--font-body);
-}
-.works-section-card-header h2 a {
-  color: var(--color-ink);
-  text-decoration: none;
-}
-.works-section-card-count {
+.works-umbrella-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
   font-family: var(--font-ui);
-  font-size: 0.85rem;
+  font-size: 0.78rem;
+}
+.works-sort {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
   color: var(--color-ink-soft);
 }
-.works-section-card-list {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 1rem 0;
+.works-sort select {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  background: var(--color-stone);
+  color: var(--color-ink);
+  border: 1px solid var(--color-rule);
+  border-radius: 4px;
+  padding: 0.25rem 0.4rem;
 }
-.works-section-card-list li {
-  font-style: italic;
-  margin-bottom: 0.3em;
+.works-umbrella-toolbar .graph-toggle {
+  margin-left: auto;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--color-burgundy);
+  color: var(--color-burgundy);
+  background: var(--color-stone);
+  border-radius: 4px;
+  cursor: pointer;
 }
-.works-section-card-list a {
+.works-umbrella-toolbar .graph-toggle[aria-expanded="true"] {
+  background: var(--color-burgundy);
+  color: var(--color-stone);
+}
+
+/* Bento grid */
+.works-bento {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-auto-rows: 160px;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+@media (max-width: 720px) {
+  .works-bento { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .works-bento { grid-template-columns: 1fr; }
+}
+
+.works-tile {
+  border: 1px solid var(--color-rule);
+  border-radius: 6px;
+  background: var(--color-stone);
+  transition: border-color .15s;
+  overflow: hidden;
+}
+.works-tile:hover { border-color: var(--color-ink-soft); }
+.works-tile[data-span="2x1"] { grid-column: span 2; }
+.works-tile[data-span="1x2"] { grid-row: span 2; }
+.works-tile[data-span="2x2"] { grid-column: span 2; grid-row: span 2; }
+@media (max-width: 480px) {
+  .works-tile[data-span="2x1"], .works-tile[data-span="2x2"] { grid-column: span 1; }
+}
+.works-tile[hidden] { display: none; }
+
+.works-tile-link {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  height: 100%;
+  text-decoration: none;
   color: var(--color-ink);
 }
-.works-section-card-all {
+.works-tile-glyph {
+  width: 22px; height: 22px;
+  margin-bottom: 0.5rem;
+}
+.works-tile[data-medium="game"] .works-tile-glyph { color: var(--color-burgundy); }
+.works-tile[data-medium="music"] .works-tile-glyph { color: var(--color-steel); }
+.works-tile[data-medium="poetry"] .works-tile-glyph { color: var(--color-green); }
+.works-tile[data-span="2x2"] .works-tile-glyph { width: 30px; height: 30px; }
+
+.works-tile-title {
+  margin: 0 0 0.15rem 0;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.works-tile[data-span="2x1"] .works-tile-title { font-size: 1.15rem; }
+.works-tile[data-span="2x2"] .works-tile-title { font-size: 1.4rem; }
+
+.works-tile-meta {
   font-family: var(--font-ui);
-  font-size: 0.85rem;
+  font-size: 0.7rem;
+  color: var(--color-ink-soft);
+}
+.works-tile-pull {
+  font-style: italic;
+  font-size: 0.88rem;
+  color: var(--color-ink-soft);
+  margin: 0.5rem 0 0 0;
+}
+.works-tile-tags {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding-top: 0.6rem;
+}
+.works-tile-tag {
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--color-rule);
+  border-radius: 999px;
+  font-family: var(--font-ui);
+  font-size: 0.62rem;
+  color: var(--color-ink-soft);
+}
+.works-tile-tag.is-match {
+  background: var(--color-ink);
+  color: var(--color-stone);
+  border-color: var(--color-ink);
+}
+.works-tile-crossref {
+  margin-top: 0.4rem;
+  font-family: var(--font-ui);
+  font-size: 0.62rem;
   color: var(--color-burgundy);
 }
+
+.works-empty {
+  margin-top: 2rem;
+  font-style: italic;
+  color: var(--color-ink-soft);
+  text-align: center;
+}
+.works-empty[hidden] { display: none; }
 
 /* Games index */
 .works-games-grid {
@@ -2605,4 +2704,87 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 }
 .works-poem-body p {
   margin: 0 0 1.3em 0;
+}
+
+/* =========================================================
+ * §36 Works graph
+ * Constellation panel (in-page on desktop) + standalone /works/graph/.
+ * Reuses §27 shared graph scaffolding (toggle, panel, toolbar, canvas,
+ * legend, resize handle). This section adds works-specific node + edge
+ * styling and the panel filter-chip row.
+ * ========================================================= */
+
+.works-graph-node-badge {
+  fill: url(#works-graph-badge-gradient);
+  stroke: var(--color-rule);
+  stroke-width: 1;
+}
+.works-graph-node[data-medium="game"] use { color: var(--color-burgundy); }
+.works-graph-node[data-medium="music"] use { color: var(--color-steel); }
+.works-graph-node[data-medium="poetry"] use { color: var(--color-green); }
+.works-graph-node-label {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  fill: var(--color-ink);
+  text-anchor: middle;
+  pointer-events: none;
+}
+.works-graph-node[data-featured="true"] .works-graph-node-label {
+  font-weight: 600;
+}
+
+.works-graph-edge-tag-share {
+  stroke: var(--color-rule);
+  stroke-width: 1;
+  opacity: 0.7;
+}
+.works-graph-edge-cross-ref {
+  stroke: var(--color-ink-soft);
+  stroke-width: 1.25;
+  stroke-dasharray: 4 3;
+  opacity: 0.8;
+}
+
+/* Standalone /works/graph/ */
+.works-graph-page .graph-page-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 1.5rem 0 1rem 0;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+}
+.works-graph-summary {
+  color: var(--color-ink-soft);
+  margin-right: 1rem;
+}
+.graph-page-canvas {
+  display: block;
+  width: 100%;
+  height: 70vh;
+  min-height: 480px;
+  border: 1px solid var(--color-rule);
+  border-radius: 6px;
+  background: var(--color-stone);
+}
+.graph-page-legend {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.75rem;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--color-ink-soft);
+}
+.legend-mark {
+  display: inline-block;
+  width: 22px;
+  height: 1px;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+  background: var(--color-ink-soft);
+}
+.legend-mark-dashed {
+  background: none;
+  border-top: 1.25px dashed var(--color-ink-soft);
 }
