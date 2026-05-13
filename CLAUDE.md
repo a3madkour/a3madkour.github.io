@@ -11,7 +11,7 @@ Personal website for Abdelrahman Madkour, built as a Hugo static site with hand-
 - `hugo server --buildDrafts` — dev server with drafts visible.
 - `hugo --minify` — production build to `public/`. **Do not run with a dev server alive**; it poisons the dev-server CSS via a MIME mismatch.
 - `python3 tools/check-contrast.py` — WCAG 2.1 contrast verifier (CI gate).
-- Nine linter pairs under `tools/check_*.py` + `tools/test_check_*.py` (CI runs each linter then its unit-test sibling): essay fixtures, garden fixtures, garden links, filter-chips config, research fixtures, research links, citations, works fixtures, works links.
+- Eleven linter pairs under `tools/check_*.py` + `tools/test_check_*.py` (CI runs each linter then its unit-test sibling): essay fixtures, garden fixtures, garden links, filter-chips config, research fixtures, research links, citations, works fixtures, works links, library fixtures, library links.
 
 No npm. Python tooling is stdlib-only. Hugo **extended** (≥ 0.148.0) is required — `.github/workflows/hugo.yaml` pins `HUGO_VERSION=0.148.0`.
 
@@ -37,6 +37,7 @@ No npm. Python tooling is stdlib-only. Hugo **extended** (≥ 0.148.0) is requir
 | `js/entry-research.js` | `research.<hash>.js` (~107 KB) | `/research/` and `/research/graph/` only | `research-graph.js` (copy + trim of `garden-graph.js`); page-narrow predicate over section-wide |
 | `js/entry-works.js` | `works.<hash>.js` (~4 KB) | `.Section == "works"` AND NOT `/works/`-or-`/works/graph/` | imports `filter-chips.js`; per-item pages only |
 | `js/entry-works-umbrella.js` | `works-umbrella.<hash>.js` (~112 KB) | `/works/` and `/works/graph/` only | `works.js` + `works-graph.js` (copy + trim of `research-graph.js`) + vendored d3 modules |
+| `js/entry-library.js` | `library.<hash>.js` (~5 KB) | `.Section == "library"` AND NOT `/library/` | imports `filter-chips.js`; per-leaf pages only (no graph) |
 
 **Why multi-entry, not `splitting: true`?** esbuild requires `outdir` for code splitting, but Hugo's `js.Build` is `outfile`-only. `splitting: true` on a single entry silently inlines dynamic imports rather than emitting chunks. Confirmed with a minimal repro. `filter-chips.js` is duplicated into essay/garden/works bundles (~8 KB).
 
@@ -127,6 +128,8 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 - **Design spec (canonical)**: `docs/superpowers/specs/2026-05-03-personal-site-design.md`. §14 is the master phase list.
 - Per-slice plans and specs under `docs/superpowers/{plans,specs}/`, dated by slice.
 - **Phase 6 umbrella polish spec**: `docs/superpowers/specs/2026-05-12-works-umbrella-polish-design.md`. Phase 6 Slice 0.
+- **Library spec**: `docs/superpowers/specs/2026-05-12-library-section-design.md`. Phase 7 first slice.
+- **Library cover-fetch sketch** (deferred future slice): `docs/superpowers/specs/2026-05-12-library-cover-fetch-sketch.md`.
 
 ## Project status (as of 2026-05-12)
 
@@ -138,12 +141,12 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 - **Research** (Phase 5): `/research/` index, theme + question hubs, status pills, output icons, backlinks, force-directed research graph (slide-in panel + standalone `/research/graph/`).
 - **Works** (Phase 6): polished umbrella (Bento variable-tile grid + tag-cloud filter + ⊞ Graph view toggle with d3-force constellation; three hand-authored medium glyphs: gamepad/eighth-note/quill); games / music / poetry indexes + per-item pages. Runtime-heavy pieces deferred — see table below.
 - **About** (Phase 2 bio half): Hero / Bio / Where / Connect / Colophon. Now widget deferred (Phase 3-blocked).
+- **Library** (Phase 7 first slice): umbrella + 4 list pages (`/library/{reading,listening,playing,watching}/`); fixture-shaped `data/*.yaml` per spec §10.4; 2 new hand-authored glyphs (book + clapper); shape+color status badges (✓ ▶ ↑ ✗ ★); per-page filter chips with status / format-or-platform / tag dims; nav adds Library as 6th item.
 
 **Not started, in phase order:**
 
 - **About Now widget** — Phase 3-blocked (needs elisp pipeline).
 - **Phase 3 — org-mode pipeline**: elisp helpers + ox-hugo that wire real content into the fixture-shaped data files. All site fixtures exist to round-trip when this lands.
-- **Phase 7 — Library** (reading / listening / playing): data-driven view filtered from media-flavor garden notes + `data/*.yaml`.
 - **Phase 7 — Homepage v3**: Currently strip + Studio strip + Garden+Studio columns. The current homepage has only the role line + essays strip.
 - **Phase 8 — Pagefind search + Lighthouse CI + final QA.**
 
@@ -167,7 +170,10 @@ To pick up a slice: read this file + parent spec §14, run `superpowers:brainsto
 | Figure lightbox | Polish phase | n/a |
 | Code highlighting palette swap from Dracula | Post-Phase-2 polish | n/a |
 | Print stylesheet | Phase 8 polish | n/a |
-| Library cross-linking | Phase 7 | media-flavor garden notes are the canonical source |
+| Library cover thumbnails (book / album / game / film / series) | Future library cover-fetch slice (sketch exists) | yaml `extras` already accepts `cover_file` / `cover_url` extensions; type-glyph stand-ins ship now |
+| Last.fm scrobble counts on `/library/listening/` | Gated on author need | listening yaml `extras` already accepts (none defined yet); spec §4.23 documents deferral |
+| Library RSS feeds | Phase 7 polish or later | essays + garden have RSS; works + library do not |
+| `/library/graph/` constellation | Future library polish slice | parent spec did not request a graph view; defer unless appetite shows up |
 | About Now widget | Phase 3 (org-mode) | About template has a placeholder slot |
 
 ## Hard constraints (from spec §1)
