@@ -1,5 +1,38 @@
 {{ define "main" }}
+{{- /* Aggregate Pages across the three sub-sections. */ -}}
+{{- $games := where (where site.RegularPages "Section" "works") "Type" "works-games" -}}
+{{- $music := where (where site.RegularPages "Section" "works") "Type" "works-music" -}}
+{{- $poetry := where (where site.RegularPages "Section" "works") "Type" "works-poetry" -}}
+{{- $all := union (union $games $music) $poetry -}}
+
+{{- /* Tag dim values (frequency-ranked, alphabetical for ties). */ -}}
+{{- $tagFreq := dict -}}
+{{- range $all -}}
+  {{- range .Params.tags -}}
+    {{- $tagFreq = merge $tagFreq (dict . (add (index $tagFreq . | default 0) 1)) -}}
+  {{- end -}}
+{{- end -}}
+{{- $tagPairs := slice -}}
+{{- range $k, $v := $tagFreq }}{{ $tagPairs = $tagPairs | append (dict "tag" $k "n" $v) }}{{ end -}}
+{{- $tagPairs = sort $tagPairs "tag" "asc" -}}
+{{- $tagPairs = sort $tagPairs "n" "desc" -}}
+{{- $tagValues := slice -}}
+{{- range $tagPairs }}{{ $tagValues = $tagValues | append .tag }}{{ end -}}
+
+{{- /* Medium dim values — fixed order. Singular matches tile data-medium,
+       glyph symbol ids (g-game/g-music/g-poetry), and graph node data.
+       The labels map renders the chip text as titlecase plural for parity
+       with the graph-panel chips. */ -}}
+{{- $mediumValues := slice "game" "music" "poetry" -}}
+{{- $mediumLabels := dict "game" "Games" "music" "Music" "poetry" "Poetry" -}}
+
+{{- $dims := slice
+     (dict "key" "tag" "label" "Tag" "values" $tagValues)
+     (dict "key" "medium" "label" "Medium" "values" $mediumValues "labels" $mediumLabels) -}}
+
 <article class="page works-umbrella">
+  {{ partial "works/glyph-sprite.html" . }}
+
   <header class="page-header">
     <h1>{{ .Title }}</h1>
     {{ with .Description }}<p class="page-description">{{ . }}</p>{{ end }}
@@ -7,10 +40,34 @@
 
   {{ .Content }}
 
-  <section class="works-umbrella-grid">
-    {{ partial "works/section-card.html" (dict "sub" "games") }}
-    {{ partial "works/section-card.html" (dict "sub" "music") }}
-    {{ partial "works/section-card.html" (dict "sub" "poetry") }}
+  <div class="works-umbrella-controls">
+    {{ partial "filter-chips.html" (dict "dimensions" $dims "section" "works") }}
+    <div class="works-umbrella-toolbar">
+      <label class="works-sort">
+        Sort
+        <select id="works-sort" aria-label="Sort works">
+          <option value="featured">featured</option>
+          <option value="chronological">chronological</option>
+          <option value="random">random</option>
+        </select>
+      </label>
+      <button type="button" id="works-graph-toggle" class="graph-toggle"
+              aria-expanded="false" aria-controls="works-graph-panel">⊞ Graph view</button>
+    </div>
+  </div>
+
+  <section class="works-bento" aria-label="All works">
+    {{- range $all -}}
+      {{- $m := "" -}}
+      {{- if eq .Type "works-games" }}{{ $m = "game" }}
+      {{- else if eq .Type "works-music" }}{{ $m = "music" }}
+      {{- else if eq .Type "works-poetry" }}{{ $m = "poetry" }}{{ end -}}
+      {{ partial "works/tile.html" (dict "Page" . "medium" $m) }}
+    {{- end -}}
   </section>
+  <p class="works-empty" hidden role="status">No works match the current filter.</p>
+
+  {{ partial "works/graph-panel.html" . }}
+  {{ partial "works/graph-script.html" . }}
 </article>
 {{ end }}

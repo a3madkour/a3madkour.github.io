@@ -19,7 +19,7 @@ No npm. Python tooling is stdlib-only. Hugo **extended** (≥ 0.148.0) is requir
 
 ### CSS pipeline — hand-rolled, processed by Hugo
 
-`assets/css/main.css` is a single hand-rolled stylesheet, organized into numbered sections §1–§35 (see the file's top-of-file index for the list). Consumed by `layouts/partials/head.html` via `resources.Get` + (production) `minify | fingerprint` with SRI integrity.
+`assets/css/main.css` is a single hand-rolled stylesheet, organized into numbered sections §1–§36 (see the file's top-of-file index for the list). Consumed by `layouts/partials/head.html` via `resources.Get` + (production) `minify | fingerprint` with SRI integrity.
 
 - **Tokens** are CSS custom properties on `:root` (light) and `:root[data-theme="dark"]` (dark). System dark via `@media (prefers-color-scheme: dark) :root:not([data-theme])`. The `[data-theme="dark"]` block and the media-query block carry **duplicate values** — both must be updated together when the palette changes.
 - **WCAG contrast**: `tools/check-contrast.py` parses the `:root` blocks and verifies four pairings (ink/stone AAA, ink-soft/stone AA, burgundy/stone AA, steel/stone AA) in both modes. Failure blocks deploy. Tokens `--color-green` (evergreen / finished pill) and `--color-warn` (queued pill) ride along but aren't checked.
@@ -35,7 +35,8 @@ No npm. Python tooling is stdlib-only. Hugo **extended** (≥ 0.148.0) is requir
 | `js/entry-essay.js` | `essay.<hash>.js` (~4.8 KB) | `.Section == "essays"` | imports `filter-chips.js` + `citation-card.js` |
 | `js/entry-garden.js` | `garden.<hash>.js` (~117 KB) | `.Section == "garden"` | `garden.js` + `garden-stack.js` + `garden-graph.js` + ~95 KB vendored d3 modules |
 | `js/entry-research.js` | `research.<hash>.js` (~107 KB) | `/research/` and `/research/graph/` only | `research-graph.js` (copy + trim of `garden-graph.js`); page-narrow predicate over section-wide |
-| `js/entry-works.js` | `works.<hash>.js` (~6 KB) | `.Section == "works"` | imports `filter-chips.js`; per-item pages no-op via selector guards |
+| `js/entry-works.js` | `works.<hash>.js` (~4 KB) | `.Section == "works"` AND NOT `/works/`-or-`/works/graph/` | imports `filter-chips.js`; per-item pages only |
+| `js/entry-works-umbrella.js` | `works-umbrella.<hash>.js` (~112 KB) | `/works/` and `/works/graph/` only | `works.js` + `works-graph.js` (copy + trim of `research-graph.js`) + vendored d3 modules |
 
 **Why multi-entry, not `splitting: true`?** esbuild requires `outdir` for code splitting, but Hugo's `js.Build` is `outfile`-only. `splitting: true` on a single entry silently inlines dynamic imports rather than emitting chunks. Confirmed with a minimal repro. `filter-chips.js` is duplicated into essay/garden/works bundles (~8 KB).
 
@@ -121,6 +122,7 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 
 - **Design spec (canonical)**: `docs/superpowers/specs/2026-05-03-personal-site-design.md`. §14 is the master phase list.
 - Per-slice plans and specs under `docs/superpowers/{plans,specs}/`, dated by slice.
+- **Phase 6 umbrella polish spec**: `docs/superpowers/specs/2026-05-12-works-umbrella-polish-design.md`. Phase 6 Slice 0.
 
 ## Project status (as of 2026-05-12)
 
@@ -130,7 +132,7 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 - **Essays** (Phase 2): variable-tile Bento index, three-zone post layout (TOC + body + sidenote rail), citation hover-card runtime, figures, footnotes, hero illustrations, series nav, per-section RSS, homepage essays strip.
 - **Garden** (Phase 2 + 4): concept/media/reference single-note template, `topic_map` facet, multi-dim AND filter chips with two-tier tag disclosure, stacked-column retrieval (`?stack=` URL sync, sticky path log, consent banner), force-directed graph with zoom/pan/drag-to-reposition, side panel on desktop + standalone `/garden/graph/` on mobile, per-section RSS.
 - **Research** (Phase 5): `/research/` index, theme + question hubs, status pills, output icons, backlinks, force-directed research graph (slide-in panel + standalone `/research/graph/`).
-- **Works** (Phase 6): umbrella + games / music / poetry indexes + per-item pages. Runtime-heavy pieces deferred — see table below.
+- **Works** (Phase 6): polished umbrella (Bento variable-tile grid + tag-cloud filter + ⊞ Graph view toggle with d3-force constellation; three hand-authored medium glyphs: gamepad/eighth-note/quill); games / music / poetry indexes + per-item pages. Runtime-heavy pieces deferred — see table below.
 - **About** (Phase 2 bio half): Hero / Bio / Where / Connect / Colophon. Now widget deferred (Phase 3-blocked).
 
 **Not started, in phase order:**

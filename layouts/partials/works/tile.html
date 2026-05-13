@@ -1,0 +1,68 @@
+{{- /* Single Bento tile for the /works/ umbrella.
+   Inputs:
+     .Page      — the work fixture (a *hugolib.Page)
+     .medium    — "game" | "music" | "poetry"
+   Resolves:
+     data-tile-size = explicit tile_size > (featured ? "large") > "medium"
+     data-span      = "2x1" if featured, "1x2" if hero, "2x2" if both, "1x1" otherwise
+   Surfaces cross-medium references (lyrics_poem / set_to_music) as a small
+   ↔ annotation. Tags rendered as capsule chips, max 3; the active tag (set
+   via JS) gains class `t--match`.
+*/ -}}
+{{- $p := .Page -}}
+{{- $medium := .medium -}}
+{{- $params := $p.Params -}}
+
+{{- $tile := "medium" -}}
+{{- with $params.tile_size }}{{ $tile = . }}{{ end -}}
+{{- if and (eq $tile "medium") $params.featured }}{{ $tile = "large" }}{{ end -}}
+
+{{- $span := "1x1" -}}
+{{- if and $params.featured $params.hero }}{{ $span = "2x2" -}}
+{{- else if $params.featured }}{{ $span = "2x1" -}}
+{{- else if $params.hero }}{{ $span = "1x2" -}}{{ end -}}
+
+{{- /* Meta line: per-medium */ -}}
+{{- $metaParts := slice -}}
+{{- if eq $medium "game" -}}
+  {{- with $params.game_kind }}{{ $metaParts = $metaParts | append . }}{{ end -}}
+{{- else if eq $medium "music" -}}
+  {{- with $params.format }}{{ $metaParts = $metaParts | append . }}{{ end -}}
+{{- else if eq $medium "poetry" -}}
+  {{- with $params.collection }}{{ $metaParts = $metaParts | append . }}{{ end -}}
+{{- end -}}
+{{- with $params.year }}{{ $metaParts = $metaParts | append (printf "%d" .) }}{{ end -}}
+{{- $meta := delimit $metaParts " · " -}}
+
+{{- /* Cross-ref: poetry → music (set_to_music), music → poetry (lyrics_poem). */ -}}
+{{- $crossref := "" -}}
+{{- with $params.lyrics_poem -}}
+  {{- $target := site.GetPage (printf "/works/poetry/%s" .) -}}
+  {{- if $target }}{{ $crossref = printf "↔ poem · %s" $target.Title }}{{ end -}}
+{{- end -}}
+{{- with $params.set_to_music -}}
+  {{- $target := site.GetPage (printf "/works/music/%s" .) -}}
+  {{- if $target }}{{ $crossref = printf "↔ music · %s" $target.Title }}{{ end -}}
+{{- end -}}
+
+{{- $tags := $params.tags | default slice -}}
+{{- $tagList := first 3 $tags -}}
+
+<article class="works-tile" data-tile-size="{{ $tile }}" data-span="{{ $span }}" data-medium="{{ $medium }}"
+         data-tags="{{ delimit $tags " " }}"
+         data-featured="{{ if $params.featured }}true{{ else }}false{{ end }}">
+  <a class="works-tile-link" href="{{ $p.RelPermalink }}">
+    <svg class="works-tile-glyph" viewBox="0 0 24 24" role="img" aria-label="{{ $medium }}"><use href="#g-{{ $medium }}"/></svg>
+    <h3 class="works-tile-title">{{ $p.Title }}</h3>
+    {{- with $meta }}<span class="works-tile-meta">{{ . }}</span>{{ end }}
+    {{- if eq $span "2x2" }}
+      {{- with $params.summary }}<p class="works-tile-pull">{{ . }}</p>{{ end }}
+    {{- end }}
+    {{- if $tagList }}
+    <div class="works-tile-tags">
+      {{- range $tagList }}<span class="works-tile-tag" data-key="{{ . }}">{{ . }}</span>{{ end }}
+    </div>
+    {{- end }}
+    {{- with $crossref }}<span class="works-tile-crossref">{{ . }}</span>{{ end }}
+  </a>
+</article>

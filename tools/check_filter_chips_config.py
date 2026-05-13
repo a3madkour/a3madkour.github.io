@@ -108,13 +108,26 @@ SECTION_PATH_OVERRIDES: dict[str, str] = {
     "poetry": "content/works/poetry",
 }
 
+# Sections whose tag pool aggregates across multiple content directories.
+SECTION_AGGREGATIONS: dict[str, tuple[str, ...]] = {
+    "works": ("content/works/games", "content/works/music", "content/works/poetry"),
+}
 
-def _section_content_path(repo_root: Path, section: str) -> Path:
-    """Return the content directory for a section key."""
+
+def _section_content_paths(repo_root: Path, section: str) -> list[Path]:
+    """Return all content directories that contribute to a section's tag pool.
+
+    Most sections map 1:1 to `content/<section>/`. Sub-sections like games/music/
+    poetry have explicit overrides. `works` aggregates across its three sub-
+    sections — its tag pool is the union of all three.
+    """
+    paths = SECTION_AGGREGATIONS.get(section)
+    if paths is not None:
+        return [repo_root / p for p in paths]
     override = SECTION_PATH_OVERRIDES.get(section)
     if override:
-        return repo_root / override
-    return repo_root / "content" / section
+        return [repo_root / override]
+    return [repo_root / "content" / section]
 
 
 def run(repo_root: Path) -> tuple[int, list[str]]:
@@ -155,9 +168,11 @@ def run(repo_root: Path) -> tuple[int, list[str]]:
                 f"must be a list, got {type(primary).__name__}"
             )
             continue
-        content_path = _section_content_path(repo_root, section)
-        display_path = str(content_path.relative_to(repo_root))
-        live = collect_tags(content_path)
+        content_paths = _section_content_paths(repo_root, section)
+        display_path = ", ".join(str(p.relative_to(repo_root)) for p in content_paths)
+        live: set[str] = set()
+        for p in content_paths:
+            live |= collect_tags(p)
         for entry in primary:
             if str(entry) not in live:
                 errors.append(

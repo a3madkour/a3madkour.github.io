@@ -1,26 +1,16 @@
-// Garden graph runtime. Uses d3-force for layout; renders to SVG.
-// Spec: docs/superpowers/specs/2026-05-08-garden-interactions-design.md §6.
+// Works constellation graph runtime. Uses d3-force for layout; renders to SVG.
+// Spec: docs/superpowers/specs/2026-05-12-works-umbrella-polish-design.md §3.4.
+//
+// Copy + trim of research-graph.js with three structural differences:
+//   - Every node is the same shape: a rounded-rect badge background with an
+//     inline <use href="#g-{medium}"> glyph (from partials/works/glyph-sprite).
+//   - Edges classify as "tag-share" (solid) or "cross-ref" (dashed).
+//   - In-panel filter chips only carry a "medium" dimension. Tag-level
+//     filtering is owned by the umbrella's top-strip filter-chips and is not
+//     mirrored here (the panel and the tiles filter independently).
 
-const PANEL_KEY = 'garden-graph-open';
-const POSITIONS_KEY = 'garden-graph-positions';
-// Hand-curated map from known tags to existing site palette tokens. Ordering
-// has no effect; lookup is by exact key match. Multiple tags may
-// intentionally share a token (e.g. reading + calvino both ride --color-warn,
-// games + play both ride --color-steel) — they're semantically adjacent and
-// expanding the palette just to disambiguate would hurt graph legibility more
-// than it helps. Unmapped tags fall through to --color-ink-fade by design;
-// this is the signal "we haven't curated a color for this tag yet", not a
-// bug. To add a new mapping, pick an existing token from the :root palette
-// (don't introduce new ones here).
-const TAG_PALETTE = {
-  'narrative': 'var(--color-burgundy)',
-  'memory':    'var(--color-green)',
-  'games':     'var(--color-steel)',
-  'reading':   'var(--color-warn)',
-  'calvino':   'var(--color-warn)',
-  'play':      'var(--color-steel)',
-  'aesthetics':'var(--color-ink-soft)',
-};
+const PANEL_KEY = 'works-graph-open';
+const POSITIONS_KEY = 'works-graph-positions';
 
 const state = {
   data: null,
@@ -29,15 +19,8 @@ const state = {
   svg: null,
   simulation: null,
   contentGroup: null,
-  filters: { tag: 'all', stage: 'all', local: 'all' /* all | 1-hop | 2-hop */ },
-  inStack: new Set(),
-  page: { isMobile: false, isNotePage: false, currentSlug: null },
-  // Tracks user's last pointer interaction: was it inside the stack columns?
-  // Used to disambiguate Esc — if user's "attention" is on the stack (last
-  // click was in a column), Esc clears the stack; otherwise the open panel
-  // claims Esc.
-  lastPointerInStack: false,
-  // Added this slice:
+  filters: { medium: 'all' },
+  page: { isMobile: false },
   viewTransform: { k: 1, tx: 0, ty: 0 },
   pinnedSlugs: new Set(),
   zoomBehavior: null,
@@ -53,13 +36,13 @@ function persistCacheDebounced() {
     flushCache();
   }, 200);
 }
-// Returns the active graph canvas element (the standalone /garden/graph/
+// Returns the active graph canvas element (the standalone /works/graph/
 // page's canvas, or the side panel's canvas), or null if neither is
 // mounted. The standalone page takes precedence because it can coexist
 // with state.panel = null.
 function getActiveCanvas() {
-  if (document.querySelector('.garden-graph-page')) {
-    return document.querySelector('.garden-graph-page .garden-graph-canvas');
+  if (document.querySelector('.works-graph-page')) {
+    return document.querySelector('.works-graph-page .works-graph-canvas');
   }
   if (state.panel) {
     return state.panel.querySelector('.graph-panel-canvas');
@@ -78,16 +61,12 @@ function reducedMotion() {
 }
 
 // Cache key encodes everything that would change a node's settled position:
-// the active filters, the canvas viewport, and — only when local-graph mode
-// is active — the focused note (since local mode renders a different
-// subgraph per focal note). With scope=all the full graph is the same
-// regardless of which note page is displaying it, so the cache is shared
-// across all notes and the standalone /garden/graph/ page; dragged
-// positions persist as the reader traverses.
+// the active filters and the canvas viewport. Works graph always renders
+// all nodes (no local N-hop mode), so the cache is shared across /works/
+// and /works/graph/.
 function positionsCacheKey(canvas) {
   const f = state.filters;
-  const focus = f.local === 'all' ? '' : (state.page.currentSlug || '');
-  return `${f.tag}|${f.stage}|${f.local}|${focus}|${canvas.clientWidth}x${canvas.clientHeight}`;
+  return `${f.medium}|${canvas.clientWidth}x${canvas.clientHeight}`;
 }
 
 function loadCachedPositions(canvas) {
@@ -108,7 +87,7 @@ function loadCachedPositions(canvas) {
   } catch (e) {
     // Corrupt JSON or a SecurityError on sessionStorage. Drop the whole key
     // rather than fail every page load; the next save will rebuild it.
-    console.warn('garden-graph: dropping unreadable positions cache', e);
+    console.warn('works-graph: dropping unreadable positions cache', e);
     try { sessionStorage.removeItem(POSITIONS_KEY); } catch {}
     return null;
   }
@@ -129,11 +108,11 @@ function saveCachedPositions(canvas, nodes, view, pinned) {
     };
     sessionStorage.setItem(POSITIONS_KEY, JSON.stringify(cache));
   } catch (e) {
-    // QuotaExceededError on small-budget sessionStorage (rare for ~14 KB),
-    // SecurityError in locked-down contexts, or JSON.stringify on a node
-    // with a custom toJSON throwing. Don't blow up the graph runtime; just
-    // log so a developer can spot it.
-    console.warn('garden-graph: positions cache write failed', e);
+    // QuotaExceededError on small-budget sessionStorage, SecurityError in
+    // locked-down contexts, or JSON.stringify on a node with a custom toJSON
+    // throwing. Don't blow up the graph runtime; just log so a developer
+    // can spot it.
+    console.warn('works-graph: positions cache write failed', e);
   }
 }
 
@@ -141,59 +120,65 @@ function isMobile() {
   return window.matchMedia('(max-width: 720px)').matches;
 }
 
-function tagColor(tag) {
-  return TAG_PALETTE[tag] || 'var(--color-ink-fade)';
-}
-
-// Node radius is the contract that backs the legend's "size = link count":
-// r = NODE_R_MIN + (degree × NODE_R_PER_DEGREE), clamped to NODE_R_MAX.
-// Tweak these if a future fixture set makes high-degree nodes feel too
-// uniform or low-degree ones too thin to click.
-const NODE_R_MIN = 5;
-const NODE_R_MAX = 16;
-const NODE_R_PER_DEGREE = 1.5;
-function nodeRadius(degree) {
-  return Math.min(NODE_R_MAX, Math.max(NODE_R_MIN, NODE_R_MIN + degree * NODE_R_PER_DEGREE));
-}
+// Badge + glyph sizes are the contract that backs the legend's "featured =
+// larger badge". Featured nodes get a 72-px badge with a 40-px glyph;
+// regular nodes get a 52-px badge with a 30-px glyph. The spec §3.4 calls
+// these out explicitly.
+const BADGE_REGULAR = 36;
+const BADGE_FEATURED = 48;
+const GLYPH_REGULAR = 20;
+const GLYPH_FEATURED = 28;
+function badgeSize(featured) { return featured ? BADGE_FEATURED : BADGE_REGULAR; }
+function glyphSize(featured) { return featured ? GLYPH_FEATURED : GLYPH_REGULAR; }
+// Collide radius for the simulation — half the badge size plus a generous gap.
+// The gap (not the badge size) is what actually pushes nodes apart visually.
+function nodeRadius(featured) { return badgeSize(featured) / 2 + 38; }
 
 function parseData() {
-  const tag = document.getElementById('garden-graph-data');
-  if (!tag) return null;
-  try { return JSON.parse(tag.textContent); } catch { return null; }
+  const el = document.getElementById('works-graph-data');
+  if (!el) return null;
+  try {
+    const raw = JSON.parse(el.textContent);
+    const nodes = (raw.nodes || []).map(n => ({
+      slug: n.slug,
+      title: n.title,
+      url: n.url,
+      medium: n.medium,
+      tags: n.tags || [],
+      featured: !!n.featured,
+      year: n.year || 0,
+    }));
+    // Normalize edges: kind field is "tag-share" | "cross-ref".
+    const edges = (raw.edges || []).map(e => ({
+      source: e.source,
+      target: e.target,
+      kind: e.kind || 'tag-share',
+      via: e.via || null,
+      shared: e.shared || null,
+      weight: e.weight || 1,
+    }));
+    return { nodes, edges };
+  } catch { return null; }
 }
 
-function bfsNeighborhood(focus, hops, edges) {
-  const adj = new Map();
-  for (const e of edges) {
-    if (!adj.has(e.source)) adj.set(e.source, new Set());
-    if (!adj.has(e.target)) adj.set(e.target, new Set());
-    adj.get(e.source).add(e.target);
-    adj.get(e.target).add(e.source);
-  }
-  const visited = new Set([focus]);
-  let frontier = new Set([focus]);
-  for (let i = 0; i < hops; i++) {
-    const next = new Set();
-    frontier.forEach(s => {
-      (adj.get(s) || new Set()).forEach(t => {
-        if (!visited.has(t)) { next.add(t); visited.add(t); }
-      });
-    });
-    frontier = next;
-  }
-  return visited;
+// The toolbar's medium chips use the plural form ("games") to stay consistent
+// with the umbrella's top-strip filter dim values. Node data uses singular
+// ("game"). Map plural→singular here so the chip click can match.
+function mediumSingular(plural) {
+  if (plural === 'games') return 'game';
+  if (plural === 'music') return 'music';
+  if (plural === 'poetry') return 'poetry';
+  return plural;
 }
 
 function applyFilters() {
   if (!state.data) return { nodes: [], edges: [] };
   const f = state.filters;
   let nodes = state.data.nodes;
-  if (f.tag !== 'all') nodes = nodes.filter(n => n.tag === f.tag);
-  if (f.stage !== 'all') nodes = nodes.filter(n => n.stage === f.stage);
-  if (state.page.isNotePage && f.local !== 'all') {
-    const hops = f.local === '1-hop' ? 1 : 2;
-    const allowed = bfsNeighborhood(state.page.currentSlug, hops, state.data.edges);
-    nodes = nodes.filter(n => allowed.has(n.slug));
+  // Medium filter: single-select.
+  if (f.medium !== 'all') {
+    const want = mediumSingular(f.medium);
+    nodes = nodes.filter(n => n.medium === want);
   }
   const allowed = new Set(nodes.map(n => n.slug));
   const edges = state.data.edges.filter(e => allowed.has(e.source) && allowed.has(e.target));
@@ -225,29 +210,66 @@ async function buildSimulation(canvas) {
   const h = canvas.clientHeight || 360;
 
   const SVG_NS = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(SVG_NS, 'svg');
+
+  // The canvas is already an <svg> (rendered by partials/works/graph-panel.html
+  // or the standalone graph page); set the viewBox + a11y, then build inner
+  // structure into it. If for any reason it isn't an <svg>, create one and
+  // mount it as a child below.
+  let svg;
+  if (canvas.tagName && canvas.tagName.toLowerCase() === 'svg') {
+    svg = canvas;
+  } else {
+    svg = document.createElementNS(SVG_NS, 'svg');
+  }
   svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', `Force-directed graph of ${nodes.length} note(s)`);
+  svg.setAttribute('aria-label', `Force-directed works constellation of ${nodes.length} node(s)`);
+  // Clear any prior children before rebuilding.
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+
   const desc = document.createElementNS(SVG_NS, 'desc');
-  desc.textContent = `Garden graph with ${nodes.length} nodes and ${edges.length} edges. Click a node to open it in a stack.`;
+  desc.textContent = `Works constellation with ${nodes.length} nodes and ${edges.length} edges. Click a node to navigate to its page.`;
   svg.appendChild(desc);
+
+  // <defs> with the badge gradient (referenced by CSS §36
+  // .works-graph-node-badge { fill: url(#works-graph-badge-gradient); }).
+  const defs = document.createElementNS(SVG_NS, 'defs');
+  const grad = document.createElementNS(SVG_NS, 'linearGradient');
+  grad.setAttribute('id', 'works-graph-badge-gradient');
+  grad.setAttribute('x1', '0');
+  grad.setAttribute('y1', '0');
+  grad.setAttribute('x2', '1');
+  grad.setAttribute('y2', '1');
+  const stop1 = document.createElementNS(SVG_NS, 'stop');
+  stop1.setAttribute('offset', '0%');
+  stop1.setAttribute('stop-color', 'var(--color-burgundy)');
+  stop1.setAttribute('stop-opacity', '0.10');
+  const stop2 = document.createElementNS(SVG_NS, 'stop');
+  stop2.setAttribute('offset', '100%');
+  stop2.setAttribute('stop-color', 'var(--color-steel)');
+  stop2.setAttribute('stop-opacity', '0.08');
+  grad.appendChild(stop1);
+  grad.appendChild(stop2);
+  defs.appendChild(grad);
+  svg.appendChild(defs);
 
   const contentGroup = document.createElementNS(SVG_NS, 'g');
   contentGroup.setAttribute('class', 'graph-content');
   svg.appendChild(contentGroup);
 
   const edgeLayer = document.createElementNS(SVG_NS, 'g');
-  edgeLayer.setAttribute('class', 'garden-graph-edges');
+  edgeLayer.setAttribute('class', 'works-graph-edges');
   contentGroup.appendChild(edgeLayer);
   const nodeLayer = document.createElementNS(SVG_NS, 'g');
-  nodeLayer.setAttribute('class', 'garden-graph-nodes');
+  nodeLayer.setAttribute('class', 'works-graph-nodes');
   contentGroup.appendChild(nodeLayer);
 
-  // Build edge elements
+  // Build edge elements — solid for tag-share, dashed for cross-ref.
   const edgeEls = edges.map(e => {
     const line = document.createElementNS(SVG_NS, 'line');
-    line.setAttribute('class', 'garden-graph-edge' + (e.crossTopic ? ' cross-topic' : ''));
+    line.setAttribute('class', e.kind === 'cross-ref'
+      ? 'works-graph-edge works-graph-edge-cross-ref'
+      : 'works-graph-edge works-graph-edge-tag-share');
     edgeLayer.appendChild(line);
     return { e, line };
   });
@@ -297,24 +319,49 @@ async function buildSimulation(canvas) {
       persistCacheDebounced();
     });
 
-  // Build node elements (each is a <g> with circle + text).
+  // Build node elements — every node is a <g> with a rounded-rect badge plus
+  // an inline <use href="#g-{medium}"> glyph from the sprite. Featured nodes
+  // get the larger 72-px badge + 40-px glyph; regular nodes get 52 + 30.
   const nodeEls = nodes.map(n => {
     const g = document.createElementNS(SVG_NS, 'g');
-    g.setAttribute('class', 'garden-graph-node' + (state.inStack.has(n.slug) ? ' in-stack' : ''));
+    g.setAttribute('class', `works-graph-node${n.featured ? ' works-graph-node-featured' : ''}`);
+    g.setAttribute('data-medium', n.medium);
+    g.setAttribute('data-featured', n.featured ? 'true' : 'false');
     g.setAttribute('tabindex', '0');
     g.setAttribute('role', 'link');
-    g.setAttribute('aria-label', `Open ${n.title} in stack`);
+    g.setAttribute('aria-label', n.title);
     g.dataset.slug = n.slug;
+    g.dataset.url = n.url;
 
-    const c = document.createElementNS(SVG_NS, 'circle');
-    c.setAttribute('r', String(nodeRadius(n.degree)));
-    c.setAttribute('fill', tagColor(n.tag));
-    g.appendChild(c);
+    const size = badgeSize(n.featured);
+    const half = size / 2;
+    const rect = document.createElementNS(SVG_NS, 'rect');
+    rect.setAttribute('class', 'works-graph-node-badge');
+    rect.setAttribute('width', String(size));
+    rect.setAttribute('height', String(size));
+    rect.setAttribute('x', String(-half));
+    rect.setAttribute('y', String(-half));
+    rect.setAttribute('rx', '10');
+    rect.setAttribute('ry', '10');
+    g.appendChild(rect);
+
+    const gsize = glyphSize(n.featured);
+    const ghalf = gsize / 2;
+    const use = document.createElementNS(SVG_NS, 'use');
+    use.setAttribute('class', 'works-graph-node-glyph');
+    use.setAttribute('href', `#g-${n.medium}`);
+    use.setAttribute('x', String(-ghalf));
+    use.setAttribute('y', String(-ghalf));
+    use.setAttribute('width', String(gsize));
+    use.setAttribute('height', String(gsize));
+    g.appendChild(use);
 
     const t = document.createElementNS(SVG_NS, 'text');
+    t.setAttribute('class', 'works-graph-node-label');
+    t.setAttribute('text-anchor', 'middle');
+    t.setAttribute('x', '0');
+    t.setAttribute('y', String(half + 14));
     t.textContent = n.title;
-    t.setAttribute('x', String(nodeRadius(n.degree) + 3));
-    t.setAttribute('y', '3');
     g.appendChild(t);
 
     g.__data__ = n;
@@ -330,20 +377,11 @@ async function buildSimulation(canvas) {
   // per-node closure — so the listeners survive a rebuild and don't grow
   // with the graph.
   function openSlugForElement(g) {
-    const slug = g.dataset.slug;
-    // If a stack root is mounted on this page, append/refocus a column rather
-    // than do a hard navigation — preserves the reader's path. On the
-    // standalone /garden/graph/ page there's no stack, so navigate.
-    if (document.querySelector('.garden-stack')) {
-      window.dispatchEvent(new CustomEvent('garden:graph-navigate', {
-        detail: { slug }
-      }));
-    } else {
-      window.location.assign(`/garden/${slug}/`);
-    }
+    const url = g.dataset.url;
+    if (url) window.location.assign(url);
   }
   nodeLayer.addEventListener('click', (e) => {
-    const g = e.target.closest('.garden-graph-node');
+    const g = e.target.closest('.works-graph-node');
     if (!g || !nodeLayer.contains(g)) return;
     const d = g.__data__;
     if (d && d.wasDragged) {
@@ -354,17 +392,20 @@ async function buildSimulation(canvas) {
   });
   nodeLayer.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
-    const g = e.target.closest('.garden-graph-node');
+    const g = e.target.closest('.works-graph-node');
     if (!g || !nodeLayer.contains(g)) return;
     e.preventDefault();
     openSlugForElement(g);
   });
 
-  canvas.replaceChildren(svg);
+  // If we created a fresh <svg> (canvas wasn't already an svg), mount it.
+  if (svg !== canvas) {
+    canvas.replaceChildren(svg);
+  }
 
   const zoomBehavior = zoom()
     .scaleExtent([0.3, 4])
-    .filter(event => !event.target.closest('.garden-graph-node'))
+    .filter(event => !event.target.closest('.works-graph-node'))
     .on('start', (event) => {
       // Wheel-zoom also fires start/end; only flip the cursor for drag-pan.
       if (event.sourceEvent && event.sourceEvent.type !== 'wheel') {
@@ -414,10 +455,10 @@ async function buildSimulation(canvas) {
   }
 
   const sim = forceSimulation(nodes)
-    .force('link', forceLink(edges).id(d => d.slug).distance(60).strength(0.6))
-    .force('charge', forceManyBody().strength(-180))
+    .force('link', forceLink(edges).id(d => d.slug).distance(160).strength(0.35))
+    .force('charge', forceManyBody().strength(-700))
     .force('center', forceCenter(w / 2, h / 2))
-    .force('collide', forceCollide().radius(d => nodeRadius(d.degree) + 4));
+    .force('collide', forceCollide().radius(d => nodeRadius(d.featured)));
 
   function renderTick() {
     edgeEls.forEach(({ e, line }) => {
@@ -458,14 +499,6 @@ function rebuildGraph() {
   });
 }
 
-function updateInStackMarkers() {
-  if (!state.svg) return;
-  state.svg.querySelectorAll('.garden-graph-node').forEach(g => {
-    const slug = g.dataset.slug;
-    g.classList.toggle('in-stack', state.inStack.has(slug));
-  });
-}
-
 function resetView() {
   if (!state.zoomBehavior || !state.svg || !state.d3select || !state.zoomIdentity) return;
   state.d3select(state.svg).call(state.zoomBehavior.transform, state.zoomIdentity);
@@ -499,7 +532,7 @@ function resetPositions() {
   });
 }
 
-const PANEL_WIDTH_KEY = 'garden-graph-panel-width';
+const PANEL_WIDTH_KEY = 'works-graph-panel-width';
 const PANEL_MIN = 240;
 function panelMaxWidth() { return Math.round(window.innerWidth * 0.8); }
 
@@ -517,14 +550,19 @@ function applySavedPanelWidth() {
 
 function setupPanelResize() {
   if (!state.panel) return;
-  if (state.panel.querySelector('.graph-panel-resize')) return;
-
-  const handle = document.createElement('div');
-  handle.className = 'graph-panel-resize';
-  handle.setAttribute('role', 'separator');
-  handle.setAttribute('aria-orientation', 'vertical');
-  handle.setAttribute('aria-label', 'Resize graph panel');
-  state.panel.appendChild(handle);
+  // The works graph-panel partial pre-renders the resize handle; wire it up
+  // in place if found, otherwise create one (parity with research-graph).
+  let handle = state.panel.querySelector('.graph-panel-resize');
+  if (!handle) {
+    handle = document.createElement('div');
+    handle.className = 'graph-panel-resize';
+    handle.setAttribute('role', 'separator');
+    handle.setAttribute('aria-orientation', 'vertical');
+    handle.setAttribute('aria-label', 'Resize graph panel');
+    state.panel.appendChild(handle);
+  }
+  if (handle.dataset.wired === 'true') return;
+  handle.dataset.wired = 'true';
 
   let startX = 0;
   let startWidth = 0;
@@ -567,108 +605,40 @@ function setupPanelResize() {
   });
 }
 
-// Filter chips use aria-pressed toggle semantics (each chip is "currently
-// selected or not" within its dimension); action chips are one-shot buttons.
-// Different semantics, different visual treatment (.chip vs .chip-action),
-// different builder concerns — separate them.
+// The graph panel's toolbar is rendered by partials/works/graph-panel.html
+// with its medium chips + reset buttons already in the markup. This module
+// wires click handlers onto the existing elements rather than rebuilding
+// them, so the SSR HTML stays the source of truth.
+function wireToolbar(toolbar) {
+  if (!toolbar) return;
+  if (toolbar.dataset.wired === 'true') return;
+  toolbar.dataset.wired = 'true';
 
-function makeFilterChip(host, label, dim, value) {
-  const b = document.createElement('button');
-  b.type = 'button';
-  b.className = 'chip';
-  b.dataset.dim = dim;
-  b.dataset.value = value;
-  b.setAttribute('aria-pressed', state.filters[dim] === value ? 'true' : 'false');
-  b.textContent = label;
-  b.addEventListener('click', () => {
-    state.filters[dim] = value;
-    host.querySelectorAll(`button[data-dim="${dim}"]`).forEach(c => {
-      c.setAttribute('aria-pressed', c.dataset.value === value ? 'true' : 'false');
+  toolbar.querySelectorAll('button[data-dim="medium"][data-key]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.getAttribute('data-key') || 'all';
+      state.filters.medium = key;
+      toolbar.querySelectorAll('button[data-dim="medium"]').forEach(b => {
+        const isActive = b.getAttribute('data-key') === key;
+        b.classList.toggle('is-active', isActive);
+        b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      });
+      rebuildGraph();
     });
-    rebuildGraph();
+    // Seed aria-pressed from the SSR is-active class.
+    btn.setAttribute('aria-pressed', btn.classList.contains('is-active') ? 'true' : 'false');
   });
-  return b;
-}
 
-function makeActionChip(label, onClick) {
-  const b = document.createElement('button');
-  b.type = 'button';
-  b.className = 'chip chip-action';
-  b.textContent = label;
-  b.addEventListener('click', onClick);
-  return b;
-}
-
-function buildFilterChips(host) {
-  const tags = new Set();
-  const stages = new Set();
-  state.data.nodes.forEach(n => { if (n.tag) tags.add(n.tag); stages.add(n.stage); });
-
-  // Tag dim
-  const tagLabel = document.createElement('span'); tagLabel.className = 'label'; tagLabel.textContent = 'Tag:';
-  host.append(tagLabel, makeFilterChip(host, 'All', 'tag', 'all'));
-  Array.from(tags).sort().forEach(t => host.appendChild(makeFilterChip(host, t, 'tag', t)));
-
-  // Stage dim
-  const stageLabel = document.createElement('span'); stageLabel.className = 'label'; stageLabel.textContent = 'Stage:';
-  host.append(stageLabel, makeFilterChip(host, 'All', 'stage', 'all'));
-  ['seedling', 'budding', 'evergreen']
-    .filter(s => stages.has(s))
-    .forEach(s => host.appendChild(makeFilterChip(host, s, 'stage', s)));
-
-  // Local dim — note pages only
-  if (state.page.isNotePage) {
-    const localLabel = document.createElement('span'); localLabel.className = 'label'; localLabel.textContent = 'Scope:';
-    host.append(
-      localLabel,
-      makeFilterChip(host, 'All', 'local', 'all'),
-      makeFilterChip(host, '1-hop', 'local', '1-hop'),
-      makeFilterChip(host, '2-hop', 'local', '2-hop'),
-    );
-  }
-}
-
-function buildActionChips(host) {
-  const divider = document.createElement('span');
-  divider.className = 'toolbar-divider';
-  divider.setAttribute('aria-hidden', 'true');
-  const hint = document.createElement('span');
-  hint.className = 'graph-hint';
-  hint.setAttribute('aria-hidden', 'true');
-  hint.innerHTML = '<kbd>Shift</kbd>+drag to pin';
-  host.append(
-    divider,
-    makeActionChip('Reset view', resetView),
-    makeActionChip('Reset positions', resetPositions),
-    hint,
-  );
-}
-
-function buildToolbar(host) {
-  if (!state.data) return;
-  host.replaceChildren();
-  buildFilterChips(host);
-  buildActionChips(host);
-}
-
-function buildLegend(host) {
-  host.replaceChildren();
-  const tags = new Map();
-  (state.data.nodes || []).forEach(n => { if (n.tag) tags.set(n.tag, true); });
-  Array.from(tags.keys()).slice(0, 4).forEach(tag => {
-    const li = document.createElement('li');
-    li.innerHTML = `<span class="swatch" style="background:${tagColor(tag)}"></span>${tag}`;
-    host.appendChild(li);
-  });
-  const note = document.createElement('li');
-  note.textContent = 'size = link count · solid = same topic · dashed = cross-topic';
-  host.appendChild(note);
+  const resetViewBtn = toolbar.querySelector('button[data-action="reset-view"]');
+  if (resetViewBtn) resetViewBtn.addEventListener('click', resetView);
+  const resetPosBtn = toolbar.querySelector('button[data-action="reset-positions"]');
+  if (resetPosBtn) resetPosBtn.addEventListener('click', resetPositions);
 }
 
 function openPanel({ animate = true } = {}) {
   if (!state.panel) return;
   if (isMobile()) {
-    window.location.assign('/garden/graph/');
+    window.location.assign('/works/graph/');
     return;
   }
   // Adding `.is-animating` enables the CSS transition for the slide. We add
@@ -676,15 +646,14 @@ function openPanel({ animate = true } = {}) {
   // path — so navigating between notes never re-animates a panel that was
   // already open.
   if (animate) state.panel.classList.add('is-animating');
+  state.panel.removeAttribute('hidden');
   state.panel.setAttribute('aria-hidden', 'false');
   state.panelOpen = true;
   try { sessionStorage.setItem(PANEL_KEY, '1'); } catch {}
   document.querySelectorAll('.graph-toggle').forEach(b => b.setAttribute('aria-expanded', 'true'));
 
   const toolbar = state.panel.querySelector('.graph-panel-toolbar');
-  const legend = state.panel.querySelector('.graph-panel-legend');
-  if (toolbar && !toolbar.children.length) buildToolbar(toolbar);
-  if (legend && !legend.children.length) buildLegend(legend);
+  wireToolbar(toolbar);
   rebuildGraph();
 }
 
@@ -693,6 +662,7 @@ function closePanel() {
   // Close is always user-initiated (button click or Esc) — always animate.
   state.panel.classList.add('is-animating');
   state.panel.setAttribute('aria-hidden', 'true');
+  state.panel.setAttribute('hidden', '');
   state.panelOpen = false;
   try { sessionStorage.removeItem(PANEL_KEY); } catch {}
   document.querySelectorAll('.graph-toggle').forEach(b => b.setAttribute('aria-expanded', 'false'));
@@ -703,25 +673,15 @@ function closePanel() {
 function init() {
   state.data = parseData();
   if (!state.data) return;
-  state.panel = document.getElementById('garden-graph-panel');
+  state.panel = document.getElementById('works-graph-panel');
   state.page.isMobile = isMobile();
-  const stackRoot = document.querySelector('.garden-stack-columns .garden-column');
-  state.page.isNotePage = !!stackRoot;
-  state.page.currentSlug = stackRoot ? stackRoot.dataset.slug : null;
 
-  // Initial in-stack set
-  document.querySelectorAll('.garden-stack-columns .garden-column').forEach(c => {
-    state.inStack.add(c.dataset.slug);
-  });
-
-  const isGraphPage = !!document.querySelector('.garden-graph-page');
+  const isGraphPage = !!document.querySelector('.works-graph-page');
 
   if (isGraphPage) {
-    // Standalone /garden/graph/ — render immediately; no panel.
-    const toolbar = document.querySelector('.garden-graph-page .garden-graph-toolbar');
-    const legend = document.querySelector('.garden-graph-page .garden-graph-legend');
-    if (toolbar) buildToolbar(toolbar);
-    if (legend) buildLegend(legend);
+    // Standalone /works/graph/ — render immediately; no panel.
+    const toolbar = document.querySelector('.works-graph-page .works-graph-toolbar');
+    if (toolbar) wireToolbar(toolbar);
     rebuildGraph();
     return;
   }
@@ -750,28 +710,8 @@ function init() {
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     if (!state.panelOpen) return;
-    // Panel claims Esc UNLESS the user's last pointer-down was in the stack
-    // (they're reading a column — let Esc clear the stack instead).
-    // stopImmediatePropagation prevents garden-stack's keydown handler from
-    // also firing — necessary because both listeners attach to `document` and
-    // would otherwise both run on the same event.
-    if (state.lastPointerInStack) return;
     e.stopImmediatePropagation();
     closePanel();
-  });
-
-  // Track whether the user's last pointer interaction was inside the stack
-  // columns. Capture phase so this fires before any click handlers can
-  // consume the event.
-  document.addEventListener('pointerdown', (e) => {
-    const stack = document.querySelector('.garden-stack');
-    state.lastPointerInStack = stack ? stack.contains(e.target) : false;
-  }, true);
-
-  // Listen for stack changes
-  window.addEventListener('garden:stack-changed', (e) => {
-    state.inStack = new Set(e.detail.slugs);
-    updateInStackMarkers();
   });
 
   // Restore panel state

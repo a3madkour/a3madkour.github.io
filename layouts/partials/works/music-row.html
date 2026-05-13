@@ -6,7 +6,7 @@
 {{- end -}}
 <article class="works-music-row"
          data-format="{{ .Params.format }}"
-         data-tags="{{ delimit (.Params.tags | default slice) "," }}">
+         data-tags="{{ delimit (.Params.tags | default slice) " " }}">
   <a class="works-music-row-link" href="{{ .RelPermalink }}">
     <div class="works-music-row-cover">
       {{- if $cover }}<img src="{{ $cover }}" alt="" loading="lazy">{{- end }}

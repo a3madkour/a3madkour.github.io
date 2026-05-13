@@ -26,3 +26,8 @@ music:
 poetry:
   primary_tags: [example, lyric, collected]
   primary_top_k: 10
+
+works:
+  # Umbrella aggregates tags across games + music + poetry sub-sections.
+  primary_tags: [example]
+  primary_top_k: 10

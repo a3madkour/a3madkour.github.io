@@ -1,0 +1,88 @@
+{{- /* Inner partial — actual data computation. Wrapped by graph-data.html
+       so the outer call can use the partialCached cache key. */ -}}
+{{- $games := where (where site.RegularPages "Section" "works") "Type" "works-games" -}}
+{{- $music := where (where site.RegularPages "Section" "works") "Type" "works-music" -}}
+{{- $poetry := where (where site.RegularPages "Section" "works") "Type" "works-poetry" -}}
+{{- $all := union (union $games $music) $poetry -}}
+
+{{- $nodes := slice -}}
+{{- $slugIndex := dict -}}
+{{- range $i, $p := $all -}}
+  {{- $m := "" -}}
+  {{- if eq $p.Type "works-games" }}{{ $m = "game" }}
+  {{- else if eq $p.Type "works-music" }}{{ $m = "music" }}
+  {{- else if eq $p.Type "works-poetry" }}{{ $m = "poetry" }}{{ end -}}
+  {{- $slug := path.Base $p.File.Dir -}}
+  {{- $node := dict
+       "slug" $slug
+       "medium" $m
+       "title" $p.Title
+       "url" $p.RelPermalink
+       "tags" ($p.Params.tags | default slice)
+       "featured" (eq ($p.Params.featured | default false) true)
+       "year" ($p.Params.year | default 0) -}}
+  {{- $nodes = $nodes | append $node -}}
+  {{- $slugIndex = merge $slugIndex (dict $slug $p) -}}
+{{- end -}}
+
+{{- /* Tag-share edges: every pair with ≥1 shared tag. */ -}}
+{{- $edges := slice -}}
+{{- $crossKeys := dict -}}
+{{- range $i, $a := $all -}}
+  {{- $aSlug := path.Base $a.File.Dir -}}
+  {{- $aTags := $a.Params.tags | default slice -}}
+  {{- range $j, $b := $all -}}
+    {{- if lt $i $j -}}
+      {{- $bSlug := path.Base $b.File.Dir -}}
+      {{- $bTags := $b.Params.tags | default slice -}}
+      {{- $shared := slice -}}
+      {{- range $aTags -}}{{ if in $bTags . }}{{ $shared = $shared | append . }}{{ end }}{{ end -}}
+      {{- if $shared -}}
+        {{- $edges = $edges | append (dict
+             "source" $aSlug "target" $bSlug
+             "kind" "tag-share" "weight" (len $shared) "shared" $shared) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* Cross-ref edges: lyrics_poem (music → poetry) and set_to_music (poetry → music). */ -}}
+{{- range $a := $all -}}
+  {{- $aSlug := path.Base $a.File.Dir -}}
+  {{- with $a.Params.lyrics_poem -}}
+    {{- $tgt := site.GetPage (printf "/works/poetry/%s" .) -}}
+    {{- if $tgt -}}
+      {{- $tSlug := path.Base $tgt.File.Dir -}}
+      {{- $edges = $edges | append (dict "source" $aSlug "target" $tSlug "kind" "cross-ref" "via" "lyrics_poem") -}}
+    {{- end -}}
+  {{- end -}}
+  {{- with $a.Params.set_to_music -}}
+    {{- $tgt := site.GetPage (printf "/works/music/%s" .) -}}
+    {{- if $tgt -}}
+      {{- $tSlug := path.Base $tgt.File.Dir -}}
+      {{- $edges = $edges | append (dict "source" $aSlug "target" $tSlug "kind" "cross-ref" "via" "set_to_music") -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* Dedupe: drop tag-share edges that have an equivalent cross-ref edge. */ -}}
+{{- $crossPairs := dict -}}
+{{- range $e := $edges -}}
+  {{- if eq $e.kind "cross-ref" -}}
+    {{- $k1 := printf "%s|%s" $e.source $e.target -}}
+    {{- $k2 := printf "%s|%s" $e.target $e.source -}}
+    {{- $crossPairs = merge $crossPairs (dict $k1 true $k2 true) -}}
+  {{- end -}}
+{{- end -}}
+{{- $filtered := slice -}}
+{{- range $e := $edges -}}
+  {{- if eq $e.kind "tag-share" -}}
+    {{- $k := printf "%s|%s" $e.source $e.target -}}
+    {{- if not (index $crossPairs $k) }}{{ $filtered = $filtered | append $e }}{{ end -}}
+  {{- else -}}
+    {{- $filtered = $filtered | append $e -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $data := dict "nodes" $nodes "edges" $filtered -}}
+{{- return $data -}}

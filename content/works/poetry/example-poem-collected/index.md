@@ -5,6 +5,7 @@ lastmod: 2026-02-14
 draft: false
 lines: 8
 collection: greenhouse-demos
+tile_size: large
 tags: [example, collected]
 ---
 

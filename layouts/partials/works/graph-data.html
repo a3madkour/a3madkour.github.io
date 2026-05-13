@@ -1,0 +1,15 @@
+{{- /* Build-time graph data for /works/ constellation. Cached once via
+       partialCached so the umbrella + standalone /works/graph/ page share
+       one cache entry. Output JSON shape:
+         { nodes: [{slug, medium, title, url, tags, featured, year}],
+           edges: [{source, target, kind: "tag-share"|"cross-ref",
+                    weight?: int, shared?: [tag], via?: "lyrics_poem"|...}] }
+       Edges:
+       - tag-share (solid)  → every pair sharing ≥1 tag.
+       - cross-ref (dashed) → derived from lyrics_poem / set_to_music
+                              frontmatter; always emitted; if the pair also
+                              tag-shares, only the dashed edge is kept (the
+                              tag overlap is recorded in `shared`).
+*/ -}}
+{{- $payload := partialCached "works/graph-data-inner" . "works-graph" -}}
+{{- return $payload -}}
