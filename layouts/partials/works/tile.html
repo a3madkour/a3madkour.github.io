@@ -49,7 +49,7 @@
 {{- $tagList := first 3 $tags -}}
 
 <article class="works-tile" data-tile-size="{{ $tile }}" data-span="{{ $span }}" data-medium="{{ $medium }}"
-         data-tags="{{ delimit $tags "," }}"
+         data-tags="{{ delimit $tags " " }}"
          data-featured="{{ if $params.featured }}true{{ else }}false{{ end }}">
   <a class="works-tile-link" href="{{ $p.RelPermalink }}">
     <svg class="works-tile-glyph" viewBox="0 0 24 24" role="img" aria-label="{{ $medium }}"><use href="#g-{{ $medium }}"/></svg>

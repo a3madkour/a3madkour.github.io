@@ -19,12 +19,16 @@
 {{- $tagValues := slice -}}
 {{- range $tagPairs }}{{ $tagValues = $tagValues | append .tag }}{{ end -}}
 
-{{- /* Medium dim values — fixed order. */ -}}
-{{- $mediumValues := slice "games" "music" "poetry" -}}
+{{- /* Medium dim values — fixed order. Singular matches tile data-medium,
+       glyph symbol ids (g-game/g-music/g-poetry), and graph node data.
+       The labels map renders the chip text as titlecase plural for parity
+       with the graph-panel chips. */ -}}
+{{- $mediumValues := slice "game" "music" "poetry" -}}
+{{- $mediumLabels := dict "game" "Games" "music" "Music" "poetry" "Poetry" -}}
 
 {{- $dims := slice
      (dict "key" "tag" "label" "Tag" "values" $tagValues)
-     (dict "key" "medium" "label" "Medium" "values" $mediumValues) -}}
+     (dict "key" "medium" "label" "Medium" "values" $mediumValues "labels" $mediumLabels) -}}
 
 <article class="page works-umbrella">
   {{ partial "works/glyph-sprite.html" . }}
@@ -64,7 +68,6 @@
   <p class="works-empty" hidden role="status">No works match the current filter.</p>
 
   {{ partial "works/graph-panel.html" . }}
-  {{ partial "works/graph-data.html" . }}
   {{ partial "works/graph-script.html" . }}
 </article>
 {{ end }}

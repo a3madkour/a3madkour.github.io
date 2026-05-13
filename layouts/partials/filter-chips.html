@@ -1,12 +1,17 @@
 {{- /* Shared multi-dimension AND filter chip strip.
    Inputs:
-     dimensions  — slice of dicts: { key, label, values }
+     dimensions  — slice of dicts: { key, label, values, labels? }
                    key:    machine name (used as data-dim, e.g. "tag")
                    label:  display label (e.g. "Tag")
                    values: slice of strings (the chip values).
                            For the tag dim, values must be pre-ranked by
                            note count (desc, alphabetical for ties) — the
                            caller does this.
+                   labels: optional dict mapping value → display string.
+                           When a value's key is missing, the chip displays
+                           the value verbatim. Lets the caller render
+                           "Games" while keeping the data-key "game" for
+                           JS-side matching against tile attributes.
      section     — section slug (e.g. "garden", "essays") used to look up
                    site.Data["filter-chips"].<section> for curated primary tags.
    Suppression rule: dimensions with len(values) < 2 are not rendered.
@@ -43,6 +48,7 @@
     {{- $key := .key -}}
     {{- $label := .label -}}
     {{- $values := .values -}}
+    {{- $labels := .labels | default dict -}}
     <div class="filter-dimension" data-dim="{{ $key }}">
       <span class="filter-label">{{ $label }}</span>
       <button type="button" class="filter-chip is-active" data-dim="{{ $key }}" data-key="all">All</button>
@@ -65,7 +71,8 @@
         {{- $secondaryId := printf "filter-secondary-tag-%s" (or $section "x") -}}
 
         {{- range $primary -}}
-          <button type="button" class="filter-chip" data-dim="tag" data-key="{{ . }}" data-tier="primary">{{ . }}</button>
+          {{- $v := . -}}
+          <button type="button" class="filter-chip" data-dim="tag" data-key="{{ $v }}" data-tier="primary">{{ index $labels $v | default $v }}</button>
         {{- end -}}
 
         {{- if $secondary -}}
@@ -82,7 +89,8 @@
                      autocomplete="off">
               <div class="filter-secondary" id="{{ $secondaryId }}">
                 {{- range $secondary -}}
-                  <button type="button" class="filter-chip" data-dim="tag" data-key="{{ . }}" data-tier="secondary">{{ . }}</button>
+                  {{- $v := . -}}
+                  <button type="button" class="filter-chip" data-dim="tag" data-key="{{ $v }}" data-tier="secondary">{{ index $labels $v | default $v }}</button>
                 {{- end -}}
                 <p class="filter-secondary-empty" role="status" hidden>No matching tags.</p>
               </div>
@@ -91,9 +99,10 @@
         {{- end -}}
 
       {{- else -}}
-        {{- /* Other dims: flat chip list, unchanged */ -}}
+        {{- /* Other dims: flat chip list. */ -}}
         {{- range $values -}}
-          <button type="button" class="filter-chip" data-dim="{{ $key }}" data-key="{{ . }}">{{ . }}</button>
+          {{- $v := . -}}
+          <button type="button" class="filter-chip" data-dim="{{ $key }}" data-key="{{ $v }}">{{ index $labels $v | default $v }}</button>
         {{- end -}}
       {{- end -}}
 
