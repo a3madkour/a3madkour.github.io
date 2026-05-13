@@ -8,7 +8,7 @@
 
 ## Symptom
 
-On viewports below the rail→strip flip point (≤ 1219 px CSS width), the homepage's mobile dots strip **scrolls away with page content instead of staying pinned at the top of the viewport.**
+On viewports below the rail→strip flip point (≤ 1219 px CSS width), the homepage's mobile dots strip **scrolls away (ONLY WHEN SCROLLING DOWN, SCROLLING UP BRINGS IT BACK UP TO THE TOP OF THE SCREEN) with page content instead of staying pinned at the top of the viewport.**
 
 - Reproduces on real mobile devices (user confirmed it on phone with an earlier build).
 - Reproduces on a narrow desktop window at ~525×599 (and other widths < 1220).
