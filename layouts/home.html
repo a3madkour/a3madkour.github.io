@@ -8,11 +8,10 @@
   {{- $hasWorks = where $hasWorks "RelPermalink" "ne" "/works/poetry/" -}}
   {{- if $hasWorks }}{{ partial "works/glyph-sprite.html" . }}{{ end -}}
   {{ partial "page-sidebar.html" (dict "sections" (slice
-      (dict "id" "currently"      "label" "Currently")
-      (dict "id" "essays"         "label" "Essays")
-      (dict "id" "research-strip" "label" "Chasing")
-      (dict "id" "garden-strip"   "label" "Garden")
-      (dict "id" "studio-strip"   "label" "Studio")
+      (dict "id" "currently" "label" "Currently")
+      (dict "id" "essays"    "label" "Essays")
+      (dict "id" "research"  "label" "Research")
+      (dict "id" "works"     "label" "Works")
     )) }}
   {{ partial "home/hero.html" . }}
   {{ partial "home/currently.html" . }}
@@ -41,11 +40,15 @@
   </section>
   {{- end }}
 
-  {{ partial "home/research-strip.html" . }}
-
-  <section class="home-two-col">
+  <section id="research" class="home-research-strip">
+    <header class="home-strip-header">
+      <h2>Research</h2>
+      <a class="home-strip-all" href="{{ "/research/" | relURL }}">All research →</a>
+    </header>
+    {{ partial "home/research-strip.html" . }}
     {{ partial "home/garden-strip.html" . }}
-    {{ partial "home/studio-strip.html" . }}
   </section>
+
+  {{ partial "home/studio-strip.html" . }}
 </main>
 {{ end }}

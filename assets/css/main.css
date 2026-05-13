@@ -3324,6 +3324,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 .home-garden-strip .garden-tile .tile-title { font-size: 0.88rem; line-height: 1.25; }
 .home-garden-strip .garden-tile .tile-meta { font-size: 0.62rem; }
 
+.home-studio-strip { padding: 3rem 0 2.5rem; }
 .home-studio-list { display: flex; flex-direction: column; gap: 0.55rem; }
 .home-work-row {
   background: var(--color-tile);
