@@ -235,6 +235,41 @@ Body.
         p = self._write("poetry", "with-optionals", body)
         self.assertEqual(lint.lint_file(p), [])
 
+    # --- umbrella (Bento grid) fields ---
+
+    def test_game_accepts_tile_size_featured_hero(self):
+        body = GAME_VALID.replace(
+            "year: 2026\n",
+            "year: 2026\ntile_size: large\nfeatured: true\nhero: true\n",
+        )
+        p = self._write("games", "with-umbrella", body)
+        self.assertEqual(lint.lint_file(p), [])
+
+    def test_music_accepts_tile_size_featured_hero(self):
+        body = MUSIC_VALID.replace(
+            "year: 2026\n",
+            "year: 2026\ntile_size: small\nfeatured: true\nhero: false\n",
+        )
+        p = self._write("music", "with-umbrella", body)
+        self.assertEqual(lint.lint_file(p), [])
+
+    def test_poem_accepts_tile_size_featured_hero(self):
+        body = POEM_VALID.replace(
+            "lines: 14\n",
+            "lines: 14\ntile_size: medium\nfeatured: false\nhero: true\n",
+        )
+        p = self._write("poetry", "with-umbrella", body)
+        self.assertEqual(lint.lint_file(p), [])
+
+    def test_tile_size_must_be_in_enum(self):
+        body = GAME_VALID.replace(
+            "year: 2026\n",
+            "year: 2026\ntile_size: huge\n",
+        )
+        p = self._write("games", "bad-tile-size", body)
+        errs = lint.lint_file(p)
+        self.assertTrue(any("tile_size='huge'" in e for e in errs), errs)
+
     # --- runner ---
 
     def test_runner_walks_all_three_sub_sections(self):

@@ -16,12 +16,15 @@ from check_fixtures import parse_frontmatter  # noqa: E402
 
 # --- contracts ---
 
+UMBRELLA_OPTIONAL = {"tile_size", "featured", "hero"}
+TILE_SIZES = {"small", "medium", "large"}
+
 GAME_REQUIRED = {"title", "date", "lastmod", "draft", "status", "game_kind", "tagline", "year"}
 GAME_OPTIONAL = {
     "tags", "summary", "hero", "embed_url", "source_url", "itch_url",
     "collaborators", "tech_stack", "length", "screenshots",
     "research_questions", "related_essays", "related_notes",
-}
+} | UMBRELLA_OPTIONAL
 GAME_FIELDS = GAME_REQUIRED | GAME_OPTIONAL
 GAME_STATUSES = {"playable", "in-progress", "archived"}
 GAME_KINDS = {"full-release", "jam", "research-prototype", "experiment"}
@@ -31,14 +34,33 @@ MUSIC_OPTIONAL = {
     "tags", "summary", "tagline", "cover", "duration",
     "tracks", "platform_embed", "audio_url", "lyrics_poem",
     "related_works", "related_essays", "made_with", "collaborators",
-}
+} | UMBRELLA_OPTIONAL
 MUSIC_FIELDS = MUSIC_REQUIRED | MUSIC_OPTIONAL
 MUSIC_FORMATS = {"album", "track", "experiment", "live"}
 PLATFORM_KINDS = {"bandcamp", "soundcloud", "youtube"}
 
 POEM_REQUIRED = {"title", "date", "lastmod", "draft", "lines"}
-POEM_OPTIONAL = {"tags", "collection", "set_to_music", "summary"}
+POEM_OPTIONAL = {"tags", "collection", "set_to_music", "summary"} | UMBRELLA_OPTIONAL
 POEM_FIELDS = POEM_REQUIRED | POEM_OPTIONAL
+
+
+def _validate_umbrella_fields(md: Path, fm: dict[str, object]) -> list[str]:
+    """Validate optional Bento-grid fields (tile_size, featured, hero).
+
+    Note: hero is polymorphic:
+      - For games, it may be a string (image filename, legacy field) or a bool (Bento grid).
+      - For music and poetry, it is a bool (Bento grid).
+    """
+    errs: list[str] = []
+    ts = fm.get("tile_size")
+    if ts is not None and ts not in TILE_SIZES:
+        errs.append(f"{md}: tile_size='{ts}' not in {sorted(TILE_SIZES)}")
+
+    featured = fm.get("featured")
+    if featured is not None and not isinstance(featured, bool):
+        errs.append(f"{md}: featured must be bool, got {type(featured).__name__}")
+
+    return errs
 
 
 def lint_file(md: Path) -> list[str]:
@@ -93,6 +115,10 @@ def _lint_game(md: Path, fm: dict[str, object]) -> list[str]:
     if screenshots is not None and not isinstance(screenshots, list):
         errs.append(f"{md}: screenshots must be a list of strings")
 
+    # For games, hero is polymorphic (string filename or bool for Bento grid)
+    # and is validated by _validate_umbrella_fields (bool only for featured/tile_size).
+    errs.extend(_validate_umbrella_fields(md, fm))
+
     return errs
 
 
@@ -136,6 +162,13 @@ def _lint_music(md: Path, fm: dict[str, object]) -> list[str]:
             if "url" not in pe:
                 errs.append(f"{md}: platform_embed.url missing")
 
+    errs.extend(_validate_umbrella_fields(md, fm))
+
+    # For music, hero must be bool (Bento grid directive, no image filename)
+    hero = fm.get("hero")
+    if hero is not None and not isinstance(hero, bool):
+        errs.append(f"{md}: hero must be bool, got {type(hero).__name__}")
+
     return errs
 
 
@@ -149,6 +182,13 @@ def _lint_poem(md: Path, fm: dict[str, object]) -> list[str]:
     lines = fm.get("lines")
     if lines is not None and not isinstance(lines, int):
         errs.append(f"{md}: lines must be an integer, got {type(lines).__name__}")
+
+    errs.extend(_validate_umbrella_fields(md, fm))
+
+    # For poetry, hero must be bool (Bento grid directive)
+    hero = fm.get("hero")
+    if hero is not None and not isinstance(hero, bool):
+        errs.append(f"{md}: hero must be bool, got {type(hero).__name__}")
 
     return errs
 
