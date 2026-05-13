@@ -106,6 +106,10 @@ jobs:
             --gc \
             --minify \
             --baseURL "${{ steps.pages.outputs.base_url }}/"
+      - name: Run pagefind metadata linter unit tests
+        run: cd tools && python3 -m unittest test_check_pagefind_meta.py -v
+      - name: Verify pagefind metadata on built pages
+        run: python3 tools/check_pagefind_meta.py
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
