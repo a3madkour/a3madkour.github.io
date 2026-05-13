@@ -325,6 +325,33 @@ class FilterChipsLinterTest(unittest.TestCase):
         self.assertIn("ghost-game-tag", joined)
         self.assertIn("games", joined)
 
+    # --- works aggregation (games + music + poetry) ---
+
+    def test_works_primary_resolves_against_all_three_subs(self) -> None:
+        # The `works` key aggregates tags across games / music / poetry.
+        self.repo.write_game("g1")  # has tags ["example", "demo"]
+        self.repo.write_music("m1")  # has tags ["example", "ambient"]
+        self.repo.write_poem("p1")  # has tags ["example", "lyric"]
+        self.repo.write_config(
+            'works:\n'
+            '  primary_tags: ["demo", "ambient", "lyric"]\n'
+        )
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 0, msg=f"unexpected: {errors}")
+
+    def test_works_primary_rejects_tag_not_in_any_sub(self) -> None:
+        # A tag that doesn't appear in any of the three sub-sections must fail.
+        self.repo.write_game("g1")  # has tags ["example", "demo"]
+        self.repo.write_music("m1")  # has tags ["example", "ambient"]
+        self.repo.write_poem("p1")  # has tags ["example", "lyric"]
+        self.repo.write_config(
+            'works:\n'
+            '  primary_tags: ["ghost-tag"]\n'
+        )
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("ghost-tag" in e for e in errors), errors)
+
 
 if __name__ == "__main__":
     unittest.main()
