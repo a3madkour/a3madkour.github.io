@@ -29,6 +29,8 @@ BUDGETS_PREFIX = [
     ("/works/music/",    500_000),   # music index + per-music-slug pages
     ("/works/",          600_000),   # works umbrella + per-game/poetry pages
     ("/garden/",         600_000),   # garden index + per-note pages
+    ("/research/",       600_000),   # research index inlines the graph JS bundle
+    ("/library/",        500_000),   # library leaves carry cover-image payloads
 ]
 
 BUDGET_HOMEPAGE = 500_000   # exact match `/`
