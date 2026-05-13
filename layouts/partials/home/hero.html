@@ -1,0 +1,14 @@
+{{- /* Inputs: . — the home page (for site.Title + Params.home_lede) */ -}}
+<section class="home-hero">
+  <div class="home-hero-text">
+    <h1>{{ site.Title }}</h1>
+    <p class="home-hero-lede">{{ .Params.home_lede }}</p>
+  </div>
+  <svg class="home-hero-mark" width="80" height="80" viewBox="0 0 80 80"
+       fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false">
+    <path d="M40 12 Q 28 24, 30 40 Q 32 56, 40 68"/>
+    <path d="M40 12 Q 52 24, 50 40 Q 48 56, 40 68"/>
+    <path d="M30 40 Q 40 38, 50 40" stroke-dasharray="2,2"/>
+    <circle cx="40" cy="40" r="3" fill="currentColor"/>
+  </svg>
+</section>
