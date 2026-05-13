@@ -8,6 +8,11 @@
  * ------------------------------------------------------------------ */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
+/* `overflow-x: clip` (NOT hidden) prevents any descendant from forcing
+ * horizontal overflow on the document. Hidden would create a scroll
+ * container and break position:sticky on the mobile page-sidebar strip;
+ * clip does not. Defends sticky against future over-wide content. */
+html { overflow-x: clip; }
 body { min-height: 100dvh; }
 img, svg { display: block; max-width: 100%; }
 
@@ -187,6 +192,7 @@ main { flex-grow: 1; }
 .site-nav {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 1.25rem;
   font-size: var(--text-sm);
 }
@@ -3498,7 +3504,8 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   /* Push scroll-into-view targets below the sticky strip (~24px). */
   main > section[id],
   main > article > section[id],
-  main > .library-leaf-page section[id] { scroll-margin-top: 2.5rem; }
+  main > .library-leaf-page section[id],
+  main > .home > section[id] { scroll-margin-top: 2.5rem; }
 }
 
 /* ============================================================================

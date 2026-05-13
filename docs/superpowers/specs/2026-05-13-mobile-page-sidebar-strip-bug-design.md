@@ -3,6 +3,7 @@
 **Phase:** Post-Phase-8 polish slice (standalone). Not blocking Phase 8 close.
 **Parent spec:** `docs/superpowers/specs/2026-05-13-page-sidebar-design.md` (page-sidebar slice).
 **Filed:** 2026-05-13, during Phase 8 Slice 3 QA walkthrough. Multiple attempted fixes in-session failed to resolve.
+**Resolved:** 2026-05-13, dive-deeper session. See "Resolution" at the bottom.
 
 ---
 
@@ -88,4 +89,35 @@ When picking this up:
 
 ---
 
-*End of stub. Brainstorm + plan when ready to dive in with a clean head.*
+## Resolution (2026-05-13)
+
+**Root cause: horizontal document overflow at narrow viewports.** Not a compositor bug, not a `display: contents` interop bug, not a paint divergence — though those were the working hypotheses. Firefox's `position: sticky` paint math fails to pin a vertical sticky element when `<html>` reports `scrollWidth > clientWidth`. The DOM API still reports `getBoundingClientRect().y = 0` correctly, but the paint is drawn against the wider scroll context and scrolls out of the viewport.
+
+The over-wide element was `<nav class="site-nav">`: 6 nav links + 3 icon buttons in `display: flex` with no `flex-wrap`. At ≥900px viewport everything fit and sticky worked. Below ~580px the nav overflowed the viewport, triggering the document horizontal overflow that broke sticky.
+
+This is also why the earlier in-session diagnostic was misleading: at the widths where it was probed (presumably 800+ wide), `getBoundingClientRect` correctly reported pinned-at-top, but the user observed scroll-away at narrower widths where the diagnostic wasn't re-run. The contradiction was real but viewport-scoped.
+
+### Fixes applied
+
+1. **`flex-wrap: wrap` on `.site-nav`** (main.css §5). Lets the nav wrap to multiple rows at narrow viewports instead of forcing horizontal overflow on the document. Primary root-cause fix.
+2. **`html { overflow-x: clip }`** (main.css §3). Defensive backstop against any future descendant accidentally forcing horizontal overflow. `clip` (not `hidden`) does not create a scroll container, so sticky descendants continue to pin against the viewport.
+3. **`<main class="home">` → `<div class="home">`** (`layouts/home.html`). Found and fixed during bisect — the homepage had a nested `<main>` (the outer one is in `baseof.html`), which is an HTML validation defect. Did not affect the sticky bug but worth cleaning up while paths were already touched.
+4. **`scroll-margin-top` selector widened** (main.css §41 @1219 block) — added `main > .home > section[id]` so home sections still get the 2.5rem offset under the sticky strip now that they're inside `<div class="home">` instead of being direct children of `<main>`.
+
+### Known limitation
+
+At viewports < ~200 px CSS width, the strip's own content (4 dots + 0.85rem gaps + 0.4rem hit-area padding ≈ 116 px content) plus `.page` padding (2 × 1.25rem = 40 px) exceeds the available width. The strip itself becomes wider than the viewport, and `overflow-x: clip` cannot rescue sticky in that regime. This is below any historical real-device width (iPhone 4 / earliest smartphones started at 320 px) and outside the responsive design target. No fix planned.
+
+### Diagnostic snippet that found it
+
+For future similar paint-vs-DOM divergences, the discriminating probe was:
+
+```js
+console.log('docW=' + document.documentElement.scrollWidth, 'clientW=' + document.documentElement.clientWidth, 'overflow?=' + (document.documentElement.scrollWidth > document.documentElement.clientWidth));
+```
+
+If `overflow?=true` at the failing viewport, suspect content-width overflow before pursuing compositor or sticky-implementation hypotheses.
+
+---
+
+*End of stub. Closed.*

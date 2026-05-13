@@ -1,5 +1,5 @@
 {{ define "main" }}
-<main class="home">
+<div class="home">
   <span data-pagefind-meta="section:home" hidden></span>
   <span data-pagefind-filter="section:home" hidden></span>
   {{- /* Render works glyph sprite once if the studio strip will produce rows. */ -}}
@@ -48,5 +48,5 @@
   </section>
 
   {{ partial "home/studio-strip.html" . }}
-</main>
+</div>
 {{ end }}
