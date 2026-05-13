@@ -23,6 +23,7 @@ SECTION_BY_PREFIX = [
     ("/works/",    "works"),
     ("/library/",  "library"),
     ("/about/",    "about"),
+    ("/blog/",     "blog"),
     ("/",          "home"),
 ]
 
@@ -42,8 +43,15 @@ SKIP_FILES = [
 
 
 def parse_meta(html: str) -> dict:
-    """Extract data-pagefind-meta="..." kv pairs from the first occurrence."""
+    """Extract data-pagefind-meta="..." kv pairs from the first occurrence.
+
+    Handles both quoted values (unminified) and unquoted values (minified by
+    Hugo --minify, which drops quotes from simple attribute values).
+    """
+    # Try quoted first, then unquoted (minified HTML).
     m = re.search(r'data-pagefind-meta\s*=\s*"([^"]*)"', html)
+    if not m:
+        m = re.search(r"data-pagefind-meta\s*=\s*([^\s\"'`=<>]+)", html)
     if not m:
         return {}
     out = {}

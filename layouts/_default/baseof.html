@@ -4,7 +4,7 @@
   <body>
     <div class="page">
       {{ partial "header.html" . }}
-      <main>
+      <main data-pagefind-body>
         {{- block "main" . -}}{{- end -}}
       </main>
       {{ partial "footer.html" . }}

@@ -3,7 +3,7 @@
 {{- $listening := (index site.Data "listening").items | default slice -}}
 {{- $playing := (index site.Data "playing").items | default slice -}}
 {{- $watching := (index site.Data "watching").items | default slice -}}
-<main class="library-umbrella-page">
+<main class="library-umbrella-page" data-pagefind-meta="section:library">
   <header class="library-page-header">
     <h1 class="library-page-title">{{ .Title }}</h1>
     {{- with .Content }}<div class="library-page-lede">{{ . }}</div>{{ end -}}

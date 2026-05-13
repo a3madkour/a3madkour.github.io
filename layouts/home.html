@@ -1,5 +1,5 @@
 {{ define "main" }}
-<main class="home">
+<main class="home" data-pagefind-meta="section:home">
   {{- /* Render works glyph sprite once if the studio strip will produce rows. */ -}}
   {{- $hasWorks := where site.RegularPages "Section" "works" -}}
   {{- $hasWorks = where $hasWorks "RelPermalink" "ne" "/works/" -}}

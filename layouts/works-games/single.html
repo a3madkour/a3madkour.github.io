@@ -1,5 +1,5 @@
 {{ define "main" }}
-<article class="page works-game-page">
+<article class="page works-game-page" data-pagefind-meta="section:works,medium:game">
   {{- $hero := "" -}}
   {{- with .Params.hero -}}
     {{- $heroRes := $.Resources.Get . -}}

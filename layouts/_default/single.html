@@ -1,5 +1,5 @@
 {{ define "main" }}
-<article class="reading-column">
+<article class="reading-column" data-pagefind-meta="section:{{ .Section }},date:{{ .Date.Format "2006-01-02" }}">
   <h1>{{ .Title }}</h1>
   {{- .Content -}}
 </article>

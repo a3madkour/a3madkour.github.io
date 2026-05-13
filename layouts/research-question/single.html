@@ -34,7 +34,7 @@
 {{- $backlinksData := partialCached "research/backlinks-data.html" . -}}
 {{- $myBacklinks := index $backlinksData $thisSlug | default slice -}}
 
-<main class="reading-column research-question-hub">
+<main class="reading-column research-question-hub" data-pagefind-meta="section:research,subtype:question,status:{{ .Params.status }}">
 
   {{- $sections := slice -}}
   {{- if .Content -}}

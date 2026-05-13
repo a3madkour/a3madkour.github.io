@@ -1,5 +1,5 @@
 {{ define "main" }}
-<article class="page works-music-page">
+<article class="page works-music-page" data-pagefind-meta="section:works,medium:music">
   {{- $cover := "" -}}
   {{- with .Params.cover -}}
     {{- $coverRes := $.Resources.Get . -}}
