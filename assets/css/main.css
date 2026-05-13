@@ -3346,7 +3346,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: white;
+  color: var(--color-stone);
 }
 .home-work-row .type-badge svg { width: 16px; height: 16px; }
 .type-badge--games  { background: linear-gradient(135deg, var(--color-steel),
