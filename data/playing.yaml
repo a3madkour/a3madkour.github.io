@@ -1,0 +1,88 @@
+# Playing list fixture. Games only — films + series live on watching.yaml.
+items:
+  - slug: outer-wilds
+    title: Outer Wilds
+    creator: Mobius Digital
+    year: 2019
+    media_type: game
+    status: playing
+    started: 2026-04-10
+    last_modified: 2026-05-01
+    note_slug: outer-wilds
+    canonical_url: "https://example.com/outer-wilds"
+    spoiler_level: heavy
+    preview: "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+    tags: [puzzle, exploration]
+    extras:
+      hours_played: 22
+      platform: PC
+  - slug: lorem-game-ii
+    title: Lorem Game II
+    creator: Studio II
+    year: 2022
+    media_type: game
+    status: finished
+    started: 2025-08-01
+    finished: 2025-09-12
+    last_modified: 2025-09-13
+    canonical_url: "https://example.com/lorem-game-ii"
+    preview: "Lorem ipsum dolor sit amet."
+    tags: [puzzle, indie]
+    extras:
+      hours_played: 8
+      platform: PC
+  - slug: lorem-game-iii
+    title: Lorem Game III
+    creator: Studio III
+    year: 2021
+    media_type: game
+    status: 100pct
+    started: 2025-06-10
+    finished: 2025-07-02
+    last_modified: 2025-07-03
+    canonical_url: "https://example.com/lorem-game-iii"
+    preview: "Lorem ipsum dolor sit amet."
+    tags: [platformer, indie]
+    extras:
+      hours_played: 18
+      platform: Switch
+  - slug: lorem-game-iv
+    title: Lorem Game IV
+    creator: Studio IV
+    year: 2024
+    media_type: game
+    status: dropped
+    started: 2026-02-20
+    finished: 2026-03-05
+    last_modified: 2026-03-06
+    canonical_url: "https://example.com/lorem-game-iv"
+    preview: "Lorem ipsum dolor sit amet."
+    tags: [rpg]
+    extras:
+      hours_played: 4
+      platform: PS5
+  - slug: lorem-game-v
+    title: Lorem Game V
+    creator: Studio V
+    year: 2020
+    media_type: game
+    status: finished
+    started: 2026-01-10
+    finished: 2026-02-22
+    last_modified: 2026-02-23
+    canonical_url: "https://example.com/lorem-game-v"
+    preview: "Lorem ipsum dolor sit amet."
+    tags: [strategy]
+    extras:
+      hours_played: 30
+      platform: PC
+  - slug: lorem-game-vi
+    title: Lorem Game VI
+    creator: Studio VI
+    year: 2025
+    media_type: game
+    status: queued
+    last_modified: 2026-04-20
+    tags: [adventure]
+    extras:
+      platform: Web

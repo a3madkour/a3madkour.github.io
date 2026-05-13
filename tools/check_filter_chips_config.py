@@ -24,6 +24,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_fixtures import parse_frontmatter, parse_scalar  # noqa: E402
+from check_library_fixtures import parse_library_yaml  # noqa: E402
 
 # YAML structure we accept (narrow subset, no third-party deps):
 #
@@ -100,6 +101,31 @@ def collect_tags(section_dir: Path) -> set[str]:
     return tags
 
 
+# Sections whose tags come from a data/<file>.yaml rather than content/ dirs.
+# Keys must match the top-level filter-chips YAML key; values are relative to
+# repo_root (i.e., the data file path).
+SECTION_YAML_OVERRIDES: dict[str, str] = {
+    "library-reading":   "data/reading.yaml",
+    "library-listening": "data/listening.yaml",
+    "library-playing":   "data/playing.yaml",
+    "library-watching":  "data/watching.yaml",
+}
+
+
+def collect_tags_from_library_yaml(yaml_path: Path) -> set[str]:
+    """Return the set of tags used by any item in a library data yaml file."""
+    tags: set[str] = set()
+    if not yaml_path.exists():
+        return tags
+    items = parse_library_yaml(yaml_path.read_text())
+    for item in items:
+        item_tags = item.get("tags")
+        if isinstance(item_tags, list):
+            for t in item_tags:
+                tags.add(str(t))
+    return tags
+
+
 # Sections whose content lives at a path other than `content/<section>/`.
 # Keys must match the top-level YAML key; values are relative to repo_root.
 SECTION_PATH_OVERRIDES: dict[str, str] = {
@@ -168,11 +194,17 @@ def run(repo_root: Path) -> tuple[int, list[str]]:
                 f"must be a list, got {type(primary).__name__}"
             )
             continue
-        content_paths = _section_content_paths(repo_root, section)
-        display_path = ", ".join(str(p.relative_to(repo_root)) for p in content_paths)
-        live: set[str] = set()
-        for p in content_paths:
-            live |= collect_tags(p)
+        yaml_rel = SECTION_YAML_OVERRIDES.get(section)
+        if yaml_rel is not None:
+            yaml_path = repo_root / yaml_rel
+            live: set[str] = collect_tags_from_library_yaml(yaml_path)
+            display_path = yaml_rel
+        else:
+            content_paths = _section_content_paths(repo_root, section)
+            display_path = ", ".join(str(p.relative_to(repo_root)) for p in content_paths)
+            live = set()
+            for p in content_paths:
+                live |= collect_tags(p)
         for entry in primary:
             if str(entry) not in live:
                 errors.append(

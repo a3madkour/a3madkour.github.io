@@ -1,0 +1,22 @@
+{{- /* Type glyph in tinted block. Inputs:
+       .media_type — book | album | track | game | film | series
+       .size       — "large" (highlight cards, 56×72) or "mini" (rows, 44×56)
+       Reused SVGs from works for music + game. New SVGs for book + clapper. */ -}}
+{{- $mt := .media_type -}}
+{{- $size := .size | default "mini" -}}
+{{- $cls := "library-glyph-block" -}}
+{{- if eq $size "large" -}}{{- $cls = printf "%s is-large" $cls -}}{{- end -}}
+{{- $modifier := "" -}}
+{{- $iconPath := "" -}}
+{{- if eq $mt "book" -}}
+  {{- $modifier = "book" -}}{{- $iconPath = "images/icons/library/book.svg" -}}
+{{- else if or (eq $mt "album") (eq $mt "track") -}}
+  {{- $modifier = "music" -}}{{- $iconPath = "images/icons/glyph-music.svg" -}}
+{{- else if eq $mt "game" -}}
+  {{- $modifier = "game" -}}{{- $iconPath = "images/icons/glyph-game.svg" -}}
+{{- else if or (eq $mt "film") (eq $mt "series") -}}
+  {{- $modifier = "watching" -}}{{- $iconPath = "images/icons/library/clapper.svg" -}}
+{{- end -}}
+<span class="{{ $cls }} {{ $modifier }}" aria-hidden="true">
+  {{- with resources.Get $iconPath -}}{{- .Content | safeHTML -}}{{- end -}}
+</span>

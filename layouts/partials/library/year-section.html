@@ -1,0 +1,11 @@
+{{- /* One year section: rule + label + rows.
+       Input: dict { year (string), items (slice of item dicts) }.
+       year may be "Undated" for items with no `finished` date. */ -}}
+{{- $year := .year -}}
+{{- $items := .items -}}
+<section class="library-year" data-year="{{ $year }}">
+  <header class="library-year-rule">{{ $year }}</header>
+  {{- range $items -}}
+    {{ partial "library/row.html" . }}
+  {{- end -}}
+</section>

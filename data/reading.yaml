@@ -1,0 +1,85 @@
+# Reading list — fixture seed for /library/reading/.
+# Real data lands via the elisp pipeline (Phase 3); this round-trips the
+# spec §10.4 schema. Filler is "Lorem Ipsum N" / "Author N" — never authored prose.
+items:
+  - slug: invisible-cities
+    title: Invisible Cities
+    creator: Italo Calvino
+    year: 1972
+    media_type: book
+    status: reading
+    started: 2025-12-15
+    last_modified: 2026-04-22
+    note_slug: invisible-cities
+    canonical_url: "https://example.com/invisible-cities"
+    preview: "Re-reading for the procedural narrative paper."
+    tags: [fiction, italian, procedural-narrative]
+    extras:
+      progress_pct: 51
+      progress_label: "p. 84 / 165"
+  - slug: lorem-ipsum-ii
+    title: Lorem Ipsum II
+    creator: Author II
+    year: 2024
+    media_type: book
+    status: reading
+    started: 2026-04-02
+    last_modified: 2026-05-01
+    canonical_url: "https://example.com/lorem-ii"
+    preview: "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+    tags: [non-fiction, design]
+    extras:
+      progress_pct: 18
+      progress_label: "p. 42 / 230"
+  - slug: lorem-ipsum-iii
+    title: Lorem Ipsum III
+    creator: Author III
+    year: 2019
+    media_type: book
+    status: finished
+    started: 2026-01-15
+    finished: 2026-02-10
+    last_modified: 2026-02-11
+    canonical_url: "https://example.com/lorem-iii"
+    preview: "Lorem ipsum dolor sit amet."
+    tags: [fiction, italian]
+  - slug: lorem-ipsum-iv
+    title: Lorem Ipsum IV
+    creator: Author IV
+    year: 2021
+    media_type: book
+    status: abandoned
+    started: 2026-03-01
+    finished: 2026-03-30
+    last_modified: 2026-04-01
+    canonical_url: "https://example.com/lorem-iv"
+    preview: "Started but didn't click."
+    tags: [non-fiction]
+  - slug: lorem-ipsum-v
+    title: Lorem Ipsum V
+    creator: Author V
+    year: 1995
+    media_type: book
+    status: finished
+    started: 2025-09-01
+    finished: 2025-11-04
+    last_modified: 2025-11-05
+    canonical_url: "https://example.com/lorem-v"
+    preview: "Lorem ipsum dolor sit amet, consectetur."
+    tags: [memoir, architecture]
+  - slug: lorem-ipsum-vi
+    title: Lorem Ipsum VI
+    creator: Author VI
+    year: 2023
+    media_type: book
+    status: queued
+    last_modified: 2026-04-15
+    tags: [fiction]
+  - slug: lorem-ipsum-vii
+    title: Lorem Ipsum VII
+    creator: Author VII
+    year: 2020
+    media_type: book
+    status: queued
+    last_modified: 2026-03-20
+    tags: [non-fiction, design]

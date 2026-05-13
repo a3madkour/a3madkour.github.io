@@ -31,3 +31,19 @@ works:
   # Umbrella aggregates tags across games + music + poetry sub-sections.
   primary_tags: [example]
   primary_top_k: 10
+
+library-reading:
+  primary_tags: [fiction, non-fiction]
+  primary_top_k: 10
+
+library-listening:
+  primary_tags: [ambient, jazz]
+  primary_top_k: 10
+
+library-playing:
+  primary_tags: [puzzle, indie]
+  primary_top_k: 10
+
+library-watching:
+  primary_tags: [drama, sci-fi]
+  primary_top_k: 10
