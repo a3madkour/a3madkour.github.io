@@ -1,11 +1,20 @@
-{{- /* Type glyph in tinted block. Inputs:
-       .media_type — book | album | track | game | film | series
-       .size       — "large" (highlight cards, 56×72) or "mini" (rows, 44×56)
-       Reused SVGs from works for music + game. New SVGs for book + clapper. */ -}}
+{{- /* Type glyph in tinted block OR <img> when cover cached. Inputs:
+       .media_type, .size ("large"/"mini"), .slug, .extras (optional)
+       Cover resolution: extras.cover_file > <slug>.jpg fallback.
+       See: docs/superpowers/specs/2026-05-12-library-cover-fetch-design.md §6 */ -}}
 {{- $mt := .media_type -}}
 {{- $size := .size | default "mini" -}}
-{{- $cls := "library-glyph-block" -}}
-{{- if eq $size "large" -}}{{- $cls = printf "%s is-large" $cls -}}{{- end -}}
+{{- $slug := .slug -}}
+{{- $extras := .extras | default dict -}}
+{{- $coverFile := index $extras "cover_file" -}}
+{{- $coverPath := "" -}}
+{{- if $coverFile -}}
+  {{- $coverPath = printf "images/library/covers/%s" $coverFile -}}
+{{- else if $slug -}}
+  {{- $coverPath = printf "images/library/covers/%s.jpg" $slug -}}
+{{- end -}}
+{{- $cover := "" -}}
+{{- if $coverPath -}}{{- $cover = resources.Get $coverPath -}}{{- end -}}
 {{- $modifier := "" -}}
 {{- $iconPath := "" -}}
 {{- if eq $mt "book" -}}
@@ -17,6 +26,14 @@
 {{- else if or (eq $mt "film") (eq $mt "series") -}}
   {{- $modifier = "watching" -}}{{- $iconPath = "images/icons/library/clapper.svg" -}}
 {{- end -}}
-<span class="{{ $cls }} {{ $modifier }}" aria-hidden="true">
-  {{- with resources.Get $iconPath -}}{{- .Content | safeHTML -}}{{- end -}}
-</span>
+{{- $cls := "library-glyph-block" -}}
+{{- if eq $size "large" -}}{{- $cls = printf "%s is-large" $cls -}}{{- end -}}
+{{- if $cover -}}
+  <span class="library-cover-block {{ $size }} {{ $modifier }}">
+    <img class="library-cover" src="{{ $cover.RelPermalink }}" alt="" loading="lazy" />
+  </span>
+{{- else -}}
+  <span class="{{ $cls }} {{ $modifier }}" aria-hidden="true">
+    {{- with resources.Get $iconPath -}}{{- .Content | safeHTML -}}{{- end -}}
+  </span>
+{{- end -}}

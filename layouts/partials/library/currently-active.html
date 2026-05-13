@@ -9,7 +9,7 @@
     {{- range $items -}}
       {{- $item := . -}}
       <article class="library-curr-card" data-media-type="{{ $item.media_type }}">
-        {{ partial "library/type-glyph.html" (dict "media_type" $item.media_type "size" "large") }}
+        {{ partial "library/type-glyph.html" (dict "media_type" $item.media_type "size" "large" "slug" $item.slug "extras" ($item.extras | default dict)) }}
         <div class="library-curr-content">
           <h3 class="library-curr-title">{{ $item.title }}</h3>
           <div class="library-curr-meta">

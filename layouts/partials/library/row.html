@@ -5,7 +5,7 @@
 {{- $tags := delimit ($item.tags | default slice) " " -}}
 <article class="library-row" data-status="{{ $item.status }}" data-media-type="{{ $item.media_type }}" data-tags="{{ $tags }}"{{ with $item.extras.platform }} data-platform="{{ . }}"{{ end }}>
   <div class="library-row-badge">{{ partial "library/status-badge.html" $item.status }}</div>
-  {{ partial "library/type-glyph.html" (dict "media_type" $item.media_type "size" "mini") }}
+  {{ partial "library/type-glyph.html" (dict "media_type" $item.media_type "size" "mini" "slug" $item.slug "extras" ($item.extras | default dict)) }}
   <div class="library-row-content">
     <h4 class="library-row-title">
       <span class="ttl">{{ $item.title }}</span>
