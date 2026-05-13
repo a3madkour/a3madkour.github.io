@@ -3327,12 +3327,11 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 .home-garden-strip .home-garden-grid { gap: 0.85rem; }
 
 .home-research-section {
-  padding: 5rem 0 5rem;
+  padding: 4rem 0 4rem;
   border-bottom: 1px solid var(--color-rule);
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 3rem;
-  min-height: 65vh;
 }
 /* Inside the narrower 50% column, stack the question cards. */
 .home-research-section .home-research-questions { grid-template-columns: 1fr; gap: 1.75rem; }

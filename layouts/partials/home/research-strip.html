@@ -6,7 +6,7 @@
 {{- $questions := where site.RegularPages "Type" "research-question" -}}
 {{- $active := where $questions "Params.status" "active" -}}
 {{- $sorted := sort $active "Params.last_modified" "desc" -}}
-{{- $picks := first 2 $sorted -}}
+{{- $picks := first 3 $sorted -}}
 
 {{- if $picks -}}
 <div class="home-research-block">

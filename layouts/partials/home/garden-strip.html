@@ -9,7 +9,7 @@
 {{- $notes = where $notes "RelPermalink" "ne" "/garden/" -}}
 {{- $notes = where $notes "RelPermalink" "ne" "/garden/graph/" -}}
 {{- $sorted := sort $notes "Params.last_modified" "desc" -}}
-{{- $picks := first 6 $sorted -}}
+{{- $picks := first 10 $sorted -}}
 
 {{- if $picks -}}
 <div class="home-garden-strip">
