@@ -191,7 +191,7 @@ Suppression rule (existing): a dimension with <2 distinct values doesn't render.
 
 ### 3.14 Link label convention
 
-Per `[[feedback_no_arrow_prefix_on_links]]`, content-level links in rows use plain text — but the existing essay/garden/research surface uses "→" as a *suffix* on summary links (e.g., "All reading →", "→ my notes"). The library follows the same suffix-not-prefix convention.
+Per `[[feedback_no_arrow_prefix_on_links]]`, content-level links in rows use plain text — no arrow prefix and no arrow suffix. Row links render as `my notes` and `original` (no `→`). The summary-style chrome arrows ("All reading →") on the umbrella card footer keep their suffix arrow (matches the existing essays/works pattern).
 
 ## 4. Visual design
 

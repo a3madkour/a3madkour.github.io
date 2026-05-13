@@ -47,8 +47,8 @@
           {{- end -}}
           {{- with $item.preview }}<p class="library-curr-takeaway">{{ . }}</p>{{ end -}}
           <div class="library-row-links">
-            {{- with $item.note_slug }}<a href="{{ printf "/garden/%s/" . | relURL }}">→ my notes</a>{{ end -}}
-            {{- with $item.canonical_url }}<a href="{{ . }}">→ original</a>{{ end -}}
+            {{- with $item.note_slug }}<a href="{{ printf "/garden/%s/" . | relURL }}">my notes</a>{{ end -}}
+            {{- with $item.canonical_url }}<a href="{{ . }}">original</a>{{ end -}}
           </div>
         </div>
       </article>
