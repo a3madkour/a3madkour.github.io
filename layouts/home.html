@@ -1,5 +1,12 @@
 {{ define "main" }}
 <main class="home">
+  {{- /* Render works glyph sprite once if the studio strip will produce rows. */ -}}
+  {{- $hasWorks := where site.RegularPages "Section" "works" -}}
+  {{- $hasWorks = where $hasWorks "RelPermalink" "ne" "/works/" -}}
+  {{- $hasWorks = where $hasWorks "RelPermalink" "ne" "/works/games/" -}}
+  {{- $hasWorks = where $hasWorks "RelPermalink" "ne" "/works/music/" -}}
+  {{- $hasWorks = where $hasWorks "RelPermalink" "ne" "/works/poetry/" -}}
+  {{- if $hasWorks }}{{ partial "works/glyph-sprite.html" . }}{{ end -}}
   {{ partial "home/hero.html" . }}
   {{ partial "home/currently.html" . }}
 
