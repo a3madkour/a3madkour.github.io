@@ -28,5 +28,56 @@ class CliTests(unittest.TestCase):
         args = fc.parse_args(["--dry-run"])
         self.assertTrue(args.dry_run)
 
+class PickSourceTests(unittest.TestCase):
+    def test_cover_file_wins(self):
+        item = {"slug": "x", "media_type": "book",
+                "extras": {"cover_file": "x.jpg", "cover_url": "https://e/x", "isbn": "9780000000002"}}
+        s = fc.pick_source(item)
+        self.assertEqual(s, ("cover_file", "x.jpg"))
+
+    def test_cover_url_when_no_file(self):
+        item = {"slug": "x", "media_type": "book",
+                "extras": {"cover_url": "https://e/x", "isbn": "9780000000002"}}
+        self.assertEqual(fc.pick_source(item), ("cover_url", "https://e/x"))
+
+    def test_isbn_book(self):
+        item = {"slug": "x", "media_type": "book", "extras": {"isbn": "9780000000002"}}
+        self.assertEqual(fc.pick_source(item), ("isbn", "9780000000002"))
+
+    def test_mbid_album(self):
+        item = {"slug": "x", "media_type": "album",
+                "extras": {"musicbrainz_release_group": "abc-123"}}
+        self.assertEqual(fc.pick_source(item), ("mbid", "abc-123"))
+
+    def test_igdb_game(self):
+        item = {"slug": "x", "media_type": "game", "extras": {"igdb_id": 1942}}
+        self.assertEqual(fc.pick_source(item), ("igdb_id", 1942))
+
+    def test_tmdb_film(self):
+        item = {"slug": "x", "media_type": "film", "extras": {"tmdb_id": 95396}}
+        self.assertEqual(fc.pick_source(item), ("tmdb_id", 95396))
+
+    def test_no_source_returns_none(self):
+        item = {"slug": "x", "media_type": "book", "extras": {}}
+        self.assertIsNone(fc.pick_source(item))
+
+    def test_no_extras_returns_none(self):
+        item = {"slug": "x", "media_type": "book"}
+        self.assertIsNone(fc.pick_source(item))
+
+
+class LoadLeafTests(unittest.TestCase):
+    def test_loads_listening(self):
+        items = fc.load_leaf("listening")
+        self.assertTrue(len(items) >= 1)
+        self.assertIn("slug", items[0])
+
+    def test_loads_reading_with_extras(self):
+        items = fc.load_leaf("reading")
+        wizard = next((i for i in items if i.get("slug") == "wizard-of-oz"), None)
+        self.assertIsNotNone(wizard)
+        self.assertEqual(wizard["extras"]["isbn"], "9780486291161")
+
+
 if __name__ == "__main__":
     unittest.main()
