@@ -10,6 +10,7 @@ year: 2026
 tags: [example, demo]
 summary: "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
 hero: hero.svg
+featured: true
 embed_url: "https://example.itch.io/embed"
 source_url: "https://github.com/example/repo"
 itch_url: "https://example.itch.io"

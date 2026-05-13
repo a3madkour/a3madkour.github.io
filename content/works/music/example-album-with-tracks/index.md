@@ -5,6 +5,7 @@ lastmod: 2026-02-25
 draft: false
 format: album
 year: 2026
+featured: true
 tagline: "Lorem ipsum dolor sit amet."
 cover: cover.svg
 duration: "42:18"
