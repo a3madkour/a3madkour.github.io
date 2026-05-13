@@ -31,7 +31,15 @@
 <script src="{{ $research.RelPermalink }}" integrity="{{ $research.Data.Integrity }}" defer></script>
 {{- end }}
 
-{{- if eq .Section "works" }}
+{{- /* Works split:
+       umbrella + standalone graph → entry-works-umbrella.js (~110 KB w/ d3)
+       per-item works pages       → entry-works.js (~6 KB, no d3) */ -}}
+{{- $isUmbrella := or (eq .RelPermalink "/works/") (eq .RelPermalink "/works/graph/") -}}
+{{- if $isUmbrella }}
+{{- $worksUmbOpts := dict "targetPath" "js/works-umbrella.js" "minify" true -}}
+{{- $worksUmb := resources.Get "js/entry-works-umbrella.js" | js.Build $worksUmbOpts | fingerprint }}
+<script src="{{ $worksUmb.RelPermalink }}" integrity="{{ $worksUmb.Data.Integrity }}" defer></script>
+{{- else if eq .Section "works" }}
 {{- $worksOpts := dict "targetPath" "js/works.js" "minify" true -}}
 {{- $works := resources.Get "js/entry-works.js" | js.Build $worksOpts | fingerprint }}
 <script src="{{ $works.RelPermalink }}" integrity="{{ $works.Data.Integrity }}" defer></script>
