@@ -81,7 +81,7 @@ items:
     tags: [fiction, classic]
     extras:
       isbn: "9780486291161"
-      cover_url: "https://upload.wikimedia.org/wikipedia/commons/2/27/Wizard_title_page.jpg"
+      cover_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/The_Wonderful_Wizard_of_Oz%2C_006.png/240px-The_Wonderful_Wizard_of_Oz%2C_006.png"
   - slug: pride-and-prejudice
     title: Pride and Prejudice
     creator: Jane Austen
@@ -96,4 +96,4 @@ items:
     tags: [fiction, classic]
     extras:
       isbn: "9780141439518"
-      cover_url: "https://upload.wikimedia.org/wikipedia/commons/1/17/PrideAndPrejudiceTitlePage.jpg"
+      cover_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/PrideAndPrejudiceTitlePage.jpg/240px-PrideAndPrejudiceTitlePage.jpg"
