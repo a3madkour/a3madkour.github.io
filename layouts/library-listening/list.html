@@ -1,0 +1,67 @@
+{{ define "main" }}
+{{- $items := (index site.Data "listening").items | default slice -}}
+{{- $active := slice -}}{{- $byYear := dict -}}{{- $queued := slice -}}{{- $undated := slice -}}
+{{- range $items -}}
+  {{- if eq .status "listening" -}}{{- $active = $active | append . -}}
+  {{- else if eq .status "queued" -}}{{- $queued = $queued | append . -}}
+  {{- else -}}
+    {{- $year := "Undated" -}}{{- with .finished -}}{{- $year = (substr . 0 4) -}}{{- end -}}
+    {{- if eq $year "Undated" -}}{{- $undated = $undated | append . -}}
+    {{- else -}}{{- $existing := index $byYear $year | default slice -}}{{- $byYear = merge $byYear (dict $year ($existing | append .)) -}}{{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- $years := slice -}}
+{{- range $k, $_ := $byYear -}}{{- $years = $years | append $k -}}{{- end -}}
+{{- $years = sort $years "value" "desc" -}}
+
+{{- $formatValues := slice -}}
+{{- range $items -}}
+  {{- if not (in $formatValues .media_type) -}}{{- $formatValues = $formatValues | append .media_type -}}{{- end -}}
+{{- end -}}
+{{- $formatValues = sort $formatValues -}}
+
+{{- $tagCount := dict -}}
+{{- range $items -}}{{- range .tags -}}
+  {{- $cur := index $tagCount . | default 0 -}}{{- $tagCount = merge $tagCount (dict . (add $cur 1)) -}}
+{{- end -}}{{- end -}}
+{{- $tagValues := slice -}}
+{{- range $k, $_ := $tagCount -}}{{- $tagValues = $tagValues | append $k -}}{{- end -}}
+{{- $tagValues = sort $tagValues "value" "asc" -}}
+
+<main class="library-leaf-page" data-library-page="listening">
+  <div data-library-page="listening" hidden></div>
+  <header class="library-page-header">
+    <nav class="library-breadcrumb"><a href="{{ "/library/" | relURL }}">Library</a> › Listening</nav>
+    <h1 class="library-page-title">{{ .Title }}</h1>
+    {{- with .Content }}<div class="library-page-lede">{{ . }}</div>{{ end -}}
+  </header>
+
+  {{- if $items -}}
+    {{ partial "library/currently-active.html" (dict "items" $active) }}
+
+    <p class="library-stats-line">{{ len $items }} total.</p>
+    <div class="library-chips" data-page="listening">
+      {{ partial "filter-chips.html" (dict "section" "library-listening" "dimensions" (slice
+        (dict "key" "status" "label" "Status" "values" (slice "finished" "listening" "queued" "dropped"))
+        (dict "key" "format" "label" "Format" "values" $formatValues)
+        (dict "key" "tag"    "label" "Tag"    "values" $tagValues)
+      )) }}
+    </div>
+
+    {{- range $year := $years -}}
+      {{ partial "library/year-section.html" (dict "year" $year "items" (index $byYear $year)) }}
+    {{- end -}}
+    {{- with $undated -}}
+      {{ partial "library/year-section.html" (dict "year" "Undated" "items" .) }}
+    {{- end -}}
+    {{- with $queued -}}
+      <section class="library-upnext">
+        <header class="library-section-rule">Up next</header>
+        {{- range . -}}<p class="library-upnext-row">↑ <span class="ttl">{{ .title }}</span> · {{ .creator }}{{ with .year }} · {{ . }}{{ end }}</p>{{- end -}}
+      </section>
+    {{- end -}}
+  {{- else -}}
+    <p class="library-empty">Nothing here yet.</p>
+  {{- end -}}
+</main>
+{{ end }}
