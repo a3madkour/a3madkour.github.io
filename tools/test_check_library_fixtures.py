@@ -380,6 +380,11 @@ class CoverKeyTests(unittest.TestCase):
         errs = self._run("playing.yaml", yaml)
         self.assertTrue(any("igdb_id" in e for e in errs), errs)
 
+    def test_igdb_id_rejects_negative(self):
+        yaml = self._item("game", "playing.yaml", "      igdb_id: -1")
+        errs = self._run("playing.yaml", yaml)
+        self.assertTrue(any("igdb_id" in e for e in errs), errs)
+
     def test_igdb_id_not_allowed_on_film(self):
         yaml = self._item("film", "watching.yaml", "      igdb_id: 1942")
         errs = self._run("watching.yaml", yaml)
@@ -395,6 +400,11 @@ class CoverKeyTests(unittest.TestCase):
 
     def test_tmdb_id_rejects_string(self):
         yaml = self._item("film", "watching.yaml", "      tmdb_id: abc")
+        errs = self._run("watching.yaml", yaml)
+        self.assertTrue(any("tmdb_id" in e for e in errs), errs)
+
+    def test_tmdb_id_rejects_negative(self):
+        yaml = self._item("film", "watching.yaml", "      tmdb_id: -1")
         errs = self._run("watching.yaml", yaml)
         self.assertTrue(any("tmdb_id" in e for e in errs), errs)
 
