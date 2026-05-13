@@ -8,12 +8,12 @@
 {{- $sections := .sections | default slice -}}
 {{- if ge (len $sections) 2 -}}
 <aside class="page-sidebar" aria-label="Page sections">
-  <nav class="page-sidebar--rail">
+  <nav class="page-sidebar--rail" aria-label="Section labels">
     {{- range $sections -}}
       <a href="#{{ .id }}" class="page-sidebar-label">{{ .label }}</a>
     {{- end -}}
   </nav>
-  <nav class="page-sidebar--strip">
+  <nav class="page-sidebar--strip" aria-label="Section indicators">
     {{- range $sections -}}
       <a href="#{{ .id }}" class="page-sidebar-dot" aria-label="{{ .label }}"></a>
     {{- end -}}
