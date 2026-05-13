@@ -6,7 +6,11 @@ docs/superpowers/specs/2026-05-12-library-cover-fetch-design.md
 """
 from __future__ import annotations
 import argparse
+import hashlib
 import sys
+import time
+import urllib.error
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
@@ -84,6 +88,40 @@ def dispatch_cover_file(*, slug: str, cover_file: str, covers_dir: Path) -> Fetc
         return FetchResult(kind="cover_file", slug=slug, path=target, cached=True)
     return FetchResult(kind="cover_file", slug=slug, path=target,
                        cached=False, error=f"cover_file {cover_file} not found in {covers_dir}")
+
+
+RETRY_BACKOFF_S = 2.0
+
+def _download(url: str, ua: str, timeout_s: int) -> bytes:
+    """Single GET. Raises urllib.error.HTTPError on non-2xx."""
+    req = urllib.request.Request(url, headers={"User-Agent": ua})
+    with urllib.request.urlopen(req, timeout=timeout_s) as resp:
+        return resp.read()
+
+def _download_with_retry(url: str, ua: str, timeout_s: int) -> bytes:
+    """Download with one retry on 5xx."""
+    try:
+        return _download(url, ua, timeout_s)
+    except urllib.error.HTTPError as e:
+        if 500 <= e.code < 600:
+            time.sleep(RETRY_BACKOFF_S)
+            return _download(url, ua, timeout_s)
+        raise
+
+def dispatch_cover_url(*, slug: str, url: str, covers_dir: Path, ua: str, timeout_s: int) -> FetchResult:
+    target = covers_dir / f"{slug}.jpg"
+    try:
+        body = _download_with_retry(url, ua, timeout_s)
+    except urllib.error.HTTPError as e:
+        return FetchResult(kind="cover_url", slug=slug, path=target,
+                           cached=False, error=f"HTTP {e.code}: {url}")
+    except urllib.error.URLError as e:
+        return FetchResult(kind="cover_url", slug=slug, path=target,
+                           cached=False, error=f"URLError: {e.reason} for {url}")
+    covers_dir.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(body)
+    return FetchResult(kind="cover_url", slug=slug, path=target,
+                       cached=True, sha256=hashlib.sha256(body).hexdigest())
 
 
 LEAVES = ("reading", "listening", "playing", "watching")
