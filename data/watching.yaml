@@ -1,0 +1,84 @@
+# Watching list fixture. ≥1 film and ≥1 series for format dim to render.
+items:
+  - slug: lorem-series-i
+    title: Lorem Series I
+    creator: Network I
+    year: 2025
+    media_type: series
+    status: watching
+    started: 2026-05-01
+    last_modified: 2026-05-10
+    canonical_url: "https://example.com/lorem-series-i"
+    spoiler_level: light
+    preview: "Lorem ipsum dolor sit amet."
+    tags: [drama]
+    extras:
+      episode_count: 8
+      current_episode: 4
+      current_season: 1
+  - slug: severance-s2
+    title: Severance S2
+    creator: Apple TV+
+    year: 2025
+    media_type: series
+    status: finished
+    started: 2026-02-01
+    finished: 2026-03-30
+    last_modified: 2026-03-31
+    note_slug: severance-s2
+    canonical_url: "https://example.com/severance-s2"
+    spoiler_level: light
+    preview: "Lorem ipsum dolor sit amet."
+    tags: [sci-fi, drama]
+    extras:
+      episode_count: 10
+  - slug: lorem-film-iii
+    title: Lorem Film III
+    creator: Director III
+    year: 2018
+    media_type: film
+    status: finished
+    finished: 2026-01-08
+    last_modified: 2026-01-09
+    canonical_url: "https://example.com/lorem-film-iii"
+    preview: "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+    tags: [drama]
+    extras:
+      runtime_min: 124
+  - slug: lorem-film-iv
+    title: Lorem Film IV
+    creator: Director IV
+    year: 2022
+    media_type: film
+    status: finished
+    finished: 2025-12-20
+    last_modified: 2025-12-21
+    canonical_url: "https://example.com/lorem-film-iv"
+    preview: "Lorem ipsum dolor sit amet."
+    tags: [documentary]
+    extras:
+      runtime_min: 96
+  - slug: lorem-series-v
+    title: Lorem Series V
+    creator: Network V
+    year: 2024
+    media_type: series
+    status: dropped
+    started: 2025-11-01
+    finished: 2025-11-15
+    last_modified: 2025-11-16
+    canonical_url: "https://example.com/lorem-series-v"
+    preview: "Lorem ipsum dolor sit amet."
+    tags: [horror]
+    extras:
+      episode_count: 6
+      current_episode: 2
+      current_season: 1
+  - slug: lorem-film-vi
+    title: Lorem Film VI
+    creator: Director VI
+    year: 2026
+    media_type: film
+    status: queued
+    last_modified: 2026-05-02
+    tags: [sci-fi]
