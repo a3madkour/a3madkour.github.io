@@ -99,13 +99,14 @@ The page-weight gate (Slice 2) is the primary automated check. This section adds
 
 ## 6. Summary
 
-Filled in at end of walkthrough:
+End of session 2026-05-13.
 
-- Total items walked: __ / __
-- ☑ pass: __
-- ☒ fixed in-slice: __
-- ⚠ deferred (with reason): __
-- Follow-up specs opened: __
+- **Items walked this session:** 3 (1.6 RSS link, item-cluster behind 4.10 mobile strip, garden path-log persistence).
+- **☑ pass:** RSS link works as a link (item 1.6) — deferring UX pretty-rendering as a polish follow-up.
+- **☒ fixed in-slice:** 0.
+- **⚠ deferred:** 3 (RSS pretty-render, garden path-log retrieval, mobile page-sidebar strip pinning bug).
+- **Follow-up specs opened:** 2 (`2026-05-13-garden-path-log-retrieval-design.md`, `2026-05-13-mobile-page-sidebar-strip-bug-design.md`).
+- **Unchecked items deferred:** all items not marked above (1.1-1.5, 1.7-1.9, 2.*, 3.*, 4.* except the strip cluster, 5.*) are queued for a follow-up walkthrough paired with the page-sidebar bug investigation. See `2026-05-13-mobile-page-sidebar-strip-bug-design.md` "Resume points" section for the joint pickup plan.
 
 ### Follow-ups
 

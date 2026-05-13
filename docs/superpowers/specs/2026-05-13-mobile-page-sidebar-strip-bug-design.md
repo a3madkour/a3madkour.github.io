@@ -71,7 +71,20 @@ The disconnect between the DOM/paint API readings and the actual rendered output
 
 - Memory: `feedback_test_at_half_screen_1080p.md` — half-screen 1080p (≈ 960 px wide) is the user's daily test viewport. At 960px the rail is the active rendering, NOT the strip; so the dots-strip bug only surfaces below the flip point (1220 px).
 - Memory: `project_page_sidebar_slice.md` — Phase 7 polish that originally shipped this code (commit `10f64a5`).
+- Memory (to be saved on merge of this slice): `project_phase_8_slice_3_final_qa.md` — bookmarks where the in-session investigation halted.
 - Session where this surfaced: Phase 8 Slice 3 QA walkthrough. Multiple back-and-forth fixes in the session got increasingly desperate and never resolved the actual rendering bug; controller's working context became polluted. Start fresh.
+
+## Resume points (for the next session)
+
+When picking this up:
+
+1. **Open with a clean conversation.** Do NOT carry forward in-progress hypothesis trees from the previous session — start the diagnosis from the symptom and the diagnostic outputs preserved in this spec (see "What the diagnostic ruled out").
+2. **Pair with the rest of the Phase 8 QA walkthrough.** The QA checklist at `docs/superpowers/qa-checklists/2026-05-13-phase-8-final-qa.md` has items 1.1-1.5, 1.7-1.9, all of §2 (SR walkthrough), all of §3 (CB sim), most of §4 (mobile audit), and §5 (perf cross-check) still unchecked. Walk those after the strip bug is resolved (or in parallel if the user prefers).
+3. **Start by reproducing the bug** from a known-good state: rebuild the master branch, serve `public/`, narrow the window to 525×599 (or any width < 1220), open the homepage, scroll. The strip should scroll away with content.
+4. **Compare against the minimal repro.** Re-create `public/test-fixed.html` from this spec's "What the diagnostic ruled out" §7 and confirm it still works at the same viewport size. Then bisect by progressively adding homepage structure + CSS into the probe until pinning breaks.
+5. **Do NOT start with another speculative CSS tweak.** The bug pattern (DOM says pinned, screen says not) is structural or compositor-level; CSS-only fixes failed in the prior session.
+6. **Suggested first investigation**: capture a screen recording of the bug to confirm it's a paint issue (the bar is rendered then immediately repainted away) vs. an interpretation issue (the bar IS painted but covered by something the diagnostic API doesn't see — e.g., a browser-chrome overlay or a viewport-bar interaction).
+7. **Consider markup restructure**: a plausible fix once the diagnosis lands is to move `<aside class="page-sidebar">` out of the nested-`<main>` tree to be a direct child of `<body>` (or `.page` between header and `<main>`). This requires changing `baseof.html` to render the partial there, which means each layout needs to pass its `sections` argument via a different mechanism (e.g., a per-page `Scratch.Set` from inside the layout that `baseof.html` reads).
 
 ---
 
