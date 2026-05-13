@@ -3385,3 +3385,97 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   .home-two-col { grid-template-columns: 1fr; }
   .home-garden-grid { grid-template-columns: 1fr; }
 }
+
+/* §41 Page sidebar — vertical rotated-labels rail (desktop) +
+ * sticky horizontal dots strip (mobile).
+ * Active state driven by IntersectionObserver in assets/js/nav.js.
+ * ----------------------------------------------------------------- */
+
+.page-sidebar { font-family: var(--font-ui); }
+
+/* Desktop: rotated-label rail, fixed mid-viewport on the left margin */
+.page-sidebar--rail {
+  position: fixed;
+  top: 50%;
+  left: 1rem;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 1.5rem;
+  z-index: 5;
+}
+.page-sidebar-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--color-ink-soft);
+  text-decoration: none;
+  cursor: pointer;
+}
+.page-sidebar-label:hover {
+  color: var(--color-burgundy);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.page-sidebar-label.is-active {
+  color: var(--color-burgundy);
+  font-weight: 600;
+}
+.page-sidebar-label:focus-visible {
+  outline: 1px solid var(--color-burgundy);
+  outline-offset: 3px;
+}
+
+/* Mobile: horizontal dots strip, sticky just below the (non-sticky) header */
+.page-sidebar--strip {
+  display: none; /* hidden on desktop; shown in the @800 block */
+}
+.page-sidebar-dot {
+  display: block;
+  padding: 0.4rem;  /* hit-area expansion to ≥36×36 */
+  text-decoration: none;
+  position: relative;
+}
+.page-sidebar-dot::before {
+  content: "";
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-rule);
+  transition: background 0.15s, width 0.15s, height 0.15s;
+}
+.page-sidebar-dot.is-active::before {
+  background: var(--color-burgundy);
+  width: 8px;
+  height: 8px;
+}
+.page-sidebar-dot:focus-visible {
+  outline: 1px solid var(--color-burgundy);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (max-width: 800px) {
+  .page-sidebar--rail { display: none; }
+  .page-sidebar--strip {
+    display: flex;
+    justify-content: center;
+    gap: 0.85rem;
+    padding: 0.5rem 0;
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: var(--color-stone);
+    border-bottom: 1px solid var(--color-rule);
+    z-index: 5;
+  }
+  /* Push scroll-into-view targets below the sticky strip (~24px). */
+  main > section[id],
+  main > article > section[id],
+  main > .library-leaf-page section[id] { scroll-margin-top: 2.5rem; }
+}
