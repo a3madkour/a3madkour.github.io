@@ -6,7 +6,9 @@ docs/superpowers/specs/2026-05-12-library-cover-fetch-design.md
 """
 from __future__ import annotations
 import argparse
+import datetime
 import hashlib
+import json
 import sys
 import time
 import urllib.error
@@ -43,10 +45,87 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
                    help="print planned actions; no network or disk writes")
     return p.parse_args(argv)
 
+def load_audit_log() -> dict:
+    if AUDIT_LOG.exists():
+        return json.loads(AUDIT_LOG.read_text())
+    return {}
+
+def write_audit_log(log: dict) -> None:
+    AUDIT_LOG.write_text(json.dumps(log, indent=2, sort_keys=True) + "\n")
+
+def update_audit_entry(log: dict, slug: str, source_kind: str, source: object, sha256: str) -> None:
+    log[slug] = {
+        "source_kind": source_kind,
+        "source": source,
+        "fetched_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "sha256": sha256,
+    }
+
+def load_config() -> dict:
+    if CONFIG.exists():
+        return json.loads(CONFIG.read_text())
+    return {"contact_email": "anonymous@example.com"}
+
+def build_ua(cfg: dict) -> str:
+    return f"a3madkour-site/0.1 ({cfg.get('contact_email', 'anonymous@example.com')})"
+
+PER_SOURCE_SLEEP_MS = {"cover_url": 50, "isbn": 100, "mbid": 250}
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv if argv is not None else sys.argv[1:])
-    print(f"medium={args.medium} force={args.force} dry_run={args.dry_run}")
-    return 0
+    cfg = load_config()
+    ua = build_ua(cfg)
+    audit = load_audit_log()
+    rc = 0
+
+    leaves = LEAVES if args.medium == "all" else (MEDIUM_TO_LEAF[args.medium],)
+    for leaf in leaves:
+        for item in load_leaf(leaf):
+            if args.medium != "all" and item.get("media_type") != args.medium:
+                continue
+            source = pick_source(item)
+            if source is None:
+                continue
+            kind, value = source
+            slug = item["slug"]
+            target = COVERS_DIR / (value if kind == "cover_file" else f"{slug}.jpg")
+            if target.exists() and not args.force:
+                continue
+            if args.dry_run:
+                print(f"[dry-run] {slug}: fetch via {kind} → {target}")
+                continue
+            try:
+                if kind == "cover_file":
+                    result = dispatch_cover_file(slug=slug, cover_file=value, covers_dir=COVERS_DIR)
+                elif kind == "cover_url":
+                    result = dispatch_cover_url(slug=slug, url=value, covers_dir=COVERS_DIR, ua=ua, timeout_s=10)
+                elif kind == "isbn":
+                    result = dispatch_isbn(slug=slug, isbn=value, covers_dir=COVERS_DIR, ua=ua, timeout_s=10)
+                elif kind == "mbid":
+                    result = dispatch_mbid(slug=slug, mbid=value, covers_dir=COVERS_DIR, ua=ua, timeout_s=10)
+                elif kind == "igdb_id":
+                    dispatch_igdb(slug=slug, igdb_id=value, covers_dir=COVERS_DIR, ua=ua, timeout_s=10)
+                    continue
+                elif kind == "tmdb_id":
+                    dispatch_tmdb(slug=slug, tmdb_id=value, covers_dir=COVERS_DIR, ua=ua, timeout_s=10)
+                    continue
+            except NotImplementedError as e:
+                print(f"{slug}: {e}", file=sys.stderr)
+                rc = 1
+                continue
+            if not result.cached:
+                print(f"{slug}: {result.error}", file=sys.stderr)
+                rc = 1
+                continue
+            if result.sha256:
+                update_audit_entry(audit, slug, kind, value, result.sha256)
+            ms = PER_SOURCE_SLEEP_MS.get(kind, 0)
+            if ms:
+                time.sleep(ms / 1000)
+
+    if not args.dry_run:
+        write_audit_log(audit)
+    return rc
 
 # Source priority order. Per-medium ID keys are only consulted for the matching media_type.
 MEDIA_TO_ID_KEY = {

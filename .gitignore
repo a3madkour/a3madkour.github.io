@@ -78,3 +78,6 @@ $RECYCLE.BIN/
 # Python
 __pycache__/
 *.pyc
+
+# Library cover-fetch config (contact email; commit .example only)
+tools/.fetch-config.json

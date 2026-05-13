@@ -230,5 +230,112 @@ class StubDispatchTests(unittest.TestCase):
         self.assertIn("TMDB_API_KEY", str(cm.exception))
 
 
+class MainLoopTests(unittest.TestCase):
+    def test_dry_run_makes_no_writes(self):
+        with tempfile.TemporaryDirectory() as td:
+            covers = Path(td) / "covers"
+            audit = Path(td) / "audit.json"
+            with unittest.mock.patch.object(fc, "COVERS_DIR", covers), \
+                 unittest.mock.patch.object(fc, "AUDIT_LOG", audit), \
+                 unittest.mock.patch.object(fc, "load_leaf", return_value=[
+                     {"slug": "x", "media_type": "book", "extras": {"isbn": "9780000000002"}}
+                 ]):
+                rc = fc.main(["--medium", "book", "--dry-run"])
+                self.assertEqual(rc, 0)
+                self.assertFalse(audit.exists())
+                self.assertFalse(covers.exists())
+
+    def test_audit_log_updated_after_fetch(self):
+        body = b"\xff\xd8\xff\xd9jpeg"
+        mock_resp = unittest.mock.MagicMock()
+        mock_resp.read.return_value = body
+        mock_resp.__enter__.return_value = mock_resp
+        mock_resp.__exit__.return_value = False
+        with tempfile.TemporaryDirectory() as td:
+            covers = Path(td) / "covers"
+            audit = Path(td) / "audit.json"
+            with unittest.mock.patch.object(fc, "COVERS_DIR", covers), \
+                 unittest.mock.patch.object(fc, "AUDIT_LOG", audit), \
+                 unittest.mock.patch.object(fc, "load_leaf", return_value=[
+                     {"slug": "wizard-of-oz", "media_type": "book",
+                      "extras": {"cover_url": "https://e/x.jpg"}}
+                 ]), \
+                 unittest.mock.patch("urllib.request.urlopen", return_value=mock_resp), \
+                 unittest.mock.patch("time.sleep"):
+                rc = fc.main(["--medium", "book"])
+                self.assertEqual(rc, 0)
+                self.assertTrue((covers / "wizard-of-oz.jpg").exists())
+                log = json.loads(audit.read_text())
+                self.assertIn("wizard-of-oz", log)
+                self.assertEqual(log["wizard-of-oz"]["source_kind"], "cover_url")
+                self.assertEqual(log["wizard-of-oz"]["source"], "https://e/x.jpg")
+                self.assertEqual(log["wizard-of-oz"]["sha256"], hashlib.sha256(body).hexdigest())
+                self.assertTrue(log["wizard-of-oz"]["fetched_at"].endswith("Z"))
+
+    def test_cache_hit_skips_without_force(self):
+        with tempfile.TemporaryDirectory() as td:
+            covers = Path(td) / "covers"
+            covers.mkdir()
+            (covers / "wizard-of-oz.jpg").write_bytes(b"existing")
+            audit = Path(td) / "audit.json"
+            with unittest.mock.patch.object(fc, "COVERS_DIR", covers), \
+                 unittest.mock.patch.object(fc, "AUDIT_LOG", audit), \
+                 unittest.mock.patch.object(fc, "load_leaf", return_value=[
+                     {"slug": "wizard-of-oz", "media_type": "book",
+                      "extras": {"cover_url": "https://e/x.jpg"}}
+                 ]), \
+                 unittest.mock.patch("urllib.request.urlopen") as urlopen:
+                rc = fc.main(["--medium", "book"])
+                self.assertEqual(rc, 0)
+                urlopen.assert_not_called()
+                self.assertEqual((covers / "wizard-of-oz.jpg").read_bytes(), b"existing")
+
+    def test_force_refetches(self):
+        body = b"\xff\xd8\xff\xd9new"
+        mock_resp = unittest.mock.MagicMock()
+        mock_resp.read.return_value = body
+        mock_resp.__enter__.return_value = mock_resp
+        mock_resp.__exit__.return_value = False
+        with tempfile.TemporaryDirectory() as td:
+            covers = Path(td) / "covers"
+            covers.mkdir()
+            (covers / "wizard-of-oz.jpg").write_bytes(b"old")
+            audit = Path(td) / "audit.json"
+            with unittest.mock.patch.object(fc, "COVERS_DIR", covers), \
+                 unittest.mock.patch.object(fc, "AUDIT_LOG", audit), \
+                 unittest.mock.patch.object(fc, "load_leaf", return_value=[
+                     {"slug": "wizard-of-oz", "media_type": "book",
+                      "extras": {"cover_url": "https://e/x.jpg"}}
+                 ]), \
+                 unittest.mock.patch("urllib.request.urlopen", return_value=mock_resp) as urlopen, \
+                 unittest.mock.patch("time.sleep"):
+                rc = fc.main(["--medium", "book", "--force"])
+                self.assertEqual(rc, 0)
+                urlopen.assert_called_once()
+                self.assertEqual((covers / "wizard-of-oz.jpg").read_bytes(), body)
+
+    def test_not_implemented_does_not_abort_loop(self):
+        body = b"\xff\xd8\xff\xd9jpeg"
+        mock_resp = unittest.mock.MagicMock()
+        mock_resp.read.return_value = body
+        mock_resp.__enter__.return_value = mock_resp
+        mock_resp.__exit__.return_value = False
+        with tempfile.TemporaryDirectory() as td:
+            covers = Path(td) / "covers"
+            audit = Path(td) / "audit.json"
+            with unittest.mock.patch.object(fc, "COVERS_DIR", covers), \
+                 unittest.mock.patch.object(fc, "AUDIT_LOG", audit), \
+                 unittest.mock.patch.object(fc, "load_leaf", side_effect=lambda leaf: [
+                     {"slug": "hades", "media_type": "game", "extras": {"igdb_id": 1942}},
+                     {"slug": "ok-game", "media_type": "game",
+                      "extras": {"cover_url": "https://e/x.jpg"}},
+                 ] if leaf == "playing" else []), \
+                 unittest.mock.patch("urllib.request.urlopen", return_value=mock_resp), \
+                 unittest.mock.patch("time.sleep"):
+                rc = fc.main(["--medium", "game"])
+                self.assertEqual(rc, 1)  # stubbed item set rc=1
+                self.assertTrue((covers / "ok-game.jpg").exists())
+
+
 if __name__ == "__main__":
     unittest.main()
