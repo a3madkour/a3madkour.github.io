@@ -107,6 +107,11 @@ Filled in at end of walkthrough:
 - ⚠ deferred (with reason): __
 - Follow-up specs opened: __
 
+### Follow-ups
+
+- ⚠ **RSS link UX** — clicking the header RSS icon navigates to the raw `.xml` feed file. Standard behavior; RSS-literate visitors are fine, but pretty-rendering via an XSL stylesheet is a future polish. Deferred (no spec opened yet); revisit if the audience grows.
+- ⚠ **Garden path-log retrieval** — the consent banner asks users to persist a visited-notes list, but no UI surface reads it back. Spec stub filed at `docs/superpowers/specs/2026-05-13-garden-path-log-retrieval-design.md`. Pick up as a standalone post-Phase-8 polish slice (not Phase 3, not Phase 8).
+
 ---
 
 *End of checklist.*
