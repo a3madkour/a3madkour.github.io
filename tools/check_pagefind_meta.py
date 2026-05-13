@@ -3,8 +3,13 @@ metadata the search modal depends on.
 
 Checks per page:
   1. <main data-pagefind-body> is present.
-  2. Some element inside <main> carries data-pagefind-meta with a 'section' key.
+  2. Some element carries data-pagefind-meta with a 'section' key.
+     Each data-pagefind-meta attribute holds exactly ONE key:value pair;
+     we collect ALL occurrences on the page into a single dict (first key wins
+     on collision — there should not be collisions in practice).
   3. The 'section' value matches what the URL prefix implies.
+  4. At least one element carries data-pagefind-filter="section:..." so the
+     search-modal's section filter chips actually work.
 
 This linter runs in CI after `hugo --minify` builds public/. It is paired
 with tools/test_check_pagefind_meta.py (unit-tested logic on synthetic HTML).
@@ -43,24 +48,41 @@ SKIP_FILES = [
 
 
 def parse_meta(html: str) -> dict:
-    """Extract data-pagefind-meta="..." kv pairs from the first occurrence.
+    """Collect ALL data-pagefind-meta="key:value" occurrences into one dict.
 
+    Each attribute holds exactly one key:value pair (the new contract).
     Handles both quoted values (unminified) and unquoted values (minified by
     Hugo --minify, which drops quotes from simple attribute values).
+    First key wins on collision.
     """
-    # Try quoted first, then unquoted (minified HTML).
-    m = re.search(r'data-pagefind-meta\s*=\s*"([^"]*)"', html)
-    if not m:
-        m = re.search(r"data-pagefind-meta\s*=\s*([^\s\"'`=<>]+)", html)
-    if not m:
-        return {}
     out = {}
-    for pair in m.group(1).split(","):
-        if ":" not in pair:
+    # Collect all quoted occurrences first.
+    for value in re.findall(r'data-pagefind-meta\s*=\s*"([^"]*)"', html):
+        if ":" not in value:
             continue
-        k, v = pair.split(":", 1)
-        out[k.strip()] = v.strip()
+        k, v = value.split(":", 1)
+        k, v = k.strip(), v.strip()
+        if k and k not in out:
+            out[k] = v
+    # Then unquoted occurrences (Hugo --minify drops quotes on simple values).
+    for value in re.findall(r'data-pagefind-meta\s*=\s*([^\s"\'`=<>]+)', html):
+        if ":" not in value:
+            continue
+        k, v = value.split(":", 1)
+        k, v = k.strip(), v.strip()
+        if k and k not in out:
+            out[k] = v
     return out
+
+
+def parse_filters(html: str) -> list:
+    """Return a list of all data-pagefind-filter values found on the page."""
+    filters = []
+    for value in re.findall(r'data-pagefind-filter\s*=\s*"([^"]*)"', html):
+        filters.append(value.strip())
+    for value in re.findall(r'data-pagefind-filter\s*=\s*([^\s"\'`=<>]+)', html):
+        filters.append(value.strip())
+    return filters
 
 
 def section_from_path(url_path: str) -> str:
@@ -98,7 +120,8 @@ def validate_page(file: Path, public: Path) -> list:
     html = file.read_text(encoding="utf-8", errors="replace")
 
     errors = []
-    if not re.search(r'<main[^>]*\sdata-pagefind-body(?=[\s>=])', html):
+    has_body = bool(re.search(r'<main[^>]*\sdata-pagefind-body(?=[\s>=])', html))
+    if not has_body:
         errors.append(f"{url}: missing data-pagefind-body on <main>")
 
     meta = parse_meta(html)
@@ -112,6 +135,17 @@ def validate_page(file: Path, public: Path) -> list:
             f"{url}: section mismatch — meta says '{meta['section']}', "
             f"URL implies '{expected}'"
         )
+
+    # Verify at least one data-pagefind-filter="section:..." is present so the
+    # search-modal section filter chips work.
+    if has_body:
+        filters = parse_filters(html)
+        section_filters = [f for f in filters if f.startswith("section:")]
+        if not section_filters:
+            errors.append(
+                f"{url}: missing data-pagefind-filter with 'section:' value"
+            )
+
     return errors
 
 

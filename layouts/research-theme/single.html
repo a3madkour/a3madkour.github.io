@@ -14,7 +14,11 @@
   {{- end -}}
 {{- end -}}
 
-<main class="reading-column research-theme-page" data-pagefind-meta="section:research,subtype:theme,status:{{ .Params.status }}">
+<main class="reading-column research-theme-page">
+  <span data-pagefind-meta="section:research" hidden></span>
+  <span data-pagefind-meta="subtype:theme" hidden></span>
+  <span data-pagefind-meta="status:{{ .Params.status }}" hidden></span>
+  <span data-pagefind-filter="section:research" hidden></span>
 
   {{- $sections := slice -}}
   {{- if or $active $dormant $answered -}}

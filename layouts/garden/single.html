@@ -1,6 +1,18 @@
 {{ define "main" }}
 {{ partial "garden/path-log.html" . }}
-<div class="garden-stack" data-stack-root="true" data-pagefind-meta="section:garden,growth_stage:{{ .Params.growth_stage }},flavor:{{ with .Params.media_type }}{{ if in (slice "book" "album" "track" "game" "film" "series") . }}media{{ else if in (slice "paper" "video" "article" "talk") . }}reference{{ else }}concept{{ end }}{{ else }}concept{{ end }}">
+{{- $gardenFlavor := "concept" -}}
+{{- with .Params.media_type -}}
+  {{- if in (slice "book" "album" "track" "game" "film" "series") . -}}
+    {{- $gardenFlavor = "media" -}}
+  {{- else if in (slice "paper" "video" "article" "talk") . -}}
+    {{- $gardenFlavor = "reference" -}}
+  {{- end -}}
+{{- end -}}
+<span data-pagefind-meta="section:garden" hidden></span>
+<span data-pagefind-meta="growth_stage:{{ .Params.growth_stage }}" hidden></span>
+<span data-pagefind-meta="flavor:{{ $gardenFlavor }}" hidden></span>
+<span data-pagefind-filter="section:garden" hidden></span>
+<div class="garden-stack" data-stack-root="true">
   <div class="garden-stack-columns">
     <article class="garden-column is-active reading-column garden-note" data-slug="{{ path.Base .File.Dir }}">
       {{ partial "garden/note-header.html" . }}

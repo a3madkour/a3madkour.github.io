@@ -1,5 +1,8 @@
 {{ define "main" }}
-<article class="page works-music-page" data-pagefind-meta="section:works,medium:music">
+<article class="page works-music-page">
+  <span data-pagefind-meta="section:works" hidden></span>
+  <span data-pagefind-meta="medium:music" hidden></span>
+  <span data-pagefind-filter="section:works" hidden></span>
   {{- $cover := "" -}}
   {{- with .Params.cover -}}
     {{- $coverRes := $.Resources.Get . -}}

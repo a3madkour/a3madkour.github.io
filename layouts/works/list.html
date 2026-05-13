@@ -30,7 +30,9 @@
      (dict "key" "tag" "label" "Tag" "values" $tagValues)
      (dict "key" "medium" "label" "Medium" "values" $mediumValues "labels" $mediumLabels) -}}
 
-<article class="page works-umbrella" data-pagefind-meta="section:works">
+<article class="page works-umbrella">
+  <span data-pagefind-meta="section:works" hidden></span>
+  <span data-pagefind-filter="section:works" hidden></span>
   {{ partial "works/glyph-sprite.html" . }}
 
   <header class="page-header">

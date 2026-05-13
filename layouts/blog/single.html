@@ -1,5 +1,8 @@
 {{ define "main" }}
-<article class="reading-column" data-pagefind-meta="section:{{ .Section }},date:{{ .Date.Format "2006-01-02" }}">
+<article class="reading-column">
+  <span data-pagefind-meta="section:{{ .Section }}" hidden></span>
+  <span data-pagefind-meta="date:{{ .Date.Format "2006-01-02" }}" hidden></span>
+  <span data-pagefind-filter="section:{{ .Section }}" hidden></span>
   {{ if .Params.image }}
     {{ with .Resources.Get .Params.image }}
       <p class="post-hero"><img src="{{ .RelPermalink }}" alt=""></p>
