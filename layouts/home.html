@@ -7,6 +7,13 @@
   {{- $hasWorks = where $hasWorks "RelPermalink" "ne" "/works/music/" -}}
   {{- $hasWorks = where $hasWorks "RelPermalink" "ne" "/works/poetry/" -}}
   {{- if $hasWorks }}{{ partial "works/glyph-sprite.html" . }}{{ end -}}
+  {{ partial "page-sidebar.html" (dict "sections" (slice
+      (dict "id" "currently"      "label" "Currently")
+      (dict "id" "essays"         "label" "Essays")
+      (dict "id" "research-strip" "label" "Chasing")
+      (dict "id" "garden-strip"   "label" "Garden")
+      (dict "id" "studio-strip"   "label" "Studio")
+    )) }}
   {{ partial "home/hero.html" . }}
   {{ partial "home/currently.html" . }}
 
@@ -20,7 +27,7 @@
     {{- if not $featured -}}{{- $featured = index $essays 0 -}}{{- end -}}
     {{- $recents := first 4 (where $essays "RelPermalink" "ne" $featured.RelPermalink) -}}
     {{- $recents = first 3 $recents -}}
-  <section class="home-essays">
+  <section id="essays" class="home-essays">
     <header class="home-essays-header">
       <h2>Essays</h2>
       <a href="{{ "/essays/" | relURL }}" class="home-essays-all">All essays →</a>

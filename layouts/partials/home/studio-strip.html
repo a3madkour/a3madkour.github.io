@@ -45,7 +45,7 @@
 {{- $picks = sort $picks "Params.last_modified" "desc" -}}
 
 {{- if $picks -}}
-<section class="home-studio-strip">
+<section id="studio-strip" class="home-studio-strip">
   <header class="home-strip-header">
     <h2>Lately, in the studio</h2>
     <a class="home-strip-all" href="{{ "/works/" | relURL }}">All works →</a>
