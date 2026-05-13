@@ -25,6 +25,7 @@ img, svg { display: block; max-width: 100%; }
   --color-steel:    #1e4060;
   --color-green:    #2d5a3d;
   --color-warn:     #a05a1a;
+  --color-violet:   #5d4a8a;
 
   --font-body: "Petrona", Georgia, serif;
   --font-ui:   "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -55,6 +56,7 @@ img, svg { display: block; max-width: 100%; }
   --color-steel:    #7eafd0;
   --color-green:    #86c099;
   --color-warn:     #d4a060;
+  --color-violet:   #b8a6e0;
 }
 
 /* Dark mode — system preference, only when no explicit override */
@@ -70,6 +72,7 @@ img, svg { display: block; max-width: 100%; }
     --color-steel:    #7eafd0;
     --color-green:    #86c099;
     --color-warn:     #d4a060;
+    --color-violet:   #b8a6e0;
   }
 }
 
