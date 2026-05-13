@@ -2812,3 +2812,310 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   background: none;
   border-top: 1.25px dashed var(--color-ink-soft);
 }
+
+/* ------------------------------------------------------------------
+ * 37. Library
+ * ------------------------------------------------------------------ */
+
+.library-page-header { margin-bottom: 2rem; }
+.library-breadcrumb {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.4rem;
+}
+.library-breadcrumb a { color: inherit; text-decoration: none; }
+.library-breadcrumb a:hover { color: var(--color-burgundy); }
+.library-page-title {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-2xl);
+  margin: 0 0 0.4rem;
+  letter-spacing: -0.01em;
+}
+.library-page-lede {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--color-ink-soft);
+  margin-bottom: 1.5rem;
+  max-width: 60ch;
+}
+
+/* Section rule (Currently / Up next / year headers) */
+.library-section-rule,
+.library-year-rule {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-ink-soft);
+  margin: 1.75rem 0 0.875rem;
+}
+.library-section-rule::after,
+.library-year-rule::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--color-rule);
+}
+
+/* Umbrella 2x2 grid */
+.library-umbrella-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+.library-um-card {
+  border: 1px solid var(--color-rule);
+  background: var(--color-tile);
+  border-radius: 4px;
+  padding: 1.125rem;
+}
+.library-um-card-title {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-md);
+  margin: 0 0 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+.library-um-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  color: var(--color-ink-soft);
+}
+.library-um-glyph svg { width: 100%; height: 100%; }
+.library-um-card-stats {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  margin: 0 0 0.875rem;
+}
+.library-um-card-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.875rem;
+}
+.library-um-card-list li {
+  display: grid;
+  grid-template-columns: 1.125rem 1fr;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid color-mix(in srgb, var(--color-rule) 40%, transparent);
+  font-size: var(--text-sm);
+  align-items: center;
+}
+.library-um-card-list li:first-child { border-top: 0; }
+.library-um-card-list .ttl { font-style: italic; }
+.library-um-card-list .creator {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  margin-top: 0.125rem;
+  font-style: normal;
+}
+.library-um-card-link {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  margin: 0;
+}
+.library-um-card-link a { color: var(--color-burgundy); text-decoration: none; border-bottom: 1px dotted var(--color-burgundy); }
+
+/* Status badge */
+.library-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+.library-status-badge.b-fin   { color: var(--color-green); }
+.library-status-badge.b-act   { color: var(--color-steel); }
+.library-status-badge.b-queue { color: var(--color-ink-soft); }
+.library-status-badge.b-aban  { color: var(--color-burgundy); }
+.library-status-badge.b-100   { color: var(--color-warn); }
+
+/* Glyph block (tinted square holding the type SVG) */
+.library-glyph-block {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 3.5rem;
+  border-radius: 3px;
+  color: var(--color-tile);
+  background: linear-gradient(180deg, var(--color-burgundy) 0%, color-mix(in srgb, var(--color-burgundy) 70%, black) 100%);
+  flex-shrink: 0;
+}
+.library-glyph-block.is-large { width: 3.5rem; height: 4.5rem; }
+.library-glyph-block svg { width: 60%; height: 60%; }
+.library-glyph-block.book {} /* default burgundy */
+.library-glyph-block.music   { background: linear-gradient(180deg, var(--color-steel) 0%, color-mix(in srgb, var(--color-steel) 70%, black) 100%); }
+.library-glyph-block.game    { background: linear-gradient(180deg, var(--color-green) 0%, color-mix(in srgb, var(--color-green) 70%, black) 100%); }
+.library-glyph-block.watching { background: linear-gradient(180deg, var(--color-violet) 0%, color-mix(in srgb, var(--color-violet) 70%, black) 100%); }
+
+/* Currently-active highlight */
+.library-currently-grid {
+  display: grid;
+  gap: 1rem;
+}
+.library-currently[data-active-count="1"] .library-currently-grid { grid-template-columns: 1fr; }
+.library-currently[data-active-count="2"] .library-currently-grid,
+.library-currently[data-active-count="3"] .library-currently-grid { grid-template-columns: 1fr 1fr; }
+
+.library-curr-card {
+  display: grid;
+  grid-template-columns: 4rem 1fr;
+  gap: 0.875rem;
+  border: 1px solid var(--color-rule);
+  background: var(--color-tile);
+  border-radius: 4px;
+  padding: 1.125rem;
+}
+.library-curr-title {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: var(--text-md);
+  margin: 0;
+  line-height: 1.2;
+}
+.library-curr-meta {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  margin: 0.125rem 0 0.625rem;
+}
+.library-progress {
+  height: 0.5rem;
+  background: color-mix(in srgb, var(--color-rule) 40%, transparent);
+  border-radius: 0.25rem;
+  overflow: hidden;
+  margin: 0.375rem 0 0.25rem;
+}
+.library-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--color-steel);
+}
+.library-progress-meta {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  margin-bottom: 0.5rem;
+}
+.library-curr-takeaway {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  margin: 0.5rem 0;
+}
+
+/* Year sections + rows */
+.library-row {
+  display: grid;
+  grid-template-columns: 1.5rem 3.5rem 1fr;
+  gap: 0.875rem;
+  padding: 0.875rem 0;
+  border-top: 1px solid color-mix(in srgb, var(--color-rule) 40%, transparent);
+  align-items: start;
+}
+.library-row:first-of-type { border-top: 1px solid var(--color-rule); }
+.library-row-badge {
+  font-family: var(--font-ui);
+  padding-top: 0.125rem;
+}
+.library-row-title {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: var(--text-base);
+  margin: 0;
+  line-height: 1.2;
+}
+.library-row-tags {
+  float: right;
+  font-family: var(--font-ui);
+  font-style: normal;
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  text-transform: lowercase;
+}
+.library-row-meta {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  margin: 0.125rem 0 0.375rem;
+}
+.library-row-takeaway {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  margin: 0.375rem 0;
+}
+.library-row-links {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+}
+.library-row-links a {
+  color: var(--color-burgundy);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--color-burgundy);
+  margin-right: 1rem;
+}
+
+.library-spoiler-heavy { color: var(--color-burgundy); }
+.library-spoiler-light { color: var(--color-ink-soft); }
+
+/* Up next */
+.library-upnext-row {
+  font-family: var(--font-body);
+  padding: 0.375rem 0;
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+  margin: 0;
+}
+.library-upnext-row .ttl { font-style: italic; color: var(--color-ink); }
+
+/* Stats line above chips */
+.library-stats-line {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+  margin: 1.125rem 0 0.625rem;
+}
+
+/* Hidden by filter — UA `[hidden] { display:none }` is overridden by our
+   grid display, so re-establish the rule for library rows + year sections. */
+.library-row[hidden],
+.library-year[hidden] { display: none; }
+
+/* Empty state */
+.library-empty {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--color-ink-soft);
+  margin-top: 2rem;
+}
+
+/* Responsive */
+@media (max-width: 720px) {
+  .library-umbrella-grid { grid-template-columns: 1fr; }
+  .library-currently[data-active-count="2"] .library-currently-grid,
+  .library-currently[data-active-count="3"] .library-currently-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .library-row { grid-template-columns: 1.5rem 1fr; }
+  .library-row .library-glyph-block { display: none; }
+}
