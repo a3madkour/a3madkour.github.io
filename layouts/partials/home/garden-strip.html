@@ -1,1 +1,23 @@
-{{- /* TODO: filled in Task 2/3/4/5 */ -}}
+{{- /* Inputs: . — the home page (unused beyond context).
+       Top 6 most-recently-tended garden notes (any flavor). */ -}}
+
+{{- $notes := where site.RegularPages "Section" "garden" -}}
+{{- $notes = where $notes "Draft" false -}}
+{{- $notes = where $notes "RelPermalink" "ne" "/garden/" -}}
+{{- $notes = where $notes "RelPermalink" "ne" "/garden/graph/" -}}
+{{- $sorted := sort $notes "Params.last_modified" "desc" -}}
+{{- $picks := first 6 $sorted -}}
+
+{{- if $picks -}}
+<section class="home-garden-strip">
+  <header class="home-strip-header">
+    <h2>From the Garden</h2>
+    <a class="home-strip-all" href="{{ "/garden/" | relURL }}">Browse →</a>
+  </header>
+  <div class="home-garden-grid">
+    {{- range $picks -}}
+      {{ partial "garden/note-tile.html" (dict "page" .) }}
+    {{- end -}}
+  </div>
+</section>
+{{- end -}}
