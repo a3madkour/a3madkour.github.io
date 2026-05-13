@@ -174,5 +174,47 @@ class CoverUrlDispatchTests(unittest.TestCase):
             self.assertIn("503", result.error)
 
 
+class OpenLibraryDispatchTests(unittest.TestCase):
+    def test_isbn_url_construction(self):
+        url = fc.openlibrary_url("9780486291161")
+        self.assertEqual(url, "https://covers.openlibrary.org/b/isbn/9780486291161-L.jpg")
+
+    def test_dispatch_isbn_downloads(self):
+        body = b"jpeg-bytes"
+        mock_resp = unittest.mock.MagicMock()
+        mock_resp.read.return_value = body
+        mock_resp.__enter__.return_value = mock_resp
+        mock_resp.__exit__.return_value = False
+        with unittest.mock.patch("urllib.request.urlopen", return_value=mock_resp) as urlopen, \
+             tempfile.TemporaryDirectory() as td:
+            covers = Path(td)
+            result = fc.dispatch_isbn(slug="x", isbn="9780486291161",
+                                       covers_dir=covers, ua="ua", timeout_s=10)
+            self.assertTrue(result.cached)
+            self.assertEqual(result.kind, "isbn")
+            self.assertEqual(result.path, covers / "x.jpg")
+            self.assertIn("9780486291161-L.jpg", urlopen.call_args.args[0].full_url)
+
+
+class CoverArtArchiveDispatchTests(unittest.TestCase):
+    def test_mbid_url_construction(self):
+        url = fc.coverart_archive_url("abc-123-def")
+        self.assertEqual(url, "https://coverartarchive.org/release-group/abc-123-def/front-500")
+
+    def test_dispatch_mbid_downloads(self):
+        body = b"jpeg-bytes"
+        mock_resp = unittest.mock.MagicMock()
+        mock_resp.read.return_value = body
+        mock_resp.__enter__.return_value = mock_resp
+        mock_resp.__exit__.return_value = False
+        with unittest.mock.patch("urllib.request.urlopen", return_value=mock_resp), \
+             tempfile.TemporaryDirectory() as td:
+            covers = Path(td)
+            result = fc.dispatch_mbid(slug="x", mbid="abc-123",
+                                      covers_dir=covers, ua="ua", timeout_s=10)
+            self.assertTrue(result.cached)
+            self.assertEqual(result.kind, "mbid")
+
+
 if __name__ == "__main__":
     unittest.main()

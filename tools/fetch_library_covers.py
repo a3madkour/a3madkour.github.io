@@ -124,6 +124,25 @@ def dispatch_cover_url(*, slug: str, url: str, covers_dir: Path, ua: str, timeou
                        cached=True, sha256=hashlib.sha256(body).hexdigest())
 
 
+def openlibrary_url(isbn: str) -> str:
+    return f"https://covers.openlibrary.org/b/isbn/{isbn}-L.jpg"
+
+def coverart_archive_url(mbid: str) -> str:
+    return f"https://coverartarchive.org/release-group/{mbid}/front-500"
+
+def dispatch_isbn(*, slug: str, isbn: str, covers_dir: Path, ua: str, timeout_s: int) -> FetchResult:
+    url = openlibrary_url(isbn)
+    result = dispatch_cover_url(slug=slug, url=url, covers_dir=covers_dir, ua=ua, timeout_s=timeout_s)
+    return FetchResult(kind="isbn", slug=slug, path=result.path,
+                       cached=result.cached, error=result.error, sha256=result.sha256)
+
+def dispatch_mbid(*, slug: str, mbid: str, covers_dir: Path, ua: str, timeout_s: int) -> FetchResult:
+    url = coverart_archive_url(mbid)
+    result = dispatch_cover_url(slug=slug, url=url, covers_dir=covers_dir, ua=ua, timeout_s=timeout_s)
+    return FetchResult(kind="mbid", slug=slug, path=result.path,
+                       cached=result.cached, error=result.error, sha256=result.sha256)
+
+
 LEAVES = ("reading", "listening", "playing", "watching")
 
 def load_leaf(leaf: str) -> list[dict]:
