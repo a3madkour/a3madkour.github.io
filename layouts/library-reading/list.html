@@ -23,18 +23,25 @@
 {{- range $k, $_ := $byYear -}}{{- $years = $years | append $k -}}{{- end -}}
 {{- $years = sort $years "value" "desc" -}}
 
-{{- /* Tag dim values across all items, ranked by count desc */ -}}
+{{- /* Up-next sorted by last_modified desc per spec §3.9 */ -}}
+{{- $queued = sort $queued "last_modified" "desc" -}}
+
+{{- /* Tag dim values across all items, ranked by count desc, alpha for ties */ -}}
 {{- $tagCount := dict -}}
 {{- range $items -}}{{- range .tags -}}
   {{- $cur := index $tagCount . | default 0 -}}
   {{- $tagCount = merge $tagCount (dict . (add $cur 1)) -}}
 {{- end -}}{{- end -}}
+{{- $tagPairs := slice -}}
+{{- range $name, $cnt := $tagCount -}}
+  {{- $tagPairs = $tagPairs | append (dict "name" $name "count" $cnt) -}}
+{{- end -}}
 {{- $tagValues := slice -}}
-{{- range $k, $_ := $tagCount -}}{{- $tagValues = $tagValues | append $k -}}{{- end -}}
-{{- $tagValues = sort $tagValues "value" "asc" -}}
+{{- range (sort (sort $tagPairs "name" "asc") "count" "desc") -}}
+  {{- $tagValues = $tagValues | append .name -}}
+{{- end -}}
 
 <main class="library-leaf-page" data-library-page="reading">
-  <div data-library-page="reading" hidden></div>
   <header class="library-page-header">
     <nav class="library-breadcrumb"><a href="{{ "/library/" | relURL }}">Library</a> › Reading</nav>
     <h1 class="library-page-title">{{ .Title }}</h1>

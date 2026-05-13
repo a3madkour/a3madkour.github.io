@@ -14,22 +14,30 @@
 {{- range $k, $_ := $byYear -}}{{- $years = $years | append $k -}}{{- end -}}
 {{- $years = sort $years "value" "desc" -}}
 
+{{- /* Up-next sorted by last_modified desc per spec §3.9 */ -}}
+{{- $queued = sort $queued "last_modified" "desc" -}}
+
 {{- $formatValues := slice -}}
 {{- range $items -}}
   {{- if not (in $formatValues .media_type) -}}{{- $formatValues = $formatValues | append .media_type -}}{{- end -}}
 {{- end -}}
 {{- $formatValues = sort $formatValues -}}
 
+{{- /* Tag dim ranked by count desc, alpha for ties */ -}}
 {{- $tagCount := dict -}}
 {{- range $items -}}{{- range .tags -}}
   {{- $cur := index $tagCount . | default 0 -}}{{- $tagCount = merge $tagCount (dict . (add $cur 1)) -}}
 {{- end -}}{{- end -}}
+{{- $tagPairs := slice -}}
+{{- range $name, $cnt := $tagCount -}}
+  {{- $tagPairs = $tagPairs | append (dict "name" $name "count" $cnt) -}}
+{{- end -}}
 {{- $tagValues := slice -}}
-{{- range $k, $_ := $tagCount -}}{{- $tagValues = $tagValues | append $k -}}{{- end -}}
-{{- $tagValues = sort $tagValues "value" "asc" -}}
+{{- range (sort (sort $tagPairs "name" "asc") "count" "desc") -}}
+  {{- $tagValues = $tagValues | append .name -}}
+{{- end -}}
 
 <main class="library-leaf-page" data-library-page="watching">
-  <div data-library-page="watching" hidden></div>
   <header class="library-page-header">
     <nav class="library-breadcrumb"><a href="{{ "/library/" | relURL }}">Library</a> › Watching</nav>
     <h1 class="library-page-title">{{ .Title }}</h1>
@@ -43,7 +51,7 @@
     <div class="library-chips" data-page="watching">
       {{ partial "filter-chips.html" (dict "section" "library-watching" "dimensions" (slice
         (dict "key" "status" "label" "Status" "values" (slice "finished" "watching" "queued" "dropped"))
-        (dict "key" "format" "label" "Format" "values" $formatValues)
+        (dict "key" "media-type" "label" "Format" "values" $formatValues)
         (dict "key" "tag"    "label" "Tag"    "values" $tagValues)
       )) }}
     </div>
