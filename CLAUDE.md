@@ -19,7 +19,7 @@ No npm. Python tooling is stdlib-only. Hugo **extended** (≥ 0.148.0) is requir
 
 ### CSS pipeline — hand-rolled, processed by Hugo
 
-`assets/css/main.css` is a single hand-rolled stylesheet, organized into numbered sections §1–§37 (see the file's top-of-file index for the list; §32–§36 are reserved for past works-section additions that landed without numbered headers). Consumed by `layouts/partials/head.html` via `resources.Get` + (production) `minify | fingerprint` with SRI integrity.
+`assets/css/main.css` is a single hand-rolled stylesheet, organized into numbered sections §1–§40 (see the file's top-of-file index for the list; §32–§36 are reserved for past works-section additions that landed without numbered headers; §38–§40 cover the homepage hero, Currently widget, and homepage strips). Consumed by `layouts/partials/head.html` via `resources.Get` + (production) `minify | fingerprint` with SRI integrity.
 
 - **Tokens** are CSS custom properties on `:root` (light) and `:root[data-theme="dark"]` (dark). System dark via `@media (prefers-color-scheme: dark) :root:not([data-theme])`. The `[data-theme="dark"]` block and the media-query block carry **duplicate values** — both must be updated together when the palette changes.
 - **WCAG contrast**: `tools/check-contrast.py` parses the `:root` blocks and verifies four pairings (ink/stone AAA, ink-soft/stone AA, burgundy/stone AA, steel/stone AA) in both modes. Failure blocks deploy. Tokens `--color-green` (evergreen / finished pill) and `--color-warn` (queued pill) ride along but aren't checked.
@@ -56,7 +56,7 @@ Three-state cycle: **system → light → dark → system**.
 
 - **Content sections** in `content/`: `_index.html`, `about/`, `blog/` (legacy), `essays/`, `garden/`, `research/`, `works/`.
 - **Layouts** under `layouts/`: base templates in `_default/`; per-section `{list,single}.html` plus `rss.xml` for essays + garden and standalone `graph.html` pages for garden + research + works. Works splits into `works/`, `works-games/`, `works-music/`, `works-poetry/`. Research splits into `research/`, `research-theme/`, `research-question/` with type discrimination via `cascade: { type: research-theme|research-question }` on `content/research/{themes,questions}/_index.md` (bare section URLs hidden via `build: render: never`). `baseof.html` is a thin semantic wrapper; per-section layouts override `{{ block "main" }}`.
-- **Partials** under `layouts/partials/`: site chrome (`head`, `header`, `footer`, `scripts`); essays (`essay-card{,-featured}`, `essay-meta`, `essay-toc`, `essay-references`, `essay-series-nav`); shared `filter-chips.html`; `garden/` subfolder (`note-header`, `stage-glyph`, `note-tile`, `topic-section`, `relative-date`, `path-log`, `links-section`, `graph-{data,script,panel}`); `research/` subfolder (`status-pill`, `output-item`, `theme-card`, `backlinks-data`, `graph-{data,script,panel}`); `works/` subfolder (`tile`, `glyph-sprite`, `game-card`, `music-row`, `poem-row`, `status-pill`, `audio-pill`, `audio-link`, `connections`, `graph-{data,data-inner,script,panel}`).
+- **Partials** under `layouts/partials/`: site chrome (`head`, `header`, `footer`, `scripts`); essays (`essay-card{,-featured}`, `essay-meta`, `essay-toc`, `essay-references`, `essay-series-nav`); shared `filter-chips.html`; `home/` subfolder (`hero`, `currently`, `research-strip`, `garden-strip`, `studio-strip` — homepage v3 sections); `garden/` subfolder (`note-header`, `stage-glyph`, `note-tile`, `topic-section`, `relative-date`, `path-log`, `links-section`, `graph-{data,script,panel}`); `research/` subfolder (`status-pill`, `output-item`, `theme-card`, `backlinks-data`, `graph-{data,script,panel}`); `works/` subfolder (`tile`, `glyph-sprite`, `game-card`, `music-row`, `poem-row`, `status-pill`, `audio-pill`, `audio-link`, `connections`, `graph-{data,data-inner,script,panel}`).
 - **Shortcodes** under `layouts/shortcodes/`: `cite` (looks up `site.Data.citations.citations[key]`, errors if missing), `sidenote` (auto-numbered marker + aside via page scratch), `figure` (semantic, supports `class="wide"`), `spoiler` (`<details>`-based, no JS). Deferred-feature stubs: `math`, `video-sync`, `widget`, `lyrics` — each emits a `data-pending` container so fixtures exercise the shape.
 - **Top nav** (locked): Essays / Garden / Research / Works / Library / About. Active item gets `aria-current="page"` via `hasPrefix` match.
 
@@ -130,8 +130,9 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 - **Phase 6 umbrella polish spec**: `docs/superpowers/specs/2026-05-12-works-umbrella-polish-design.md`. Phase 6 Slice 0.
 - **Library spec**: `docs/superpowers/specs/2026-05-12-library-section-design.md`. Phase 7 first slice.
 - **Library cover-fetch spec**: `docs/superpowers/specs/2026-05-12-library-cover-fetch-design.md`. Phase 7 Slice 1 (infra shipped; live IGDB + TMDB paths deferred to a future slice).
+- **Homepage v3 spec**: `docs/superpowers/specs/2026-05-13-homepage-v3-design.md`. Phase 7 Slice 2 (closes Phase 7).
 
-## Project status (as of 2026-05-12)
+## Project status (as of 2026-05-13)
 
 **Shipped — Phases 0–6 plus targeted polish:**
 
@@ -143,12 +144,12 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 - **About** (Phase 2 bio half): Hero / Bio / Where / Connect / Colophon. Now widget deferred (Phase 3-blocked).
 - **Library** (Phase 7 first slice): umbrella + 4 list pages (`/library/{reading,listening,playing,watching}/`); fixture-shaped `data/*.yaml` per spec §10.4; 2 new hand-authored glyphs (book + clapper); shape+color status badges (✓ ▶ ↑ ✗ ★); per-page filter chips with status / format-or-platform / tag dims; nav adds Library as 6th item.
 - **Library cover-fetch** (Phase 7 Slice 1): cover infra (data shape via `extras.cover_url`/`isbn`/`mbid`/`igdb_id`/`tmdb_id`/`cover_file`; Hugo `<img>` template with glyph fallback; per-section aspect — listening square, others portrait; `tools/fetch_library_covers.py` with 4 live source paths + IGDB/TMDB `NotImplementedError` stubs; 12th linter pair gating schema + cache + audit consistency + freshness; sha256 audit log at `tools/.cover-cache.json`). 8 PD/fair-use cover thumbnails seeded via Wikimedia thumb URLs (~588 KB total). Live IGDB + TMDB API paths defer to a future slice that pairs with real items + API keys.
+- **Homepage v3** (Phase 7 Slice 2): closes Phase 7. New hero (2-col grid, `home_lede` frontmatter split from `description`, hand-authored burgundy mark SVG) + Currently widget (4 rows reading/listening/playing/watching, max-`last_modified` timestamp, spoiler tag only when `spoiler_level == heavy` AND `note_slug` present, empty-row + empty-widget hiding) + Research strip (top 2 active questions, theme-name lookup via `site.GetPage`) + 2-col Garden+Studio block (Garden = top 6 by `last_modified` reusing `garden/note-tile.html` size-scoped via `.home-garden-strip`; Studio = one per medium + most-recent remaining, 4 rows total, reuses `works/glyph-sprite.html` rendered once guarded). CSS §38–§40 + single 800px responsive breakpoint. Studio type-badge glyphs use `var(--color-stone)` (theme-flipping) for dark-mode contrast on the burgundy/steel `color-mix` gradients.
 
 **Not started, in phase order:**
 
 - **About Now widget** — Phase 3-blocked (needs elisp pipeline).
 - **Phase 3 — org-mode pipeline**: elisp helpers + ox-hugo that wire real content into the fixture-shaped data files. All site fixtures exist to round-trip when this lands.
-- **Phase 7 — Homepage v3**: Currently strip + Studio strip + Garden+Studio columns. The current homepage has only the role line + essays strip.
 - **Phase 8 — Pagefind search + Lighthouse CI + final QA.**
 
 To pick up a slice: read this file + parent spec §14, run `superpowers:brainstorming` then `superpowers:writing-plans`. Confirm with the user whether the slice depends on the elisp pipeline (most do) or can build on placeholder data.
