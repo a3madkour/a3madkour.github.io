@@ -83,10 +83,11 @@ function renderResults(resultsEl, statusEl, groups, totalMs, query) {
     html += `<section data-section="${section}"><h3>${SECTION_LABEL[section]}</h3><ol>`;
     for (const row of groups[section]) {
       const spoilers = parseInt(row.meta?.spoilers || '0', 10);
+      const title = row.meta?.title || row.url;
       html += `
         <li class="search-modal-result" data-url="${escapeHtml(row.url)}">
           <a href="${escapeHtml(row.url)}">
-            <div class="search-modal-result-title">${escapeHtml(row.title)}</div>
+            <div class="search-modal-result-title">${escapeHtml(title)}</div>
             <div class="search-modal-result-snippet">${row.excerpt}</div>
             ${spoilers > 0 ? `<div class="search-modal-result-spoilers">${spoilers} spoiler block${spoilers === 1 ? '' : 's'} hidden from search</div>` : ''}
           </a>
@@ -111,8 +112,9 @@ async function performSearch(query, resultsEl, statusEl) {
     return;
   }
   const t0 = performance.now();
-  const filters = currentSection === 'all' ? {} : { section: [currentSection] };
-  const search = await pagefindInstance.search(query, { filters });
+  const search = currentSection === 'all'
+    ? await pagefindInstance.search(query)
+    : await pagefindInstance.search(query, { filters: { section: [currentSection] } });
   // Pagefind returns ids; fetch their data in parallel.
   const top = search.results.slice(0, 30);
   const datas = await Promise.all(top.map((r) => r.data()));
