@@ -8,5 +8,5 @@
 {{- $summary := .Get "summary" | default "spoiler" -}}
 <details class="spoiler" data-spoiler-level="{{ $level }}">
   <summary>{{ $summary }}</summary>
-  <div class="spoiler-body">{{ .Inner | markdownify }}</div>
+  <div class="spoiler-body" data-pagefind-ignore>{{ .Inner | markdownify }}</div>
 </details>
