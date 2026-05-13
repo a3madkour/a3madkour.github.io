@@ -3400,7 +3400,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   left: 1.25rem;
   transform: translateY(-50%);
   display: flex;
-  flex-direction: column-reverse;
+  flex-direction: column;
   gap: 1.75rem;
   z-index: 5;
 }
@@ -3462,6 +3462,9 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 /* Below 1220px the content max-width (1080px) + rail safe-zone runs out,
  * so the rail would overlap headlines. Flip to the sticky dots strip. */
 @media (max-width: 1219px) {
+  /* Dissolve the <aside> box so the strip's containing block is <main>
+   * (full document height). Otherwise sticky has nowhere to stick within. */
+  .page-sidebar { display: contents; }
   .page-sidebar--rail { display: none; }
   .page-sidebar--strip {
     display: flex;
