@@ -21,6 +21,7 @@ img, svg { display: block; max-width: 100%; }
   --color-ink-fade: #9a958e;
   --color-rule:     #d4d3cd;
   --color-tile:     #fdfcf8;
+  --color-paper:    #fdfcf8;
   --color-burgundy: #6b1f2c;
   --color-steel:    #1e4060;
   --color-green:    #2d5a3d;
@@ -52,6 +53,7 @@ img, svg { display: block; max-width: 100%; }
   --color-ink-fade: #7a7770;
   --color-rule:     #333333;
   --color-tile:     #2a2a2a;
+  --color-paper:    #2a2a2a;
   --color-burgundy: #d65a6a;
   --color-steel:    #7eafd0;
   --color-green:    #86c099;
@@ -68,6 +70,7 @@ img, svg { display: block; max-width: 100%; }
     --color-ink-fade: #7a7770;
     --color-rule:     #333333;
     --color-tile:     #2a2a2a;
+    --color-paper:    #2a2a2a;
     --color-burgundy: #d65a6a;
     --color-steel:    #7eafd0;
     --color-green:    #86c099;
@@ -3496,4 +3499,231 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   main > section[id],
   main > article > section[id],
   main > .library-leaf-page section[id] { scroll-margin-top: 2.5rem; }
+}
+
+/* ============================================================================
+   §42 Search modal
+   <dialog>-based modal opened by header icon or `/` keystroke. Token-driven
+   palette; fade-in only; respects prefers-reduced-motion.
+   ========================================================================== */
+
+.search-modal {
+  /* Native <dialog> centering + reset */
+  border: none;
+  padding: 0;
+  background: transparent;
+  max-width: min(900px, 95vw);
+  width: 100%;
+  max-height: min(80vh, 720px);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+.search-modal::backdrop {
+  background: color-mix(in srgb, var(--color-ink) 70%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.search-modal[open] {
+  animation: search-modal-fade-in 120ms ease-out;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-paper);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px color-mix(in srgb, var(--color-ink) 30%, transparent);
+  overflow: hidden;
+}
+
+@keyframes search-modal-fade-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-modal[open] { animation: none; }
+}
+
+.search-modal-form {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-ink-soft);
+}
+
+.search-modal-icon {
+  display: inline-flex;
+  color: var(--color-ink-soft);
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.search-modal-icon svg { width: 100%; height: 100%; }
+
+.search-modal-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+  color: var(--color-ink);
+  outline: none;
+}
+
+.search-modal-input::placeholder { color: var(--color-ink-soft); }
+
+.search-modal-esc-hint {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--color-ink-soft);
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 4px;
+  padding: 0.125rem 0.375rem;
+}
+
+.search-modal-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--color-ink-soft);
+}
+
+.search-modal-chip {
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+  background: transparent;
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  color: var(--color-ink);
+  cursor: pointer;
+}
+
+.search-modal-chip:hover,
+.search-modal-chip:focus-visible {
+  border-color: var(--color-burgundy);
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
+}
+
+.search-modal-chip.is-active {
+  background: var(--color-burgundy);
+  color: var(--color-paper);
+  border-color: var(--color-burgundy);
+}
+
+.search-modal-results {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 1.25rem;
+}
+
+.search-modal-results section {
+  margin-top: 1rem;
+}
+
+.search-modal-results section:first-child { margin-top: 0.5rem; }
+
+.search-modal-results h3 {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  margin: 0 0 0.5rem;
+}
+
+.search-modal-results ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.search-modal-result {
+  padding: 0.625rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.search-modal-result.is-active,
+.search-modal-result:hover {
+  background: color-mix(in srgb, var(--color-burgundy) 8%, transparent);
+}
+
+.search-modal-result a {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.search-modal-result-title {
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.search-modal-result-snippet {
+  font-size: 0.875rem;
+  color: var(--color-ink-soft);
+  margin-top: 0.125rem;
+  line-height: 1.45;
+}
+
+.search-modal-result-snippet mark {
+  background: color-mix(in srgb, var(--color-burgundy) 20%, transparent);
+  color: inherit;
+  padding: 0 0.125rem;
+}
+
+.search-modal-result-spoilers {
+  font-family: var(--font-ui);
+  font-size: 0.6875rem;
+  color: var(--color-ink-soft);
+  font-style: italic;
+  margin-top: 0.125rem;
+}
+
+.search-modal-empty {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--color-ink-soft);
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.search-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--color-ink-soft);
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--color-ink-soft);
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.search-modal-kbd-hints {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.search-modal-kbd-hints kbd {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  background: color-mix(in srgb, var(--color-ink-soft) 12%, transparent);
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 3px;
+  padding: 0.0625rem 0.25rem;
+  margin: 0 0.125rem;
+}
+
+@media (max-width: 600px) {
+  .search-modal-kbd-hints { display: none; }
+  .search-modal-form { padding: 0.75rem 1rem; }
+  .search-modal-filters { padding: 0.5rem 1rem; }
+  .search-modal-results { padding: 0.25rem 1rem; }
 }
