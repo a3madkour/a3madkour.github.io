@@ -1,1 +1,67 @@
-{{- /* TODO: filled in Task 2/3/4/5 */ -}}
+{{- /* Inputs: . — the home page (unused beyond context).
+       Reads data/{reading,listening,playing,watching}.yaml. */ -}}
+
+{{- /* Per-row config: yaml file, active status, verb label, library section slug. */ -}}
+{{- $rowConfigs := slice
+    (dict "data" "reading"   "status" "reading"   "verb" "reading"      "section" "reading")
+    (dict "data" "listening" "status" "listening" "verb" "listening to" "section" "listening")
+    (dict "data" "playing"   "status" "playing"   "verb" "playing"      "section" "playing")
+    (dict "data" "watching"  "status" "watching"  "verb" "watching"     "section" "watching")
+-}}
+
+{{- /* Build candidate rows: pick the most-recently-modified active item per row. */ -}}
+{{- $rows := slice -}}
+{{- $allLastMod := slice -}}
+{{- range $rowConfigs -}}
+  {{- $items := (index site.Data .data).items | default slice -}}
+  {{- $active := where $items "status" .status -}}
+  {{- if $active -}}
+    {{- $sorted := sort $active "last_modified" "desc" -}}
+    {{- $top := index $sorted 0 -}}
+    {{- $rows = $rows | append (dict "item" $top "verb" .verb "section" .section) -}}
+    {{- $allLastMod = $allLastMod | append $top.last_modified -}}
+  {{- end -}}
+{{- end -}}
+
+{{- if $rows -}}
+  {{- /* Compute max(last_modified) across the rows shown. */ -}}
+  {{- $sortedMod := sort $allLastMod "value" "desc" -}}
+  {{- $maxModRaw := index $sortedMod 0 -}}
+  {{- $maxMod := $maxModRaw -}}
+  {{- if (strings.Contains (printf "%T" $maxModRaw) "string") -}}
+    {{- $extracted := (index (findRE "\\d{4}-\\d{2}-\\d{2}" (printf "%v" $maxModRaw)) 0) -}}
+    {{- $maxMod = (printf "%sT00:00:00Z" $extracted | time.AsTime) -}}
+  {{- end -}}
+
+<section class="home-currently" data-active-count="{{ len $rows }}">
+  <div class="home-currently-label">
+    <span class="home-currently-pulse" aria-hidden="true"></span>
+    <span class="home-currently-lead">Currently</span>
+    <span class="home-currently-timestamp">last modified {{ $maxMod.Format "Jan 2" }}</span>
+  </div>
+  {{- range $rows -}}
+    {{- $it := .item -}}
+    {{- $href := "" -}}
+    {{- with $it.note_slug -}}
+      {{- $href = printf "/garden/%s/" . | relURL -}}
+    {{- else -}}
+      {{- $href = $it.canonical_url | default "" -}}
+    {{- end -}}
+    <div class="home-now-line">
+      <span class="verb">{{ .verb }}</span>
+      <span class="what">
+        {{- if $href -}}
+          <a href="{{ $href }}"><em>{{ $it.title }}</em></a>
+        {{- else -}}
+          <em>{{ $it.title }}</em>
+        {{- end -}}
+        {{- with $it.creator }} <span class="by">— {{ . }}</span>{{ end -}}
+        {{- if and (eq ($it.spoiler_level | default "") "heavy") $it.note_slug -}}
+          <span class="spoiler"> (spoilers in notes)</span>
+        {{- end -}}
+      </span>
+      <a class="all-link" href="{{ printf "/library/%s/" .section | relURL }}">all {{ .verb }} →</a>
+    </div>
+  {{- end -}}
+</section>
+{{- end -}}
