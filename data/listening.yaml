@@ -1,0 +1,68 @@
+# Listening list fixture. ≥1 track for format dim to render.
+items:
+  - slug: koyaanisqatsi-soundtrack
+    title: Koyaanisqatsi
+    creator: Philip Glass
+    year: 1983
+    media_type: album
+    status: listening
+    started: 2026-04-20
+    last_modified: 2026-05-01
+    note_slug: koyaanisqatsi-soundtrack
+    canonical_url: "https://example.com/koyaanisqatsi"
+    preview: "Re-listening after watching the film again."
+    tags: [ambient, soundtrack]
+  - slug: lorem-album-ii
+    title: Lorem Album II
+    creator: Artist II
+    year: 2023
+    media_type: album
+    status: listening
+    started: 2026-03-12
+    last_modified: 2026-04-30
+    canonical_url: "https://example.com/lorem-album-ii"
+    preview: "Lorem ipsum dolor sit amet."
+    tags: [ambient]
+  - slug: lorem-album-iii
+    title: Lorem Album III
+    creator: Artist III
+    year: 2021
+    media_type: album
+    status: finished
+    started: 2026-01-05
+    finished: 2026-02-28
+    last_modified: 2026-03-01
+    canonical_url: "https://example.com/lorem-album-iii"
+    preview: "Lorem ipsum dolor sit amet."
+    tags: [jazz, modal]
+  - slug: lorem-track-iv
+    title: Lorem Track IV
+    creator: Artist IV
+    year: 2025
+    media_type: track
+    status: finished
+    finished: 2026-03-15
+    last_modified: 2026-03-15
+    canonical_url: "https://example.com/lorem-track-iv"
+    preview: "One repeat-play single."
+    tags: [pop]
+  - slug: lorem-album-v
+    title: Lorem Album V
+    creator: Artist V
+    year: 2018
+    media_type: album
+    status: dropped
+    started: 2025-08-01
+    finished: 2025-08-12
+    last_modified: 2025-08-13
+    canonical_url: "https://example.com/lorem-album-v"
+    preview: "Lorem ipsum dolor sit amet."
+    tags: [experimental]
+  - slug: lorem-album-vi
+    title: Lorem Album VI
+    creator: Artist VI
+    year: 2024
+    media_type: album
+    status: queued
+    last_modified: 2026-05-02
+    tags: [ambient]
