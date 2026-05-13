@@ -76,7 +76,7 @@ items:
     started: 2024-11-01
     finished: 2024-11-18
     last_modified: 2026-05-12
-    canonical_url: "https://en.wikipedia.org/wiki/The_Wonderful_Wizard_of_Oz"
+    canonical_url: "https://example.com/wizard-of-oz"
     preview: "Example notes line one. Lorem ipsum dolor sit amet."
     tags: [fiction, classic]
     extras:
@@ -91,7 +91,7 @@ items:
     started: 2025-01-04
     finished: 2025-01-22
     last_modified: 2026-05-12
-    canonical_url: "https://en.wikipedia.org/wiki/Pride_and_Prejudice"
+    canonical_url: "https://example.com/pride-and-prejudice"
     preview: "Example notes line two. Lorem ipsum dolor sit amet."
     tags: [fiction, classic]
     extras:

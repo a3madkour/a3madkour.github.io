@@ -66,7 +66,7 @@ items:
     status: finished
     finished: 2024-12-29
     last_modified: 2026-05-12
-    canonical_url: "https://en.wikipedia.org/wiki/The_General_(1926_film)"
+    canonical_url: "https://example.com/the-general"
     preview: "Example notes line one. Lorem ipsum dolor sit amet."
     tags: [silent, comedy]
     extras:
@@ -79,7 +79,7 @@ items:
     status: finished
     finished: 2025-10-31
     last_modified: 2026-05-12
-    canonical_url: "https://en.wikipedia.org/wiki/Nosferatu"
+    canonical_url: "https://example.com/nosferatu"
     preview: "Example notes line two. Lorem ipsum dolor sit amet."
     tags: [silent, horror]
     extras:

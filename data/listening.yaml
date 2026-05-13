@@ -54,7 +54,7 @@ items:
     status: finished
     finished: 2025-03-10
     last_modified: 2026-05-12
-    canonical_url: "https://en.wikipedia.org/wiki/Brandenburg_Concertos"
+    canonical_url: "https://example.com/brandenburg-concertos"
     preview: "Example notes line one. Lorem ipsum dolor sit amet."
     tags: [classical]
     extras:
@@ -67,7 +67,7 @@ items:
     status: finished
     finished: 2025-05-20
     last_modified: 2026-05-12
-    canonical_url: "https://en.wikipedia.org/wiki/The_Entertainer_(rag)"
+    canonical_url: "https://example.com/the-entertainer"
     preview: "Example notes line two. Lorem ipsum dolor sit amet."
     tags: [ragtime, classical]
     extras:
