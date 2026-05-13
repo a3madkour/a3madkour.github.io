@@ -1277,6 +1277,10 @@ The implementation plan (next step, `superpowers:writing-plans`) should organize
 - Once `data/citations.yaml` is reliable, implement the `cite` shortcode + hover-card UI
 - Once `data/notes.json` is reliable, implement the graph view (d3-force)
 - Once `data/{reading,listening,playing}.yaml` is reliable, implement library pages and homepage Currently widget
+- **Two separate publishing commands** — different cadences imply different workflows:
+  - **Garden / Library / Research publish** (runs frequently, idempotent, fast): exports notes, library yaml, and research themes/questions; meant to run on a regular cadence (daily / hourly) so the "living" surfaces stay current without ceremony. Should be safe to invoke repeatedly with no diff when nothing changed.
+  - **Essay publish** (per-post, deliberate): exports a single essay subtree (or all essays) with its assets (hero illo, figures, sidenotes, citations). Treated as a publishing event — not a continuous-export workflow. Output is reviewed before commit.
+  - Both commands share underlying ox-hugo + elisp helpers; they differ in selector (which org subtrees to export) + intended invocation frequency.
 
 ### Phase 4: Garden interaction model
 - Stacked-column retrieval (vanilla JS)

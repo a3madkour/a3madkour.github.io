@@ -151,7 +151,7 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 **Not started, in phase order:**
 
 - **About Now widget** — Phase 3-blocked (needs elisp pipeline).
-- **Phase 3 — org-mode pipeline**: elisp helpers + ox-hugo that wire real content into the fixture-shaped data files. All site fixtures exist to round-trip when this lands.
+- **Phase 3 — org-mode pipeline**: elisp helpers + ox-hugo that wire real content into the fixture-shaped data files. All site fixtures exist to round-trip when this lands. **Two separate publishing commands** required (per spec §14 Phase 3): a Garden/Library/Research publish that runs frequently and idempotently (the "living" surfaces — meant for daily/hourly cadence with no diff when nothing changed), and an Essay publish that's per-post and deliberate (treated as a publishing event with hero/figures/sidenotes/citations rolled in; output reviewed before commit).
 - **Phase 8 — Pagefind search + Lighthouse CI + final QA.**
 
 To pick up a slice: read this file + parent spec §14, run `superpowers:brainstorming` then `superpowers:writing-plans`. Confirm with the user whether the slice depends on the elisp pipeline (most do) or can build on placeholder data.
