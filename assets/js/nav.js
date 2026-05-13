@@ -46,18 +46,20 @@ window.addEventListener('DOMContentLoaded', () => {
     const triggerY = scrollY + viewHeight * 0.1;
     const atBottom = scrollY + viewHeight >= docHeight - 2;
 
-    let active = sections[0].link;
+    let activeHref = sections[0].link.getAttribute('href');
     if (atBottom) {
-      active = sections[sections.length - 1].link;
+      activeHref = sections[sections.length - 1].link.getAttribute('href');
     } else {
       for (const s of sections) {
         if (s.target.getBoundingClientRect().top + scrollY <= triggerY) {
-          active = s.link;
+          activeHref = s.link.getAttribute('href');
         }
       }
     }
 
-    sidebarLinks.forEach((a) => a.classList.toggle('is-active', a === active));
+    // Toggle by href so BOTH the rail label and the strip dot for the
+    // active section flip together — sidebarLinks holds both DOMs.
+    sidebarLinks.forEach((a) => a.classList.toggle('is-active', a.getAttribute('href') === activeHref));
   }
 
   window.addEventListener('scroll', updateActive, { passive: true });
