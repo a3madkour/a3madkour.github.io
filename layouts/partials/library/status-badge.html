@@ -1,0 +1,16 @@
+{{- /* Status badge: shape + color in row gutter.
+       Input: . is the status string ('finished' | 'reading' | 'listening' |
+       'playing' | 'watching' | 'queued' | 'abandoned' | 'dropped' | '100pct').
+       Renders an aria-labelled span with a class for color and a glyph as text. */ -}}
+{{- $glyph := "" -}}
+{{- $cls := "" -}}
+{{- $aria := . -}}
+{{- if eq . "finished" -}}     {{- $glyph = "✓" -}}{{- $cls = "b-fin" -}}
+{{- else if eq . "100pct" -}}  {{- $glyph = "★" -}}{{- $cls = "b-100" -}}{{- $aria = "100% complete" -}}
+{{- else if or (eq . "reading") (eq . "listening") (eq . "playing") (eq . "watching") -}}
+                               {{- $glyph = "▶" -}}{{- $cls = "b-act" -}}
+{{- else if eq . "queued" -}}  {{- $glyph = "↑" -}}{{- $cls = "b-queue" -}}
+{{- else if or (eq . "abandoned") (eq . "dropped") -}}
+                               {{- $glyph = "✗" -}}{{- $cls = "b-aban" -}}
+{{- end -}}
+<span class="library-status-badge {{ $cls }}" aria-label="status: {{ $aria }}">{{ $glyph }}</span>
