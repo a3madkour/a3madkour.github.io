@@ -15,7 +15,7 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence
+from typing import Sequence, cast
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_library_fixtures import parse_library_yaml  # noqa: E402
@@ -70,6 +70,7 @@ def build_ua(cfg: dict) -> str:
     return f"a3madkour-site/0.1 ({cfg.get('contact_email', 'anonymous@example.com')})"
 
 PER_SOURCE_SLEEP_MS = {"cover_url": 50, "isbn": 100, "mbid": 250}
+DEFAULT_TIMEOUT_S = 10
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv if argv is not None else sys.argv[1:])
@@ -94,27 +95,29 @@ def main(argv: Sequence[str] | None = None) -> int:
             if args.dry_run:
                 print(f"[dry-run] {slug}: fetch via {kind} → {target}")
                 continue
+            result: FetchResult | None = None
             try:
                 if kind == "cover_file":
-                    result = dispatch_cover_file(slug=slug, cover_file=value, covers_dir=COVERS_DIR)
+                    result = dispatch_cover_file(slug=slug, cover_file=cast(str, value), covers_dir=COVERS_DIR)
                 elif kind == "cover_url":
-                    result = dispatch_cover_url(slug=slug, url=value, covers_dir=COVERS_DIR, ua=ua, timeout_s=10)
+                    result = dispatch_cover_url(slug=slug, url=cast(str, value), covers_dir=COVERS_DIR, ua=ua, timeout_s=DEFAULT_TIMEOUT_S)
                 elif kind == "isbn":
-                    result = dispatch_isbn(slug=slug, isbn=value, covers_dir=COVERS_DIR, ua=ua, timeout_s=10)
+                    result = dispatch_isbn(slug=slug, isbn=cast(str, value), covers_dir=COVERS_DIR, ua=ua, timeout_s=DEFAULT_TIMEOUT_S)
                 elif kind == "mbid":
-                    result = dispatch_mbid(slug=slug, mbid=value, covers_dir=COVERS_DIR, ua=ua, timeout_s=10)
+                    result = dispatch_mbid(slug=slug, mbid=cast(str, value), covers_dir=COVERS_DIR, ua=ua, timeout_s=DEFAULT_TIMEOUT_S)
                 elif kind == "igdb_id":
-                    dispatch_igdb(slug=slug, igdb_id=value, covers_dir=COVERS_DIR, ua=ua, timeout_s=10)
+                    dispatch_igdb(slug=slug, igdb_id=cast(int, value), covers_dir=COVERS_DIR, ua=ua, timeout_s=DEFAULT_TIMEOUT_S)
                     continue
                 elif kind == "tmdb_id":
-                    dispatch_tmdb(slug=slug, tmdb_id=value, covers_dir=COVERS_DIR, ua=ua, timeout_s=10)
+                    dispatch_tmdb(slug=slug, tmdb_id=cast(int, value), covers_dir=COVERS_DIR, ua=ua, timeout_s=DEFAULT_TIMEOUT_S)
                     continue
             except NotImplementedError as e:
                 print(f"{slug}: {e}", file=sys.stderr)
                 rc = 1
                 continue
-            if not result.cached:
-                print(f"{slug}: {result.error}", file=sys.stderr)
+            if result is None or not result.cached:
+                if result is not None:
+                    print(f"{slug}: {result.error}", file=sys.stderr)
                 rc = 1
                 continue
             if result.sha256:
@@ -137,7 +140,7 @@ MEDIA_TO_ID_KEY = {
     "series": ("tmdb_id", "tmdb_id"),
 }
 
-def pick_source(item: dict) -> tuple[str, object] | None:
+def pick_source(item: dict) -> tuple[str, str | int] | None:
     extras = item.get("extras") or {}
     if "cover_file" in extras and extras["cover_file"]:
         return ("cover_file", extras["cover_file"])
