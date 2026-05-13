@@ -27,6 +27,10 @@ window.addEventListener('DOMContentLoaded', () => {
   const sidebarLinks = document.querySelectorAll('.page-sidebar a[href^="#"]');
   if (sidebarLinks.length === 0) return;
 
+  // Active zone is the top 10% of viewport. A section "becomes active"
+  // once its top edge crosses into that band — so clicking an anchor
+  // (which scrolls the target's top to y=0) lands the clicked section
+  // in the active zone, not the section after it.
   const sectionObserver = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (!entry.isIntersecting) return;
@@ -35,7 +39,7 @@ window.addEventListener('DOMContentLoaded', () => {
         a.classList.toggle('is-active', a.getAttribute('href') === `#${id}`);
       });
     });
-  }, { rootMargin: '-30% 0px -60% 0px' });
+  }, { rootMargin: '0px 0px -90% 0px' });
 
   sidebarLinks.forEach((a) => {
     const target = document.querySelector(a.getAttribute('href'));
