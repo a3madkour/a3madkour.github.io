@@ -1,6 +1,6 @@
 {{ define "main" }}
 {{ partial "garden/path-log.html" . }}
-<div class="garden-stack" data-stack-root="true" data-pagefind-meta="section:garden,date:{{ .Date.Format "2006-01-02" }}">
+<div class="garden-stack" data-stack-root="true" data-pagefind-meta="section:garden,growth_stage:{{ .Params.growth_stage }},flavor:{{ with .Params.media_type }}{{ if in (slice "book" "album" "track" "game" "film" "series") . }}media{{ else if in (slice "paper" "video" "article" "talk") . }}reference{{ else }}concept{{ end }}{{ else }}concept{{ end }}">
   <div class="garden-stack-columns">
     <article class="garden-column is-active reading-column garden-note" data-slug="{{ path.Base .File.Dir }}">
       {{ partial "garden/note-header.html" . }}

@@ -37,7 +37,7 @@
   {{- $tagValues = $tagValues | append .name -}}
 {{- end -}}
 
-<main class="library-leaf-page" data-library-page="listening" data-pagefind-meta="section:library,medium:album">
+<main class="library-leaf-page" data-library-page="listening" data-pagefind-meta="section:library,medium:album,status:listening">
   {{- $sections := slice -}}
   {{- if $active -}}
     {{- $sections = $sections | append (dict "id" "currently-active" "label" "Now") -}}

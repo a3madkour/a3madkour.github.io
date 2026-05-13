@@ -49,6 +49,9 @@ class TestSectionFromPath(unittest.TestCase):
     def test_about(self):
         self.assertEqual(section_from_path("/about/"), "about")
 
+    def test_blog(self):
+        self.assertEqual(section_from_path("/blog/"), "blog")
+
 
 class TestParseMeta(unittest.TestCase):
     def test_extracts_section_key(self):
@@ -66,6 +69,19 @@ class TestParseMeta(unittest.TestCase):
         meta = parse_meta(html)
         self.assertEqual(meta.get("section"), "essays")
         self.assertEqual(meta.get("medium"), "book")
+
+    def test_extracts_unquoted_value(self):
+        # Hugo's minifier emits unquoted attrs for simple values:
+        # data-pagefind-meta=section:home  (no surrounding quotes)
+        html = '<article data-pagefind-meta=section:home>x</article>'
+        meta = parse_meta(html)
+        self.assertEqual(meta.get("section"), "home")
+
+    def test_extracts_unquoted_multikey_value(self):
+        html = '<article data-pagefind-meta=section:works,medium:game>x</article>'
+        meta = parse_meta(html)
+        self.assertEqual(meta.get("section"), "works")
+        self.assertEqual(meta.get("medium"), "game")
 
 
 class TestValidatePage(unittest.TestCase):
