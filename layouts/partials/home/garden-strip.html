@@ -1,8 +1,8 @@
 {{- /* Inputs: . — the home page (unused beyond context).
        Top 6 most-recently-tended garden notes (any flavor).
-       Emits an inner div carrying the .home-garden-strip class for
-       size-scoping the reused garden tile; the outer <section id="research">
-       wrapper + heading live in layouts/home.html. */ -}}
+       Emits its own block (header + tile grid) — sits as the other
+       half of the 2-col Research section in layouts/home.html.
+       The .home-garden-strip class also size-scopes the reused tile. */ -}}
 
 {{- $notes := where site.RegularPages "Section" "garden" -}}
 {{- $notes = where $notes "Draft" false -}}
@@ -13,6 +13,10 @@
 
 {{- if $picks -}}
 <div class="home-garden-strip">
+  <header class="home-strip-header">
+    <h2>From the Garden</h2>
+    <a class="home-strip-all" href="{{ "/garden/" | relURL }}">Browse →</a>
+  </header>
   <div class="home-garden-grid">
     {{- range $picks -}}
       {{ partial "garden/note-tile.html" (dict "page" .) }}

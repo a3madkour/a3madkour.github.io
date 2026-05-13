@@ -3324,6 +3324,16 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 .home-garden-strip .garden-tile .tile-title { font-size: 0.88rem; line-height: 1.25; }
 .home-garden-strip .garden-tile .tile-meta { font-size: 0.62rem; }
 
+.home-research-section {
+  padding: 3rem 0 2.5rem;
+  border-bottom: 1px solid var(--color-rule);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+/* Inside the narrower 50% column, stack the question cards. */
+.home-research-section .home-research-questions { grid-template-columns: 1fr; gap: 1.25rem; }
+
 .home-studio-strip { padding: 3rem 0 2.5rem; }
 .home-studio-list { display: flex; flex-direction: column; gap: 0.55rem; }
 .home-work-row {
@@ -3383,7 +3393,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   .home-now-line { grid-template-columns: 90px 1fr; }
   .home-now-line .all-link { display: none; }
   .home-research-questions { grid-template-columns: 1fr; }
-  .home-two-col { grid-template-columns: 1fr; }
+  .home-research-section { grid-template-columns: 1fr; }
   .home-garden-grid { grid-template-columns: 1fr; }
 }
 
