@@ -143,6 +143,20 @@ def dispatch_mbid(*, slug: str, mbid: str, covers_dir: Path, ua: str, timeout_s:
                        cached=result.cached, error=result.error, sha256=result.sha256)
 
 
+def dispatch_igdb(*, slug: str, igdb_id: int, covers_dir: Path, ua: str, timeout_s: int) -> FetchResult:
+    raise NotImplementedError(
+        f"IGDB live fetch requires IGDB_CLIENT_ID + IGDB_CLIENT_SECRET; "
+        f"rerun when wired (slug={slug}, igdb_id={igdb_id})"
+    )
+
+
+def dispatch_tmdb(*, slug: str, tmdb_id: int, covers_dir: Path, ua: str, timeout_s: int) -> FetchResult:
+    raise NotImplementedError(
+        f"TMDB live fetch requires TMDB_API_KEY; "
+        f"rerun when wired (slug={slug}, tmdb_id={tmdb_id})"
+    )
+
+
 LEAVES = ("reading", "listening", "playing", "watching")
 
 def load_leaf(leaf: str) -> list[dict]:

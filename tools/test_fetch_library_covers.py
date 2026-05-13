@@ -216,5 +216,19 @@ class CoverArtArchiveDispatchTests(unittest.TestCase):
             self.assertEqual(result.kind, "mbid")
 
 
+class StubDispatchTests(unittest.TestCase):
+    def test_igdb_raises_not_implemented(self):
+        with self.assertRaises(NotImplementedError) as cm:
+            fc.dispatch_igdb(slug="x", igdb_id=1942,
+                             covers_dir=Path("/tmp"), ua="ua", timeout_s=10)
+        self.assertIn("IGDB_CLIENT_ID", str(cm.exception))
+
+    def test_tmdb_raises_not_implemented(self):
+        with self.assertRaises(NotImplementedError) as cm:
+            fc.dispatch_tmdb(slug="x", tmdb_id=95396,
+                             covers_dir=Path("/tmp"), ua="ua", timeout_s=10)
+        self.assertIn("TMDB_API_KEY", str(cm.exception))
+
+
 if __name__ == "__main__":
     unittest.main()
