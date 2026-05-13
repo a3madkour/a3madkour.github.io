@@ -17,7 +17,6 @@ from check_pagefind_meta import (
     parse_meta,
     section_from_path,
     validate_page,
-    PagefindMetaError,
 )
 
 

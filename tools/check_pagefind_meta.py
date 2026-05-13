@@ -41,10 +41,6 @@ SKIP_FILES = [
 ]
 
 
-class PagefindMetaError(Exception):
-    pass
-
-
 def parse_meta(html: str) -> dict:
     """Extract data-pagefind-meta="..." kv pairs from the first occurrence."""
     m = re.search(r'data-pagefind-meta\s*=\s*"([^"]*)"', html)
@@ -94,7 +90,7 @@ def validate_page(file: Path, public: Path) -> list:
     html = file.read_text(encoding="utf-8", errors="replace")
 
     errors = []
-    if not re.search(r"<main[^>]*\bdata-pagefind-body\b", html):
+    if not re.search(r'<main[^>]*\sdata-pagefind-body(?=[\s>=])', html):
         errors.append(f"{url}: missing data-pagefind-body on <main>")
 
     meta = parse_meta(html)
