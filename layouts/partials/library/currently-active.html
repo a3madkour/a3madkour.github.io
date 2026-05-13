@@ -3,7 +3,7 @@
        Layout: 1 → full width; 2-3 → 2-col grid (data-active-count). */ -}}
 {{- $items := .items -}}
 {{- if $items -}}
-<section class="library-currently" data-active-count="{{ len $items }}">
+<section id="currently-active" class="library-currently" data-active-count="{{ len $items }}">
   <header class="library-section-rule">Currently active</header>
   <div class="library-currently-grid">
     {{- range $items -}}

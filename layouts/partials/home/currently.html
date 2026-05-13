@@ -33,7 +33,7 @@
     {{- $maxMod = (printf "%sT00:00:00Z" $extracted | time.AsTime) -}}
   {{- end -}}
 
-<section class="home-currently" data-active-count="{{ len $rows }}">
+<section id="currently" class="home-currently" data-active-count="{{ len $rows }}">
   <div class="home-currently-label">
     <span class="home-currently-pulse" aria-hidden="true"></span>
     <span class="home-currently-lead">Currently</span>

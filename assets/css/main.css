@@ -3319,11 +3319,24 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   grid-template-columns: 1fr 1fr;
   gap: 0.6rem;
 }
-/* Scope size reduction to the homepage strip only. */
-.home-garden-strip .garden-tile { padding: 0.7rem 0.85rem; }
-.home-garden-strip .garden-tile .tile-title { font-size: 0.88rem; line-height: 1.25; }
-.home-garden-strip .garden-tile .tile-meta { font-size: 0.62rem; }
+/* Lighter size scoping on the homepage tile vs. the /garden/ index. */
+.home-garden-strip .garden-tile { padding: 0.95rem 1.05rem; }
+.home-garden-strip .garden-tile .tile-title { font-size: 0.95rem; line-height: 1.3; }
+.home-garden-strip .garden-tile .tile-meta { font-size: 0.7rem; }
+/* Roomier vertical gap between the 2-col rows of homepage tiles. */
+.home-garden-strip .home-garden-grid { gap: 0.85rem; }
 
+.home-research-section {
+  padding: 4rem 0 4rem;
+  border-bottom: 1px solid var(--color-rule);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+}
+/* Inside the narrower 50% column, stack the question cards. */
+.home-research-section .home-research-questions { grid-template-columns: 1fr; gap: 1.75rem; }
+
+.home-studio-strip { padding: 3rem 0 2.5rem; }
 .home-studio-list { display: flex; flex-direction: column; gap: 0.55rem; }
 .home-work-row {
   background: var(--color-tile);
@@ -3382,6 +3395,105 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   .home-now-line { grid-template-columns: 90px 1fr; }
   .home-now-line .all-link { display: none; }
   .home-research-questions { grid-template-columns: 1fr; }
-  .home-two-col { grid-template-columns: 1fr; }
+  .home-research-section { grid-template-columns: 1fr; }
   .home-garden-grid { grid-template-columns: 1fr; }
+}
+
+/* §41 Page sidebar — vertical rotated-labels rail (desktop) +
+ * sticky horizontal dots strip (mobile).
+ * Active state driven by IntersectionObserver in assets/js/nav.js.
+ * ----------------------------------------------------------------- */
+
+.page-sidebar { font-family: var(--font-ui); }
+
+/* Desktop: rotated-label rail, fixed mid-viewport on the left margin */
+.page-sidebar--rail {
+  position: fixed;
+  top: 50%;
+  left: 1.25rem;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  z-index: 5;
+}
+.page-sidebar-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: clamp(0.9rem, 0.7rem + 0.35vw, 1.2rem);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--color-ink-soft);
+  text-decoration: none;
+  cursor: pointer;
+}
+.page-sidebar-label:hover {
+  color: var(--color-burgundy);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.page-sidebar-label.is-active {
+  color: var(--color-burgundy);
+  font-weight: 600;
+}
+.page-sidebar-label:focus-visible {
+  outline: 1px solid var(--color-burgundy);
+  outline-offset: 3px;
+}
+
+/* Mobile: horizontal dots strip, sticky just below the (non-sticky) header */
+.page-sidebar--strip {
+  display: none; /* hidden on desktop; shown in the @800 block */
+}
+.page-sidebar-dot {
+  display: block;
+  padding: 0.4rem;  /* hit-area expansion to ≥36×36 */
+  text-decoration: none;
+  position: relative;
+}
+.page-sidebar-dot::before {
+  content: "";
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-rule);
+  transition: background 0.15s, width 0.15s, height 0.15s;
+}
+.page-sidebar-dot.is-active::before {
+  background: var(--color-burgundy);
+  width: 8px;
+  height: 8px;
+}
+.page-sidebar-dot:focus-visible {
+  outline: 1px solid var(--color-burgundy);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Below 1220px the content max-width (1080px) + rail safe-zone runs out,
+ * so the rail would overlap headlines. Flip to the sticky dots strip. */
+@media (max-width: 1219px) {
+  /* Dissolve the <aside> box so the strip's containing block is <main>
+   * (full document height). Otherwise sticky has nowhere to stick within. */
+  .page-sidebar { display: contents; }
+  .page-sidebar--rail { display: none; }
+  .page-sidebar--strip {
+    display: flex;
+    justify-content: center;
+    gap: 0.85rem;
+    padding: 0.5rem 0;
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: var(--color-stone);
+    border-bottom: 1px solid var(--color-rule);
+    z-index: 5;
+  }
+  /* Push scroll-into-view targets below the sticky strip (~24px). */
+  main > section[id],
+  main > article > section[id],
+  main > .library-leaf-page section[id] { scroll-margin-top: 2.5rem; }
 }

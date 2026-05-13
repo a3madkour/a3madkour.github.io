@@ -1,15 +1,18 @@
 {{- /* Inputs: . — the home page (unused beyond context).
-       Top 6 most-recently-tended garden notes (any flavor). */ -}}
+       Top 6 most-recently-tended garden notes (any flavor).
+       Emits its own block (header + tile grid) — sits as the other
+       half of the 2-col Research section in layouts/home.html.
+       The .home-garden-strip class also size-scopes the reused tile. */ -}}
 
 {{- $notes := where site.RegularPages "Section" "garden" -}}
 {{- $notes = where $notes "Draft" false -}}
 {{- $notes = where $notes "RelPermalink" "ne" "/garden/" -}}
 {{- $notes = where $notes "RelPermalink" "ne" "/garden/graph/" -}}
 {{- $sorted := sort $notes "Params.last_modified" "desc" -}}
-{{- $picks := first 6 $sorted -}}
+{{- $picks := first 10 $sorted -}}
 
 {{- if $picks -}}
-<section class="home-garden-strip">
+<div class="home-garden-strip">
   <header class="home-strip-header">
     <h2>From the Garden</h2>
     <a class="home-strip-all" href="{{ "/garden/" | relURL }}">Browse →</a>
@@ -19,5 +22,5 @@
       {{ partial "garden/note-tile.html" (dict "page" .) }}
     {{- end -}}
   </div>
-</section>
+</div>
 {{- end -}}

@@ -40,6 +40,21 @@
 {{- end -}}
 
 <main class="library-leaf-page" data-library-page="playing">
+  {{- $sections := slice -}}
+  {{- if $active -}}
+    {{- $sections = $sections | append (dict "id" "currently-active" "label" "Now") -}}
+  {{- end -}}
+  {{- range $years -}}
+    {{- $sections = $sections | append (dict "id" . "label" .) -}}
+  {{- end -}}
+  {{- if $undated -}}
+    {{- $sections = $sections | append (dict "id" "Undated" "label" "Undated") -}}
+  {{- end -}}
+  {{- if $queued -}}
+    {{- $sections = $sections | append (dict "id" "upnext" "label" "Next") -}}
+  {{- end -}}
+  {{ partial "page-sidebar.html" (dict "sections" $sections) }}
+
   <header class="library-page-header">
     <nav class="library-breadcrumb"><a href="{{ "/library/" | relURL }}">Library</a> › Playing</nav>
     <h1 class="library-page-title">{{ .Title }}</h1>
@@ -65,7 +80,7 @@
       {{ partial "library/year-section.html" (dict "year" "Undated" "items" .) }}
     {{- end -}}
     {{- with $queued -}}
-      <section class="library-upnext">
+      <section id="upnext" class="library-upnext">
         <header class="library-section-rule">Up next</header>
         {{- range . -}}<p class="library-upnext-row"><span class="ttl">{{ .title }}</span> · {{ .creator }}{{ with .year }} · {{ . }}{{ end }}</p>{{- end -}}
       </section>

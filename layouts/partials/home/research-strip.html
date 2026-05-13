@@ -1,13 +1,15 @@
 {{- /* Inputs: . — the home page (unused beyond context).
-       Walks site.RegularPages for active research-question pages. */ -}}
+       Walks site.RegularPages for active research-question pages.
+       Emits its own block (header + questions grid) — sits as one
+       half of the 2-col Research section in layouts/home.html. */ -}}
 
 {{- $questions := where site.RegularPages "Type" "research-question" -}}
 {{- $active := where $questions "Params.status" "active" -}}
 {{- $sorted := sort $active "Params.last_modified" "desc" -}}
-{{- $picks := first 2 $sorted -}}
+{{- $picks := first 3 $sorted -}}
 
 {{- if $picks -}}
-<section class="home-research-strip">
+<div class="home-research-block">
   <header class="home-strip-header">
     <h2>What I'm chasing</h2>
     <a class="home-strip-all" href="{{ "/research/" | relURL }}">All research →</a>
@@ -40,5 +42,5 @@
       </article>
     {{- end -}}
   </div>
-</section>
+</div>
 {{- end -}}

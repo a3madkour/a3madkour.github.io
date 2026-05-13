@@ -16,6 +16,21 @@
 
 <main class="reading-column research-theme-page">
 
+  {{- $sections := slice -}}
+  {{- if or $active $dormant $answered -}}
+    {{- $sections = $sections | append (dict "id" "questions" "label" "Questions") -}}
+  {{- end -}}
+  {{- if $allOutputs -}}
+    {{- $sections = $sections | append (dict "id" "outputs" "label" "Outputs") -}}
+  {{- end -}}
+  {{- if .Params.garden_topic_ref -}}
+    {{- $sections = $sections | append (dict "id" "garden-topic" "label" "Topic") -}}
+  {{- end -}}
+  {{- if .Content -}}
+    {{- $sections = $sections | append (dict "id" "framing" "label" "Framing") -}}
+  {{- end -}}
+  {{ partial "page-sidebar.html" (dict "sections" $sections) }}
+
   <nav class="research-breadcrumb" aria-label="Breadcrumb">
     <a href="/research/">Research</a> ›
     <span aria-current="page">{{ .Title }}</span>
@@ -34,7 +49,7 @@
     {{ end }}
   </header>
 
-  <section class="three-col-questions">
+  <section id="questions" class="three-col-questions">
     {{ if $active }}
     <div class="col-active">
       <h3>Active</h3>
@@ -77,7 +92,7 @@
   </section>
 
   {{ if $allOutputs }}
-  <section class="research-outputs">
+  <section id="outputs" class="research-outputs">
     <h2>Outputs</h2>
     <ul class="outputs-list">
       {{ range sort $allOutputs "year" "desc" }}
@@ -94,7 +109,7 @@
       {{- if eq (path.Base .File.Dir) $gardenSlug -}}{{- $gardenPage = . -}}{{- end -}}
     {{- end -}}
     {{ if $gardenPage }}
-    <section class="research-garden-embed">
+    <section id="garden-topic" class="research-garden-embed">
       <h2>From the Garden</h2>
       {{ partial "garden/topic-section.html" (dict "context" $gardenPage) }}
     </section>
@@ -102,7 +117,7 @@
   {{ end }}
 
   {{ if .Content }}
-  <section class="research-theme-body">
+  <section id="framing" class="research-theme-body">
     {{ .Content }}
   </section>
   {{ end }}
