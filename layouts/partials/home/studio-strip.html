@@ -1,0 +1,79 @@
+{{- /* Inputs: . — the home page (unused beyond context).
+       Picks 1 newest of each medium + 1 newest remaining (4 rows total). */ -}}
+
+{{- $works := where site.RegularPages "Section" "works" -}}
+{{- /* Exclude umbrella + 3 sub-indexes via RelPermalink. */ -}}
+{{- $excluded := slice "/works/" "/works/games/" "/works/music/" "/works/poetry/" -}}
+{{- $allWorks := slice -}}
+{{- range $works -}}
+  {{- if not (in $excluded .RelPermalink) -}}
+    {{- $allWorks = $allWorks | append . -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* Type → medium → glyph mapping. */ -}}
+{{- $mediumMap := dict
+    "works-games"   (dict "medium" "games"   "glyph" "g-game")
+    "works-music"   (dict "medium" "music"   "glyph" "g-music")
+    "works-poetry"  (dict "medium" "poetry"  "glyph" "g-poetry") -}}
+
+{{- /* Pick newest per medium. */ -}}
+{{- $picks := slice -}}
+{{- range $type, $_ := $mediumMap -}}
+  {{- $ofType := where $allWorks "Type" $type -}}
+  {{- $ofType = sort $ofType "Params.last_modified" "desc" -}}
+  {{- with (first 1 $ofType) -}}
+    {{- $picks = $picks | append (index . 0) -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* Compute remaining = $allWorks minus picks, take 1 newest. */ -}}
+{{- $pickPerms := slice -}}
+{{- range $picks -}}{{- $pickPerms = $pickPerms | append .RelPermalink -}}{{- end -}}
+{{- $remaining := slice -}}
+{{- range $allWorks -}}
+  {{- if not (in $pickPerms .RelPermalink) -}}
+    {{- $remaining = $remaining | append . -}}
+  {{- end -}}
+{{- end -}}
+{{- $remaining = sort $remaining "Params.last_modified" "desc" -}}
+{{- with (first 1 $remaining) -}}
+  {{- $picks = $picks | append (index . 0) -}}
+{{- end -}}
+
+{{- /* Sort final picks by last_modified desc so the strip reads recency-first. */ -}}
+{{- $picks = sort $picks "Params.last_modified" "desc" -}}
+
+{{- if $picks -}}
+<section class="home-studio-strip">
+  <header class="home-strip-header">
+    <h2>Lately, in the studio</h2>
+    <a class="home-strip-all" href="{{ "/works/" | relURL }}">All works →</a>
+  </header>
+  <div class="home-studio-list">
+    {{- range $picks -}}
+      {{- $cfg := index $mediumMap .Type -}}
+      {{- $medium := $cfg.medium -}}
+      {{- $glyph := $cfg.glyph -}}
+      {{- /* Sub-line parts: medium + kind/format + year + status — drop nils. */ -}}
+      {{- $kind := .Params.game_kind | default (.Params.format | default "") -}}
+      {{- $year := .Params.year | default "" -}}
+      {{- $status := .Params.status | default "" -}}
+      {{- $subParts := slice $medium -}}
+      {{- with $kind -}}{{- $subParts = $subParts | append . -}}{{- end -}}
+      {{- with $year -}}{{- $subParts = $subParts | append (printf "%v" .) -}}{{- end -}}
+      {{- with $status -}}{{- $subParts = $subParts | append . -}}{{- end -}}
+      <a class="home-work-row" href="{{ .RelPermalink }}">
+        <span class="type-badge type-badge--{{ $medium }}" aria-hidden="true">
+          <svg width="16" height="16"><use href="#{{ $glyph }}"/></svg>
+        </span>
+        <span class="body">
+          <h5>{{ .Title }}</h5>
+          <span class="sub">{{ delimit $subParts " · " }}</span>
+        </span>
+        <span class="right">works/{{ $medium }}</span>
+      </a>
+    {{- end -}}
+  </div>
+</section>
+{{- end -}}

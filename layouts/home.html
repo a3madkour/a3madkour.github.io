@@ -1,29 +1,44 @@
 {{ define "main" }}
-{{ .Content }}
+<main class="home">
+  {{- /* Render works glyph sprite once if the studio strip will produce rows. */ -}}
+  {{- $hasWorks := where site.RegularPages "Section" "works" -}}
+  {{- $hasWorks = where $hasWorks "RelPermalink" "ne" "/works/" -}}
+  {{- $hasWorks = where $hasWorks "RelPermalink" "ne" "/works/games/" -}}
+  {{- $hasWorks = where $hasWorks "RelPermalink" "ne" "/works/music/" -}}
+  {{- $hasWorks = where $hasWorks "RelPermalink" "ne" "/works/poetry/" -}}
+  {{- if $hasWorks }}{{ partial "works/glyph-sprite.html" . }}{{ end -}}
+  {{ partial "home/hero.html" . }}
+  {{ partial "home/currently.html" . }}
 
-{{- $essays := where site.RegularPages "Section" "essays" -}}
-{{- $essays = sort $essays "Date" "desc" -}}
-{{- if $essays -}}
-  {{- $featured := false -}}
-  {{- range $essays -}}
-    {{- if and (not $featured) .Params.featured -}}{{- $featured = . -}}{{- end -}}
-  {{- end -}}
-  {{- if not $featured -}}{{- $featured = index $essays 0 -}}{{- end -}}
-  {{- $recents := first 4 (where $essays "RelPermalink" "ne" $featured.RelPermalink) -}}
-  {{- $recents = first 3 $recents -}}
+  {{- $essays := where site.RegularPages "Section" "essays" -}}
+  {{- $essays = sort $essays "Date" "desc" -}}
+  {{- if $essays -}}
+    {{- $featured := false -}}
+    {{- range $essays -}}
+      {{- if and (not $featured) .Params.featured -}}{{- $featured = . -}}{{- end -}}
+    {{- end -}}
+    {{- if not $featured -}}{{- $featured = index $essays 0 -}}{{- end -}}
+    {{- $recents := first 4 (where $essays "RelPermalink" "ne" $featured.RelPermalink) -}}
+    {{- $recents = first 3 $recents -}}
+  <section class="home-essays">
+    <header class="home-essays-header">
+      <h2>Essays</h2>
+      <a href="{{ "/essays/" | relURL }}" class="home-essays-all">All essays →</a>
+    </header>
+    <ul class="essay-grid home-essays-grid">
+      {{ partial "essay-card-featured.html" $featured }}
+      {{ range $recents }}
+        {{ partial "essay-card.html" . }}
+      {{ end }}
+    </ul>
+  </section>
+  {{- end }}
 
-<section class="home-essays">
-  <header class="home-essays-header">
-    <h2>Essays</h2>
-    <a href="{{ "/essays/" | relURL }}" class="home-essays-all">All essays →</a>
-  </header>
+  {{ partial "home/research-strip.html" . }}
 
-  <ul class="essay-grid home-essays-grid">
-    {{ partial "essay-card-featured.html" $featured }}
-    {{ range $recents }}
-      {{ partial "essay-card.html" . }}
-    {{ end }}
-  </ul>
-</section>
-{{- end }}
+  <section class="home-two-col">
+    {{ partial "home/garden-strip.html" . }}
+    {{ partial "home/studio-strip.html" . }}
+  </section>
+</main>
 {{ end }}

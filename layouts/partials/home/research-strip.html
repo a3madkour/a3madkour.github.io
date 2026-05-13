@@ -1,0 +1,44 @@
+{{- /* Inputs: . — the home page (unused beyond context).
+       Walks site.RegularPages for active research-question pages. */ -}}
+
+{{- $questions := where site.RegularPages "Type" "research-question" -}}
+{{- $active := where $questions "Params.status" "active" -}}
+{{- $sorted := sort $active "Params.last_modified" "desc" -}}
+{{- $picks := first 2 $sorted -}}
+
+{{- if $picks -}}
+<section class="home-research-strip">
+  <header class="home-strip-header">
+    <h2>What I'm chasing</h2>
+    <a class="home-strip-all" href="{{ "/research/" | relURL }}">All research →</a>
+  </header>
+  <div class="home-research-questions">
+    {{- range $picks -}}
+      {{- $themeSlug := .Params.theme | default "" -}}
+      {{- $themeTitle := "" -}}
+      {{- with $themeSlug -}}
+        {{- $themePage := site.GetPage (printf "/research/themes/%s" .) -}}
+        {{- with $themePage -}}{{- $themeTitle = .Title -}}{{- end -}}
+      {{- end -}}
+      {{- $subCount := len (.Params.sub_questions | default slice) -}}
+      {{- $noteCount := len (.Params.supporting_notes | default slice) -}}
+      {{- $framing := .Params.summary | default "" -}}
+      {{- if not $framing -}}
+        {{- $plain := .Plain | default "" -}}
+        {{- $trimmed := substr (strings.TrimSpace $plain) 0 140 -}}
+        {{- $framing = printf "%s…" $trimmed -}}
+      {{- end -}}
+      <article class="home-research-question">
+        <div class="meta">
+          <span class="dot" aria-hidden="true"></span>
+          <strong class="status">active</strong>
+          {{- with $themeTitle }} <span class="theme">{{ . }}</span>{{ end -}}
+          <span class="counts">· {{ $subCount }} sub-question{{ if ne $subCount 1 }}s{{ end }} · {{ $noteCount }} garden note{{ if ne $noteCount 1 }}s{{ end }}</span>
+        </div>
+        <h4><a href="{{ .RelPermalink }}">{{ .Title }}</a></h4>
+        <p class="framing">{{ $framing }}</p>
+      </article>
+    {{- end -}}
+  </div>
+</section>
+{{- end -}}

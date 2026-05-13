@@ -3133,3 +3133,255 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   .library-row { grid-template-columns: 1.5rem 1fr; }
   .library-row .library-glyph-block { display: none; }
 }
+
+/* §38 Home hero — name + lede + mark SVG
+ * Replaces the old single-role-line homepage with a 2-column hero.
+ * Mobile drops to single column and hides the mark.
+ * ----------------------------------------------------------------- */
+.home-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 720px) 1fr;
+  gap: 3rem;
+  align-items: end;
+  padding: 4rem 0 2.5rem;
+  border-bottom: 1px solid var(--color-rule);
+}
+.home-hero h1 {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 3.2rem;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 0 0 1rem;
+  color: var(--color-ink);
+}
+.home-hero-lede {
+  font-family: var(--font-body);
+  font-size: 1.15rem;
+  line-height: 1.55;
+  color: var(--color-ink-soft);
+  max-width: 640px;
+  margin: 0;
+}
+.home-hero-mark {
+  color: var(--color-burgundy);
+  opacity: 0.85;
+  align-self: end;
+  margin-bottom: 0.5rem;
+}
+
+/* §39 Home Currently widget — pulse-row label + 1–4 now-lines
+ * Each row: verb (gray) | what (linked italic title) | all-link (steel)
+ * Empty rows are filtered server-side; widget hides entirely when 0 rows.
+ * ----------------------------------------------------------------- */
+.home-currently {
+  padding: 1.5rem 0;
+  border-bottom: 1px solid var(--color-rule);
+}
+.home-currently-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+  font-family: var(--font-ui);
+}
+.home-currently-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-burgundy);
+}
+.home-currently-lead {
+  font-size: 0.72rem;
+  color: var(--color-burgundy);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+.home-currently-timestamp {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--color-ink-soft);
+}
+.home-now-line {
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed var(--color-rule);
+  display: grid;
+  grid-template-columns: 105px 1fr auto;
+  gap: 1rem;
+  align-items: baseline;
+  font-size: 0.95rem;
+}
+.home-now-line:last-child { border-bottom: none; }
+.home-now-line .verb {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--color-ink-soft);
+}
+.home-now-line .what em { font-style: italic; }
+.home-now-line .what .by {
+  color: var(--color-ink-soft);
+  font-size: 0.88rem;
+}
+.home-now-line .what .spoiler { color: var(--color-burgundy); font-size: 0.88rem; }
+.home-now-line .all-link {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  color: var(--color-steel);
+  text-decoration: none;
+}
+.home-now-line .all-link:hover { text-decoration: underline; }
+
+/* §40 Home strips — Research, Garden, Studio + shared strip chrome
+ * Research strip = 2-col grid of question cards w/ burgundy left rail.
+ * Garden+Studio = 2-col block. Mobile collapses both to single column.
+ * .home-garden-strip scopes a size reduction onto the reused .garden-tile.
+ * ----------------------------------------------------------------- */
+.home-strip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1.5rem;
+}
+.home-strip-header h2 {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 1.55rem;
+  letter-spacing: -0.01em;
+  color: var(--color-ink);
+  margin: 0;
+}
+.home-strip-all {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--color-steel);
+  text-decoration: none;
+}
+.home-strip-all:hover { text-decoration: underline; }
+
+.home-research-strip {
+  padding: 3rem 0 2.5rem;
+  border-bottom: 1px solid var(--color-rule);
+}
+.home-research-questions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem 2rem;
+}
+.home-research-question {
+  border-left: 3px solid var(--color-burgundy);
+  padding: 0.4rem 0 0.4rem 1.25rem;
+}
+.home-research-question .meta {
+  display: flex;
+  gap: 0.7rem;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  color: var(--color-ink-soft);
+  margin-bottom: 0.3rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.home-research-question .meta .dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-burgundy);
+}
+.home-research-question .meta .status { color: var(--color-burgundy); font-weight: 600; }
+.home-research-question h4 {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 1.1rem;
+  line-height: 1.3;
+  margin: 0 0 0.3rem;
+}
+.home-research-question h4 a { color: var(--color-ink); text-decoration: none; }
+.home-research-question h4 a:hover { color: var(--color-burgundy); text-decoration: underline; }
+.home-research-question .framing {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--color-ink-soft);
+  max-width: 640px;
+  margin: 0;
+}
+
+.home-two-col {
+  padding: 3rem 0 2.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.home-garden-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+/* Scope size reduction to the homepage strip only. */
+.home-garden-strip .garden-tile { padding: 0.7rem 0.85rem; }
+.home-garden-strip .garden-tile .tile-title { font-size: 0.88rem; line-height: 1.25; }
+.home-garden-strip .garden-tile .tile-meta { font-size: 0.62rem; }
+
+.home-studio-list { display: flex; flex-direction: column; gap: 0.55rem; }
+.home-work-row {
+  background: var(--color-tile);
+  border: 1px solid var(--color-rule);
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.85rem;
+  align-items: center;
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+.home-work-row:hover { border-color: var(--color-burgundy); }
+.home-work-row .type-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--color-stone);
+}
+.home-work-row .type-badge svg { width: 16px; height: 16px; }
+.type-badge--games  { background: linear-gradient(135deg, var(--color-steel),
+                       color-mix(in srgb, var(--color-steel) 60%, var(--color-burgundy))); }
+.type-badge--music  { background: linear-gradient(135deg,
+                       color-mix(in srgb, var(--color-steel) 70%, var(--color-burgundy)),
+                       var(--color-burgundy)); }
+.type-badge--poetry { background: linear-gradient(135deg, var(--color-burgundy),
+                       var(--color-steel)); }
+.home-work-row .body h5 {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin: 0 0 0.15rem;
+  color: var(--color-ink);
+}
+.home-work-row .body .sub {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  color: var(--color-ink-soft);
+}
+.home-work-row .right {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  color: var(--color-ink-soft);
+  white-space: nowrap;
+}
+
+@media (max-width: 800px) {
+  .home-hero { grid-template-columns: 1fr; gap: 1.5rem; }
+  .home-hero h1 { font-size: 2.2rem; }
+  .home-hero-mark { display: none; }
+  .home-now-line { grid-template-columns: 90px 1fr; }
+  .home-now-line .all-link { display: none; }
+  .home-research-questions { grid-template-columns: 1fr; }
+  .home-two-col { grid-template-columns: 1fr; }
+  .home-garden-grid { grid-template-columns: 1fr; }
+}
