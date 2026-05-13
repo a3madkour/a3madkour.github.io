@@ -229,7 +229,7 @@ def lint_yaml_file(file_name: str, text: str) -> list[str]:
                 errors.append(f"{prefix}: extras must be a mapping")
             elif isinstance(mt, str):
                 allowed = ALLOWED_EXTRAS.get(mt, set())
-                for k, v in extras.items():
+                for k in extras:
                     if k not in allowed:
                         errors.append(f"{prefix}: extras.{k} not allowed for media_type '{mt}'")
                 if "progress_pct" in extras:

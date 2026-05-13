@@ -10,7 +10,6 @@ Exits 0 on all-pass, 1 on any violation. Stdlib only.
 """
 from __future__ import annotations
 
-import re
 import sys
 from pathlib import Path
 
