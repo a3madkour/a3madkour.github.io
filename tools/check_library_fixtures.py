@@ -19,8 +19,10 @@ from check_fixtures import parse_scalar  # noqa: E402
 
 ITEM_START_RE = re.compile(r"^  - ([a-zA-Z_]+):\s*(.*)$")
 ITEM_FIELD_RE = re.compile(r"^    ([a-zA-Z_]+):\s*(.*)$")
-NESTED_HEADER_RE = re.compile(r"^    ([a-zA-Z_]+):\s*$")
 NESTED_FIELD_RE = re.compile(r"^      ([a-zA-Z_]+):\s*(.*)$")
+# Only these item-level fields open a nested mapping when their value is empty.
+# All other empty-value item fields parse to None.
+NESTED_BLOCK_FIELDS = {"extras"}
 
 
 def _scalar(value: str) -> object:
@@ -72,14 +74,6 @@ def parse_library_yaml(text: str) -> list[dict[str, object]]:
             current[field] = _scalar(value)
             continue
 
-        m_nested_hdr = NESTED_HEADER_RE.match(raw)
-        if m_nested_hdr and current is not None:
-            if nested_key is not None and nested is not None:
-                current[nested_key] = nested
-            nested_key = m_nested_hdr.group(1)
-            nested = {}
-            continue
-
         m_nested = NESTED_FIELD_RE.match(raw)
         if m_nested and nested is not None:
             field, value = m_nested.group(1), m_nested.group(2).strip()
@@ -88,12 +82,19 @@ def parse_library_yaml(text: str) -> list[dict[str, object]]:
 
         m_field = ITEM_FIELD_RE.match(raw)
         if m_field and current is not None:
-            if nested_key is not None and nested is not None:
-                current[nested_key] = nested
-                nested_key = None
-                nested = None
             field, value = m_field.group(1), m_field.group(2).strip()
-            current[field] = _scalar(value)
+            if value == "" and field in NESTED_BLOCK_FIELDS:
+                # Open a nested mapping (e.g., extras: <newline> 6-space fields).
+                if nested_key is not None and nested is not None:
+                    current[nested_key] = nested
+                nested_key = field
+                nested = {}
+            else:
+                if nested_key is not None and nested is not None:
+                    current[nested_key] = nested
+                    nested_key = None
+                    nested = None
+                current[field] = _scalar(value) if value else None
             continue
 
     if current is not None:
@@ -138,28 +139,33 @@ DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 ACTIVE_STATUSES = {"reading", "listening", "playing", "watching"}
 
 
-def _check_date(label: str, value: object) -> str | None:
+def _check_date(prefix: str, field: str, value: object) -> str | None:
     if value is None:
         return None
     # parse_scalar converts valid YYYY-MM-DD strings to datetime.date objects
     if isinstance(value, Date):
         return None
     if not isinstance(value, str) or not DATE_RE.match(value):
-        return f"{label}: not YYYY-MM-DD ('{value}')"
+        return f"{prefix}: {field} not YYYY-MM-DD ('{value}')"
     return None
 
 
-def lint_yaml_file(file_name: str, text: str) -> list[str]:
+def lint_yaml_file(file_name: str, text: str) -> tuple[list[str], list[str]]:
+    """Validate one library yaml file.
+
+    Returns (errors, warnings). Errors fail CI; warnings print to stderr only.
+    """
     errors: list[str] = []
+    warnings: list[str] = []
     if file_name not in ALLOWED_MEDIA_TYPES:
-        return [f"{file_name}: unknown library file"]
+        return [f"{file_name}: unknown library file"], []
 
     media_allow = ALLOWED_MEDIA_TYPES[file_name]
     status_allow = ALLOWED_STATUSES[file_name]
     items = parse_library_yaml(text)
 
     if not items:
-        return [f"{file_name}: no items parsed"]
+        return [f"{file_name}: no items parsed"], []
 
     seen_slugs: set[str] = set()
     active_count = 0
@@ -178,7 +184,9 @@ def lint_yaml_file(file_name: str, text: str) -> list[str]:
             errors.append(f"{prefix}: unknown field '{f}'")
 
         slug = item.get("slug")
-        if isinstance(slug, str):
+        if slug is not None and not isinstance(slug, str):
+            errors.append(f"{prefix}: slug must be a string, got {type(slug).__name__}")
+        elif isinstance(slug, str):
             if not SLUG_RE.match(slug):
                 errors.append(f"{prefix}: slug '{slug}' not kebab-case")
             if slug in seen_slugs:
@@ -200,9 +208,9 @@ def lint_yaml_file(file_name: str, text: str) -> list[str]:
             active_count += 1
 
         for date_field in ("started", "finished", "last_modified"):
-            err = _check_date(f"{prefix}: {date_field}", item.get(date_field))
+            err = _check_date(prefix, date_field, item.get(date_field))
             if err:
-                errors.append(err.replace("not YYYY-MM-DD", f"{date_field} not YYYY-MM-DD"))
+                errors.append(err)
 
         if status == "finished" and item.get("finished") in (None, ""):
             errors.append(f"{prefix}: finished date required when status='finished'")
@@ -243,27 +251,32 @@ def lint_yaml_file(file_name: str, text: str) -> list[str]:
                         errors.append(f"{prefix}: current_episode ({ce}) > episode_count ({ec})")
 
     if active_count > 3:
-        errors.append(f"{file_name}: warning — {active_count} active items, expected ≤3 in currently-active highlight")
+        warnings.append(f"{file_name}: {active_count} active items, expected ≤3 in currently-active highlight")
 
-    return errors
+    return errors, warnings
 
 
-def run(repo_root: Path) -> tuple[int, list[str]]:
+def run(repo_root: Path) -> tuple[int, list[str], list[str]]:
     all_errs: list[str] = []
+    all_warns: list[str] = []
     data_dir = repo_root / "data"
     for fname in sorted(ALLOWED_MEDIA_TYPES.keys()):
         path = data_dir / fname
         if not path.exists():
             continue
-        all_errs.extend(lint_yaml_file(fname, path.read_text()))
-    return (1 if all_errs else 0), all_errs
+        errs, warns = lint_yaml_file(fname, path.read_text())
+        all_errs.extend(errs)
+        all_warns.extend(warns)
+    return (1 if all_errs else 0), all_errs, all_warns
 
 
 def main() -> int:
     repo_root = Path(__file__).resolve().parent.parent
-    rc, errs = run(repo_root)
+    rc, errs, warns = run(repo_root)
     for e in errs:
         print(e, file=sys.stderr)
+    for w in warns:
+        print(f"warning: {w}", file=sys.stderr)
     if rc == 0:
         print("check_library_fixtures: OK")
     return rc

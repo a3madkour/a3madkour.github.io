@@ -71,6 +71,9 @@ class ValidatorTests(unittest.TestCase):
         self.maxDiff = None
 
     def _run(self, file_name: str, text: str) -> list[str]:
+        return lint.lint_yaml_file(file_name, text)[0]
+
+    def _run_with_warnings(self, file_name: str, text: str) -> tuple[list[str], list[str]]:
         return lint.lint_yaml_file(file_name, text)
 
     def test_valid_reading_passes(self):
@@ -207,6 +210,91 @@ items:
 """
         errs = self._run("reading.yaml", text)
         self.assertTrue(any("last_modified" in e and "YYYY-MM-DD" in e for e in errs), errs)
+        # Field name should appear once, not twice (regression check).
+        date_errs = [e for e in errs if "YYYY-MM-DD" in e]
+        for e in date_errs:
+            self.assertEqual(e.count("last_modified"), 1, f"field name doubled: {e!r}")
+
+    def test_integer_slug_rejected(self):
+        # Regression: int slug used to silently bypass all validation.
+        text = """\
+items:
+  - slug: 123
+    title: X
+    creator: Y
+    year: 2020
+    media_type: book
+    status: queued
+    last_modified: 2026-02-11
+    tags: []
+"""
+        errs = self._run("reading.yaml", text)
+        self.assertTrue(any("slug must be a string" in e for e in errs), errs)
+
+    def test_empty_value_field_parses_to_none(self):
+        # Regression: bare `started:` used to produce {} (a nested dict)
+        # because NESTED_HEADER_RE matched first. Now only `extras:` opens
+        # a nested mapping; other empty values become None.
+        items = lint.parse_library_yaml("""\
+items:
+  - slug: t
+    title: T
+    creator: X
+    year: 2020
+    media_type: book
+    status: queued
+    started:
+    last_modified: 2026-04-22
+    tags: []
+""")
+        self.assertEqual(len(items), 1)
+        self.assertIs(items[0]["started"], None)
+        self.assertEqual(items[0]["last_modified"].isoformat(), "2026-04-22")
+
+    def test_active_count_over_3_emits_warning_not_error(self):
+        # Spec §3.7: 4+ active is "not currently expected" but not a violation.
+        text = """\
+items:
+  - slug: a
+    title: A
+    creator: X
+    year: 2020
+    media_type: book
+    status: reading
+    started: 2025-12-15
+    last_modified: 2026-04-22
+    tags: []
+  - slug: b
+    title: B
+    creator: X
+    year: 2020
+    media_type: book
+    status: reading
+    started: 2025-12-15
+    last_modified: 2026-04-22
+    tags: []
+  - slug: c
+    title: C
+    creator: X
+    year: 2020
+    media_type: book
+    status: reading
+    started: 2025-12-15
+    last_modified: 2026-04-22
+    tags: []
+  - slug: d
+    title: D
+    creator: X
+    year: 2020
+    media_type: book
+    status: reading
+    started: 2025-12-15
+    last_modified: 2026-04-22
+    tags: []
+"""
+        errors, warnings = self._run_with_warnings("reading.yaml", text)
+        self.assertEqual(errors, [])
+        self.assertTrue(any("4 active items" in w for w in warnings), warnings)
 
 
 if __name__ == "__main__":
