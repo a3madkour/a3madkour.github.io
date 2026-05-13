@@ -124,14 +124,15 @@ function isMobile() {
 // larger badge". Featured nodes get a 72-px badge with a 40-px glyph;
 // regular nodes get a 52-px badge with a 30-px glyph. The spec §3.4 calls
 // these out explicitly.
-const BADGE_REGULAR = 52;
-const BADGE_FEATURED = 72;
-const GLYPH_REGULAR = 30;
-const GLYPH_FEATURED = 40;
+const BADGE_REGULAR = 36;
+const BADGE_FEATURED = 48;
+const GLYPH_REGULAR = 20;
+const GLYPH_FEATURED = 28;
 function badgeSize(featured) { return featured ? BADGE_FEATURED : BADGE_REGULAR; }
 function glyphSize(featured) { return featured ? GLYPH_FEATURED : GLYPH_REGULAR; }
-// Collide radius for the simulation — half the badge size plus a small gap.
-function nodeRadius(featured) { return badgeSize(featured) / 2 + 4; }
+// Collide radius for the simulation — half the badge size plus a generous gap.
+// The gap (not the badge size) is what actually pushes nodes apart visually.
+function nodeRadius(featured) { return badgeSize(featured) / 2 + 38; }
 
 function parseData() {
   const el = document.getElementById('works-graph-data');
@@ -303,13 +304,14 @@ async function buildSimulation(canvas) {
       if (d.__reheated && !reducedMotion()) sim.alphaTarget(0);
       const dx = d.fx - d.__startX;
       const dy = d.fy - d.__startY;
-      if ((dx * dx + dy * dy) > 9) {
-        d.wasDragged = true;
+      const moved = (dx * dx + dy * dy) > 9;
+      const shouldPin = moved && event.sourceEvent && event.sourceEvent.shiftKey;
+      if (moved) d.wasDragged = true;
+      if (shouldPin) {
         state.pinnedSlugs.add(d.slug);
       } else {
-        // Pure click — release any pin (either the one we just set in 'start'
-        // for an un-dragged node, or a pin from a previous drag if the user
-        // is now clicking the same node without moving).
+        // Plain drag (no Shift) OR pure click — release any pin. Shift+drag is
+        // the opt-in gesture for "place this node and keep it there."
         d.fx = null;
         d.fy = null;
         state.pinnedSlugs.delete(d.slug);
@@ -453,8 +455,8 @@ async function buildSimulation(canvas) {
   }
 
   const sim = forceSimulation(nodes)
-    .force('link', forceLink(edges).id(d => d.slug).distance(80).strength(0.6))
-    .force('charge', forceManyBody().strength(-280))
+    .force('link', forceLink(edges).id(d => d.slug).distance(160).strength(0.35))
+    .force('charge', forceManyBody().strength(-700))
     .force('center', forceCenter(w / 2, h / 2))
     .force('collide', forceCollide().radius(d => nodeRadius(d.featured)));
 

@@ -1406,6 +1406,27 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   font-style: italic;
 }
 
+/* Gesture hint — small, muted, sits at the end of the toolbar. */
+.graph-hint {
+  margin-left: auto;
+  padding-left: 0.5rem;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-style: italic;
+  color: var(--color-ink-soft);
+  white-space: nowrap;
+}
+.graph-hint kbd {
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-size: 0.65rem;
+  padding: 0.05rem 0.3rem;
+  border: 1px solid var(--color-rule);
+  border-radius: 3px;
+  background: var(--color-stone);
+  color: var(--color-ink);
+}
+
 .graph-panel-legend {
   list-style: none;
   margin: 0;

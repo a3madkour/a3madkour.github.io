@@ -269,13 +269,14 @@ async function buildSimulation(canvas) {
       if (d.__reheated && !reducedMotion()) sim.alphaTarget(0);
       const dx = d.fx - d.__startX;
       const dy = d.fy - d.__startY;
-      if ((dx * dx + dy * dy) > 9) {
-        d.wasDragged = true;
+      const moved = (dx * dx + dy * dy) > 9;
+      const shouldPin = moved && event.sourceEvent && event.sourceEvent.shiftKey;
+      if (moved) d.wasDragged = true;
+      if (shouldPin) {
         state.pinnedSlugs.add(d.slug);
       } else {
-        // Pure click — release any pin (either the one we just set in 'start'
-        // for an un-dragged node, or a pin from a previous drag if the user
-        // is now clicking the same node without moving).
+        // Plain drag (no Shift) OR pure click — release any pin. Shift+drag is
+        // the opt-in gesture for "place this node and keep it there."
         d.fx = null;
         d.fy = null;
         state.pinnedSlugs.delete(d.slug);
@@ -645,10 +646,15 @@ function buildActionChips(host) {
   const divider = document.createElement('span');
   divider.className = 'toolbar-divider';
   divider.setAttribute('aria-hidden', 'true');
+  const hint = document.createElement('span');
+  hint.className = 'graph-hint';
+  hint.setAttribute('aria-hidden', 'true');
+  hint.innerHTML = '<kbd>Shift</kbd>+drag to pin';
   host.append(
     divider,
     makeActionChip('Reset view', resetView),
     makeActionChip('Reset positions', resetPositions),
+    hint,
   );
 }
 
