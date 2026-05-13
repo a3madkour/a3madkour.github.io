@@ -111,6 +111,7 @@ Filled in at end of walkthrough:
 
 - ⚠ **RSS link UX** — clicking the header RSS icon navigates to the raw `.xml` feed file. Standard behavior; RSS-literate visitors are fine, but pretty-rendering via an XSL stylesheet is a future polish. Deferred (no spec opened yet); revisit if the audience grows.
 - ⚠ **Garden path-log retrieval** — the consent banner asks users to persist a visited-notes list, but no UI surface reads it back. Spec stub filed at `docs/superpowers/specs/2026-05-13-garden-path-log-retrieval-design.md`. Pick up as a standalone post-Phase-8 polish slice (not Phase 3, not Phase 8).
+- ⚠ **Mobile page-sidebar strip doesn't pin** (items 4.10 + 4.12 family) — at viewport widths < 1220 px the dots strip scrolls away with content instead of staying at viewport top. Reproduces on real phone too. Multiple in-session fixes failed; DOM/paint API confirms the element is at viewport top but it's not visible on screen — points to a compositing/render-tree divergence we couldn't isolate in this session. Spec stub filed at `docs/superpowers/specs/2026-05-13-mobile-page-sidebar-strip-bug-design.md`. Pick up with a fresh context.
 
 ---
 
