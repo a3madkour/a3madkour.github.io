@@ -89,7 +89,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 continue
             kind, value = source
             slug = item["slug"]
-            target = COVERS_DIR / (value if kind == "cover_file" else f"{slug}.jpg")
+            target = COVERS_DIR / (cast(str, value) if kind == "cover_file" else f"{slug}.jpg")
             if target.exists() and not args.force:
                 continue
             if args.dry_run:
