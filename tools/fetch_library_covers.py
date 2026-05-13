@@ -7,6 +7,7 @@ docs/superpowers/specs/2026-05-12-library-cover-fetch-design.md
 from __future__ import annotations
 import argparse
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
@@ -65,6 +66,24 @@ def pick_source(item: dict) -> tuple[str, object] | None:
         if yaml_key in extras and extras[yaml_key]:
             return (source_kind, extras[yaml_key])
     return None
+
+
+@dataclass
+class FetchResult:
+    kind: str
+    slug: str
+    path: Path | None = None
+    cached: bool = False
+    error: str | None = None
+    sha256: str | None = None
+
+
+def dispatch_cover_file(*, slug: str, cover_file: str, covers_dir: Path) -> FetchResult:
+    target = covers_dir / cover_file
+    if target.exists():
+        return FetchResult(kind="cover_file", slug=slug, path=target, cached=True)
+    return FetchResult(kind="cover_file", slug=slug, path=target,
+                       cached=False, error=f"cover_file {cover_file} not found in {covers_dir}")
 
 
 LEAVES = ("reading", "listening", "playing", "watching")

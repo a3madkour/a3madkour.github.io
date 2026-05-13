@@ -2,6 +2,7 @@ from __future__ import annotations
 import io
 import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -77,6 +78,29 @@ class LoadLeafTests(unittest.TestCase):
         wizard = next((i for i in items if i.get("slug") == "wizard-of-oz"), None)
         self.assertIsNotNone(wizard)
         self.assertEqual(wizard["extras"]["isbn"], "9780486291161")
+
+
+class CoverFileDispatchTests(unittest.TestCase):
+    def test_existing_file_is_ok(self):
+        with tempfile.TemporaryDirectory() as td:
+            covers = Path(td)
+            (covers / "wizard.jpg").write_bytes(b"\xff\xd8\xff\xd9")  # JPEG header
+            result = fc.dispatch_cover_file(slug="wizard-of-oz",
+                                            cover_file="wizard.jpg",
+                                            covers_dir=covers)
+            self.assertEqual(result.kind, "cover_file")
+            self.assertEqual(result.path.name, "wizard.jpg")
+            self.assertTrue(result.cached)
+
+    def test_missing_file_is_error(self):
+        with tempfile.TemporaryDirectory() as td:
+            covers = Path(td)
+            result = fc.dispatch_cover_file(slug="x",
+                                            cover_file="missing.jpg",
+                                            covers_dir=covers)
+            self.assertEqual(result.kind, "cover_file")
+            self.assertFalse(result.cached)
+            self.assertIn("not found", result.error)
 
 
 if __name__ == "__main__":
