@@ -11,5 +11,5 @@
                               tag-shares, only the dashed edge is kept (the
                               tag overlap is recorded in `shared`).
 */ -}}
-{{- $cached := partialCached "works/graph-data-inner" . "works-graph" -}}
-{{- $cached | safeJS -}}
+{{- $payload := partialCached "works/graph-data-inner" . "works-graph" -}}
+{{- return $payload -}}
