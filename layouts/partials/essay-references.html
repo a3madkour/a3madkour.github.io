@@ -4,7 +4,10 @@
 {{- if $used -}}
   {{- $citations := site.Data.citations.citations -}}
   <section class="essay-references" aria-labelledby="references-heading">
-    <h2 id="references-heading">References</h2>
+    <header class="essay-references-header">
+      <h2 id="references-heading">References</h2>
+      <button class="ref-cite-bulk-bib" type="button">Download all as .bib</button>
+    </header>
     <ol>
       {{- range $used -}}
         {{- $entry := index $citations . -}}

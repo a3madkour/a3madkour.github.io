@@ -91,9 +91,10 @@ class _MetaCollector(HTMLParser):
     def handle_starttag(self, tag, attrs):
         attrs_d = dict(attrs)
         name = attrs_d.get('name') or ''
+        cls = attrs_d.get('class') or ''
         if tag == 'meta' and name.startswith('citation_'):
             self.metas.append((name, attrs_d.get('content') or ''))
-        elif tag == 'script' and attrs_d.get('id') == 'cite-data':
+        elif tag == 'script' and 'cite-data' in cls.split():
             self._in_cite_data = True
         elif tag == 'section' and attrs_d.get('id') == 'cite-this':
             self.has_cite_this = True
@@ -119,7 +120,7 @@ def inspect_html(html: str, citations: dict) -> list[str]:
             issues.append(f'missing <meta name="{required}">')
 
     if p.cite_data is None:
-        issues.append('missing <script id="cite-data">')
+        issues.append('missing <script class="cite-data">')
     else:
         try:
             blob = json.loads(p.cite_data)

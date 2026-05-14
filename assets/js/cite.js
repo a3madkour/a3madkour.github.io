@@ -1,8 +1,12 @@
-// Citation export runtime. Reads the inline #cite-data JSON blob,
-// opens the modal on "Cite this page" / "Full citation" clicks, handles
+// Citation export runtime. Reads the inline .cite-data JSON blob,
+// opens the modal on "Cite this X" / "Full citation" clicks, handles
 // tab switching, copy-to-clipboard, and download links.
 //
-// Bails silently if #cite-data is absent (page isn't citable).
+// Scoping (matters for garden stacked columns): the cite-data blob is
+// emitted as `<script class="cite-data">` INSIDE each <article>. On a
+// click we walk up to the containing article and find that article's
+// own cite-data, so a button in a stacked column refers to that
+// column's note — not the root.
 
 const STORAGE_KEY = 'cite-format-pref';
 const EXT_MAP = {
@@ -20,23 +24,24 @@ const MIME_MAP = {
   ris: 'application/x-research-info-systems',
 };
 
-let citeData = null;
 let modal = null;
-let outputEl = null;
+let titleEl = null;
 let subtitleEl = null;
+let outputEl = null;
 let toastEl = null;
 let downloadEl = null;
 let sourceEl = null;
 let noteEl = null;
 let currentSource = null;
 
-function parseDataBlob() {
-  const el = document.getElementById('cite-data');
+function parseScopedBlob(scope) {
+  const root = scope || document;
+  const el = root.querySelector('script.cite-data');
   if (!el) return null;
   try {
     return JSON.parse(el.textContent);
   } catch (e) {
-    console.warn('cite: failed to parse #cite-data', e);
+    console.warn('cite: failed to parse .cite-data', e);
     return null;
   }
 }
@@ -78,9 +83,10 @@ function setNavPill(el, href) {
   }
 }
 
-function openModal(source, subtitle) {
+function openModal(source, title, subtitle) {
   if (!source) return;
   currentSource = source;
+  titleEl.textContent = title || 'Cite';
   subtitleEl.textContent = subtitle || '';
   setNavPill(sourceEl, source.url);
   setNavPill(noteEl, source.notes_ref ? `/garden/${source.notes_ref}/` : '');
@@ -120,17 +126,32 @@ function copyToClipboard(text) {
   }
 }
 
+function triggerDownload(filename, mime, text) {
+  const url = `data:${mime};charset=utf-8,${encodeURIComponent(text)}`;
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
 function onDocumentClick(e) {
   const pageLink = e.target.closest('.cite-cta');
   if (pageLink) {
     e.preventDefault();
-    openModal(citeData.self, 'This page');
+    const data = parseScopedBlob(pageLink.closest('article'));
+    if (data) {
+      openModal(data.self, pageLink.textContent.trim(), data.self.title);
+    }
     return;
   }
   const fullBtn = e.target.closest('.ref-cite-full');
   if (fullBtn) {
+    const data = parseScopedBlob(fullBtn.closest('article'));
+    if (!data || !data.refs) return;
     const key = fullBtn.dataset.citeKey;
-    const ref = citeData.refs && citeData.refs[key];
+    const ref = data.refs[key];
     if (ref) {
       e.preventDefault();
       openModal(
@@ -141,19 +162,36 @@ function onDocumentClick(e) {
           url: ref.url,
           notes_ref: ref.notes_ref,
         },
-        `Reference: ${ref.title}`,
+        'Cite this reference',
+        ref.title,
       );
     }
     return;
   }
   const copyBtn = e.target.closest('.ref-cite-copy');
   if (copyBtn) {
+    const data = parseScopedBlob(copyBtn.closest('article'));
+    if (!data || !data.refs) return;
     const key = copyBtn.dataset.citeKey;
     const fmt = copyBtn.dataset.format;
-    const ref = citeData.refs && citeData.refs[key];
+    const ref = data.refs[key];
     if (ref && ref.formats && ref.formats[fmt]) {
       copyToClipboard(ref.formats[fmt]);
     }
+    return;
+  }
+  const bulkBtn = e.target.closest('.ref-cite-bulk-bib');
+  if (bulkBtn) {
+    e.preventDefault();
+    const data = parseScopedBlob(bulkBtn.closest('article'));
+    if (!data || !data.refs) return;
+    const entries = Object.values(data.refs)
+      .map((r) => r.formats && r.formats.bibtex)
+      .filter(Boolean);
+    if (!entries.length) return;
+    const text = entries.join('\n\n');
+    const filename = `${data.self.citekey}-references.bib`;
+    triggerDownload(filename, MIME_MAP.bibtex, text);
     return;
   }
   const tab = e.target.closest('.cite-modal-tabs [role="tab"]');
@@ -181,11 +219,13 @@ function onKeydown(e) {
 }
 
 export function initCite() {
-  citeData = parseDataBlob();
-  if (!citeData) return;
   modal = document.getElementById('cite-modal');
   if (!modal) return;
+  // The cite-data blob is parsed lazily per click (so stacked garden
+  // columns each refer to their own data), but we still need the modal
+  // chrome wired up once.
   outputEl = document.getElementById('cite-modal-output');
+  titleEl = document.getElementById('cite-modal-title');
   subtitleEl = document.getElementById('cite-modal-subtitle');
   toastEl = modal.querySelector('.cite-modal-toast');
   downloadEl = modal.querySelector('.cite-modal-download');

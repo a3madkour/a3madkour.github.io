@@ -27,7 +27,7 @@ HAPPY = """
 <meta name="citation_public_url" content="https://x/y/">
 </head><body>
 <section id="cite-this"><details></details></section>
-<script type="application/json" id="cite-data">
+<script type="application/json" class="cite-data">
 {"self":{"citekey":"madkour-2026-my-slug","title":"A","formats":{"bibtex":"x","apa":"x","chicago":"x","mla":"x","ris":"x"}},"refs":{}}
 </script>
 </body></html>
@@ -51,8 +51,8 @@ class TestCiteMeta(unittest.TestCase):
 
     def test_missing_cite_data_fails(self):
         broken = HAPPY.replace(
-            '<script type="application/json" id="cite-data">',
-            '<script type="application/json" id="something-else">',
+            '<script type="application/json" class="cite-data">',
+            '<script type="application/json" class="something-else">',
         )
         issues = inspect_html(broken, citations=CITATIONS_FIXTURE)
         self.assertTrue(any('cite-data' in i for i in issues))
