@@ -1,0 +1,26 @@
+{{- /* Renders a citation dict as a Chicago notes-bibliography citation.
+       Format: <First Last>, "<Title>," <Venue>, <year>, <url>.
+*/ -}}
+
+{{- $cite := . -}}
+
+{{- /* Authors: First Last ordering for Chicago notes form. citations.yaml
+       stores "Last, F." — flip first-author "Last, F." → "F. Last"; pass
+       subsequent authors through "F. Last" the same way. */ -}}
+{{- $flipped := slice -}}
+{{- range $cite.authors -}}
+  {{- $parts := split . ", " -}}
+  {{- if eq (len $parts) 2 -}}
+    {{- $flipped = $flipped | append (printf "%s %s" (index $parts 1) (index $parts 0)) -}}
+  {{- else -}}
+    {{- $flipped = $flipped | append . -}}
+  {{- end -}}
+{{- end -}}
+{{- $authors_str := delimit $flipped ", " -}}
+
+{{- $parts := slice (printf "%s, \"%s,\"" $authors_str $cite.title) -}}
+{{- with $cite.venue -}}{{- $parts = $parts | append (printf "%s," .) -}}{{- end -}}
+{{- $parts = $parts | append (printf "%d," $cite.year) -}}
+{{- with $cite.url -}}{{- $parts = $parts | append (printf "%s." .) -}}{{- else -}}{{- $parts = $parts | append "." -}}{{- end -}}
+
+{{- return delimit $parts " " -}}
