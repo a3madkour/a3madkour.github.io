@@ -632,7 +632,12 @@ main { flex-grow: 1; }
   .essay-layout {
     grid-template-columns: 200px minmax(0, var(--reading-column)) 250px;
     justify-content: center;
-    gap: 2rem;
+    /* Wider column-gap pushes the TOC + cite sidebar toward the viewport
+     * edge without moving the reading column (justify-content: center
+     * keeps the whole grid centered, so widening the gap shifts both
+     * outer columns symmetrically outward). */
+    column-gap: 5rem;
+    row-gap: 2rem;
   }
 }
 
