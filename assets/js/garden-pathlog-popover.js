@@ -42,14 +42,13 @@ function init() {
   popover.innerHTML = `
     <h3 id="path-log-popover-heading">Recent paths</h3>
     <ol class="popover-paths"></ol>
-    <a class="popover-history-link" href="/garden/history/">full history →</a>
+    <a class="popover-history-link" href="/garden/history/">full history</a>
   `;
   button.insertAdjacentElement('afterend', popover);
 
   const list = popover.querySelector('.popover-paths');
   others.forEach(s => {
     const li = document.createElement('li');
-    li.className = 'path-row';
     li.appendChild(renderPath(s));
     list.appendChild(li);
   });

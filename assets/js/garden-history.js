@@ -85,38 +85,44 @@ function slugToLabel(slug) {
 }
 
 export function renderPath(session, options = {}) {
+  // Whole row is a single <a> that loads the full path via ?stack=.
+  // Click anywhere on the row → the destination rebuilds the stack.
+  // Chips inside are decorative <span>s, not individual links — so the click
+  // target is uniform across the row regardless of which chip you hit.
   const includeTime = options.includeTime !== false;
-  const frag = document.createDocumentFragment();
+  const slugs = session.slugs || [];
+  const root = slugs[0] || '';
+  const rest = slugs.slice(1).join(',');
+  const href = rest
+    ? `/garden/${root}/?stack=${encodeURIComponent(rest)}`
+    : `/garden/${root}/`;
+
+  const link = document.createElement('a');
+  link.className = 'path-row';
+  link.href = href;
 
   if (includeTime) {
     const time = document.createElement('span');
     time.className = 'path-time';
     time.textContent = formatRelativeTime(session.at);
-    frag.appendChild(time);
+    link.appendChild(time);
   }
 
-  session.slugs.forEach((slug, i) => {
+  slugs.forEach((slug, i) => {
     if (i > 0) {
       const arrow = document.createElement('span');
       arrow.className = 'path-arrow';
       arrow.setAttribute('aria-hidden', 'true');
       arrow.textContent = '›';
-      frag.appendChild(arrow);
+      link.appendChild(arrow);
     }
-    const a = document.createElement('a');
-    a.className = 'path-chip';
-    if (i === 0 && session.slugs.length > 1) {
-      // Leftmost chip loads the full path via ?stack=.
-      const rest = session.slugs.slice(1).join(',');
-      a.href = `/garden/${slug}/?stack=${encodeURIComponent(rest)}`;
-    } else {
-      a.href = `/garden/${slug}/`;
-    }
-    a.textContent = slugToLabel(slug);
-    frag.appendChild(a);
+    const chip = document.createElement('span');
+    chip.className = 'path-chip';
+    chip.textContent = slugToLabel(slug);
+    link.appendChild(chip);
   });
 
-  return frag;
+  return link;
 }
 
 export function clearHistory() {

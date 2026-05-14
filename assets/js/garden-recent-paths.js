@@ -24,7 +24,6 @@ function mountWidget(root) {
   const list = root.querySelector('.recent-paths-list');
   sessions.forEach(s => {
     const li = document.createElement('li');
-    li.className = 'path-row';
     li.appendChild(renderPath(s));
     list.appendChild(li);
   });
@@ -80,7 +79,6 @@ function mountHistoryPage(root) {
 
   dedupSessions.forEach(s => {
     const li = document.createElement('li');
-    li.className = 'path-row';
     li.appendChild(renderPath(s));
     list.appendChild(li);
   });

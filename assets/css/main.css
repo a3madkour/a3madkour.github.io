@@ -3832,12 +3832,25 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 .recent-paths-clear:hover { color: var(--color-warn); }
 
 /* Shared row + chip + time + arrow primitives (also used by popover + history page) */
+/* .path-row is the clickable <a> wrapper — whole row navigates to the full path. */
 .path-row {
   display: flex;
   align-items: center;
   gap: 0.4rem;
   flex-wrap: wrap;
-  padding: 0.35rem 0;
+  padding: 0.35rem 0.4rem;
+  margin: 0 -0.4rem;
+  border-radius: 3px;
+  text-decoration: none;
+  color: inherit;
+}
+.path-row:hover,
+.path-row:focus-visible {
+  background: color-mix(in srgb, var(--color-burgundy) 6%, transparent);
+  outline: none;
+}
+.path-row:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-burgundy);
 }
 .path-time {
   font-family: var(--font-mono);
@@ -3853,11 +3866,10 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   padding: 0.15rem 0.5rem;
   font-size: var(--text-xs);
   color: var(--color-burgundy);
-  text-decoration: none;
-  border-bottom: 1px dotted var(--color-burgundy);
 }
-.path-chip:hover {
-  background: color-mix(in srgb, var(--color-burgundy) 10%, var(--color-tile));
+.path-row:hover .path-chip,
+.path-row:focus-visible .path-chip {
+  background: color-mix(in srgb, var(--color-burgundy) 12%, var(--color-tile));
 }
 .path-arrow {
   color: var(--color-ink-fade);
