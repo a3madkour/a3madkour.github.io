@@ -19,10 +19,14 @@
 
 {{- /* Year: .Date.Year if set, else Lastmod.Year, else from Params.last_modified. */ -}}
 {{- $year := 0 -}}
-{{- if not .Date.IsZero -}}{{- $year = .Date.Year -}}
-{{- else if not .Lastmod.IsZero -}}{{- $year = .Lastmod.Year -}}
-{{- else with .Params.last_modified -}}
-  {{- $year = int (dateFormat "2006" (time.AsTime .)) -}}
+{{- if not .Date.IsZero -}}
+  {{- $year = .Date.Year -}}
+{{- else if not .Lastmod.IsZero -}}
+  {{- $year = .Lastmod.Year -}}
+{{- else -}}
+  {{- with .Params.last_modified -}}
+    {{- $year = int (dateFormat "2006" (time.AsTime .)) -}}
+  {{- end -}}
 {{- end -}}
 
 {{- /* Slug: last URL path segment of .RelPermalink. */ -}}
@@ -48,8 +52,11 @@
 
 {{- /* Dates as YYYY-MM-DD for meta tags. */ -}}
 {{- $pub_date := "" -}}
-{{- if not .Date.IsZero -}}{{- $pub_date = .Date.Format "2006-01-02" -}}
-{{- else with .Params.last_modified -}}{{- $pub_date = dateFormat "2006-01-02" (time.AsTime .) -}}{{- end -}}
+{{- if not .Date.IsZero -}}
+  {{- $pub_date = .Date.Format "2006-01-02" -}}
+{{- else -}}
+  {{- with .Params.last_modified -}}{{- $pub_date = dateFormat "2006-01-02" (time.AsTime .) -}}{{- end -}}
+{{- end -}}
 {{- $online_date := $pub_date -}}
 {{- if not .Lastmod.IsZero -}}{{- $online_date = .Lastmod.Format "2006-01-02" -}}{{- end -}}
 

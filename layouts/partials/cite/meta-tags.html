@@ -1,0 +1,17 @@
+{{- /* Emits Highwire Press citation_* meta tags for Zotero auto-detect.
+       Input: . (a Page) */ -}}
+
+{{- $cite := partial "cite/normalize-page.html" . -}}
+<meta name="citation_title" content="{{ $cite.title }}">
+{{- range $cite.authors }}
+<meta name="citation_author" content="{{ . }}">
+{{- end }}
+<meta name="citation_publication_date" content="{{ $cite.pub_date }}">
+<meta name="citation_online_date" content="{{ $cite.online_date }}">
+<meta name="citation_public_url" content="{{ $cite.url }}">
+{{- with $cite.doi }}
+<meta name="citation_doi" content="{{ . }}">
+{{- end }}
+{{- with $cite.isbn }}
+<meta name="citation_isbn" content="{{ . }}">
+{{- end }}
