@@ -101,6 +101,10 @@ jobs:
         run: python3 tools/check_rss_xsl.py
       - name: Run RSS XSL linter unit tests
         run: python3 -m unittest tools/test_check_rss_xsl.py -v
+      - name: Verify garden history
+        run: python3 tools/check_garden_history.py
+      - name: Run garden history linter unit tests
+        run: python3 -m unittest tools/test_check_garden_history.py -v
       - name: Build with Hugo
         env:
           HUGO_CACHEDIR: ${{ runner.temp }}/hugo_cache
