@@ -96,11 +96,13 @@ The inline `<style>` block carries tokens copied verbatim from `assets/css/main.
 
 | Use | Light value | Dark value |
 |---|---|---|
-| Page background | `--color-stone` (`#f6f3eb`) | `--color-stone` dark (`#1a1a1a`) |
-| Body text | `--color-ink` (`#1f1d1a`) | `--color-ink` dark (`#e8e6e0`) |
-| Secondary text (date) | `--color-ink-soft` | `--color-ink-soft` dark |
-| Link | `--color-burgundy` | `--color-burgundy` dark |
-| Body font | `--font-body` (Petrona) | same |
+| Page background | `--color-stone` (`#eeeeea`) | `--color-stone` dark (`#181818`) |
+| Body text | `--color-ink` (`#1c1a17`) | `--color-ink` dark (`#e2e2dd`) |
+| Secondary text (date) | `--color-ink-soft` (`#5a564f`) | `--color-ink-soft` dark (`#b0aca0`) |
+| Link | `--color-burgundy` (`#6b1f2c`) | `--color-burgundy` dark (`#d65a6a`) |
+| Body font | `--font-body` (`"Petrona", Georgia, serif`) | same |
+
+Values copied verbatim from `assets/css/main.css` `:root` (light, line 22-) and `:root[data-theme="dark"]` (dark, line 54-) blocks as of 2026-05-13. If those values change, the XSL inline `<style>` must be updated in lockstep.
 
 Dark mode is gated by `@media (prefers-color-scheme: dark)`. There is no `[data-theme="dark"]` honor on this page because no `<script>` is allowed to run from XSL output (and `localStorage` is not consulted). The page tracks the OS-level setting only.
 
