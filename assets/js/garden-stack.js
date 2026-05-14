@@ -1,5 +1,9 @@
 // Garden stacked-column runtime — eager Matuschak-style.
 // Spec: docs/superpowers/specs/2026-05-08-garden-interactions-design.md §5.
+// Path-log persistence uses v2 schema (envelope {"version": 2, sessions:[...]}).
+// Migration + read/write live in garden-history.js.
+
+import { readHistory, writeHistory } from './garden-history.js';
 
 const STACK_ROOT = '.garden-stack';
 const COLUMNS = '.garden-stack-columns';
@@ -9,13 +13,39 @@ const MOBILE_QUERY = '(max-width: 720px)';
 const FETCH_OPTS = { credentials: 'same-origin' };
 
 const CONSENT_KEY = 'path-log-consent';
-const VISITED_KEY = 'garden-path-log';
-const VISITED_CAP = 100;
 
 const state = {
   slugs: [],
   consent: 'unset', // 'unset' | 'yes' | 'session' | 'no'
 };
+
+// Session lifecycle for the v2 path-log schema. A session is one continuous
+// reading flow on a single page load. startSession() creates a new record;
+// extendSession() appends to it. clearStack() does NOT end the session.
+let currentSessionAt = 0;
+
+function startSession() {
+  if (state.consent === 'unset' || state.consent === 'no') return;
+  if (state.slugs.length === 0) return;
+  currentSessionAt = Date.now();
+  const sessions = readHistory();
+  sessions.unshift({
+    root: state.slugs[0],
+    slugs: state.slugs.slice(),
+    at: currentSessionAt,
+  });
+  writeHistory(sessions);
+}
+
+function extendSession(slug) {
+  if (state.consent === 'unset' || state.consent === 'no') return;
+  if (!currentSessionAt) return;
+  const sessions = readHistory();
+  const current = sessions.find(s => s.at === currentSessionAt);
+  if (!current) return;
+  current.slugs.push(slug);
+  writeHistory(sessions);
+}
 
 // Slugs currently being fetched. Guards against rapid duplicate clicks while
 // fetchColumn() is in flight — without this, two fast clicks on the same
@@ -68,27 +98,6 @@ function writeConsent(value) {
   state.consent = value;
 }
 
-function persistVisited(slug) {
-  if (state.consent === 'unset' || state.consent === 'no') return;
-  const store = state.consent === 'session' ? sessionStorage : localStorage;
-  let list;
-  try {
-    list = JSON.parse(store.getItem(VISITED_KEY) || '[]');
-  } catch (e) {
-    // Corrupt JSON in the visited list. Log + reset so the next write
-    // rebuilds it cleanly instead of failing every navigation.
-    console.warn('garden-stack: dropping corrupt visited list', e);
-    list = [];
-  }
-  list.push(slug);
-  if (list.length > VISITED_CAP) list = list.slice(-VISITED_CAP);
-  try { store.setItem(VISITED_KEY, JSON.stringify(list)); } catch {}
-  // The setItem catch is intentionally silent — same rationale as the
-  // localStorage swallows in readConsent/writeConsent above: in restricted
-  // contexts (private browsing strict, sandboxed iframes) persistence is
-  // genuinely unavailable, not a bug.
-}
-
 function showConsentBanner() {
   if (state.consent !== 'unset') return;
   const log = document.querySelector(PATHLOG);
@@ -119,8 +128,8 @@ function showConsentBanner() {
     const choice = btn.dataset.choice;
     writeConsent(choice);
     if (choice !== 'no') {
-      // Persist current stack retroactively.
-      state.slugs.forEach(persistVisited);
+      // Persist the current stack as a session retroactively.
+      startSession();
     }
     banner.parentNode.removeChild(banner);
   });
@@ -241,7 +250,7 @@ async function appendColumn(slug) {
     focusColumn(slug);
     updatePathLog();
     dispatchStackChanged();
-    persistVisited(slug);
+    extendSession(slug);
     if (wasOne) showConsentBanner();
   } finally {
     pending.delete(slug);
@@ -312,6 +321,7 @@ async function init() {
     focusColumn(state.slugs[state.slugs.length - 1]);
   }
   dispatchStackChanged();
+  startSession();
 
   // Delegated click handler for internal /garden/ links inside any column
   root.addEventListener('click', (e) => {
