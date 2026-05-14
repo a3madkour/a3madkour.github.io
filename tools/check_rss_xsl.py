@@ -79,12 +79,10 @@ def lint_rss_xsl(
         errors.append(f"{essays_rss_path}: file missing")
     else:
         essays_text = essays_rss_path.read_text(encoding="utf-8")
-        # Find PI substring and first <rss occurrence.
-        # Match either expanded form or template form with resources.Get.
-        pi_match = re.search(
-            r"xml-stylesheet[^\n]*(feed/feed\.xsl|resources\.Get[^\n]*feed/feed\.xsl)",
-            essays_text
-        )
+        # Find PI substring and first <rss occurrence. Match `xml-stylesheet`
+        # and `feed/feed.xsl` on the same line; the Hugo template directive
+        # between them (resources.Get, RelPermalink, etc.) is `[^\n]*` slop.
+        pi_match = re.search(r"xml-stylesheet[^\n]*feed/feed\.xsl", essays_text)
         rss_open = essays_text.find("<rss")
         if pi_match is None:
             errors.append(
