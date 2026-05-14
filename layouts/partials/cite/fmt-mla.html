@@ -1,0 +1,35 @@
+{{- /* Renders a citation dict as an MLA-9 citation.
+       Format: <Last, First>. "<Title>." <Venue>, <year>, <url>.
+*/ -}}
+
+{{- $cite := . -}}
+
+{{- /* MLA keeps the first author Last-comma-First form. Convert "Last, F." to
+       "Last, First" if frontmatter uses full given name; citations.yaml stores
+       initial form — use as-is. Subsequent authors flipped to "First Last". */ -}}
+{{- $authors := $cite.authors -}}
+{{- $first_author := index $authors 0 -}}
+{{- $rest_flipped := slice -}}
+{{- if gt (len $authors) 1 -}}
+  {{- $rest := after 1 $authors -}}
+  {{- range $rest -}}
+    {{- $parts := split . ", " -}}
+    {{- if eq (len $parts) 2 -}}
+      {{- $rest_flipped = $rest_flipped | append (printf "%s %s" (index $parts 1) (index $parts 0)) -}}
+    {{- else -}}
+      {{- $rest_flipped = $rest_flipped | append . -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $authors_str := $first_author -}}
+{{- if gt (len $rest_flipped) 0 -}}
+  {{- $authors_str = printf "%s, and %s" $first_author (delimit $rest_flipped ", and ") -}}
+{{- end -}}
+
+{{- $parts := slice (printf "%s. \"%s.\"" $authors_str $cite.title) -}}
+{{- with $cite.venue -}}{{- $parts = $parts | append (printf "%s," .) -}}{{- end -}}
+{{- $parts = $parts | append (printf "%d," $cite.year) -}}
+{{- with $cite.url -}}{{- $parts = $parts | append (printf "%s." .) -}}{{- else -}}{{- $parts = $parts | append "." -}}{{- end -}}
+
+{{- return delimit $parts " " -}}
