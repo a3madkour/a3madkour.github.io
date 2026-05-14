@@ -1,0 +1,13 @@
+{{- /* No-JS fallback. Renders all 5 formats inline at page bottom under
+       native <details> elements. Stays visible with JS on too — the modal
+       is a shortcut to the same content, not a replacement. */ -}}
+
+{{- $self := partial "cite/normalize-page.html" . -}}
+<section id="cite-this" class="cite-static" aria-labelledby="cite-this-heading">
+  <h2 id="cite-this-heading">Cite this page</h2>
+  <details><summary>BibTeX</summary><pre>{{ partial "cite/fmt-bibtex.html"  $self }}</pre></details>
+  <details><summary>APA</summary><pre>{{ partial "cite/fmt-apa.html"     $self }}</pre></details>
+  <details><summary>Chicago</summary><pre>{{ partial "cite/fmt-chicago.html" $self }}</pre></details>
+  <details><summary>MLA</summary><pre>{{ partial "cite/fmt-mla.html"     $self }}</pre></details>
+  <details><summary>RIS</summary><pre>{{ partial "cite/fmt-ris.html"     $self }}</pre></details>
+</section>
