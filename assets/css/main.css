@@ -4019,3 +4019,178 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   border-bottom: 1px dotted var(--color-burgundy);
   font-size: var(--text-xs);
 }
+
+/* ============================================================================
+   §43 Citation export
+   "Cite this page" link, static fallback section, <dialog> modal, and
+   per-reference inline cite actions emitted by essay-references.html.
+   Token-driven palette; bottom-sheet on narrow viewports.
+   ========================================================================== */
+
+.cite-page-link {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-burgundy);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  margin-left: 0.5rem;
+}
+.cite-page-link:hover { text-decoration-thickness: 2px; }
+
+.cite-static {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed var(--color-rule);
+}
+.cite-static h2 {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-ink-soft);
+  margin: 0 0 0.75rem;
+}
+.cite-static details { margin-bottom: 0.5rem; }
+.cite-static summary {
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-burgundy);
+}
+.cite-static pre {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  background: var(--color-paper);
+  border: 1px solid var(--color-rule);
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 0;
+  border-radius: 4px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.cite-modal {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  border: 1px solid var(--color-rule);
+  border-radius: 6px;
+  max-width: 640px;
+  width: min(640px, 92vw);
+  padding: 0;
+}
+.cite-modal::backdrop { background: rgba(0, 0, 0, 0.4); }
+.cite-modal-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem 0.5rem;
+}
+.cite-modal-header h2 { margin: 0; font-size: var(--text-md); }
+.cite-modal-subtitle {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  margin: 0;
+  flex: 1;
+}
+.cite-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--color-ink-soft);
+  padding: 0;
+  line-height: 1;
+}
+.cite-modal-tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 1.25rem;
+  border-bottom: 1px solid var(--color-rule);
+  flex-wrap: wrap;
+}
+.cite-modal-tabs button {
+  background: none;
+  border: none;
+  padding: 0.4rem 0.6rem;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.cite-modal-tabs button[aria-selected="true"] {
+  color: var(--color-burgundy);
+  border-bottom-color: var(--color-burgundy);
+}
+.cite-modal-output {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  padding: 1rem 1.25rem;
+  margin: 0;
+  max-height: 50vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cite-modal-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem 1.25rem 1rem;
+  flex-wrap: wrap;
+}
+.cite-modal-copy,
+.cite-modal-download {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--color-burgundy);
+  background: transparent;
+  color: var(--color-burgundy);
+  border-radius: 3px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.cite-modal-toast { font-size: var(--text-xs); color: var(--color-ink-soft); }
+
+@media (max-width: 720px) {
+  .cite-modal {
+    width: 100vw;
+    max-width: none;
+    margin: 0 auto;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    border-radius: 8px 8px 0 0;
+  }
+}
+
+.ref-cite-actions {
+  display: inline-flex;
+  gap: 0.4rem;
+  margin-left: 0.5rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.ref-cite-copy {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  padding: 1px 6px;
+  background: transparent;
+  color: var(--color-burgundy);
+  border: 1px solid var(--color-rule);
+  border-radius: 99px;
+  cursor: pointer;
+}
+.ref-cite-copy:hover { border-color: var(--color-burgundy); }
+.ref-cite-full {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-burgundy);
+  text-decoration: underline;
+}
