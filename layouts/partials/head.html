@@ -42,5 +42,7 @@
   {{- $citable_sections := slice "essays" "garden" "research" "works" -}}
   {{- if and (in $citable_sections .Section) (eq .Kind "page") -}}
     {{- partial "cite/meta-tags.html" . }}
+    {{/* No-JS users see the static <details> fallback; JS users get the modal. */}}
+    <noscript><style>.cite-static{display:block}</style></noscript>
   {{- end -}}
 </head>

@@ -4038,6 +4038,11 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 .cite-page-link:hover { text-decoration-thickness: 2px; }
 
 .cite-static {
+  /* Hidden by default; revealed by the <noscript> override in head.html when
+   * JS is disabled. With JS the modal is the canonical path, so the static
+   * disclosure list is redundant + confusing (the summary chevrons look like
+   * link affordances). Zotero meta tags live in <head> and stay regardless. */
+  display: none;
   margin-top: 3rem;
   padding-top: 1.5rem;
   border-top: 1px dashed var(--color-rule);
