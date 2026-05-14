@@ -1,0 +1,28 @@
+{{- /* Renders a citation dict as an APA-7 plain-text citation.
+       Format: <authors> (<year>). <title>. <venue>. <url>
+*/ -}}
+
+{{- $cite := . -}}
+
+{{- /* Authors: "Last, F. M." each; join with ", " and final "& " for 2-20,
+       truncate at 19 + ellipsis + final for 21+. citations.yaml already
+       stores "Lastname, F." form, so we use entries as-is here. */ -}}
+{{- $authors := $cite.authors -}}
+{{- $n := len $authors -}}
+{{- $authors_str := "" -}}
+{{- if eq $n 1 -}}{{- $authors_str = index $authors 0 -}}
+{{- else if le $n 20 -}}
+  {{- $head := first (sub $n 1) $authors -}}
+  {{- $last := index $authors (sub $n 1) -}}
+  {{- $authors_str = printf "%s, & %s" (delimit $head ", ") $last -}}
+{{- else -}}
+  {{- $head := first 19 $authors -}}
+  {{- $last := index $authors (sub $n 1) -}}
+  {{- $authors_str = printf "%s, ... %s" (delimit $head ", ") $last -}}
+{{- end -}}
+
+{{- $parts := slice (printf "%s (%d). %s." $authors_str $cite.year $cite.title) -}}
+{{- with $cite.venue -}}{{- $parts = $parts | append (printf "%s." .) -}}{{- end -}}
+{{- with $cite.url -}}{{- $parts = $parts | append . -}}{{- end -}}
+
+{{- return delimit $parts " " -}}
