@@ -40,8 +40,6 @@
     <span aria-current="page">{{ .Title }}</span>
   </nav>
 
-  <div class="cite-cta-zone research-cite-zone">{{ partial "cite/button.html" . }}</div>
-
   <header class="research-theme-hero">
     <h1>{{ .Title }}</h1>
     {{ partial "research/status-pill.html" .Params.status }}
@@ -54,6 +52,8 @@
       </p>
     {{ end }}
   </header>
+
+  <div class="cite-cta-zone research-cite-zone">{{ partial "cite/button.html" . }}</div>
 
   {{ if or $active $dormant $answered }}
   <section id="questions">
