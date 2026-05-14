@@ -24,6 +24,71 @@ from pathlib import Path
 def lint_garden_history(project_root: Path) -> list[str]:
     """Return a list of error strings. Empty list = clean."""
     errors: list[str] = []
+
+    # 1-3: required new files
+    must_exist = [
+        ("layouts/partials/garden/recent-paths.html", "widget partial"),
+        ("layouts/garden/history.html", "history page layout"),
+        ("content/garden/history/_index.md", "history page content"),
+    ]
+    for rel, desc in must_exist:
+        if not (project_root / rel).is_file():
+            errors.append(f"{rel}: missing ({desc})")
+
+    # Frontmatter check on _index.md
+    idx = project_root / "content/garden/history/_index.md"
+    if idx.is_file():
+        text = idx.read_text(encoding="utf-8")
+        if "layout: history" not in text:
+            errors.append(f"content/garden/history/_index.md: missing 'layout: history' in frontmatter")
+
+    # 4: list.html includes recent-paths partial
+    list_html = project_root / "layouts/garden/list.html"
+    if list_html.is_file():
+        text = list_html.read_text(encoding="utf-8")
+        if "garden/recent-paths" not in text:
+            errors.append("layouts/garden/list.html: does not include partials/garden/recent-paths.html")
+    else:
+        errors.append("layouts/garden/list.html: missing")
+
+    # 5: path-log.html links to /garden/history/
+    pathlog = project_root / "layouts/partials/garden/path-log.html"
+    if pathlog.is_file():
+        text = pathlog.read_text(encoding="utf-8")
+        if "/garden/history/" not in text:
+            errors.append("layouts/partials/garden/path-log.html: missing chrome link to /garden/history/")
+    else:
+        errors.append("layouts/partials/garden/path-log.html: missing")
+
+    # 6-8: new JS modules
+    for rel in (
+        "assets/js/garden-history.js",
+        "assets/js/garden-recent-paths.js",
+        "assets/js/garden-pathlog-popover.js",
+    ):
+        if not (project_root / rel).is_file():
+            errors.append(f"{rel}: missing")
+
+    # 9: entry-garden.js imports both mount scripts
+    entry = project_root / "assets/js/entry-garden.js"
+    if entry.is_file():
+        text = entry.read_text(encoding="utf-8")
+        if not re.search(r"import\s+['\"]\.\/garden-recent-paths", text):
+            errors.append("assets/js/entry-garden.js: missing import of './garden-recent-paths'")
+        if not re.search(r"import\s+['\"]\.\/garden-pathlog-popover", text):
+            errors.append("assets/js/entry-garden.js: missing import of './garden-pathlog-popover'")
+    else:
+        errors.append("assets/js/entry-garden.js: missing")
+
+    # 10: garden-stack.js carries the v2 schema sentinel
+    stack = project_root / "assets/js/garden-stack.js"
+    if stack.is_file():
+        text = stack.read_text(encoding="utf-8")
+        if '"version": 2' not in text:
+            errors.append('assets/js/garden-stack.js: missing v2 schema sentinel (expected literal \'"version": 2\')')
+    else:
+        errors.append("assets/js/garden-stack.js: missing")
+
     return errors
 
 
