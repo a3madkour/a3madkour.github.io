@@ -1,0 +1,69 @@
+{{- /* Normalizes a Page into a citation dict consumed by fmt-* partials.
+
+       Inputs: . (a Page)
+       Output: dict {citekey, type, authors, year, title, venue, url,
+                     doi, isbn, note, pub_date, online_date}
+*/ -}}
+
+{{- /* Authors: per-page cite_author overrides; otherwise site default. */ -}}
+{{- $authors := slice -}}
+{{- with .Params.cite_author -}}
+  {{- if reflect.IsSlice . -}}
+    {{- range . -}}{{- $authors = $authors | append . -}}{{- end -}}
+  {{- else -}}
+    {{- $authors = $authors | append . -}}
+  {{- end -}}
+{{- else -}}
+  {{- $authors = $authors | append site.Params.author.name -}}
+{{- end -}}
+
+{{- /* Year: .Date.Year if set, else Lastmod.Year, else from Params.last_modified. */ -}}
+{{- $year := 0 -}}
+{{- if not .Date.IsZero -}}{{- $year = .Date.Year -}}
+{{- else if not .Lastmod.IsZero -}}{{- $year = .Lastmod.Year -}}
+{{- else with .Params.last_modified -}}
+  {{- $year = int (dateFormat "2006" (time.AsTime .)) -}}
+{{- end -}}
+
+{{- /* Slug: last URL path segment of .RelPermalink. */ -}}
+{{- $segments := split (trim .RelPermalink "/") "/" -}}
+{{- $slug := index $segments (sub (len $segments) 1) -}}
+{{- $citekey := printf "madkour-%d-%s" $year $slug -}}
+
+{{- /* Type map by section. */ -}}
+{{- $type := "misc" -}}
+{{- if eq .Section "essays" -}}{{- $type = "article" -}}
+{{- else if eq .Section "research" -}}{{- $type = "online" -}}
+{{- end -}}
+
+{{- /* Note: stage flag for non-evergreen garden notes. */ -}}
+{{- $note := "" -}}
+{{- if eq .Section "garden" -}}
+  {{- with .Params.growth_stage -}}
+    {{- if or (eq . "seedling") (eq . "budding") -}}
+      {{- $note = printf "Garden note, %s — in-progress thinking" . -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* Dates as YYYY-MM-DD for meta tags. */ -}}
+{{- $pub_date := "" -}}
+{{- if not .Date.IsZero -}}{{- $pub_date = .Date.Format "2006-01-02" -}}
+{{- else with .Params.last_modified -}}{{- $pub_date = dateFormat "2006-01-02" (time.AsTime .) -}}{{- end -}}
+{{- $online_date := $pub_date -}}
+{{- if not .Lastmod.IsZero -}}{{- $online_date = .Lastmod.Format "2006-01-02" -}}{{- end -}}
+
+{{- return dict
+      "citekey"     $citekey
+      "type"        $type
+      "authors"     $authors
+      "year"        $year
+      "title"       .Title
+      "venue"       ""
+      "url"         .Permalink
+      "doi"         ""
+      "isbn"        ""
+      "note"        $note
+      "pub_date"    $pub_date
+      "online_date" $online_date
+-}}
