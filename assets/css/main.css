@@ -3152,15 +3152,49 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   line-height: 1.5;
   margin: 0.375rem 0;
 }
-.library-row-links {
+/* Per-row action strip — cite + related-note + original.
+ * Vocabulary mirrors §43 button system: burgundy = cite-action,
+ * green = internal nav (note), violet = external nav to canonical source. */
+.library-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
   font-family: var(--font-ui);
   font-size: var(--text-xs);
+  margin-top: 0.4rem;
 }
-.library-row-links a {
-  color: var(--color-burgundy);
+.library-row-cite.cite-cta {
+  /* Override the §43 default sizing to fit per-row scale. */
+  padding: 2px 10px;
+  font-size: 0.7rem;
+  border-radius: 99px;
+  box-shadow: none;
+}
+.library-row-cite.cite-cta:hover { box-shadow: none; transform: none; }
+.library-row-note {
+  padding: 2px 10px;
+  background: transparent;
+  color: var(--color-green);
+  border: 1.5px solid var(--color-green);
+  border-radius: 99px;
+  font-weight: 500;
   text-decoration: none;
-  border-bottom: 1px dotted var(--color-burgundy);
-  margin-right: 1rem;
+}
+.library-row-note:hover {
+  background: color-mix(in srgb, var(--color-green) 8%, transparent);
+}
+.library-row-original {
+  padding: 2px 10px;
+  background: transparent;
+  color: var(--color-violet);
+  border: 1.5px solid var(--color-violet);
+  border-radius: 99px;
+  font-weight: 500;
+  text-decoration: none;
+}
+.library-row-original:hover {
+  background: color-mix(in srgb, var(--color-violet) 8%, transparent);
 }
 
 .library-spoiler-heavy { color: var(--color-burgundy); }
