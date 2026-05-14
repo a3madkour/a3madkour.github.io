@@ -4034,17 +4034,15 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
      green outline pill    → internal navigation (Related note)
    ========================================================================== */
 
-/* --- Primary CTA: sticky burgundy block --------------------------------- */
+/* --- Primary CTA: burgundy block -------------------------------------- */
 
 .cite-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
+  display: inline-block;
   background: var(--color-burgundy);
   color: var(--color-stone);
   border: none;
   border-radius: 4px;
-  padding: 0.55rem 0.85rem;
+  padding: 0.5rem 0.85rem;
   font-family: var(--font-ui);
   font-size: var(--text-xs);
   font-weight: 600;
@@ -4053,9 +4051,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   cursor: pointer;
   box-shadow: 0 2px 6px color-mix(in srgb, var(--color-burgundy) 25%, transparent);
   transition: box-shadow 0.15s ease, transform 0.15s ease;
-  width: 100%;
-  justify-content: center;
-  box-sizing: border-box;
 }
 .cite-cta:hover {
   box-shadow: 0 3px 10px color-mix(in srgb, var(--color-burgundy) 35%, transparent);
@@ -4065,24 +4060,22 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   outline: 2px solid var(--color-burgundy);
   outline-offset: 2px;
 }
-.cite-cta-glyph {
-  font-family: var(--font-body);
-  font-size: 1.05em;
-  line-height: 1;
+
+/* Default placement: inline below page header, content-width. */
+.cite-cta-zone {
+  margin: 0.4rem 0 1rem;
 }
 
-/* Sticky placement. Essays use .essay-toc-zone (already sticky on desktop);
- * other layouts opt in via a .cite-cta-zone wrapper that's sticky on desktop
- * and inline on mobile. */
-.cite-cta-zone {
-  margin-bottom: 0.6rem;
+/* Essays only — the cite block fills the TOC zone (200px column) and
+ * inherits the zone's sticky behavior on desktop ≥1100px. */
+.essay-toc-zone .cite-cta-zone {
+  margin-bottom: 0.7rem;
 }
-@media (min-width: 1100px) {
-  .cite-cta-zone {
-    position: sticky;
-    top: 1rem;
-    z-index: 2;
-  }
+.essay-toc-zone .cite-cta {
+  display: block;
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
 }
 
 .cite-static {
