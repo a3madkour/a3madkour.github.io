@@ -10,6 +10,10 @@
       {{ partial "footer.html" . }}
     </div>
     {{ partial "search-modal.html" . }}
+    {{- $citable_sections := slice "essays" "garden" "research" "works" -}}
+    {{- if and (in $citable_sections .Section) (eq .Kind "page") -}}
+      {{ partial "cite/modal.html" . }}
+    {{- end }}
     {{ partial "scripts.html" . }}
   </body>
 </html>
