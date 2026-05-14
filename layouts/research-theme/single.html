@@ -40,10 +40,11 @@
     <span aria-current="page">{{ .Title }}</span>
   </nav>
 
+  <div class="cite-cta-zone research-cite-zone">{{ partial "cite/button.html" . }}</div>
+
   <header class="research-theme-hero">
     <h1>{{ .Title }}</h1>
     {{ partial "research/status-pill.html" .Params.status }}
-    {{ partial "cite/button.html" . }}
     <p class="research-theme-description">{{ .Params.description }}</p>
     {{ with .Params.summary }}<p class="research-theme-summary">{{ . }}</p>{{ end }}
     {{ if .Params.garden_topic_ref }}

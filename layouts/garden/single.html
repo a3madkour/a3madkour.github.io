@@ -15,8 +15,8 @@
 <div class="garden-stack" data-stack-root="true">
   <div class="garden-stack-columns">
     <article class="garden-column is-active reading-column garden-note" data-slug="{{ path.Base .File.Dir }}">
+      <div class="cite-cta-zone garden-cite-zone">{{ partial "cite/button.html" . }}</div>
       {{ partial "garden/note-header.html" . }}
-      {{ partial "cite/button.html" . }}
 
       <h1 class="garden-note-title" tabindex="-1">{{ .Title }}</h1>
 

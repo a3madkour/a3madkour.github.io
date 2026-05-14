@@ -26,9 +26,12 @@
   {{- $entry := index site.Data.citations.citations . -}}
   {{- if $entry -}}
     {{- $ref_dict := partial "cite/normalize-ref.html" (dict "key" . "entry" $entry) -}}
+    {{- /* notes_ref is forwarded so the modal can render the Related note pill. */ -}}
     {{- $refs = merge $refs (dict . (dict
-          "title"   $ref_dict.title
-          "formats" (dict
+          "title"     $ref_dict.title
+          "url"       (default "" $entry.url)
+          "notes_ref" (default "" $entry.notes_ref)
+          "formats"   (dict
             "bibtex"  (partial "cite/fmt-bibtex.html"  $ref_dict)
             "apa"     (partial "cite/fmt-apa.html"     $ref_dict)
             "chicago" (partial "cite/fmt-chicago.html" $ref_dict)

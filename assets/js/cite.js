@@ -26,6 +26,8 @@ let outputEl = null;
 let subtitleEl = null;
 let toastEl = null;
 let downloadEl = null;
+let sourceEl = null;
+let noteEl = null;
 let currentSource = null;
 
 function parseDataBlob() {
@@ -66,10 +68,22 @@ function setActiveTab(format) {
   saveFormatPref(format);
 }
 
+function setNavPill(el, href) {
+  if (!href) {
+    el.hidden = true;
+    el.removeAttribute('href');
+  } else {
+    el.hidden = false;
+    el.setAttribute('href', href);
+  }
+}
+
 function openModal(source, subtitle) {
   if (!source) return;
   currentSource = source;
   subtitleEl.textContent = subtitle || '';
+  setNavPill(sourceEl, source.url);
+  setNavPill(noteEl, source.notes_ref ? `/garden/${source.notes_ref}/` : '');
   const pref = loadFormatPref();
   setActiveTab(pref);
   if (typeof modal.showModal === 'function') {
@@ -107,7 +121,7 @@ function copyToClipboard(text) {
 }
 
 function onDocumentClick(e) {
-  const pageLink = e.target.closest('.cite-page-link');
+  const pageLink = e.target.closest('.cite-cta');
   if (pageLink) {
     e.preventDefault();
     openModal(citeData.self, 'This page');
@@ -119,7 +133,16 @@ function onDocumentClick(e) {
     const ref = citeData.refs && citeData.refs[key];
     if (ref) {
       e.preventDefault();
-      openModal({ citekey: key, title: ref.title, formats: ref.formats }, `Reference: ${ref.title}`);
+      openModal(
+        {
+          citekey: key,
+          title: ref.title,
+          formats: ref.formats,
+          url: ref.url,
+          notes_ref: ref.notes_ref,
+        },
+        `Reference: ${ref.title}`,
+      );
     }
     return;
   }
@@ -166,6 +189,8 @@ export function initCite() {
   subtitleEl = document.getElementById('cite-modal-subtitle');
   toastEl = modal.querySelector('.cite-modal-toast');
   downloadEl = modal.querySelector('.cite-modal-download');
+  sourceEl = document.getElementById('cite-modal-source');
+  noteEl = document.getElementById('cite-modal-note');
   document.addEventListener('click', onDocumentClick);
   document.addEventListener('keydown', onKeydown);
 }

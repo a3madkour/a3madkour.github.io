@@ -12,13 +12,13 @@
           {{ delimit $entry.authors ", " }} ({{ $entry.year }}).
           <em>{{ $entry.title }}</em>.
           {{ $entry.venue }}.
-          {{ with $entry.url }}<a href="{{ . }}" rel="noopener">source</a>{{ end }}
-          {{ with $entry.notes_ref }}<a href="/garden/{{ . }}/" class="ref-note">related note</a>{{ end }}
           <span class="ref-cite-actions" aria-label="Cite this reference">
             <button class="ref-cite-copy" data-cite-key="{{ . }}" data-format="bibtex" type="button">BibTeX</button>
             <button class="ref-cite-copy" data-cite-key="{{ . }}" data-format="apa" type="button">APA</button>
             <button class="ref-cite-copy" data-cite-key="{{ . }}" data-format="ris" type="button">.ris</button>
             <a class="ref-cite-full" href="#ref-{{ . }}" data-cite-key="{{ . }}">Full citation</a>
+            {{ with $entry.url }}<a class="ref-cite-source" href="{{ . }}" rel="noopener">Source</a>{{ end }}
+            {{ with $entry.notes_ref }}<a class="ref-cite-note" href="/garden/{{ . }}/">Related note</a>{{ end }}
           </span>
         </li>
       {{- end -}}

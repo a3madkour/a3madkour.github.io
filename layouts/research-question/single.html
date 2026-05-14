@@ -72,6 +72,8 @@
     <span aria-current="page">{{ .Title }}</span>
   </nav>
 
+  <div class="cite-cta-zone research-cite-zone">{{ partial "cite/button.html" . }}</div>
+
   <header class="research-question-status-strip">
     {{ partial "research/status-pill.html" .Params.status }}
     <span class="last-tended">Last tended: <time>{{ .Params.last_modified }}</time></span>
@@ -82,7 +84,6 @@
   </header>
 
   <h1 class="question-statement">{{ .Title }}</h1>
-  {{ partial "cite/button.html" . }}
 
   <section id="thinking" class="research-current-thinking">
     <h2>Current thinking</h2>

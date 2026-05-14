@@ -1,5 +1,35 @@
-{{- /* "Cite this page" link. Inserted by per-section single templates
-       inside the meta row beneath the title. JS will preventDefault on
-       click and open the modal; with no JS, the href anchors to the
-       static fallback section at page bottom. */ -}}
-<a class="cite-page-link" href="#cite-this" data-action="open-cite-modal">Cite this page</a>
+{{- /* "Cite this X" CTA. Sticky block above the TOC on essays; sticky at the
+       top of the reading column on other layouts. The kind label is computed
+       per page section + media_type so users see "Cite this essay", "Cite
+       this note", "Cite this question", etc.
+
+       JS preventDefaults the click and opens the modal; with no JS the href
+       anchors to the static fallback section at page bottom. */ -}}
+
+{{- $label := "Cite this page" -}}
+{{- if eq .Section "essays" -}}
+  {{- $label = "Cite this essay" -}}
+{{- else if eq .Section "garden" -}}
+  {{- $mt := .Params.media_type -}}
+  {{- if in (slice "book" "album" "track" "game" "film" "series") $mt -}}
+    {{- $label = "Cite this entry" -}}
+  {{- else if in (slice "paper" "video" "article" "talk") $mt -}}
+    {{- $label = "Cite this reference" -}}
+  {{- else -}}
+    {{- $label = "Cite this note" -}}
+  {{- end -}}
+{{- else if eq .Section "research" -}}
+  {{- if eq .Type "research-theme" -}}{{- $label = "Cite this theme" -}}
+  {{- else if eq .Type "research-question" -}}{{- $label = "Cite this question" -}}
+  {{- end -}}
+{{- else if eq .Section "works" -}}
+  {{- if eq .Type "works-games" -}}{{- $label = "Cite this game" -}}
+  {{- else if eq .Type "works-music" -}}{{- $label = "Cite this release" -}}
+  {{- else if eq .Type "works-poetry" -}}{{- $label = "Cite this poem" -}}
+  {{- end -}}
+{{- end -}}
+
+<a class="cite-cta" href="#cite-this" data-action="open-cite-modal">
+  <span class="cite-cta-glyph" aria-hidden="true">&ldquo;</span>
+  <span class="cite-cta-label">{{ $label }}</span>
+</a>

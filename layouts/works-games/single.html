@@ -3,6 +3,7 @@
   <span data-pagefind-meta="section:works" hidden></span>
   <span data-pagefind-meta="medium:game" hidden></span>
   <span data-pagefind-filter="section:works" hidden></span>
+  <div class="cite-cta-zone works-cite-zone">{{ partial "cite/button.html" . }}</div>
   {{- $hero := "" -}}
   {{- with .Params.hero -}}
     {{- $heroRes := $.Resources.Get . -}}
@@ -19,7 +20,6 @@
         <span class="works-game-year">{{ .Params.year }}</span>
         <span class="works-game-kind">{{ humanize .Params.game_kind }}</span>
         {{- with .Params.length }}<span class="works-game-length">{{ . }}</span>{{- end }}
-        {{ partial "cite/button.html" . }}
       </p>
       {{- with .Params.collaborators }}<p class="works-game-collaborators">with {{ delimit . ", " }}</p>{{- end }}
       {{- with .Params.tech_stack }}<p class="works-game-tech">{{ delimit . " · " }}</p>{{- end }}

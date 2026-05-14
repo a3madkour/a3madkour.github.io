@@ -3,12 +3,12 @@
   <span data-pagefind-meta="section:works" hidden></span>
   <span data-pagefind-meta="medium:poetry" hidden></span>
   <span data-pagefind-filter="section:works" hidden></span>
+  <div class="cite-cta-zone works-cite-zone">{{ partial "cite/button.html" . }}</div>
   <header class="works-poem-header">
     <h1>{{ .Title }}</h1>
     <p class="works-poem-meta">
       <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2006" }}</time>
       {{- with .Params.collection }} · <span class="works-poem-collection">{{ . }}</span>{{- end }}
-      {{ partial "cite/button.html" . }}
     </p>
     {{- with .Params.set_to_music }}
       {{ partial "works/audio-pill.html" . }}

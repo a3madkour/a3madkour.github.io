@@ -3,6 +3,7 @@
   <span data-pagefind-meta="section:works" hidden></span>
   <span data-pagefind-meta="medium:music" hidden></span>
   <span data-pagefind-filter="section:works" hidden></span>
+  <div class="cite-cta-zone works-cite-zone">{{ partial "cite/button.html" . }}</div>
   {{- $cover := "" -}}
   {{- with .Params.cover -}}
     {{- $coverRes := $.Resources.Get . -}}
@@ -19,7 +20,6 @@
         {{- with .Params.duration }} · <span class="works-music-duration">{{ . }}</span>{{- end }}
         · <span class="works-music-year">{{ .Params.year }}</span>
         {{- with .Params.collaborators }} · <span class="works-music-collaborators">with {{ delimit . ", " }}</span>{{- end }}
-        {{ partial "cite/button.html" . }}
       </p>
     </div>
   </header>
