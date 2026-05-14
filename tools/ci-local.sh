@@ -77,6 +77,9 @@ separator "Post-build linters + sibling tests"
 (cd tools && python3 -m unittest test_check_pagefind_meta.py -v 2>&1 | tail -3)
 python3 tools/check_pagefind_meta.py
 
+(cd tools && python3 -m unittest test_check_cite_meta.py -v 2>&1 | tail -3)
+python3 tools/check_cite_meta.py
+
 python3 -m unittest tools/test_check_page_weights.py -v 2>&1 | tail -3
 python3 tools/check_page_weights.py
 
