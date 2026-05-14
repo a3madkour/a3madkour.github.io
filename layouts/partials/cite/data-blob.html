@@ -1,0 +1,42 @@
+{{- /* Emits <script type=application/json id=cite-data> with self + refs.
+
+       Must be rendered AFTER the page body (so Page.Scratch.cite-keys is
+       populated by the cite shortcode). Caller (per-section single template)
+       is responsible for ordering.
+
+       jsonify runs inline at the <script> embed point to avoid the minifier
+       trap documented in CLAUDE.md's "Build-time graph data" section.
+*/ -}}
+
+{{- $self_dict := partial "cite/normalize-page.html" . -}}
+{{- $self := dict
+      "citekey" $self_dict.citekey
+      "title"   $self_dict.title
+      "formats" (dict
+        "bibtex"  (partial "cite/fmt-bibtex.html"  $self_dict)
+        "apa"     (partial "cite/fmt-apa.html"     $self_dict)
+        "chicago" (partial "cite/fmt-chicago.html" $self_dict)
+        "mla"     (partial "cite/fmt-mla.html"     $self_dict)
+        "ris"     (partial "cite/fmt-ris.html"     $self_dict))
+-}}
+
+{{- $refs := dict -}}
+{{- $used := .Scratch.Get "cite-keys" | default slice -}}
+{{- range $used -}}
+  {{- $entry := index site.Data.citations.citations . -}}
+  {{- if $entry -}}
+    {{- $ref_dict := partial "cite/normalize-ref.html" (dict "key" . "entry" $entry) -}}
+    {{- $refs = merge $refs (dict . (dict
+          "title"   $ref_dict.title
+          "formats" (dict
+            "bibtex"  (partial "cite/fmt-bibtex.html"  $ref_dict)
+            "apa"     (partial "cite/fmt-apa.html"     $ref_dict)
+            "chicago" (partial "cite/fmt-chicago.html" $ref_dict)
+            "mla"     (partial "cite/fmt-mla.html"     $ref_dict)
+            "ris"     (partial "cite/fmt-ris.html"     $ref_dict)))) -}}
+  {{- end -}}
+{{- end -}}
+
+<script type="application/json" id="cite-data">
+{{ dict "self" $self "refs" $refs | jsonify }}
+</script>
