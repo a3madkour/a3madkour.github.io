@@ -20,3 +20,9 @@ markup:
         startLevel: 2
         endLevel: 6
         ordered: false
+
+params:
+  author:
+    name: "Madkour, Abdelrahman"
+    given: "Abdelrahman"
+    family: "Madkour"
