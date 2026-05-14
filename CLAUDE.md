@@ -159,6 +159,10 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 - **Homepage v3 spec**: `docs/superpowers/specs/2026-05-13-homepage-v3-design.md`. Phase 7 Slice 2 (closes Phase 7).
 - **Page sidebar spec**: `docs/superpowers/specs/2026-05-13-page-sidebar-design.md`. Phase 7 polish slice (rotated-labels rail across 5 layout families).
 - **Phase 8 spec**: `docs/superpowers/specs/2026-05-13-phase-8-design.md`. Pagefind search runtime (Slice 1 shipped), Lighthouse CI, final QA.
+- **Citation export spec**: `docs/superpowers/specs/2026-05-13-citation-export-design.md` + plan `docs/superpowers/plans/2026-05-13-citation-export.md`. Post-Phase-8 polish slice (designed, plan drafted, implementation queued).
+- **Time-synced poetry spec**: `docs/superpowers/specs/2026-05-13-time-synced-poetry-design.md`. Independent works/poetry runtime slice (designed, implementation queued).
+- **Streams section spec**: `docs/superpowers/specs/2026-05-13-streams-section-design.md`. New top-level `/streams/` section + live-state polling via GitHub Action; designed, soft dependency on Citation export.
+- **Multi-target export spec**: `docs/superpowers/specs/2026-05-13-multi-target-export-design.md`. Phase 3 Slice 3 — literate org → web essay + PDF + Word via one Emacs command; depends on Phase 3 Slices 1+2.
 
 ## Project status (as of 2026-05-13)
 
@@ -184,7 +188,18 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 - **Phase 3 — org-mode pipeline**: elisp helpers + ox-hugo that wire real content into the fixture-shaped data files. All site fixtures exist to round-trip when this lands. **Two separate publishing commands** required (per spec §14 Phase 3): a Garden/Library/Research publish that runs frequently and idempotently (the "living" surfaces — meant for daily/hourly cadence with no diff when nothing changed), and an Essay publish that's per-post and deliberate (treated as a publishing event with hero/figures/sidenotes/citations rolled in; output reviewed before commit).
 - **Phase 8 follow-up: finish QA walkthrough.** Strip bug is resolved (commit `bab359d`); remaining QA checklist items (`docs/superpowers/qa-checklists/2026-05-13-phase-8-final-qa.md` §1.1–1.5, §1.7–1.9, §2, §3, §4, §5) are unchecked. Plus two non-blocking deferrals waiting on their own slices: RSS link UX (XSL pretty-render) and garden path-log retrieval (`docs/superpowers/specs/2026-05-13-garden-path-log-retrieval-design.md`).
 
-To pick up a slice: read this file + parent spec §14, run `superpowers:brainstorming` then `superpowers:writing-plans`. Confirm with the user whether the slice depends on the elisp pipeline (most do) or can build on placeholder data.
+**Designed but not yet implemented** (specs committed 2026-05-13; pick up via `superpowers:executing-plans` when scheduled):
+
+| Feature | Spec | Plan | Phase fit | Notes |
+|---|---|---|---|---|
+| Citation export | `2026-05-13-citation-export-design.md` | `2026-05-13-citation-export.md` | Post-Phase-8 polish | Highwire `<meta>` for Zotero + `<dialog>` modal with BibTeX/APA/Chicago/MLA/RIS. Half A (page) + Half B (per-reference). 15th linter pair. Plan drafted (24 tasks). |
+| Time-synced poetry | `2026-05-13-time-synced-poetry-design.md` | not yet drafted | Independent works/poetry runtime slice | Auto-detected `[mm:ss]` markers in poem bodies → audio-driven or animation-driven reveal + player. New linter pair. Foundation for the deferred lyrics runtime. |
+| Streams section | `2026-05-13-streams-section-design.md` | not yet drafted | Independent (β parallel with Phase 3 or γ after) | New 7th top-level `/streams/` section. Cron GitHub Action polls Twitch + YouTube every 5 min → writes `data/streams-*.yaml` + auto-stubs draft stream pages. Header LIVE pill. Bidirectional cross-refs to essays/garden/research/works (16th + 17th linter pairs). Soft dependency on Citation export shipping first. |
+| Multi-target export pipeline | `2026-05-13-multi-target-export-design.md` | not yet drafted | **Phase 3 Slice 3** | One Emacs interactive command publishes a literate org doc to Hugo essay + PDF + Word. Per-target subtree visibility tags. Elisp + LaTeX classes + Word reference template versioned in `tools/elisp/` and `tools/templates/`. Hard dependency on Phase 3 Slices 1+2 (garden/research publish + standard essay publish). |
+
+Recommended sequencing across all queued work: Phase 8 close-out → Citation export → Time-synced poetry → Phase 3 Slice 1 (garden publish) → Phase 3 Slice 2 (essay publish) → Multi-target export → Streams section.
+
+To pick up a slice: read this file + parent spec §14, run `superpowers:brainstorming` then `superpowers:writing-plans` (or jump straight to `superpowers:executing-plans` if a plan already exists). Confirm with the user whether the slice depends on the elisp pipeline (Multi-target export does; the rest don't).
 
 **Fixture content is always obvious filler** (lorem ipsum / "Example N") — never authored prose, even for layout testing. Real content lands via the elisp pipeline.
 
@@ -194,11 +209,11 @@ To pick up a slice: read this file + parent spec §14, run `superpowers:brainsto
 |---|---|---|
 | KaTeX math rendering | Gated on author need | essay fixture #2 (`has_math`) |
 | Scroll-synced video runtime | Gated on author need | essay fixture #4 (`has_video_sync`) |
-| Per-page interactive widgets + per-page JS bundle convention | Design when first real widget exists | essay fixture #5 (`has_widgets`) |
+| Per-page interactive widgets + per-page JS bundle convention | Explorable explainables — own future spec (referenced from §7 of multi-target export spec) | essay fixture #5 (`has_widgets`); `widget` shortcode stub emits `data-pending` |
 | Game iframe embed (itch / Bitsy / WebGL) | Future works runtime slice | game fixture #1 `embed_url`; `works-embed-stub` anchor |
 | Music platform iframe (Bandcamp / SoundCloud / YouTube) | Future works runtime slice | music fixtures #1 / #2 / #4; `works-audio-link` text link only |
 | Custom audio player | Future works runtime slice | `works-player-stub` block |
-| Synced-lyrics runtime + two-column lyrics layout | Future works runtime slice | music fixture #2 ↔ poem fixture #1; `synced-lyrics-stub`, `lyrics` shortcode is a no-op |
+| Synced-lyrics runtime + two-column lyrics layout | Future works runtime slice | music fixture #2 ↔ poem fixture #1; `synced-lyrics-stub`, `lyrics` shortcode is a no-op. Parser foundation (`partials/works/synced-text-parser.html`) is designed in the time-synced poetry spec — lyrics slice reuses it. |
 | Audio-pill pulse animation | Future works runtime slice | poem-page audio pill renders without animation |
 | Gif-vs-hero toggle on game cards | When real gif assets land | n/a |
 | Figure lightbox | Polish phase | n/a |
