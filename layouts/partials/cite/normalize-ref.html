@@ -1,0 +1,26 @@
+{{- /* Normalizes a data/citations.yaml entry into a citation dict.
+
+       Inputs: dict {key, entry}
+         .key   — string, the citations.yaml key
+         .entry — the citations.yaml value (authors, year, title, venue, url, ...)
+
+       Output: dict matching normalize-page.html's shape.
+*/ -}}
+
+{{- $entry := .entry -}}
+{{- $type := default "article" $entry.type -}}
+
+{{- return dict
+      "citekey"     .key
+      "type"        $type
+      "authors"     $entry.authors
+      "year"        $entry.year
+      "title"       $entry.title
+      "venue"       (default "" $entry.venue)
+      "url"         (default "" $entry.url)
+      "doi"         (default "" $entry.doi)
+      "isbn"        (default "" $entry.isbn)
+      "note"        ""
+      "pub_date"    (printf "%d-01-01" $entry.year)
+      "online_date" (printf "%d-01-01" $entry.year)
+-}}

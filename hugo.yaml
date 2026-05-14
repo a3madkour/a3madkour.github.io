@@ -13,6 +13,15 @@ taxonomies:
   tag: tags
   series: series
 
+# Only the essays section ships an RSS feed; home/sections/taxonomies
+# default to HTML-only. Essays opt back into RSS via its frontmatter
+# (content/essays/_index.md).
+outputs:
+  home: [HTML]
+  section: [HTML]
+  taxonomy: [HTML]
+  term: [HTML]
+
 markup:
     highlight:
         style: dracula
@@ -20,3 +29,9 @@ markup:
         startLevel: 2
         endLevel: 6
         ordered: false
+
+params:
+  author:
+    name: "Madkour, Abdelrahman"
+    given: "Abdelrahman"
+    family: "Madkour"

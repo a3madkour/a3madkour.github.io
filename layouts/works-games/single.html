@@ -25,6 +25,8 @@
     </div>
   </header>
 
+  <div class="cite-cta-zone works-cite-zone">{{ partial "cite/button.html" . }}</div>
+
   <section class="works-game-embed">
     {{- if .Params.embed_url }}
     <a class="works-embed-stub" data-pending href="{{ .Params.embed_url }}">&rarr; Play in browser</a>
@@ -63,5 +65,8 @@
     {{- with .Params.source_url }}<p><a href="{{ . }}">GitHub</a></p>{{- end }}
   </section>
   {{- end }}
+
+  {{ partial "cite/static-fallback.html" . }}
+  {{ partial "cite/data-blob.html" . }}
 </article>
 {{ end }}

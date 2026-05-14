@@ -1,0 +1,28 @@
+<dialog id="cite-modal" class="cite-modal" aria-labelledby="cite-modal-title">
+  <header class="cite-modal-header">
+    <div class="cite-modal-titleblock">
+      <h2 id="cite-modal-title">Cite</h2>
+      <p class="cite-modal-subtitle" id="cite-modal-subtitle"></p>
+    </div>
+    <button class="cite-modal-close" type="button" aria-label="Close">×</button>
+  </header>
+  <nav class="cite-modal-tabs" role="tablist" aria-label="Citation format">
+    <button role="tab" data-format="bibtex"  aria-selected="true">BibTeX</button>
+    <button role="tab" data-format="apa"     aria-selected="false">APA</button>
+    <button role="tab" data-format="chicago" aria-selected="false">Chicago</button>
+    <button role="tab" data-format="mla"     aria-selected="false">MLA</button>
+    <button role="tab" data-format="ris"     aria-selected="false">RIS</button>
+  </nav>
+  <pre class="cite-modal-output" id="cite-modal-output" tabindex="0"></pre>
+  <div class="cite-modal-actions">
+    <div class="cite-modal-nav-group" id="cite-modal-nav-group">
+      <a class="cite-modal-source" id="cite-modal-source" href="#" hidden>Source</a>
+      <a class="cite-modal-note"   id="cite-modal-note"   href="#" hidden>Related note</a>
+    </div>
+    <div class="cite-modal-action-group">
+      <button class="cite-modal-copy" type="button">Copy</button>
+      <a class="cite-modal-download" download href="#">Download .bib</a>
+      <span class="cite-modal-toast" role="status" aria-live="polite"></span>
+    </div>
+  </div>
+</dialog>

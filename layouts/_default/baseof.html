@@ -10,6 +10,16 @@
       {{ partial "footer.html" . }}
     </div>
     {{ partial "search-modal.html" . }}
+    {{- /* Modal lives at the document level; rows / pages with cite-data
+         find it via getElementById regardless of which article they're in.
+         Library list pages get the modal so per-row "Cite this entry"
+         buttons can open it. */ -}}
+    {{- $citable_sections := slice "essays" "garden" "research" "works" -}}
+    {{- $isCitablePage := and (in $citable_sections .Section) (eq .Kind "page") -}}
+    {{- $isLibraryList := and (eq .Section "library") (ne .RelPermalink "/library/") -}}
+    {{- if or $isCitablePage $isLibraryList -}}
+      {{ partial "cite/modal.html" . }}
+    {{- end }}
     {{ partial "scripts.html" . }}
   </body>
 </html>

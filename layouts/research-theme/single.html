@@ -53,6 +53,8 @@
     {{ end }}
   </header>
 
+  <div class="cite-cta-zone research-cite-zone">{{ partial "cite/button.html" . }}</div>
+
   {{ if or $active $dormant $answered }}
   <section id="questions">
     <h2>Questions</h2>
@@ -131,5 +133,7 @@
   </section>
   {{ end }}
 
+  {{ partial "cite/static-fallback.html" . }}
+  {{ partial "cite/data-blob.html" . }}
 </article>
 {{ end }}

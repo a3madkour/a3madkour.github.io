@@ -1,0 +1,29 @@
+{{- /* Renders a citation dict as an RIS export string.
+
+       Type-code map: article→JOUR, book→BOOK, inproceedings→CONF,
+                      online→ELEC, misc→GEN.
+*/ -}}
+
+{{- $cite := . -}}
+
+{{- $type_map := dict
+      "article"       "JOUR"
+      "book"          "BOOK"
+      "inproceedings" "CONF"
+      "online"        "ELEC"
+      "misc"          "GEN" -}}
+{{- $type_code := default "GEN" (index $type_map $cite.type) -}}
+
+{{- $lines := slice (printf "TY  - %s" $type_code) -}}
+{{- range $cite.authors -}}
+  {{- $lines = $lines | append (printf "AU  - %s" .) -}}
+{{- end -}}
+{{- $lines = $lines | append (printf "PY  - %d" $cite.year) -}}
+{{- $lines = $lines | append (printf "TI  - %s" $cite.title) -}}
+{{- with $cite.venue -}}{{- $lines = $lines | append (printf "JO  - %s" .) -}}{{- end -}}
+{{- with $cite.url -}}{{- $lines = $lines | append (printf "UR  - %s" .) -}}{{- end -}}
+{{- with $cite.doi -}}{{- $lines = $lines | append (printf "DO  - %s" .) -}}{{- end -}}
+{{- with $cite.isbn -}}{{- $lines = $lines | append (printf "SN  - %s" .) -}}{{- end -}}
+{{- $lines = $lines | append "ER  -" -}}
+
+{{- return delimit $lines "\n" -}}

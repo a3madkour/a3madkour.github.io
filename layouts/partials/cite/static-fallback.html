@@ -1,0 +1,36 @@
+{{- /* No-JS fallback. Hidden by default via CSS §43; revealed by the
+       <noscript> override in head.html when JS is disabled. Renders all
+       5 formats inline under native <details>. */ -}}
+
+{{- $label := "Cite this page" -}}
+{{- if eq .Section "essays" -}}
+  {{- $label = "Cite this essay" -}}
+{{- else if eq .Section "garden" -}}
+  {{- $mt := .Params.media_type -}}
+  {{- if in (slice "book" "album" "track" "game" "film" "series") $mt -}}
+    {{- $label = "Cite this entry" -}}
+  {{- else if in (slice "paper" "video" "article" "talk") $mt -}}
+    {{- $label = "Cite this reference" -}}
+  {{- else -}}
+    {{- $label = "Cite this note" -}}
+  {{- end -}}
+{{- else if eq .Section "research" -}}
+  {{- if eq .Type "research-theme" -}}{{- $label = "Cite this theme" -}}
+  {{- else if eq .Type "research-question" -}}{{- $label = "Cite this question" -}}
+  {{- end -}}
+{{- else if eq .Section "works" -}}
+  {{- if eq .Type "works-games" -}}{{- $label = "Cite this game" -}}
+  {{- else if eq .Type "works-music" -}}{{- $label = "Cite this release" -}}
+  {{- else if eq .Type "works-poetry" -}}{{- $label = "Cite this poem" -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $self := partial "cite/normalize-page.html" . -}}
+<section id="cite-this" class="cite-static" aria-labelledby="cite-this-heading">
+  <h2 id="cite-this-heading">{{ $label }}</h2>
+  <details><summary>BibTeX</summary><pre>{{ partial "cite/fmt-bibtex.html"  $self }}</pre></details>
+  <details><summary>APA</summary><pre>{{ partial "cite/fmt-apa.html"     $self }}</pre></details>
+  <details><summary>Chicago</summary><pre>{{ partial "cite/fmt-chicago.html" $self }}</pre></details>
+  <details><summary>MLA</summary><pre>{{ partial "cite/fmt-mla.html"     $self }}</pre></details>
+  <details><summary>RIS</summary><pre>{{ partial "cite/fmt-ris.html"     $self }}</pre></details>
+</section>

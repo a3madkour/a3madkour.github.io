@@ -37,6 +37,8 @@
         </div>
       {{- end -}}
 
+      <div class="cite-cta-zone garden-cite-zone">{{ partial "cite/button.html" . }}</div>
+
       <div class="garden-note-body essay-body">
         {{ .Content }}
       </div>
@@ -51,6 +53,8 @@
       {{- end -}}
 
       {{ partial "garden/links-section.html" . }}
+      {{ partial "cite/static-fallback.html" . }}
+      {{ partial "cite/data-blob.html" . }}
     </article>
   </div>
 </div>

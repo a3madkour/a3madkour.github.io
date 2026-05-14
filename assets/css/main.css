@@ -623,16 +623,29 @@ main { flex-grow: 1; }
   font-style: italic;
 }
 
+/* Essay-scoped reading column is wider than the site default so prose
+ * doesn't feel cramped on wide screens (user feedback). */
+.essay { --reading-column: 900px; }
+
 .essay-layout {
   display: grid;
   grid-template-columns: 1fr;
   gap: 2rem;
 }
 @media (min-width: 1100px) {
+  /* Single-column body grid. The TOC + cite sidebar is pulled out via
+   * position:fixed on .essay-toc-zone (below) so it can sit at the
+   * left viewport edge, not crowded against the prose. */
   .essay-layout {
-    grid-template-columns: 200px minmax(0, var(--reading-column)) 250px;
-    justify-content: center;
+    grid-template-columns: 1fr;
     gap: 2rem;
+  }
+  /* All reading-column elements inside .essay get a min-left-margin so
+   * they never overlap the fixed TOC sidebar. Above ~1380px viewport
+   * the calc exceeds 240 and the column re-centers in the viewport. */
+  .essay .reading-column {
+    margin-left: max(240px, calc((100% - var(--reading-column)) / 2));
+    margin-right: auto;
   }
 }
 
@@ -658,7 +671,18 @@ main { flex-grow: 1; }
 .essay-toc #TableOfContents > ul > li > ul { padding-left: 1rem; }
 
 @media (min-width: 1100px) {
-  .essay-toc-zone { position: sticky; top: 2rem; align-self: start; max-height: calc(100vh - 4rem); overflow-y: auto; }
+  /* Fixed at the left viewport edge, not in the grid flow. The body's
+   * min-left-margin (set in .essay .reading-column above) reserves enough
+   * runway to never overlap. */
+  .essay-toc-zone {
+    position: fixed;
+    left: 1.5rem;
+    top: 5rem;
+    width: 200px;
+    max-height: calc(100vh - 7rem);
+    overflow-y: auto;
+    z-index: 2;
+  }
   .essay-toc details { open: true; }
   .essay-toc summary { display: none; }
 }
@@ -3128,15 +3152,54 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   line-height: 1.5;
   margin: 0.375rem 0;
 }
-.library-row-links {
+/* Per-row action strip — cite + related-note + original.
+ * Vocabulary mirrors §43 button system: burgundy = cite-action,
+ * green = internal nav (note), steel = external nav to canonical source
+ * (same color as 'Source' in essay refs — both are external links). */
+.library-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
   font-family: var(--font-ui);
-  font-size: var(--text-xs);
+  font-size: 0.72rem;
+  margin-top: 0.4rem;
 }
-.library-row-links a {
-  color: var(--color-burgundy);
+.library-row-cite.cite-cta,
+.library-row-note,
+.library-row-original {
+  padding: 2px 10px;
+  font-size: 0.72rem;
+  border-radius: 99px;
+  font-weight: 500;
   text-decoration: none;
-  border-bottom: 1px dotted var(--color-burgundy);
-  margin-right: 1rem;
+  line-height: 1.4;
+  border-width: 1.5px;
+  border-style: solid;
+}
+.library-row-cite.cite-cta {
+  /* Override the §43 default (large CTA) for per-row scale.
+   * Keeps the burgundy fill + stone text vocabulary. */
+  border-color: var(--color-burgundy);
+  box-shadow: none;
+  font-weight: 600;
+}
+.library-row-cite.cite-cta:hover { box-shadow: none; transform: none; }
+.library-row-note {
+  background: transparent;
+  color: var(--color-green);
+  border-color: var(--color-green);
+}
+.library-row-note:hover {
+  background: color-mix(in srgb, var(--color-green) 8%, transparent);
+}
+.library-row-original {
+  background: transparent;
+  color: var(--color-steel);
+  border-color: var(--color-steel);
+}
+.library-row-original:hover {
+  background: color-mix(in srgb, var(--color-steel) 8%, transparent);
 }
 
 .library-spoiler-heavy { color: var(--color-burgundy); }
@@ -4018,4 +4081,354 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   text-decoration: none;
   border-bottom: 1px dotted var(--color-burgundy);
   font-size: var(--text-xs);
+}
+
+/* ============================================================================
+   §43 Citation export
+   Sticky "Cite this X" CTA above the TOC (essays) / at top of reading column
+   elsewhere. <dialog> modal. Per-reference action row in essay-references.
+   Static fallback section (hidden when JS enabled; revealed via <noscript>).
+
+   Button vocabulary (color-as-semantic):
+     burgundy fill         → primary cite CTA (page-level)
+     burgundy outline pill → cite action (full citation, modal Copy/Download)
+     stone outline chip    → micro copy action (BibTeX/APA/.ris)
+     steel outline pill    → external navigation (Source)
+     green outline pill    → internal navigation (Related note)
+   ========================================================================== */
+
+/* --- Primary CTA: burgundy block -------------------------------------- */
+
+.cite-cta {
+  display: inline-block;
+  background: var(--color-burgundy);
+  color: var(--color-stone);
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 0.85rem;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--color-burgundy) 25%, transparent);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.cite-cta:hover {
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--color-burgundy) 35%, transparent);
+  transform: translateY(-1px);
+}
+.cite-cta:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
+}
+
+/* Default placement: inline below page header, content-width. */
+.cite-cta-zone {
+  margin: 0.4rem 0 1rem;
+}
+
+/* Essays only — the cite block fills the TOC zone (200px column) and
+ * inherits the zone's sticky behavior on desktop ≥1100px. */
+.essay-toc-zone .cite-cta-zone {
+  margin-bottom: 0.7rem;
+}
+.essay-toc-zone .cite-cta {
+  display: block;
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.cite-static {
+  /* Hidden by default; revealed by the <noscript> override in head.html when
+   * JS is disabled. With JS the modal is the canonical path, so the static
+   * disclosure list is redundant + confusing (the summary chevrons look like
+   * link affordances). Zotero meta tags live in <head> and stay regardless. */
+  display: none;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed var(--color-rule);
+}
+.cite-static h2 {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-ink-soft);
+  margin: 0 0 0.75rem;
+}
+.cite-static details { margin-bottom: 0.5rem; }
+.cite-static summary {
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-burgundy);
+}
+.cite-static pre {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  background: var(--color-paper);
+  border: 1px solid var(--color-rule);
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 0;
+  border-radius: 4px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.cite-modal {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  border: 1px solid var(--color-rule);
+  border-radius: 6px;
+  max-width: 640px;
+  width: min(640px, 92vw);
+  padding: 0;
+}
+.cite-modal::backdrop { background: rgba(0, 0, 0, 0.4); }
+.cite-modal-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem 0.5rem;
+}
+.cite-modal-header h2 { margin: 0; font-size: var(--text-md); }
+.cite-modal-subtitle {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  margin: 0;
+  flex: 1;
+}
+.cite-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--color-ink-soft);
+  padding: 0;
+  line-height: 1;
+}
+.cite-modal-tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 1.25rem;
+  border-bottom: 1px solid var(--color-rule);
+  flex-wrap: wrap;
+}
+.cite-modal-tabs button {
+  background: none;
+  border: none;
+  padding: 0.4rem 0.6rem;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.cite-modal-tabs button[aria-selected="true"] {
+  color: var(--color-burgundy);
+  border-bottom-color: var(--color-burgundy);
+}
+.cite-modal-output {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  padding: 1rem 1.25rem;
+  margin: 0;
+  max-height: 50vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cite-modal-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1.25rem 1rem;
+  flex-wrap: wrap;
+}
+.cite-modal-nav-group,
+.cite-modal-action-group {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+.cite-modal-nav-group:empty { display: none; }
+
+/* Cite-action pills (burgundy outline) — Copy / Download / Full citation. */
+.cite-modal-copy,
+.cite-modal-download {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: 3px 12px;
+  border: 1.5px solid var(--color-burgundy);
+  background: transparent;
+  color: var(--color-burgundy);
+  border-radius: 99px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.cite-modal-copy:hover,
+.cite-modal-download:hover {
+  background: color-mix(in srgb, var(--color-burgundy) 8%, transparent);
+}
+
+/* External navigation pill (steel) — Source. */
+.cite-modal-source {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  padding: 3px 12px;
+  border: 1.5px solid var(--color-steel);
+  background: transparent;
+  color: var(--color-steel);
+  border-radius: 99px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.cite-modal-source:hover {
+  background: color-mix(in srgb, var(--color-steel) 8%, transparent);
+}
+
+/* Internal navigation pill (green) — Related note. */
+.cite-modal-note {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  padding: 3px 12px;
+  border: 1.5px solid var(--color-green);
+  background: transparent;
+  color: var(--color-green);
+  border-radius: 99px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.cite-modal-note:hover {
+  background: color-mix(in srgb, var(--color-green) 8%, transparent);
+}
+
+.cite-modal-toast { font-size: var(--text-xs); color: var(--color-ink-soft); margin-left: 0.5rem; }
+
+@media (max-width: 720px) {
+  .cite-modal {
+    width: 100vw;
+    max-width: none;
+    margin: 0 auto;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    border-radius: 8px 8px 0 0;
+  }
+}
+
+/* --- References section header (bulk download) ------------------------- */
+
+.essay-references-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+.essay-references-header h2 { margin: 0; }
+.ref-cite-bulk-bib {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: 0.35rem 0.85rem;
+  background: transparent;
+  color: var(--color-burgundy);
+  border: 1.5px solid var(--color-burgundy);
+  border-radius: 99px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.ref-cite-bulk-bib:hover {
+  background: color-mix(in srgb, var(--color-burgundy) 8%, transparent);
+}
+
+/* --- Per-reference action row (Half B) --------------------------------- */
+
+.ref-cite-actions {
+  display: inline-flex;
+  gap: 0.4rem;
+  margin-left: 0.5rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+/* Micro copy chips — stone outline pills (BibTeX / APA / .ris). */
+.ref-cite-copy {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 1px 8px;
+  background: var(--color-paper);
+  color: var(--color-ink-soft);
+  border: 1px solid var(--color-rule);
+  border-radius: 99px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.ref-cite-copy:hover {
+  border-color: var(--color-burgundy);
+  color: var(--color-burgundy);
+}
+
+/* Cite action (burgundy outline) — Full citation (opens modal). */
+.ref-cite-full {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 10px;
+  background: transparent;
+  color: var(--color-burgundy);
+  border: 1.5px solid var(--color-burgundy);
+  border-radius: 99px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.ref-cite-full:hover {
+  background: color-mix(in srgb, var(--color-burgundy) 8%, transparent);
+}
+
+/* External navigation (steel) — Source. */
+.ref-cite-source {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 2px 10px;
+  background: transparent;
+  color: var(--color-steel);
+  border: 1.5px solid var(--color-steel);
+  border-radius: 99px;
+  text-decoration: none;
+}
+.ref-cite-source:hover {
+  background: color-mix(in srgb, var(--color-steel) 8%, transparent);
+}
+
+/* Internal navigation (green) — Related note. */
+.ref-cite-note {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 2px 10px;
+  background: transparent;
+  color: var(--color-green);
+  border: 1.5px solid var(--color-green);
+  border-radius: 99px;
+  text-decoration: none;
+}
+.ref-cite-note:hover {
+  background: color-mix(in srgb, var(--color-green) 8%, transparent);
 }

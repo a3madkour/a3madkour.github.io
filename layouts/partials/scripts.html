@@ -58,3 +58,15 @@
 {{- $lib := resources.Get "js/entry-library.js" | js.Build $libOpts | fingerprint }}
 <script src="{{ $lib.RelPermalink }}" integrity="{{ $lib.Data.Integrity }}" defer></script>
 {{- end }}
+
+{{- /* Citation export: modal runtime on citable single pages + library leaves
+       (each library row has its own cite-data blob; the modal serves them
+       all via cite.js's scope-aware lookup). */ -}}
+{{- $citable_sections := slice "essays" "garden" "research" "works" -}}
+{{- $isCitablePage := and (in $citable_sections .Section) (eq .Kind "page") -}}
+{{- $isLibraryList := and (eq .Section "library") (ne .RelPermalink "/library/") -}}
+{{- if or $isCitablePage $isLibraryList }}
+{{- $citeOpts := dict "targetPath" "js/cite.js" "minify" true -}}
+{{- $cite := resources.Get "js/entry-cite.js" | js.Build $citeOpts | fingerprint }}
+<script src="{{ $cite.RelPermalink }}" integrity="{{ $cite.Data.Integrity }}" defer></script>
+{{- end }}

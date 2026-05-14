@@ -1,0 +1,46 @@
+{{- /* Normalize a library YAML item to a citation dict (matches the
+       shape produced by cite/normalize-page.html and cite/normalize-ref.html).
+
+       Input: a library item dict from data/<page>.yaml.
+       Output: citation dict consumable by fmt-* partials.
+*/ -}}
+
+{{- $item := . -}}
+
+{{- /* Citekey: <creator-last>-<year>-<slug>. Falls back to "unknown" if
+       no creator is set on the item. */ -}}
+{{- $creator := default "unknown" $item.creator -}}
+{{- $words := split $creator " " -}}
+{{- $last := index $words (sub (len $words) 1) -}}
+{{- $creator_slug := lower $last | replaceRE "[^a-z0-9-]" "" -}}
+{{- $year := default 0 $item.year -}}
+{{- $citekey := printf "%s-%d-%s" $creator_slug $year $item.slug -}}
+
+{{- /* BibTeX-style type mapping by media_type. */ -}}
+{{- $type := "misc" -}}
+{{- if eq $item.media_type "book" -}}{{- $type = "book" -}}
+{{- else if eq $item.media_type "paper" -}}{{- $type = "article" -}}
+{{- else if eq $item.media_type "article" -}}{{- $type = "article" -}}
+{{- else if eq $item.media_type "talk" -}}{{- $type = "inproceedings" -}}
+{{- end -}}
+
+{{- /* Authors: YAML stores creator as a single string; wrap in slice. */ -}}
+{{- $authors := slice $creator -}}
+
+{{- $url := default "" $item.canonical_url -}}
+{{- $pub_date := printf "%d-01-01" $year -}}
+
+{{- return dict
+      "citekey"     $citekey
+      "type"        $type
+      "authors"     $authors
+      "year"        $year
+      "title"       $item.title
+      "venue"       ""
+      "url"         $url
+      "doi"         ""
+      "isbn"        (default "" $item.extras.isbn)
+      "note"        ""
+      "pub_date"    $pub_date
+      "online_date" $pub_date
+-}}

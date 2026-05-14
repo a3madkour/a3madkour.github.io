@@ -23,6 +23,8 @@
     </div>
   </header>
 
+  <div class="cite-cta-zone works-cite-zone">{{ partial "cite/button.html" . }}</div>
+
   <section class="works-music-player">
     {{- if .Params.platform_embed }}
       {{ partial "works/audio-link.html" (dict "platform_embed" .Params.platform_embed) }}
@@ -64,5 +66,8 @@
   {{- end }}
 
   {{ partial "works/connections.html" (dict "page" .) }}
+
+  {{ partial "cite/static-fallback.html" . }}
+  {{ partial "cite/data-blob.html" . }}
 </article>
 {{ end }}

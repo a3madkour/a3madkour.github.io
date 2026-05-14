@@ -3,6 +3,35 @@
        Renders into a year section. */ -}}
 {{- $item := . -}}
 {{- $tags := delimit ($item.tags | default slice) " " -}}
+
+{{- /* Build the citation dict + pre-rendered formats for this item so the
+       cite modal can read it locally (each row is its own <article>; cite.js
+       scopes its lookup to closest('article'), so per-row blobs Just Work). */ -}}
+{{- $citeDict := partial "cite/normalize-library-item.html" $item -}}
+{{- $citeSelf := dict
+      "citekey" $citeDict.citekey
+      "title"   $citeDict.title
+      "url"     $citeDict.url
+      "notes_ref" (default "" $item.note_slug)
+      "formats" (dict
+        "bibtex"  (partial "cite/fmt-bibtex.html"  $citeDict)
+        "apa"     (partial "cite/fmt-apa.html"     $citeDict)
+        "chicago" (partial "cite/fmt-chicago.html" $citeDict)
+        "mla"     (partial "cite/fmt-mla.html"     $citeDict)
+        "ris"     (partial "cite/fmt-ris.html"     $citeDict))
+-}}
+
+{{- /* Cite-button label is driven by media_type — "Cite this book/album/
+       track/game/movie/series" depending on what the row is. */ -}}
+{{- $citeLabel := "Cite this entry" -}}
+{{- if   eq $item.media_type "book"   }}{{ $citeLabel = "Cite this book" }}
+{{- else if eq $item.media_type "album"  }}{{ $citeLabel = "Cite this album" }}
+{{- else if eq $item.media_type "track"  }}{{ $citeLabel = "Cite this track" }}
+{{- else if eq $item.media_type "game"   }}{{ $citeLabel = "Cite this game" }}
+{{- else if eq $item.media_type "film"   }}{{ $citeLabel = "Cite this movie" }}
+{{- else if eq $item.media_type "series" }}{{ $citeLabel = "Cite this series" }}
+{{- end -}}
+
 <article class="library-row" data-status="{{ $item.status }}" data-media-type="{{ $item.media_type }}" data-tags="{{ $tags }}"{{ with $item.extras.platform }} data-platform="{{ . }}"{{ end }}>
   <div class="library-row-badge">{{ partial "library/status-badge.html" $item.status }}</div>
   {{ partial "library/type-glyph.html" (dict "media_type" $item.media_type "size" "mini" "slug" $item.slug "extras" ($item.extras | default dict)) }}
@@ -22,9 +51,11 @@
       {{- if eq $item.spoiler_level "light" }} · <span class="library-spoiler-light">spoilers: light</span>{{ end -}}
     </div>
     {{- with $item.preview }}<p class="library-row-takeaway">{{ . }}</p>{{ end -}}
-    <div class="library-row-links">
-      {{- with $item.note_slug }}<a href="{{ printf "/garden/%s/" . | relURL }}">my notes</a>{{ end -}}
-      {{- with $item.canonical_url }}<a href="{{ . }}">original</a>{{ end -}}
+    <div class="library-row-actions">
+      <button class="library-row-cite cite-cta" type="button" data-action="open-cite-modal">{{ $citeLabel }}</button>
+      {{- with $item.note_slug }}<a class="library-row-note" href="{{ printf "/garden/%s/" . | relURL }}">Related note</a>{{ end -}}
+      {{- with $item.canonical_url }}<a class="library-row-original" href="{{ . }}" rel="noopener">Original</a>{{ end -}}
     </div>
   </div>
+  <script type="application/json" class="cite-data">{{- dict "self" $citeSelf "refs" dict | jsonify | safeJS -}}</script>
 </article>

@@ -119,6 +119,10 @@ jobs:
         run: cd tools && python3 -m unittest test_check_pagefind_meta.py -v
       - name: Verify pagefind metadata on built pages
         run: python3 tools/check_pagefind_meta.py
+      - name: Run cite metadata linter unit tests
+        run: cd tools && python3 -m unittest test_check_cite_meta.py -v
+      - name: Verify cite metadata on built pages
+        run: python3 tools/check_cite_meta.py
       - name: Install Pagefind
         run: |
           wget -O ${{ runner.temp }}/pagefind.tar.gz \

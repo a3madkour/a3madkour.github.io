@@ -14,11 +14,12 @@
   </header>
 
   <div class="essay-layout">
-    {{ if not (eq .Params.toc false) }}
-      <div class="essay-toc-zone">
+    <div class="essay-toc-zone">
+      <div class="cite-cta-zone">{{ partial "cite/button.html" . }}</div>
+      {{ if not (eq .Params.toc false) }}
         {{ partial "essay-toc.html" . }}
-      </div>
-    {{ end }}
+      {{ end }}
+    </div>
 
     <div class="essay-body reading-column">
       {{ .Content }}
@@ -34,5 +35,8 @@
   {{ if .Params.series }}
     <div class="reading-column">{{ partial "essay-series-nav.html" . }}</div>
   {{ end }}
+
+  <div class="reading-column">{{ partial "cite/static-fallback.html" . }}</div>
+  {{ partial "cite/data-blob.html" . }}
 </article>
 {{ end }}

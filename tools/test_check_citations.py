@@ -269,6 +269,64 @@ citations:
         errors = lint.lint_citations(self.data / "citations.yaml", self.garden)
         self.assertEqual(errors, [])
 
+    def test_optional_doi_passes(self):
+        self._write_citations("""\
+citations:
+  source-1:
+    authors: ["A"]
+    year: 2020
+    title: "T"
+    venue: "V"
+    doi: "10.1234/example"
+""")
+        errors = lint.lint_citations(self.data / "citations.yaml", self.garden)
+        self.assertEqual(errors, [])
+
+    def test_optional_type_passes(self):
+        self._write_citations("""\
+citations:
+  source-1:
+    authors: ["A"]
+    year: 2020
+    title: "T"
+    venue: "V"
+    type: "book"
+""")
+        errors = lint.lint_citations(self.data / "citations.yaml", self.garden)
+        self.assertEqual(errors, [])
+
+    def test_all_new_optional_fields_pass(self):
+        self._write_citations("""\
+citations:
+  source-1:
+    authors: ["A"]
+    year: 2020
+    title: "T"
+    venue: "V"
+    doi: "10.1234/example"
+    publisher: "Acme Press"
+    volume: "12"
+    issue: "3"
+    pages: "45-67"
+    isbn: "978-0-123456-78-9"
+    type: "inproceedings"
+""")
+        errors = lint.lint_citations(self.data / "citations.yaml", self.garden)
+        self.assertEqual(errors, [])
+
+    def test_unknown_field_still_fails(self):
+        self._write_citations("""\
+citations:
+  source-1:
+    authors: ["A"]
+    year: 2020
+    title: "T"
+    venue: "V"
+    made_up_key: "x"
+""")
+        errors = lint.lint_citations(self.data / "citations.yaml", self.garden)
+        self.assertTrue(any("made_up_key" in e for e in errors))
+
 
 if __name__ == "__main__":
     unittest.main()

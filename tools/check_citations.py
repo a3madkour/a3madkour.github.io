@@ -23,7 +23,13 @@ from check_fixtures import parse_scalar  # noqa: E402
 from check_fixtures import parse_frontmatter  # noqa: E402
 
 
-ALLOWED_FIELDS = {"authors", "year", "title", "venue", "url", "notes_ref"}
+ALLOWED_FIELDS = {
+    "authors", "year", "title", "venue", "url", "notes_ref",
+    # Citation-export optional fields (forwarded by normalize-ref.html and
+    # cited in fmt-bibtex / fmt-ris). Real ox-hugo export will populate
+    # these when the upstream bib has them.
+    "doi", "publisher", "volume", "issue", "pages", "isbn", "type",
+}
 REQUIRED_FIELDS = {"authors", "year", "title", "venue"}
 KEY_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 ENTRY_HEADER_RE = re.compile(r"^  ([^:\s]+):\s*$")
