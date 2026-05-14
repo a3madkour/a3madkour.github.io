@@ -623,21 +623,29 @@ main { flex-grow: 1; }
   font-style: italic;
 }
 
+/* Essay-scoped reading column is wider than the site default so prose
+ * doesn't feel cramped on wide screens (user feedback). */
+.essay { --reading-column: 900px; }
+
 .essay-layout {
   display: grid;
   grid-template-columns: 1fr;
   gap: 2rem;
 }
 @media (min-width: 1100px) {
+  /* Single-column body grid. The TOC + cite sidebar is pulled out via
+   * position:fixed on .essay-toc-zone (below) so it can sit at the
+   * left viewport edge, not crowded against the prose. */
   .essay-layout {
-    grid-template-columns: 200px minmax(0, var(--reading-column)) 250px;
-    justify-content: center;
-    /* Wider column-gap pushes the TOC + cite sidebar toward the viewport
-     * edge without moving the reading column (justify-content: center
-     * keeps the whole grid centered, so widening the gap shifts both
-     * outer columns symmetrically outward). */
-    column-gap: 5rem;
-    row-gap: 2rem;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  /* All reading-column elements inside .essay get a min-left-margin so
+   * they never overlap the fixed TOC sidebar. Above ~1380px viewport
+   * the calc exceeds 240 and the column re-centers in the viewport. */
+  .essay .reading-column {
+    margin-left: max(240px, calc((100% - var(--reading-column)) / 2));
+    margin-right: auto;
   }
 }
 
@@ -663,7 +671,18 @@ main { flex-grow: 1; }
 .essay-toc #TableOfContents > ul > li > ul { padding-left: 1rem; }
 
 @media (min-width: 1100px) {
-  .essay-toc-zone { position: sticky; top: 2rem; align-self: start; max-height: calc(100vh - 4rem); overflow-y: auto; }
+  /* Fixed at the left viewport edge, not in the grid flow. The body's
+   * min-left-margin (set in .essay .reading-column above) reserves enough
+   * runway to never overlap. */
+  .essay-toc-zone {
+    position: fixed;
+    left: 1.5rem;
+    top: 5rem;
+    width: 200px;
+    max-height: calc(100vh - 7rem);
+    overflow-y: auto;
+    z-index: 2;
+  }
   .essay-toc details { open: true; }
   .essay-toc summary { display: none; }
 }
