@@ -8,10 +8,12 @@
   <nav class="research-graph-toolbar" aria-label="Graph filters">
     {{- /* populated by research-graph.js */ -}}
   </nav>
+  <a href="#research-graph-skip" class="graph-skip-link">Skip past graph</a>
   <div class="research-graph-canvas" role="img" aria-label="Force-directed graph of research themes and questions">
     {{- /* SVG mounted by research-graph.js */ -}}
   </div>
-  <ul class="research-graph-legend"></ul>
+  <ul class="research-graph-legend" hidden></ul>
+  <span id="research-graph-skip" tabindex="-1"></span>
 </section>
 {{ partial "research/graph-script.html" .Site }}
 {{ end }}

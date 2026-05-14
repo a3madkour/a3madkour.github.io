@@ -18,7 +18,7 @@
       </span>
     </div>
     <div class="works-game-card-body">
-      <h3 class="works-game-card-title">{{ .Title }}</h3>
+      <h2 class="works-game-card-title">{{ .Title }}</h2>
       {{- with .Params.tagline }}<p class="works-game-card-tagline">{{ . }}</p>{{- end }}
       <p class="works-game-card-meta">
         {{ partial "works/status-pill.html" (dict "status" .Params.status) }}

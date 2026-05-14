@@ -37,7 +37,7 @@
           {{- with $themeTitle }} <span class="theme">{{ . }}</span>{{ end -}}
           <span class="counts">· {{ $subCount }} sub-question{{ if ne $subCount 1 }}s{{ end }} · {{ $noteCount }} garden note{{ if ne $noteCount 1 }}s{{ end }}</span>
         </div>
-        <h4><a href="{{ .RelPermalink }}">{{ .Title }}</a></h4>
+        <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
         <p class="framing">{{ $framing }}</p>
       </article>
     {{- end -}}

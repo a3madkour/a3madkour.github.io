@@ -37,7 +37,7 @@
   {{- $tagValues = $tagValues | append .name -}}
 {{- end -}}
 
-<main class="library-leaf-page" data-library-page="watching">
+<article class="library-leaf-page" data-library-page="watching">
   <span data-pagefind-meta="section:library" hidden></span>
   <span data-pagefind-meta="medium:film_or_series" hidden></span>
   <span data-pagefind-meta="status:watching" hidden></span>
@@ -83,12 +83,12 @@
     {{- end -}}
     {{- with $queued -}}
       <section id="upnext" class="library-upnext">
-        <header class="library-section-rule">Up next</header>
+        <h2 class="library-section-rule">Up next</h2>
         {{- range . -}}<p class="library-upnext-row"><span class="ttl">{{ .title }}</span> · {{ .creator }}{{ with .year }} · {{ . }}{{ end }}</p>{{- end -}}
       </section>
     {{- end -}}
   {{- else -}}
     <p class="library-empty">Nothing here yet.</p>
   {{- end -}}
-</main>
+</article>
 {{ end }}

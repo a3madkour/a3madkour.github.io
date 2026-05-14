@@ -21,19 +21,15 @@ function isNarrow() {
 function setupSidenotePopups() {
   const markers = document.querySelectorAll('.essay-body .sidenote-marker');
   markers.forEach((marker) => {
-    marker.addEventListener('click', (e) => {
+    const link = marker.querySelector('a[href^="#sn-"]');
+    if (!link) return;
+    link.addEventListener('click', (e) => {
       if (!isNarrow()) return;
       e.preventDefault();
-      const id = marker.getAttribute('aria-controls');
+      const id = link.getAttribute('href').slice(1);
       const aside = id ? document.getElementById(id) : null;
       if (!aside) return;
       aside.classList.toggle('is-open');
-    });
-    marker.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        marker.click();
-      }
     });
   });
 

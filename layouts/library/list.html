@@ -3,7 +3,7 @@
 {{- $listening := (index site.Data "listening").items | default slice -}}
 {{- $playing := (index site.Data "playing").items | default slice -}}
 {{- $watching := (index site.Data "watching").items | default slice -}}
-<main class="library-umbrella-page">
+<article class="library-umbrella-page">
   <span data-pagefind-meta="section:library" hidden></span>
   <span data-pagefind-filter="section:library" hidden></span>
   <header class="library-page-header">
@@ -17,5 +17,5 @@
     {{ partial "library/umbrella-card.html" (dict "label" "Playing"   "glyph_media_type" "game"  "page_url" "/library/playing/"   "items" $playing) }}
     {{ partial "library/umbrella-card.html" (dict "label" "Watching"  "glyph_media_type" "film"  "page_url" "/library/watching/"  "items" $watching) }}
   </div>
-</main>
+</article>
 {{ end }}

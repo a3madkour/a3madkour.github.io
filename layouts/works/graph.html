@@ -24,12 +24,16 @@
     <span class="graph-hint" aria-hidden="true"><kbd>Shift</kbd>+drag to pin</span>
   </div>
 
+  <a href="#works-graph-skip" class="graph-skip-link">Skip past graph</a>
+
   <svg class="graph-page-canvas works-graph-canvas" id="works-graph-canvas" role="img" aria-label="Constellation of works"></svg>
 
   <div class="graph-page-legend">
     <span class="legend-item"><span class="legend-mark legend-mark-solid" aria-hidden="true"></span> tag-share</span>
     <span class="legend-item"><span class="legend-mark legend-mark-dashed" aria-hidden="true"></span> cross-medium ref</span>
   </div>
+
+  <span id="works-graph-skip" tabindex="-1"></span>
 
   {{ partial "works/graph-script.html" . }}
 </article>

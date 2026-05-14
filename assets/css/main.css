@@ -426,6 +426,15 @@ main { flex-grow: 1; }
   color: var(--color-burgundy);
   padding: 0 0.15em;
   cursor: pointer;
+  line-height: 1;
+}
+.sidenote-marker a {
+  color: inherit;
+  text-decoration: none;
+}
+.sidenote-marker a:hover,
+.sidenote-marker a:focus-visible {
+  text-decoration: underline;
 }
 .sidenote {
   display: block;
@@ -482,8 +491,14 @@ main { flex-grow: 1; }
   font-style: normal;
   color: var(--color-burgundy);
 }
-.citation a { color: inherit; text-decoration: none; }
-.citation a:hover { text-decoration: underline; }
+.citation a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+.citation a:hover,
+.citation a:focus-visible { text-decoration-thickness: 2px; }
 
 .essay-references {
   margin-top: 3rem;
@@ -493,7 +508,12 @@ main { flex-grow: 1; }
 }
 .essay-references ol { padding-left: 1.5rem; }
 .essay-references li { margin-bottom: 0.75rem; line-height: 1.5; }
-.essay-references li:target { background: rgba(107, 31, 44, 0.08); padding: 0.25rem 0.5rem; border-radius: 4px; }
+.essay-references li:target {
+  background: rgba(107, 31, 44, 0.08);
+  padding: 0.25rem 0.5rem 0.25rem 0.75rem;
+  border-left: 3px solid var(--color-burgundy);
+  border-radius: 0 4px 4px 0;
+}
 
 /* Citation hover-card (singleton popover on desktop, bottom sheet on mobile).
  * Content is cloned at runtime from #ref-<key> by citation-card.js. */
@@ -1544,6 +1564,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 .garden-graph-page .garden-graph-canvas svg {
   width: 100%;
   height: 70vh;
+  min-height: 480px;
 }
 .garden-graph-page .garden-graph-canvas svg {
   cursor: grab;
@@ -2094,6 +2115,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 .research-graph-page .research-graph-canvas svg {
   width: 100%;
   height: 70vh;
+  min-height: 480px;
 }
 
 /* Legend strip below the canvas */
@@ -2128,7 +2150,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   color: var(--color-stone);
 }
 .works-status-pill[data-status="playable"]   { background: var(--color-burgundy); }
-.works-status-pill[data-status="in-progress"] { background: var(--color-warn); color: var(--color-ink); }
+.works-status-pill[data-status="in-progress"] { background: var(--color-warn); }
 .works-status-pill[data-status="archived"]   { background: var(--color-ink-soft); }
 
 /* Stub anchors: italic + dotted underline + ink-soft.
@@ -2802,6 +2824,25 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   border-radius: 6px;
   background: var(--color-stone);
 }
+
+/* Skip-link for graph pages: visible only on keyboard focus.
+   Lets users bypass the SVG node tab-flood without losing per-node focus. */
+.graph-skip-link {
+  position: absolute;
+  left: -9999px;
+}
+.graph-skip-link:focus {
+  position: static;
+  display: inline-block;
+  margin: 0.5rem 0;
+  padding: 0.4rem 0.8rem;
+  background: var(--color-burgundy);
+  color: var(--color-stone);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  border-radius: 4px;
+  text-decoration: underline;
+}
 .graph-page-legend {
   display: flex;
   gap: 1.5rem;
@@ -3299,15 +3340,15 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   background: var(--color-burgundy);
 }
 .home-research-question .meta .status { color: var(--color-burgundy); font-weight: 600; }
-.home-research-question h4 {
+.home-research-question h3 {
   font-family: var(--font-body);
   font-weight: 600;
   font-size: 1.1rem;
   line-height: 1.3;
   margin: 0 0 0.3rem;
 }
-.home-research-question h4 a { color: var(--color-ink); text-decoration: none; }
-.home-research-question h4 a:hover { color: var(--color-burgundy); text-decoration: underline; }
+.home-research-question h3 a { color: var(--color-ink); text-decoration: none; }
+.home-research-question h3 a:hover { color: var(--color-burgundy); text-decoration: underline; }
 .home-research-question .framing {
   font-size: 0.9rem;
   line-height: 1.55;
@@ -3378,7 +3419,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
                        var(--color-burgundy)); }
 .type-badge--poetry { background: linear-gradient(135deg, var(--color-burgundy),
                        var(--color-steel)); }
-.home-work-row .body h5 {
+.home-work-row .body h3 {
   font-family: var(--font-body);
   font-weight: 600;
   font-size: 0.95rem;
@@ -3680,6 +3721,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 .search-modal-result-snippet mark {
   background: color-mix(in srgb, var(--color-burgundy) 20%, transparent);
   color: inherit;
+  font-weight: 600;
   padding: 0 0.125rem;
 }
 

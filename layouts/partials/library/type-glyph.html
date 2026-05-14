@@ -28,9 +28,11 @@
 {{- end -}}
 {{- $cls := "library-glyph-block" -}}
 {{- if eq $size "large" -}}{{- $cls = printf "%s is-large" $cls -}}{{- end -}}
+{{- $coverW := cond (eq $size "large") 56 44 -}}
+{{- $coverH := cond (eq $size "large") 72 56 -}}
 {{- if $cover -}}
   <span class="library-cover-block {{ $size }} {{ $modifier }}">
-    <img class="library-cover" src="{{ $cover.RelPermalink }}" alt="" loading="lazy" />
+    <img class="library-cover" src="{{ $cover.RelPermalink }}" alt="" width="{{ $coverW }}" height="{{ $coverH }}" loading="lazy" decoding="async" />
   </span>
 {{- else -}}
   <span class="{{ $cls }} {{ $modifier }}" aria-hidden="true">

@@ -10,11 +10,15 @@
     {{- /* populated by garden-graph.js */ -}}
   </nav>
 
+  <a href="#garden-graph-skip" class="graph-skip-link">Skip past graph</a>
+
   <div class="garden-graph-canvas" role="img" aria-label="Force-directed graph of garden notes">
     {{- /* SVG mounted by garden-graph.js */ -}}
   </div>
 
-  <ul class="garden-graph-legend"></ul>
+  <ul class="garden-graph-legend" hidden></ul>
+
+  <span id="garden-graph-skip" tabindex="-1"></span>
 </section>
 {{ partial "garden/graph-script.html" .Site }}
 {{ end }}

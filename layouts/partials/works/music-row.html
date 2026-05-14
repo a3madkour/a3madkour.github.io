@@ -12,7 +12,7 @@
       {{- if $cover }}<img src="{{ $cover }}" alt="" loading="lazy">{{- end }}
     </div>
     <div class="works-music-row-body">
-      <h3 class="works-music-row-title">{{ .Title }}</h3>
+      <h2 class="works-music-row-title">{{ .Title }}</h2>
       <p class="works-music-row-meta">
         <span class="works-music-row-format">{{ humanize .Params.format }}</span>
         {{- with .Params.duration }} · <span class="works-music-row-duration">{{ . }}</span>{{- end }}

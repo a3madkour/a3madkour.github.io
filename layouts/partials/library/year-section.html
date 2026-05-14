@@ -4,7 +4,7 @@
 {{- $year := .year -}}
 {{- $items := .items -}}
 <section id="{{ $year }}" class="library-year" data-year="{{ $year }}">
-  <header class="library-year-rule">{{ $year }}</header>
+  <h2 class="library-year-rule">{{ $year }}</h2>
   {{- range $items -}}
     {{ partial "library/row.html" . }}
   {{- end -}}

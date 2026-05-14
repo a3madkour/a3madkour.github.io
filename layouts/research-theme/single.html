@@ -14,7 +14,7 @@
   {{- end -}}
 {{- end -}}
 
-<main class="reading-column research-theme-page">
+<article class="reading-column research-theme-page">
   <span data-pagefind-meta="section:research" hidden></span>
   <span data-pagefind-meta="subtype:theme" hidden></span>
   <span data-pagefind-meta="status:{{ .Params.status }}" hidden></span>
@@ -53,47 +53,52 @@
     {{ end }}
   </header>
 
-  <section id="questions" class="three-col-questions">
-    {{ if $active }}
-    <div class="col-active">
-      <h3>Active</h3>
-      <ul>
-        {{ range $active.ByWeight }}
-          <li>
-            <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-            <span class="q-desc">{{ .Params.description }}</span>
-          </li>
-        {{ end }}
-      </ul>
+  {{ if or $active $dormant $answered }}
+  <section id="questions">
+    <h2>Questions</h2>
+    <div class="three-col-questions">
+      {{ if $active }}
+      <div class="col-active">
+        <h3>Active</h3>
+        <ul>
+          {{ range $active.ByWeight }}
+            <li>
+              <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+              <span class="q-desc">{{ .Params.description }}</span>
+            </li>
+          {{ end }}
+        </ul>
+      </div>
+      {{ end }}
+      {{ if $dormant }}
+      <div class="col-dormant">
+        <h3>Dormant</h3>
+        <ul>
+          {{ range $dormant.ByWeight }}
+            <li>
+              <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+              <span class="q-desc">{{ .Params.description }}</span>
+            </li>
+          {{ end }}
+        </ul>
+      </div>
+      {{ end }}
+      {{ if $answered }}
+      <div class="col-answered">
+        <h3>Answered</h3>
+        <ul>
+          {{ range $answered.ByWeight }}
+            <li>
+              <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+              <span class="q-desc">{{ .Params.description }}</span>
+            </li>
+          {{ end }}
+        </ul>
+      </div>
+      {{ end }}
     </div>
-    {{ end }}
-    {{ if $dormant }}
-    <div class="col-dormant">
-      <h3>Dormant</h3>
-      <ul>
-        {{ range $dormant.ByWeight }}
-          <li>
-            <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-            <span class="q-desc">{{ .Params.description }}</span>
-          </li>
-        {{ end }}
-      </ul>
-    </div>
-    {{ end }}
-    {{ if $answered }}
-    <div class="col-answered">
-      <h3>Answered</h3>
-      <ul>
-        {{ range $answered.ByWeight }}
-          <li>
-            <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-            <span class="q-desc">{{ .Params.description }}</span>
-          </li>
-        {{ end }}
-      </ul>
-    </div>
-    {{ end }}
   </section>
+  {{ end }}
 
   {{ if $allOutputs }}
   <section id="outputs" class="research-outputs">
@@ -126,5 +131,5 @@
   </section>
   {{ end }}
 
-</main>
+</article>
 {{ end }}

@@ -32,14 +32,14 @@
 {{- if gt (len $top) 3 -}}{{- $top = first 3 $top -}}{{- end -}}
 
 <article class="library-um-card">
-  <h3 class="library-um-card-title">
+  <h2 class="library-um-card-title">
     {{ $label }}
     <span class="library-um-glyph" aria-hidden="true">
       {{- with resources.Get (printf "images/icons/%s" (cond (eq $glyphMt "book") "library/book.svg" (cond (eq $glyphMt "music") "glyph-music.svg" (cond (eq $glyphMt "game") "glyph-game.svg" "library/clapper.svg")))) -}}
         {{ .Content | safeHTML }}
       {{- end -}}
     </span>
-  </h3>
+  </h2>
   <p class="library-um-card-stats">{{ $finished }} finished · {{ $active }} active · {{ $queued }} queued</p>
   <ul class="library-um-card-list">
     {{- range $top -}}

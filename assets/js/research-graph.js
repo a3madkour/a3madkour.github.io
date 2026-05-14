@@ -667,6 +667,7 @@ function buildToolbar(host) {
 
 function buildLegend(host) {
   host.replaceChildren();
+  host.removeAttribute('hidden');
   const note = document.createElement('li');
   note.textContent = 'square = theme · circle = question · size = link count · dashed = cross-theme';
   host.appendChild(note);

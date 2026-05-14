@@ -53,7 +53,7 @@
          data-featured="{{ if $params.featured }}true{{ else }}false{{ end }}">
   <a class="works-tile-link" href="{{ $p.RelPermalink }}">
     <svg class="works-tile-glyph" viewBox="0 0 24 24" role="img" aria-label="{{ $medium }}"><use href="#g-{{ $medium }}"/></svg>
-    <h3 class="works-tile-title">{{ $p.Title }}</h3>
+    <h2 class="works-tile-title">{{ $p.Title }}</h2>
     {{- with $meta }}<span class="works-tile-meta">{{ . }}</span>{{ end }}
     {{- if eq $span "2x2" }}
       {{- with $params.summary }}<p class="works-tile-pull">{{ . }}</p>{{ end }}

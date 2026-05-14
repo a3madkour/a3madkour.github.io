@@ -13,4 +13,4 @@
 {{- else if or (eq . "abandoned") (eq . "dropped") -}}
                                {{- $glyph = "✗" -}}{{- $cls = "b-aban" -}}
 {{- end -}}
-<span class="library-status-badge {{ $cls }}" aria-label="status: {{ $aria }}">{{ $glyph }}</span>
+<span class="library-status-badge {{ $cls }}" role="img" aria-label="status: {{ $aria }}"><span aria-hidden="true">{{ $glyph }}</span></span>

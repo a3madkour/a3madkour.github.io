@@ -653,6 +653,7 @@ function buildToolbar(host) {
 
 function buildLegend(host) {
   host.replaceChildren();
+  host.removeAttribute('hidden');
   const tags = new Map();
   (state.data.nodes || []).forEach(n => { if (n.tag) tags.set(n.tag, true); });
   Array.from(tags.keys()).slice(0, 4).forEach(tag => {

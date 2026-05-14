@@ -242,6 +242,39 @@ export function setupFilterChips({
     });
   }
 
+  // Arrow-key nav across primary chips within each dimension. No wraparound.
+  // Primary chips = direct .filter-chip children of .filter-dimension plus the
+  // disclosure <summary> (which is also a focusable .filter-chip).
+  function primaryChipsIn(dimEl) {
+    return Array.from(dimEl.children).flatMap((child) => {
+      if (child.matches?.('.filter-chip') && !child.hasAttribute('hidden')) return [child];
+      if (child.matches?.('.filter-disclosure')) {
+        const sum = child.querySelector(':scope > summary.filter-chip');
+        return sum ? [sum] : [];
+      }
+      return [];
+    });
+  }
+
+  container.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    const target = e.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.closest('.filter-disclosure-body')) return; // secondary handler owns this
+    const dimEl = target.closest('.filter-dimension');
+    if (!dimEl) return;
+    const chips = primaryChipsIn(dimEl);
+    const idx = chips.indexOf(target);
+    if (idx === -1) return;
+    if (e.key === 'ArrowRight' && idx < chips.length - 1) {
+      e.preventDefault();
+      chips[idx + 1].focus();
+    } else if (e.key === 'ArrowLeft' && idx > 0) {
+      e.preventDefault();
+      chips[idx - 1].focus();
+    }
+  });
+
   // Click handlers — only chips with a data-key participate.
   // The disclosure summary has no data-key, so clicks bubble up to the
   // <details> element which handles open/close natively.

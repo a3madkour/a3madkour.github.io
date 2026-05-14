@@ -16,7 +16,7 @@ Mark each item ☑ (pass), ☒ (fail — capture finding inline + fix), or ⚠ (
 - [ ] **1.4** Garden stacked-columns: Tab moves through column headers and tile links predictably; no traps inside a column.
 - [ ] **1.5** Graph pages (`/garden/graph/`, `/research/graph/`, `/works/graph/`): keyboard users have a working sidebar/links fallback; the SVG graph itself doesn't trap or steal focus.
 - [ ] **1.6** Theme toggle button + RSS link + search icon-button all reachable in tab order; each activates via Space or Enter.
-- [ ] **1.7** Search modal: `/` opens (when focus is not in an `<input>` / `<textarea>` / `[contenteditable]`); modal traps focus; Tab cycles input → filter chips → results → kbd-hints footer → back to input; Esc closes; ↑/↓ navigate result rows; Enter opens; ⌘/Ctrl+Enter opens new tab.
+- [ ] **1.7** Search modal: `/` opens (when focus is not in an `<input>` / `<textarea>` / `[contenteditable]`); modal traps focus; Tab cycles input → filter chips → result rows → back to input (kbd-hints in footer are display-only, intentionally non-focusable); Esc closes; ↑/↓ navigate result rows; Enter opens; ⌘/Ctrl+Enter opens new tab.
 - [ ] **1.8** Page-sidebar rail (≥1220 px) + mobile dots strip (<1220 px): anchor links activate with Enter; scrollspy correctly highlights the current section.
 - [ ] **1.9** Essay post page: TOC links activate with Enter; sidenote markers reachable + activate; citation hover-card has a keyboard equivalent (focus the cite, the card shows).
 

@@ -23,6 +23,8 @@ PAIRINGS = [
     ("color-ink-soft", "color-stone", 4.5, "secondary text on background"),
     ("color-burgundy", "color-stone", 4.5, "accent on background"),
     ("color-steel",    "color-stone", 4.5, "accent on background"),
+    ("color-warn",     "color-stone", 4.5, "warn pill text on background"),
+    ("color-stone",    "color-warn",  4.5, "stone on warn pill background"),
 ]
 
 

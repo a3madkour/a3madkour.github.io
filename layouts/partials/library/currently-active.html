@@ -4,7 +4,7 @@
 {{- $items := .items -}}
 {{- if $items -}}
 <section id="currently-active" class="library-currently" data-active-count="{{ len $items }}">
-  <header class="library-section-rule">Currently active</header>
+  <h2 class="library-section-rule">Currently active</h2>
   <div class="library-currently-grid">
     {{- range $items -}}
       {{- $item := . -}}
