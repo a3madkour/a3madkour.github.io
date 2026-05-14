@@ -1,5 +1,6 @@
 {{- $pages := where site.RegularPages "Section" "essays" -}}
 {{- $title := printf "%s — Essays" site.Title -}}
+{{- printf "<?xml-stylesheet type=\"text/xsl\" href=\"%s\"?>" ((resources.Get "feed/feed.xsl").RelPermalink) | safeHTML }}
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>{{ $title }}</title>
