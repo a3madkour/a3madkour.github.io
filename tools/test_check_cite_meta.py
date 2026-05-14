@@ -11,7 +11,6 @@ sys.path.insert(0, str(Path(__file__).parent))
 from check_cite_meta import (
     inspect_html,
     is_citable_path,
-    REQUIRED_META,
     CITEKEY_RE,
 )
 
@@ -91,6 +90,16 @@ class TestCiteMeta(unittest.TestCase):
 
     def test_is_citable_path_garden_history_not_citable(self):
         self.assertFalse(is_citable_path('public/garden/history/index.html'))
+
+    def test_is_citable_path_works_subsection_not_citable(self):
+        self.assertFalse(is_citable_path('public/works/games/index.html'))
+        self.assertFalse(is_citable_path('public/works/music/index.html'))
+        self.assertFalse(is_citable_path('public/works/poetry/index.html'))
+
+    def test_is_citable_path_works_game_yes(self):
+        self.assertTrue(
+            is_citable_path('public/works/games/example-1/index.html')
+        )
 
     def test_citekey_re_accepts_kebab_slug(self):
         self.assertRegex('madkour-2026-on-knowing-tools', CITEKEY_RE)
