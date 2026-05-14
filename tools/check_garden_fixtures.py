@@ -151,6 +151,11 @@ def run(repo_root: Path) -> tuple[int, list[str]]:
         slug = entry.name
         if slug.startswith("_"):
             continue
+        # Skip section directories (have _index.md but no index.md) — e.g.,
+        # /history/ is a Hugo section, not a note. The note linter expects
+        # a per-slug index.md and would false-fail on these.
+        if (entry / "_index.md").is_file() and not (entry / "index.md").is_file():
+            continue
         note_errors, fm = lint_note(entry)
         errors.extend(note_errors)
         if fm is not None:
