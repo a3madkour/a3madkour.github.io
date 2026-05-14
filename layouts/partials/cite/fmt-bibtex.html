@@ -1,0 +1,27 @@
+{{- /* Renders a citation dict as a BibTeX entry string.
+
+       Input: dict matching normalize-page.html / normalize-ref.html shape.
+       Output: string (single multi-line BibTeX entry).
+
+       Escapes: & % # _ $ in text fields.
+*/ -}}
+
+{{- $cite := . -}}
+{{- $escaped_title := replace (replace (replace (replace (replace $cite.title "\\" "\\\\") "&" "\\&") "%" "\\%") "#" "\\#") "_" "\\_" -}}
+{{- $escaped_venue := replace (replace (replace (replace (replace $cite.venue "\\" "\\\\") "&" "\\&") "%" "\\%") "#" "\\#") "_" "\\_" -}}
+
+{{- $authors_str := delimit $cite.authors " and " -}}
+
+{{- $lines := slice -}}
+{{- $lines = $lines | append (printf "@%s{%s," $cite.type $cite.citekey) -}}
+{{- $lines = $lines | append (printf "  author    = {%s}," $authors_str) -}}
+{{- $lines = $lines | append (printf "  title     = {%s}," $escaped_title) -}}
+{{- $lines = $lines | append (printf "  year      = {%d}," $cite.year) -}}
+{{- with $cite.venue -}}{{- $lines = $lines | append (printf "  journal   = {%s}," $escaped_venue) -}}{{- end -}}
+{{- with $cite.url -}}{{- $lines = $lines | append (printf "  url       = {%s}," .) -}}{{- end -}}
+{{- with $cite.doi -}}{{- $lines = $lines | append (printf "  doi       = {%s}," .) -}}{{- end -}}
+{{- with $cite.isbn -}}{{- $lines = $lines | append (printf "  isbn      = {%s}," .) -}}{{- end -}}
+{{- with $cite.note -}}{{- $lines = $lines | append (printf "  note      = {%s}," .) -}}{{- end -}}
+{{- $lines = $lines | append "}" -}}
+
+{{- return delimit $lines "\n" -}}
