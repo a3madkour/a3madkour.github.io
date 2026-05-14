@@ -3,7 +3,6 @@
   <span data-pagefind-meta="section:works" hidden></span>
   <span data-pagefind-meta="medium:music" hidden></span>
   <span data-pagefind-filter="section:works" hidden></span>
-  <div class="cite-cta-zone works-cite-zone">{{ partial "cite/button.html" . }}</div>
   {{- $cover := "" -}}
   {{- with .Params.cover -}}
     {{- $coverRes := $.Resources.Get . -}}
@@ -23,6 +22,8 @@
       </p>
     </div>
   </header>
+
+  <div class="cite-cta-zone works-cite-zone">{{ partial "cite/button.html" . }}</div>
 
   <section class="works-music-player">
     {{- if .Params.platform_embed }}

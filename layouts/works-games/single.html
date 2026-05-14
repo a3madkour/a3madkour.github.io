@@ -3,7 +3,6 @@
   <span data-pagefind-meta="section:works" hidden></span>
   <span data-pagefind-meta="medium:game" hidden></span>
   <span data-pagefind-filter="section:works" hidden></span>
-  <div class="cite-cta-zone works-cite-zone">{{ partial "cite/button.html" . }}</div>
   {{- $hero := "" -}}
   {{- with .Params.hero -}}
     {{- $heroRes := $.Resources.Get . -}}
@@ -25,6 +24,8 @@
       {{- with .Params.tech_stack }}<p class="works-game-tech">{{ delimit . " · " }}</p>{{- end }}
     </div>
   </header>
+
+  <div class="cite-cta-zone works-cite-zone">{{ partial "cite/button.html" . }}</div>
 
   <section class="works-game-embed">
     {{- if .Params.embed_url }}
