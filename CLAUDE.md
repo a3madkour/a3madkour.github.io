@@ -195,14 +195,14 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 
 | Feature | Spec | Plan | Phase fit | Notes |
 |---|---|---|---|---|
-| Citation export | `2026-05-13-citation-export-design.md` | `2026-05-13-citation-export.md` | Post-Phase-8 polish | Highwire `<meta>` for Zotero + `<dialog>` modal with BibTeX/APA/Chicago/MLA/RIS. Half A (page) + Half B (per-reference). 15th linter pair. Plan drafted (24 tasks). |
+| Citation export | `2026-05-13-citation-export-design.md` | `2026-05-13-citation-export.md` | Post-Phase-8 polish | Highwire `<meta>` for Zotero + `<dialog>` modal with BibTeX/APA/Chicago/MLA/RIS. Half A (page) + Half B (per-reference). New linter pair (would be 17th at shipping time; CI 44 → 46 steps). Plan drafted (24 tasks). |
 | Time-synced poetry | `2026-05-13-time-synced-poetry-design.md` | not yet drafted | Independent works/poetry runtime slice | Auto-detected `[mm:ss]` markers in poem bodies → audio-driven or animation-driven reveal + player. New linter pair. Foundation for the deferred lyrics runtime. |
-| Streams section | `2026-05-13-streams-section-design.md` | not yet drafted | Independent (β parallel with Phase 3 or γ after) | New 7th top-level `/streams/` section. Cron GitHub Action polls Twitch + YouTube every 5 min → writes `data/streams-*.yaml` + auto-stubs draft stream pages. Header LIVE pill. Bidirectional cross-refs to essays/garden/research/works (16th + 17th linter pairs). Soft dependency on Citation export shipping first. |
+| Streams section | `2026-05-13-streams-section-design.md` | not yet drafted | Independent (β parallel with Phase 3 or γ after) | New 7th top-level `/streams/` section. Cron GitHub Action polls Twitch + YouTube every 5 min → writes `data/streams-*.yaml` + auto-stubs draft stream pages. Header LIVE pill. Bidirectional cross-refs to essays/garden/research/works (2 new linter pairs). Soft dependency on Citation export shipping first. |
 | Multi-target export pipeline | `2026-05-13-multi-target-export-design.md` | not yet drafted | **Phase 3 Slice 3** | One Emacs interactive command publishes a literate org doc to Hugo essay + PDF + Word. Per-target subtree visibility tags. Elisp + LaTeX classes + Word reference template versioned in `tools/elisp/` and `tools/templates/`. Hard dependency on Phase 3 Slices 1+2 (garden/research publish + standard essay publish). |
 
-Recommended sequencing across all queued work: Phase 8 close-out → Citation export → Time-synced poetry → Phase 3 Slice 1 (garden publish) → Phase 3 Slice 2 (essay publish) → Multi-target export → Streams section.
+Recommended sequencing across remaining queued work: **Citation export (next up — plan already drafted, 24 tasks)** → Time-synced poetry → Phase 3 Slice 1 (garden publish) → Phase 3 Slice 2 (essay publish) → Multi-target export → Streams section.
 
-To pick up a slice: read this file + parent spec §14, run `superpowers:brainstorming` then `superpowers:writing-plans` (or jump straight to `superpowers:executing-plans` if a plan already exists). Confirm with the user whether the slice depends on the elisp pipeline (Multi-target export does; the rest don't).
+To pick up a slice: read this file + parent spec §14, run `superpowers:brainstorming` then `superpowers:writing-plans` (or jump straight to `superpowers:executing-plans` if a plan already exists — Citation export has one). Confirm with the user whether the slice depends on the elisp pipeline (Multi-target export does; the rest don't).
 
 **Fixture content is always obvious filler** (lorem ipsum / "Example N") — never authored prose, even for layout testing. Real content lands via the elisp pipeline.
 
