@@ -80,8 +80,15 @@ function openModal(source, subtitle) {
 }
 
 function closeModal() {
-  if (modal.hasAttribute('open')) modal.removeAttribute('open');
-  if (typeof modal.close === 'function') modal.close();
+  // <dialog>.showModal() makes the rest of the page inert; only .close()
+  // unwinds that state. Removing the `open` attribute first short-circuits
+  // .close() (it returns early thinking the dialog is already closed) and
+  // leaves the inert state stuck — every page click then gets swallowed.
+  if (typeof modal.close === 'function' && modal.open) {
+    modal.close();
+  } else if (modal.hasAttribute('open')) {
+    modal.removeAttribute('open');
+  }
 }
 
 function copyToClipboard(text) {
