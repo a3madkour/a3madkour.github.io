@@ -8,6 +8,7 @@
     <p class="works-poem-meta">
       <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2006" }}</time>
       {{- with .Params.collection }} · <span class="works-poem-collection">{{ . }}</span>{{- end }}
+      {{ partial "cite/button.html" . }}
     </p>
     {{- with .Params.set_to_music }}
       {{ partial "works/audio-pill.html" . }}
@@ -17,5 +18,8 @@
   <section class="works-poem-body">
     {{ .Content }}
   </section>
+
+  {{ partial "cite/static-fallback.html" . }}
+  {{ partial "cite/data-blob.html" . }}
 </article>
 {{ end }}

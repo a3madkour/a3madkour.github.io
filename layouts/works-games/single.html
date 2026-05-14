@@ -19,6 +19,7 @@
         <span class="works-game-year">{{ .Params.year }}</span>
         <span class="works-game-kind">{{ humanize .Params.game_kind }}</span>
         {{- with .Params.length }}<span class="works-game-length">{{ . }}</span>{{- end }}
+        {{ partial "cite/button.html" . }}
       </p>
       {{- with .Params.collaborators }}<p class="works-game-collaborators">with {{ delimit . ", " }}</p>{{- end }}
       {{- with .Params.tech_stack }}<p class="works-game-tech">{{ delimit . " · " }}</p>{{- end }}
@@ -63,5 +64,8 @@
     {{- with .Params.source_url }}<p><a href="{{ . }}">GitHub</a></p>{{- end }}
   </section>
   {{- end }}
+
+  {{ partial "cite/static-fallback.html" . }}
+  {{ partial "cite/data-blob.html" . }}
 </article>
 {{ end }}

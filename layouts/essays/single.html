@@ -9,6 +9,7 @@
       {{ if $hero }}<img class="essay-hero" src="{{ $hero.RelPermalink }}" alt="">{{ end }}
     {{ end }}
     {{ partial "essay-meta.html" . }}
+    {{ partial "cite/button.html" . }}
     <h1>{{ .Title }}</h1>
     {{ with .Params.summary }}<p class="lede">{{ . }}</p>{{ end }}
   </header>
@@ -34,5 +35,8 @@
   {{ if .Params.series }}
     <div class="reading-column">{{ partial "essay-series-nav.html" . }}</div>
   {{ end }}
+
+  <div class="reading-column">{{ partial "cite/static-fallback.html" . }}</div>
+  {{ partial "cite/data-blob.html" . }}
 </article>
 {{ end }}

@@ -82,6 +82,7 @@
   </header>
 
   <h1 class="question-statement">{{ .Title }}</h1>
+  {{ partial "cite/button.html" . }}
 
   <section id="thinking" class="research-current-thinking">
     <h2>Current thinking</h2>
@@ -180,5 +181,7 @@
     {{ end }}
   </section>
 
+  {{ partial "cite/static-fallback.html" . }}
+  {{ partial "cite/data-blob.html" . }}
 </article>
 {{ end }}

@@ -43,6 +43,7 @@
   <header class="research-theme-hero">
     <h1>{{ .Title }}</h1>
     {{ partial "research/status-pill.html" .Params.status }}
+    {{ partial "cite/button.html" . }}
     <p class="research-theme-description">{{ .Params.description }}</p>
     {{ with .Params.summary }}<p class="research-theme-summary">{{ . }}</p>{{ end }}
     {{ if .Params.garden_topic_ref }}
@@ -131,5 +132,7 @@
   </section>
   {{ end }}
 
+  {{ partial "cite/static-fallback.html" . }}
+  {{ partial "cite/data-blob.html" . }}
 </article>
 {{ end }}

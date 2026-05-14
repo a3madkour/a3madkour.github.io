@@ -19,6 +19,7 @@
         {{- with .Params.duration }} · <span class="works-music-duration">{{ . }}</span>{{- end }}
         · <span class="works-music-year">{{ .Params.year }}</span>
         {{- with .Params.collaborators }} · <span class="works-music-collaborators">with {{ delimit . ", " }}</span>{{- end }}
+        {{ partial "cite/button.html" . }}
       </p>
     </div>
   </header>
@@ -64,5 +65,8 @@
   {{- end }}
 
   {{ partial "works/connections.html" (dict "page" .) }}
+
+  {{ partial "cite/static-fallback.html" . }}
+  {{ partial "cite/data-blob.html" . }}
 </article>
 {{ end }}
