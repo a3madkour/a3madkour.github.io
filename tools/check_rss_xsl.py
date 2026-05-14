@@ -33,6 +33,82 @@ def lint_rss_xsl(
 ) -> list[str]:
     """Return a list of error strings. Empty list = clean."""
     errors: list[str] = []
+
+    # --- XSL file checks --------------------------------------------------
+    if not xsl_path.is_file():
+        errors.append(f"{xsl_path}: missing feed.xsl file")
+        # Nothing more to check on the XSL side; continue to PI checks.
+    else:
+        try:
+            tree = ET.parse(xsl_path)
+        except ET.ParseError as exc:
+            errors.append(f"{xsl_path}: XSL is not well-formed XML ({exc})")
+            tree = None
+
+        if tree is not None:
+            root = tree.getroot()
+            expected_root = f"{{{XSL_NS}}}stylesheet"
+            if root.tag != expected_root:
+                errors.append(
+                    f"{xsl_path}: root element is {root.tag!r}, "
+                    f"expected '{{xsl}}stylesheet'"
+                )
+            # At least one <xsl:template match="/">.
+            template_match = f"{{{XSL_NS}}}template"
+            roots = [t for t in root.findall(template_match) if t.get("match") == "/"]
+            if not roots:
+                errors.append(
+                    f"{xsl_path}: missing <xsl:template match=\"/\"> "
+                    "(stylesheet must transform the document root)"
+                )
+            # Sentinel: <style> element somewhere in the output. We don't care
+            # about namespace — the output is HTML, and ElementTree treats
+            # unprefixed elements inside XSL as namespace-less.
+            has_style = any(
+                el.tag == "style" or el.tag.endswith("}style")
+                for el in root.iter()
+            )
+            if not has_style:
+                errors.append(
+                    f"{xsl_path}: no <style> element in output template "
+                    "(inline-CSS sentinel missing — was it removed?)"
+                )
+
+    # --- Essays PI placement ---------------------------------------------
+    if not essays_rss_path.is_file():
+        errors.append(f"{essays_rss_path}: file missing")
+    else:
+        essays_text = essays_rss_path.read_text(encoding="utf-8")
+        # Find PI substring and first <rss occurrence.
+        # Match either expanded form or template form with resources.Get.
+        pi_match = re.search(
+            r"xml-stylesheet[^\n]*(feed/feed\.xsl|resources\.Get[^\n]*feed/feed\.xsl)",
+            essays_text
+        )
+        rss_open = essays_text.find("<rss")
+        if pi_match is None:
+            errors.append(
+                f"{essays_rss_path}: missing xml-stylesheet PI referencing "
+                "feed/feed.xsl (browsers won't pretty-render the feed)"
+            )
+        elif rss_open == -1:
+            # No <rss in the file — template malformed, but not our scope.
+            pass
+        elif pi_match.start() > rss_open:
+            errors.append(
+                f"{essays_rss_path}: xml-stylesheet PI must appear BEFORE the "
+                "<rss> opening tag (browsers ignore PIs inside the root element)"
+            )
+
+    # --- Garden scope guard ----------------------------------------------
+    if garden_rss_path.is_file():
+        garden_text = garden_rss_path.read_text(encoding="utf-8")
+        if "xml-stylesheet" in garden_text:
+            errors.append(
+                f"{garden_rss_path}: contains xml-stylesheet PI — garden feed "
+                "is out of scope for the pretty-render slice (remove the PI)"
+            )
+
     return errors
 
 
