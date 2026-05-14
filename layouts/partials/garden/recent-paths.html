@@ -1,0 +1,13 @@
+{{- /* Recent reading paths widget.
+       Rendered hidden by default; assets/js/garden-recent-paths.js reveals it
+       after reading localStorage['garden-path-log']. The <ol> is populated
+       client-side. No JS-off fallback (data lives in localStorage anyway).
+*/ -}}
+<section class="garden-recent-paths" hidden aria-labelledby="recent-paths-heading">
+  <h2 id="recent-paths-heading">Recent paths</h2>
+  <ol class="recent-paths-list"></ol>
+  <div class="recent-paths-actions">
+    <a class="recent-paths-view-all" href="{{ "/garden/history/" | relURL }}">Reading history →</a>
+    <button class="recent-paths-clear" type="button">Clear history</button>
+  </div>
+</section>

@@ -3776,3 +3776,90 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   .search-modal-filters { padding: 0.5rem 1rem; }
   .search-modal-results { padding: 0.25rem 1rem; }
 }
+
+/* ===========================================================================
+ * §43 Reading history — garden path-log retrieval surfaces
+ *
+ * Widget on /garden/, popover on note pages, and /garden/history/ page.
+ * All driven by assets/js/garden-history.js + the two mount modules.
+ * ===========================================================================
+ */
+
+/* Widget on /garden/ index */
+.garden-recent-paths {
+  margin: 2rem 0;
+  padding: 1rem 1.25rem;
+  background: color-mix(in srgb, var(--color-warn) 8%, var(--color-tile));
+  border: 1px solid var(--color-rule);
+  border-radius: 4px;
+  font-family: var(--font-body);
+}
+.garden-recent-paths[hidden] { display: none; }
+.garden-recent-paths h2 {
+  margin: 0 0 0.75rem;
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+.recent-paths-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.recent-paths-actions {
+  margin-top: 0.8rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed var(--color-rule);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--text-xs);
+}
+.recent-paths-view-all {
+  color: var(--color-burgundy);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--color-burgundy);
+}
+.recent-paths-clear {
+  font-family: inherit;
+  font-size: var(--text-xs);
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--color-rule);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+}
+.recent-paths-clear:hover { color: var(--color-warn); }
+
+/* Shared row + chip + time + arrow primitives (also used by popover + history page) */
+.path-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  padding: 0.35rem 0;
+}
+.path-time {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--color-ink-soft);
+  min-width: 5rem;
+  flex-shrink: 0;
+}
+.path-chip {
+  background: var(--color-tile);
+  border: 1px solid var(--color-rule);
+  border-radius: 3px;
+  padding: 0.15rem 0.5rem;
+  font-size: var(--text-xs);
+  color: var(--color-burgundy);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--color-burgundy);
+}
+.path-chip:hover {
+  background: color-mix(in srgb, var(--color-burgundy) 10%, var(--color-tile));
+}
+.path-arrow {
+  color: var(--color-ink-fade);
+  font-size: var(--text-xs);
+}
