@@ -22,8 +22,8 @@ class TestBudgetFor(unittest.TestCase):
     def test_default_fallthrough(self):
         self.assertEqual(cpw.budget_for("/about/"), 100_000)
 
-    def test_essay_post_uses_default(self):
-        self.assertEqual(cpw.budget_for("/essays/example-1/"), 100_000)
+    def test_essay_post_at_essays_tier(self):
+        self.assertEqual(cpw.budget_for("/essays/example-1/"), 200_000)
 
     def test_garden_index_is_graph_bearing(self):
         self.assertEqual(cpw.budget_for("/garden/"), 600_000)
@@ -49,8 +49,8 @@ class TestBudgetFor(unittest.TestCase):
         # /works/music/ matches the /works/music/ prefix before /works/.
         self.assertEqual(cpw.budget_for("/works/music/"), 500_000)
 
-    def test_essays_index_is_default(self):
-        self.assertEqual(cpw.budget_for("/essays/"), 100_000)
+    def test_essays_index_at_essays_tier(self):
+        self.assertEqual(cpw.budget_for("/essays/"), 200_000)
 
     def test_research_index_is_graph_bearing(self):
         # /research/ inlines the research-graph JS bundle.

@@ -31,6 +31,7 @@ BUDGETS_PREFIX = [
     ("/garden/",         600_000),   # garden index + per-note pages
     ("/research/",       600_000),   # research index inlines the graph JS bundle
     ("/library/",        500_000),   # library leaves carry cover-image payloads
+    ("/essays/",         200_000),   # essay pages — accumulated CSS growth (sidenotes, citations, Bento, §43)
 ]
 
 BUDGET_HOMEPAGE = 500_000   # exact match `/`
