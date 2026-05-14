@@ -6,3 +6,5 @@
 import './garden.js';
 import './garden-stack.js';
 import './garden-graph.js';
+import './garden-recent-paths.js';
+import './garden-pathlog-popover.js';

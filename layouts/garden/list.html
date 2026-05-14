@@ -7,6 +7,8 @@
     {{ with .Content }}<div class="framing">{{ . }}</div>{{ end }}
   </header>
 
+  {{ partial "garden/recent-paths.html" . }}
+
   {{- /* Exclude the standalone /garden/graph/ page (layout=graph) — it lives in
          the garden section but isn't a note. */ -}}
   {{- $pages := where (where .Site.RegularPages "Section" "garden") "Layout" "ne" "graph" -}}
