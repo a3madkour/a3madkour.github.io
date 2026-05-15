@@ -4445,7 +4445,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
    ========================================================================== */
 
 .library-umbrella {
-  max-width: 900px;
+  max-width: min(1600px, 92vw);
   margin: 0 auto;
   padding: 0 1.5rem 4rem;
 }
@@ -4815,7 +4815,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 
 /* Library shelf detail page (/library/shelves/<slug>/) */
 .library-shelf-page {
-  max-width: 900px;
+  max-width: min(1600px, 92vw);
   margin: 0 auto;
   padding: 0 1.5rem 4rem;
 }
