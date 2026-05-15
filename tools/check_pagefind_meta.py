@@ -29,6 +29,7 @@ SECTION_BY_PREFIX = [
     ("/library/",  "library"),
     ("/about/",    "about"),
     ("/blog/",     "blog"),
+    ("/credits/",  "credits"),
     ("/",          "home"),
 ]
 
