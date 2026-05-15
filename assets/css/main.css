@@ -1654,14 +1654,19 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 }
 .about-hero .monogram {
   flex-shrink: 0;
-  width: 96px;
-  height: 96px;
-  color: var(--color-burgundy);
-}
-.about-hero .monogram svg {
-  display: block;
-  width: 100%;
-  height: 100%;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: var(--color-ink);
+  color: var(--color-stone);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 2.4rem;
+  letter-spacing: -0.02em;
+  line-height: 1;
 }
 .about-hero h1 {
   margin: 0;
