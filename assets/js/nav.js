@@ -1,24 +1,41 @@
-// TOC active-link highlighter — observes headings with `id` and adds
-// `is-active` to the corresponding anchor inside the TOC container.
-// Used by per-essay layouts when a TOC is present (Phase 2 onward).
-
+// TOC active-link highlighter — uses the same "last heading whose top has
+// crossed the trigger line" algorithm as the page-sidebar scrollspy
+// below. The previous IntersectionObserver version only fired when a
+// heading crossed the viewport edge, so scrolling DOWN within a long
+// section never updated the highlight.
 window.addEventListener('DOMContentLoaded', () => {
-  const tocLinks = document.querySelectorAll('#TableOfContents a');
+  const tocLinks = document.querySelectorAll('#TableOfContents a[href^="#"]');
   if (tocLinks.length === 0) return;
 
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      const id = entry.target.getAttribute('id');
-      if (!id) return;
-      if (entry.intersectionRatio > 0) {
-        tocLinks.forEach((a) => a.classList.remove('is-active'));
-        document.querySelector(`#TableOfContents a[href="#${id}"]`)?.classList.add('is-active');
-      }
-    });
-  });
+  const sections = Array.from(tocLinks)
+    .map((link) => ({ link, target: document.querySelector(link.getAttribute('href')) }))
+    .filter((s) => s.target);
+  if (sections.length === 0) return;
 
-  document.querySelectorAll('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]')
-    .forEach((heading) => observer.observe(heading));
+  function updateActive() {
+    const scrollY = window.scrollY;
+    const viewHeight = window.innerHeight;
+    const docHeight = document.documentElement.scrollHeight;
+    const triggerY = scrollY + viewHeight * 0.1;
+    const atBottom = scrollY + viewHeight >= docHeight - 2;
+
+    let activeHref = sections[0].link.getAttribute('href');
+    if (atBottom) {
+      activeHref = sections[sections.length - 1].link.getAttribute('href');
+    } else {
+      for (const s of sections) {
+        if (s.target.getBoundingClientRect().top + scrollY <= triggerY) {
+          activeHref = s.link.getAttribute('href');
+        }
+      }
+    }
+
+    tocLinks.forEach((a) => a.classList.toggle('is-active', a.getAttribute('href') === activeHref));
+  }
+
+  window.addEventListener('scroll', updateActive, { passive: true });
+  window.addEventListener('resize', updateActive, { passive: true });
+  updateActive();
 });
 
 // Page sidebar — scrollspy + click handler.
