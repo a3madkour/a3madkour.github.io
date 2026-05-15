@@ -590,13 +590,13 @@ main { flex-grow: 1; }
   margin-top: 0.5rem;
 }
 
-/* Wide breakout — extends beyond reading column */
+/* Wide breakout — extends ~20px beyond reading column on each side */
 .essay-figure.wide {
-  margin-left: calc((var(--reading-column) - 920px) / 2);
-  margin-right: calc((var(--reading-column) - 920px) / 2);
-  max-width: 920px;
+  margin-left: calc((var(--reading-column) - 1140px) / 2);
+  margin-right: calc((var(--reading-column) - 1140px) / 2);
+  max-width: 1140px;
 }
-@media (max-width: 920px) {
+@media (max-width: 1140px) {
   .essay-figure.wide { margin-left: 0; margin-right: 0; max-width: 100%; }
 }
 
@@ -624,8 +624,11 @@ main { flex-grow: 1; }
 }
 
 /* Essay-scoped reading column is wider than the site default so prose
- * doesn't feel cramped on wide screens (user feedback). */
-.essay { --reading-column: 900px; }
+ * doesn't feel cramped on wide screens (user feedback). 1100px is the
+ * tolerable upper bound for body prose — past that line-length hurts
+ * readability. The fixed TOC sidebar's clearance still holds because
+ * .essay .reading-column carries max(240px, ...) margin-left below. */
+.essay { --reading-column: 1100px; }
 
 .essay-layout {
   display: grid;
@@ -4445,7 +4448,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
    ========================================================================== */
 
 .library-umbrella {
-  max-width: min(1600px, 92vw);
+  max-width: min(2400px, 95vw);
   margin: 0 auto;
   padding: 0 1.5rem 4rem;
 }
@@ -4815,7 +4818,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 
 /* Library shelf detail page (/library/shelves/<slug>/) */
 .library-shelf-page {
-  max-width: min(1600px, 92vw);
+  max-width: min(2400px, 95vw);
   margin: 0 auto;
   padding: 0 1.5rem 4rem;
 }
