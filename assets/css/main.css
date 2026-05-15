@@ -4564,16 +4564,18 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   flex-wrap: wrap;
 }
 
-/* Hero action row: bring Note/Original up to the Cite CTA's scale so the
- * three buttons baseline-align, share a hover transition, and read as
- * one button set. The §43 ref-cite pills were sized for inline essay
- * reference rows, which is why they look mismatched in this context. */
+/* Hero action row: bring Note/Original up to the Cite CTA's scale so
+ * the three buttons baseline-align and share a hover transition. They
+ * stay CIRCULAR pills (matching the tile Note/Original below) — only
+ * the primary Cite CTA is a rectangular fill. The §43 ref-cite pills
+ * were sized for inline essay reference rows, which is why they look
+ * mismatched in this context without these overrides. */
 .library-hero-actions .ref-cite-note,
 .library-hero-actions .ref-cite-source {
   padding: 0.5rem 0.85rem;
   font-size: var(--text-xs);
   font-weight: 600;
-  border-radius: 4px;
+  border-radius: 999px;
   border-width: 1.5px;
   transition: background 0.15s ease, transform 0.15s ease;
 }
@@ -4746,10 +4748,15 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   padding: 0 0 0.25rem;
 }
 
+/* Tile action row: all three are outline pills sized for the small
+ * 140px tile. Normalize cite-cta to lose its primary-button shadow +
+ * weight here (those belong to the hero CTA and the inline essay CTA,
+ * not micro pills). All three share the same hover transition. */
 .library-tile-actions .cite-cta,
 .library-tile-actions .ref-cite-note,
 .library-tile-actions .ref-cite-source {
   font-size: 0.65rem;
+  font-weight: 500;
   padding: 2px 7px;
   border-radius: 999px;
   border: 1px solid;
@@ -4757,12 +4764,20 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   line-height: 1.2;
   text-decoration: none;
   font-family: var(--font-ui);
+  box-shadow: none;
+  transform: none;
+  transition: background 0.15s ease;
 }
 
 .library-tile-actions .cite-cta {
   color: var(--color-burgundy);
   border-color: var(--color-burgundy);
   cursor: pointer;
+}
+.library-tile-actions .cite-cta:hover {
+  background: color-mix(in srgb, var(--color-burgundy) 8%, transparent);
+  box-shadow: none;
+  transform: none;
 }
 
 .library-tile-actions .ref-cite-note   { color: var(--color-green);    border-color: var(--color-green); }
