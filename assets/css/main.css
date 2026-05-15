@@ -4761,12 +4761,11 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   background: color-mix(in srgb, var(--color-steel) 8%, transparent);
 }
 
-/* Bottom catalogue block */
+/* Catalogue block — sits below the hero. Transparent so it doesn't
+ * fight the hero's gradient surface; just inset by margin. */
 .library-catalogue {
-  padding: 2rem 1.5rem;
-  margin-top: 2rem;
-  background: color-mix(in srgb, var(--color-tile) 70%, var(--color-stone) 30%);
-  border-radius: 8px;
+  padding: 1rem 0;
+  margin: 1rem 0 2.5rem;
 }
 
 .library-catalogue h2 {

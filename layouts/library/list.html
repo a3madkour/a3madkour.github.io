@@ -21,22 +21,22 @@
     {{- with .Content }}<div class="library-page-lede">{{ . }}</div>{{ end -}}
   </header>
 
-  {{ partial "library/umbrella-catalogue.html" . }}
-
   {{- if $shelves -}}
     {{ partial "library/umbrella-hero.html" (dict "hero_slug" (default "" $shelves.hero) "media_index" $media_index) }}
+    {{ partial "library/umbrella-catalogue.html" . }}
     {{- range $shelf := (default slice $shelves.shelves) -}}
       {{ partial "library/umbrella-shelf.html" (dict "shelf" $shelf "media_index" $media_index) }}
     {{- end -}}
   {{- else -}}
     {{/* Soft fall-back per spec §3.5: no shelves yaml → hero from max-last_modified */}}
     {{ partial "library/umbrella-hero.html" (dict "hero_slug" "" "media_index" $media_index) }}
+    {{ partial "library/umbrella-catalogue.html" . }}
   {{- end -}}
 
   {{/* Page sidebar — anchor list built from active sections */}}
   {{- $sections := slice -}}
-  {{- $sections = $sections | append (dict "id" "catalogue" "label" "Browse") -}}
   {{- $sections = $sections | append (dict "id" "hero" "label" "Featured") -}}
+  {{- $sections = $sections | append (dict "id" "catalogue" "label" "Browse") -}}
   {{- if $shelves -}}
     {{- range $shelf := (default slice $shelves.shelves) -}}
       {{- $sections = $sections | append (dict "id" (printf "shelf-%s" (urlize $shelf.title)) "label" $shelf.title) -}}
