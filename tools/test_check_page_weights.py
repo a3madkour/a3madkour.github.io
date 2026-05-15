@@ -20,7 +20,7 @@ class TestBudgetFor(unittest.TestCase):
         self.assertEqual(cpw.budget_for("/"), 500_000)
 
     def test_default_fallthrough(self):
-        self.assertEqual(cpw.budget_for("/about/"), 100_000)
+        self.assertEqual(cpw.budget_for("/unmapped-path/"), 100_000)
 
     def test_essay_post_at_essays_tier(self):
         self.assertEqual(cpw.budget_for("/essays/example-1/"), 200_000)
@@ -135,8 +135,8 @@ class TestAuditPage(unittest.TestCase):
     def test_page_under_budget_passes(self):
         with tempfile.TemporaryDirectory() as tmp:
             public = Path(tmp)
-            self._write(public, "/about/", "<html><body>" + "x" * 1000 + "</body></html>")
-            result = cpw.audit_page(public / "about" / "index.html", public)
+            self._write(public, "/unmapped-path/", "<html><body>" + "x" * 1000 + "</body></html>")
+            result = cpw.audit_page(public / "unmapped-path" / "index.html", public)
             self.assertEqual(result.budget, 100_000)
             self.assertLess(result.total, 100_000)
             self.assertFalse(result.over_budget)

@@ -30,8 +30,11 @@ BUDGETS_PREFIX = [
     ("/works/",          600_000),   # works umbrella + per-game/poetry pages
     ("/garden/",         600_000),   # garden index + per-note pages
     ("/research/",       600_000),   # research index inlines the graph JS bundle
+    ("/library/shelves/", 500_000),  # shelf detail pages carry cover-image grids
     ("/library/",        500_000),   # library leaves carry cover-image payloads
     ("/essays/",         200_000),   # essay pages — accumulated CSS growth (sidenotes, citations, Bento, §43)
+    ("/about/",          150_000),   # thin page; site-wide CSS bundle dominates
+    ("/credits/",        150_000),   # thin page; site-wide CSS bundle dominates
 ]
 
 BUDGET_HOMEPAGE = 500_000   # exact match `/`
