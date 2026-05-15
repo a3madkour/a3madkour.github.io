@@ -52,7 +52,7 @@
   <p class="library-tile-meta">{{ $item.creator }}{{ with $item.year }} · {{ . }}{{ end }}</p>
   <script class="cite-data" type="application/json">{{ (dict "self" $citeSelf "refs" dict) | jsonify | safeJS }}</script>
   <div class="library-tile-actions">
-    <button class="cite-cta" type="button" data-kind="{{ $item.media_type }}">{{ $citeLabel }}</button>
+    <button class="cite-cta" type="button" data-kind="{{ $item.media_type }}" aria-label="{{ $citeLabel }}">Cite</button>
     {{- with $item.note_slug }}<a class="ref-cite-note" href="/garden/{{ . }}/">Note</a>{{- end }}
     {{- with $item.canonical_url }}<a class="ref-cite-source" href="{{ . }}" rel="external">Original</a>{{- end }}
   </div>

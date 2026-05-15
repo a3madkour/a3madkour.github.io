@@ -4603,14 +4603,20 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   padding-bottom: 0.5rem;
 }
 
-/* Tile */
+/* Tile — fixed total height. Content slots (title, meta, actions)
+ * absorb extra space via the meta's margin-bottom: auto below so 1-line
+ * titles and short button rows don't shrink the tile; longer titles
+ * are line-clamped to 2 lines. This guarantees every tile in a shelf
+ * row is identical regardless of content variance. */
 .library-tile {
   width: 140px;
+  height: 340px;
   flex-shrink: 0;
   background: var(--color-tile);
   border-radius: 4px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .library-cover-wrap {
