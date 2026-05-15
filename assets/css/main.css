@@ -4667,8 +4667,13 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   height: 12px;
 }
 
-.library-glyph-block {
+/* Tile / hero / shelf-page glyph fallback — fills the cover frame.
+ * Scoped to override the older inline leaf-row glyph at §37
+ * (which fixes height: 3.5rem and would otherwise clip to a banner). */
+.library-cover-wrap .library-glyph-block,
+.library-hero-cover-wrap .library-glyph-block {
   width: 100%;
+  height: auto;
   aspect-ratio: 140 / 190;
   display: flex;
   align-items: center;
@@ -4676,15 +4681,23 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   color: var(--color-stone);
 }
 
-.library-glyph-block.book      { background: var(--color-burgundy); }
-.library-glyph-block.reading   { background: var(--color-burgundy); }
-.library-glyph-block.music     { background: var(--color-steel); }
-.library-glyph-block.listening { background: var(--color-steel); }
-.library-glyph-block.game      { background: var(--color-green); }
-.library-glyph-block.playing   { background: var(--color-green); }
-.library-glyph-block.watching  { background: var(--color-violet); }
+.library-cover-wrap .library-glyph-block.book,
+.library-hero-cover-wrap .library-glyph-block.book,
+.library-cover-wrap .library-glyph-block.reading,
+.library-hero-cover-wrap .library-glyph-block.reading   { background: var(--color-burgundy); }
+.library-cover-wrap .library-glyph-block.music,
+.library-hero-cover-wrap .library-glyph-block.music,
+.library-cover-wrap .library-glyph-block.listening,
+.library-hero-cover-wrap .library-glyph-block.listening { background: var(--color-steel); }
+.library-cover-wrap .library-glyph-block.game,
+.library-hero-cover-wrap .library-glyph-block.game,
+.library-cover-wrap .library-glyph-block.playing,
+.library-hero-cover-wrap .library-glyph-block.playing   { background: var(--color-green); }
+.library-cover-wrap .library-glyph-block.watching,
+.library-hero-cover-wrap .library-glyph-block.watching  { background: var(--color-violet); }
 
-.library-glyph-block svg {
+.library-cover-wrap .library-glyph-block svg,
+.library-hero-cover-wrap .library-glyph-block svg {
   width: 56px;
   height: 56px;
 }
