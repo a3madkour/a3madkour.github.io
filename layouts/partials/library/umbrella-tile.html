@@ -1,0 +1,61 @@
+{{- /* One library tile. Input dict: { item: <medium-item-map>, medium: <medium-entry> } */ -}}
+{{- $item := .item -}}
+{{- $medium := .medium -}}
+{{- $aspect := default "portrait" $medium.cover_aspect -}}
+
+{{/* Citation infrastructure — uses existing normalize-library-item + fmt-* partials. */}}
+{{- $citeDict := partial "cite/normalize-library-item.html" $item -}}
+{{- $citeSelf := dict
+      "citekey" $citeDict.citekey
+      "title"   $citeDict.title
+      "url"     $citeDict.url
+      "notes_ref" (default "" $item.note_slug)
+      "formats" (dict
+        "bibtex"  (partial "cite/fmt-bibtex.html"  $citeDict)
+        "apa"     (partial "cite/fmt-apa.html"     $citeDict)
+        "chicago" (partial "cite/fmt-chicago.html" $citeDict)
+        "mla"     (partial "cite/fmt-mla.html"     $citeDict)
+        "ris"     (partial "cite/fmt-ris.html"     $citeDict))
+-}}
+
+{{- $citeLabel := "Cite this entry" -}}
+{{- if   eq $item.media_type "book"   }}{{ $citeLabel = "Cite this book" }}
+{{- else if eq $item.media_type "album"  }}{{ $citeLabel = "Cite this album" }}
+{{- else if eq $item.media_type "track"  }}{{ $citeLabel = "Cite this track" }}
+{{- else if eq $item.media_type "game"   }}{{ $citeLabel = "Cite this game" }}
+{{- else if eq $item.media_type "film"   }}{{ $citeLabel = "Cite this movie" }}
+{{- else if eq $item.media_type "series" }}{{ $citeLabel = "Cite this series" }}
+{{- end -}}
+
+<article class="library-tile" data-medium="{{ $medium.key }}">
+  <a class="library-tile-link" href="/library/{{ $medium.key }}/#{{ $item.slug }}">
+    <div class="library-cover-wrap library-cover-{{ $aspect }}">
+      {{- $coverFile := default "" $item.extras.cover_file -}}
+      {{- $coverUrl := default "" $item.extras.cover_url -}}
+      {{- if $coverFile -}}
+        <img class="library-cover" src="/library/covers/{{ $coverFile }}" alt="" loading="lazy" decoding="async">
+      {{- else if $coverUrl -}}
+        <img class="library-cover" src="{{ $coverUrl }}" alt="" loading="lazy" decoding="async">
+      {{- else -}}
+        <div class="library-glyph-block {{ $medium.key }}" aria-hidden="true">
+          {{- with resources.Get (printf "images/icons/library/%s.svg" $medium.glyph) -}}{{ .Content | safeHTML }}
+          {{- else -}}{{ with resources.Get (printf "images/icons/%s.svg" $medium.glyph) }}{{ .Content | safeHTML }}{{ end -}}
+          {{- end -}}
+        </div>
+      {{- end -}}
+      <span class="library-badge" aria-hidden="true">
+        {{- with resources.Get (printf "images/icons/library/%s.svg" $medium.glyph) -}}{{ .Content | safeHTML }}
+        {{- else -}}{{ with resources.Get (printf "images/icons/%s.svg" $medium.glyph) }}{{ .Content | safeHTML }}{{ end -}}
+        {{- end -}}
+      </span>
+    </div>
+    <h4 class="library-tile-title">{{ $item.title }}</h4>
+    <p class="library-tile-meta">{{ $item.creator }}{{ with $item.year }} · {{ . }}{{ end }}</p>
+  </a>
+  <script class="cite-data" type="application/json">{{ (dict "self" $citeSelf "refs" dict) | jsonify | safeJS }}</script>
+  <div class="library-tile-actions">
+    <button class="cite-cta" type="button" data-kind="{{ $item.media_type }}">{{ $citeLabel }}</button>
+    {{- with $item.note_slug }}<a class="ref-cite-note" href="/garden/{{ . }}/">Note</a>{{- end }}
+    {{- with $item.canonical_url }}<a class="ref-cite-source" href="{{ . }}" rel="external">Original</a>{{- end }}
+  </div>
+</article>
