@@ -1,21 +1,49 @@
 {{ define "main" }}
-{{- $reading := (index site.Data "reading").items | default slice -}}
-{{- $listening := (index site.Data "listening").items | default slice -}}
-{{- $playing := (index site.Data "playing").items | default slice -}}
-{{- $watching := (index site.Data "watching").items | default slice -}}
-<article class="library-umbrella-page">
+{{- $media := index site.Data "library-media" -}}
+{{- $shelves := index site.Data "library-shelves" -}}
+
+{{/* Unified slug → {item, medium} index across all media yamls */}}
+{{- $media_index := dict -}}
+{{- range $entry := $media.media -}}
+  {{- $key := $entry.key -}}
+  {{- $bucket := index site.Data $key -}}
+  {{- range $item := (default slice $bucket.items) -}}
+    {{- $media_index = merge $media_index (dict $item.slug (dict "item" $item "medium" $entry)) -}}
+  {{- end -}}
+{{- end -}}
+
+<main class="library-umbrella prose" data-pagefind-body>
   <span data-pagefind-meta="section:library" hidden></span>
   <span data-pagefind-filter="section:library" hidden></span>
-  <header class="library-page-header">
-    <h1 class="library-page-title">{{ .Title }}</h1>
+
+  <header class="library-umbrella-header">
+    <h1>{{ .Title }}</h1>
     {{- with .Content }}<div class="library-page-lede">{{ . }}</div>{{ end -}}
   </header>
 
-  <div class="library-umbrella-grid">
-    {{ partial "library/umbrella-card.html" (dict "label" "Reading"   "glyph_media_type" "book"  "page_url" "/library/reading/"   "items" $reading) }}
-    {{ partial "library/umbrella-card.html" (dict "label" "Listening" "glyph_media_type" "music" "page_url" "/library/listening/" "items" $listening) }}
-    {{ partial "library/umbrella-card.html" (dict "label" "Playing"   "glyph_media_type" "game"  "page_url" "/library/playing/"   "items" $playing) }}
-    {{ partial "library/umbrella-card.html" (dict "label" "Watching"  "glyph_media_type" "film"  "page_url" "/library/watching/"  "items" $watching) }}
-  </div>
-</article>
+  {{ partial "library/medium-rail.html" . }}
+
+  {{- if $shelves -}}
+    {{ partial "library/umbrella-hero.html" (dict "hero_slug" (default "" $shelves.hero) "media_index" $media_index) }}
+    {{- range $shelf := (default slice $shelves.shelves) -}}
+      {{ partial "library/umbrella-shelf.html" (dict "shelf" $shelf "media_index" $media_index) }}
+    {{- end -}}
+  {{- else -}}
+    {{/* Soft fall-back per spec §3.5: no shelves yaml → hero from max-last_modified */}}
+    {{ partial "library/umbrella-hero.html" (dict "hero_slug" "" "media_index" $media_index) }}
+  {{- end -}}
+
+  {{ partial "library/umbrella-catalogue.html" . }}
+
+  {{/* Page sidebar — anchor list built from active sections */}}
+  {{- $sections := slice -}}
+  {{- $sections = $sections | append (dict "id" "hero" "label" "Hero") -}}
+  {{- if $shelves -}}
+    {{- range $shelf := (default slice $shelves.shelves) -}}
+      {{- $sections = $sections | append (dict "id" (printf "shelf-%s" (urlize $shelf.title)) "label" $shelf.title) -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $sections = $sections | append (dict "id" "catalogue" "label" "Browse") -}}
+  {{ partial "page-sidebar.html" (dict "sections" $sections) }}
+</main>
 {{ end }}
