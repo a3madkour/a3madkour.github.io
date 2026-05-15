@@ -28,30 +28,28 @@
 {{- end -}}
 
 <article class="library-tile" data-medium="{{ $medium.key }}">
-  <a class="library-tile-link" href="/library/{{ $medium.key }}/#{{ $item.slug }}">
-    <div class="library-cover-wrap library-cover-{{ $aspect }}">
-      {{- $coverFile := default "" $item.extras.cover_file -}}
-      {{- $coverUrl := default "" $item.extras.cover_url -}}
-      {{- if $coverFile -}}
-        <img class="library-cover" src="/library/covers/{{ $coverFile }}" alt="" loading="lazy" decoding="async">
-      {{- else if $coverUrl -}}
-        <img class="library-cover" src="{{ $coverUrl }}" alt="" loading="lazy" decoding="async">
-      {{- else -}}
-        <div class="library-glyph-block {{ $medium.key }}" aria-hidden="true">
-          {{- with resources.Get (printf "images/icons/library/%s.svg" $medium.glyph) -}}{{ .Content | safeHTML }}
-          {{- else -}}{{ with resources.Get (printf "images/icons/%s.svg" $medium.glyph) }}{{ .Content | safeHTML }}{{ end -}}
-          {{- end -}}
-        </div>
-      {{- end -}}
-      <span class="library-badge" aria-hidden="true">
+  <div class="library-cover-wrap library-cover-{{ $aspect }}">
+    {{- $coverFile := default "" $item.extras.cover_file -}}
+    {{- $coverUrl := default "" $item.extras.cover_url -}}
+    {{- if $coverFile -}}
+      <img class="library-cover" src="/library/covers/{{ $coverFile }}" alt="" loading="lazy" decoding="async">
+    {{- else if $coverUrl -}}
+      <img class="library-cover" src="{{ $coverUrl }}" alt="" loading="lazy" decoding="async">
+    {{- else -}}
+      <div class="library-glyph-block {{ $medium.key }}" aria-hidden="true">
         {{- with resources.Get (printf "images/icons/library/%s.svg" $medium.glyph) -}}{{ .Content | safeHTML }}
         {{- else -}}{{ with resources.Get (printf "images/icons/%s.svg" $medium.glyph) }}{{ .Content | safeHTML }}{{ end -}}
         {{- end -}}
-      </span>
-    </div>
-    <h4 class="library-tile-title">{{ $item.title }}</h4>
-    <p class="library-tile-meta">{{ $item.creator }}{{ with $item.year }} · {{ . }}{{ end }}</p>
-  </a>
+      </div>
+    {{- end -}}
+    <span class="library-badge" aria-hidden="true">
+      {{- with resources.Get (printf "images/icons/library/%s.svg" $medium.glyph) -}}{{ .Content | safeHTML }}
+      {{- else -}}{{ with resources.Get (printf "images/icons/%s.svg" $medium.glyph) }}{{ .Content | safeHTML }}{{ end -}}
+      {{- end -}}
+    </span>
+  </div>
+  <h4 class="library-tile-title">{{ $item.title }}</h4>
+  <p class="library-tile-meta">{{ $item.creator }}{{ with $item.year }} · {{ . }}{{ end }}</p>
   <script class="cite-data" type="application/json">{{ (dict "self" $citeSelf "refs" dict) | jsonify | safeJS }}</script>
   <div class="library-tile-actions">
     <button class="cite-cta" type="button" data-kind="{{ $item.media_type }}">{{ $citeLabel }}</button>
