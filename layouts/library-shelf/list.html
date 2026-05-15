@@ -1,0 +1,44 @@
+{{ define "main" }}
+{{- $shelf_slug := .Params.shelf -}}
+{{- $shelves := index site.Data "library-shelves" -}}
+{{- $media := index site.Data "library-media" -}}
+
+{{/* Find the shelf in yaml by matching urlize(title) → shelf_slug */}}
+{{- $found := "" -}}
+{{- range $s := (default slice $shelves.shelves) -}}
+  {{- if eq (urlize $s.title) $shelf_slug -}}{{- $found = $s -}}{{- end -}}
+{{- end -}}
+
+{{/* Build media index — same pattern as library/list.html */}}
+{{- $media_index := dict -}}
+{{- range $entry := $media.media -}}
+  {{- $bucket := index site.Data $entry.key -}}
+  {{- range $item := (default slice $bucket.items) -}}
+    {{- $media_index = merge $media_index (dict $item.slug (dict "item" $item "medium" $entry)) -}}
+  {{- end -}}
+{{- end -}}
+
+<main class="library-shelf-page prose" data-pagefind-body>
+  <span data-pagefind-meta="section:library" hidden></span>
+  <span data-pagefind-filter="section:library" hidden></span>
+
+  <header class="library-shelf-page-header">
+    <p class="eyebrow"><a href="/library/">Library</a></p>
+    <h1>{{ .Title }}</h1>
+    {{- with .Params.summary }}<p class="lede">{{ . }}</p>{{ end -}}
+  </header>
+
+  {{- with .Content }}<article class="library-shelf-page-body">{{ . }}</article>{{ end -}}
+
+  {{- if $found -}}
+    <div class="library-shelf-page-grid">
+      {{- range $slug := (default slice $found.items) -}}
+        {{- $entry := index $media_index $slug -}}
+        {{- if $entry }}{{ partial "library/umbrella-tile.html" (dict "item" $entry.item "medium" $entry.medium) }}{{- end -}}
+      {{- end -}}
+    </div>
+  {{- else -}}
+    <p class="library-shelf-empty">Shelf "{{ $shelf_slug }}" not found in <code>data/library-shelves.yaml</code>.</p>
+  {{- end -}}
+</main>
+{{ end }}
