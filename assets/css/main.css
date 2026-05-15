@@ -4783,6 +4783,18 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 .library-tile-actions .ref-cite-note   { color: var(--color-green);    border-color: var(--color-green); }
 .library-tile-actions .ref-cite-source { color: var(--color-steel);    border-color: var(--color-steel); }
 
+/* Tile Note/Original need explicit :hover rules in this scope —
+ * the §43 hover declares background: color-mix(...) but our tile
+ * base rule below it sets background: transparent at equal specificity
+ * and wins on source order, so without these explicit overrides the
+ * fill never appears on hover. */
+.library-tile-actions .ref-cite-note:hover {
+  background: color-mix(in srgb, var(--color-green) 8%, transparent);
+}
+.library-tile-actions .ref-cite-source:hover {
+  background: color-mix(in srgb, var(--color-steel) 8%, transparent);
+}
+
 /* Bottom catalogue block */
 .library-catalogue {
   padding: 2rem 1.5rem;
