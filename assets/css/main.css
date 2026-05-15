@@ -4559,8 +4559,27 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 
 .library-hero-actions {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+/* Hero action row: bring Note/Original up to the Cite CTA's scale so the
+ * three buttons baseline-align, share a hover transition, and read as
+ * one button set. The §43 ref-cite pills were sized for inline essay
+ * reference rows, which is why they look mismatched in this context. */
+.library-hero-actions .ref-cite-note,
+.library-hero-actions .ref-cite-source {
+  padding: 0.5rem 0.85rem;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  border-radius: 4px;
+  border-width: 1.5px;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.library-hero-actions .ref-cite-note:hover,
+.library-hero-actions .ref-cite-source:hover {
+  transform: translateY(-1px);
 }
 
 @media (max-width: 720px) {
