@@ -50,10 +50,9 @@
 <script src="{{ $works.RelPermalink }}" integrity="{{ $works.Data.Integrity }}" defer></script>
 {{- end }}
 
-{{- /* Library: load entry-library.js on leaf pages only.
-       The umbrella (/library/) has no chips and no rows — skip it. */ -}}
-{{- $isLibraryLeaf := and (eq .Section "library") (ne .RelPermalink "/library/") -}}
-{{- if $isLibraryLeaf }}
+{{- /* Library: load entry-library.js on every library page.
+       Umbrella uses library-shelf-nav; leaves use filter-chips. */ -}}
+{{- if eq .Section "library" }}
 {{- $libOpts := dict "targetPath" "js/library.js" "minify" true -}}
 {{- $lib := resources.Get "js/entry-library.js" | js.Build $libOpts | fingerprint }}
 <script src="{{ $lib.RelPermalink }}" integrity="{{ $lib.Data.Integrity }}" defer></script>

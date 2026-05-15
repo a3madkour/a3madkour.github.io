@@ -1,0 +1,22 @@
+{{- /* Bottom 'Browse the catalogue' block. N cards = one per medium in
+       data/library-media.yaml. Glyph in a neutral ink disc; medium label; count. */ -}}
+{{- $media := index site.Data "library-media" -}}
+<section class="library-catalogue" id="catalogue" aria-labelledby="catalogue-heading">
+  <h2 id="catalogue-heading">Browse the catalogue</h2>
+  <div class="library-cat-cards">
+    {{- range $entry := $media.media }}
+    {{- $key := $entry.key -}}
+    {{- $items := index site.Data $key -}}
+    {{- $count := len (default slice $items.items) -}}
+    <a class="library-cat-card" href="/library/{{ $key }}/" aria-label="{{ $entry.label }} — {{ $count }} items">
+      <span class="library-cat-disc" aria-hidden="true">
+        {{- with resources.Get (printf "images/icons/library/%s.svg" $entry.glyph) -}}{{ .Content | safeHTML }}
+        {{- else -}}{{ with resources.Get (printf "images/icons/%s.svg" $entry.glyph) }}{{ .Content | safeHTML }}{{ end -}}
+        {{- end -}}
+      </span>
+      <span class="library-cat-name">{{ $entry.label }}</span>
+      <span class="library-cat-count">{{ $count }}</span>
+    </a>
+    {{- end }}
+  </div>
+</section>

@@ -1,0 +1,15 @@
+{{ define "main" }}
+<main class="prose credits-page" data-pagefind-body>
+  <header class="credits-header">
+    <h1>{{ .Title }}</h1>
+    {{ with .Params.description }}<p class="lede">{{ . }}</p>{{ end }}
+  </header>
+  <article class="credits-body">
+    {{ .Content }}
+  </article>
+
+  {{/* Pagefind meta */}}
+  <span data-pagefind-meta="section:credits" hidden></span>
+  <span data-pagefind-filter="section:credits" hidden></span>
+</main>
+{{ end }}

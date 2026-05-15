@@ -97,6 +97,14 @@ jobs:
         run: python3 tools/check_library_covers.py
       - name: Run library cover linter unit tests
         run: python3 -m unittest tools/test_check_library_covers.py -v
+      - name: Lint — icon attribution
+        run: python3 tools/check_icon_attribution.py
+      - name: Test — icon-attribution linter
+        run: python3 -m unittest tools/test_check_icon_attribution.py -v
+      - name: Lint — library shelves
+        run: python3 tools/check_library_shelves.py
+      - name: Test — library-shelves linter
+        run: python3 -m unittest tools/test_check_library_shelves.py -v
       - name: Verify RSS XSL
         run: python3 tools/check_rss_xsl.py
       - name: Run RSS XSL linter unit tests

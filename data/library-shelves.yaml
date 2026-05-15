@@ -1,0 +1,39 @@
+# Library curation — hand-edited. Each shelf is either tag-driven (tag: …)
+# or a hand-curated slug list (items: [...]). hero: optionally pins a featured
+# item; absent or unresolvable → fall back to max-last_modified across all media.
+
+hero: invisible-cities
+
+shelves:
+  - title: "Recently finished"
+    intro: "Things I closed the cover on this season."
+    tag: classic
+
+  - title: "On the listening bench"
+    intro: "Albums in heavy rotation."
+    tag: ambient
+
+  - title: "Field of game design"
+    intro: "Games and books that shaped how I think about play."
+    items:
+      - outer-wilds
+      - hades
+      - celeste
+      - invisible-cities
+
+  - title: "Long example"
+    intro: "Used to exercise the long-shelf detail-page pattern."
+    items:
+      - invisible-cities
+      - lorem-ipsum-ii
+      - lorem-ipsum-iii
+      - lorem-ipsum-iv
+      - lorem-ipsum-v
+      - wizard-of-oz
+      - pride-and-prejudice
+      - outer-wilds
+      - hades
+      - celeste
+      - lorem-game-ii
+      - lorem-game-iii
+      - severance-s2

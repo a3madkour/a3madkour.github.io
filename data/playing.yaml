@@ -73,7 +73,7 @@ items:
     preview: "Example notes line one. Lorem ipsum dolor sit amet."
     tags: [roguelike, mythology]
     extras:
-      cover_url: "https://upload.wikimedia.org/wikipedia/en/thumb/c/cc/Hades_cover_art.jpg/240px-Hades_cover_art.jpg"
+      cover_url: "https://upload.wikimedia.org/wikipedia/en/thumb/c/cc/Hades_cover_art.jpg/250px-Hades_cover_art.jpg"
   - slug: celeste
     title: Celeste
     creator: Maddy Makes Games
@@ -86,4 +86,4 @@ items:
     preview: "Example notes line two. Lorem ipsum dolor sit amet."
     tags: [platformer]
     extras:
-      cover_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Celeste_box_art_full.png/240px-Celeste_box_art_full.png"
+      cover_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Celeste_box_art_full.png/250px-Celeste_box_art_full.png"

@@ -1,5 +1,6 @@
-// Library section entry — loaded only on /library/<leaf>/ pages.
+// Library section entry — loaded on /library/ umbrella + /library/<leaf>/ pages.
 import { setupFilterChips } from "./filter-chips.js";
+import { initLibraryShelfNav } from "./library-shelf-nav.js";
 
 const hook = document.querySelector("[data-library-page]");
 const page = hook?.dataset?.libraryPage;
@@ -11,3 +12,5 @@ if (page) {
     emptyStateSelector: ".library-empty",
   });
 }
+
+initLibraryShelfNav();

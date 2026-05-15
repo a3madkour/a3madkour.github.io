@@ -1,0 +1,20 @@
+# Library medium registry. Adding a new medium = 1 row here + 1 new
+# data/<key>.yaml file + 1 layout for the leaf page. Order = display order
+# in the top rail and the bottom 'Browse the catalogue' block.
+media:
+  - key: reading
+    label: "Reading"
+    glyph: book              # resolves to assets/images/icons/library/book.svg
+    cover_aspect: portrait
+  - key: listening
+    label: "Listening"
+    glyph: glyph-music       # resolves to assets/images/icons/glyph-music.svg
+    cover_aspect: square
+  - key: playing
+    label: "Playing"
+    glyph: glyph-game        # resolves to assets/images/icons/glyph-game.svg
+    cover_aspect: portrait
+  - key: watching
+    label: "Watching"
+    glyph: clapper           # resolves to assets/images/icons/library/clapper.svg
+    cover_aspect: portrait

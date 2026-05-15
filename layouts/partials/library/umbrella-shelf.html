@@ -1,0 +1,47 @@
+{{- /* One library shelf. Input dict: { shelf: <shelf-map>, media_index: <slug -> {item, medium}> }
+       The 12-tile cap is hardcoded; tag-driven shelves over-render → /tags/<tag>/ for the rest. */ -}}
+{{- $shelf := .shelf -}}
+{{- $media_index := .media_index -}}
+{{- $title := $shelf.title -}}
+{{- $shelf_slug := urlize $title -}}
+{{- $cap := 12 -}}
+
+{{/* Resolve items: slug-list or tag-driven */}}
+{{- $items := slice -}}
+{{- if $shelf.items -}}
+  {{- range $slug := $shelf.items -}}
+    {{- $resolved := index $media_index $slug -}}
+    {{- if $resolved -}}{{- $items = $items | append $resolved -}}{{- end -}}
+  {{- end -}}
+{{- else if $shelf.tag -}}
+  {{- $tag := $shelf.tag -}}
+  {{- range $slug, $entry := $media_index -}}
+    {{- $item := $entry.item -}}
+    {{- if in (default slice $item.tags) $tag -}}
+      {{- $items = $items | append $entry -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $count := len $items -}}
+{{- $see_all := "" -}}
+{{- if $shelf.tag -}}
+  {{- $see_all = printf "/tags/%s/" (urlize $shelf.tag) -}}
+{{- else if gt $count $cap -}}
+  {{- $see_all = printf "/library/shelves/%s/" $shelf_slug -}}
+{{- end -}}
+
+{{- if $count -}}
+<section class="library-shelf" id="shelf-{{ $shelf_slug }}" aria-labelledby="shelf-{{ $shelf_slug }}-heading">
+  <header class="library-shelf-head">
+    <h2 id="shelf-{{ $shelf_slug }}-heading">{{ $title }}</h2>
+    {{- with $shelf.intro }}<p class="library-shelf-intro">{{ . }}</p>{{ end -}}
+    {{- with $see_all }}<a class="library-shelf-see-all" href="{{ . }}">See all</a>{{ end -}}
+  </header>
+  <div class="library-shelf-strip" role="list">
+    {{- range $idx, $entry := first $cap $items -}}
+      <div role="listitem">{{ partial "library/umbrella-tile.html" (dict "item" $entry.item "medium" $entry.medium) }}</div>
+    {{- end -}}
+  </div>
+</section>
+{{- end -}}

@@ -54,6 +54,12 @@ python3 -m unittest tools/test_check_library_links.py -v 2>&1 | tail -3
 python3 tools/check_library_covers.py
 python3 -m unittest tools/test_check_library_covers.py -v 2>&1 | tail -3
 
+python3 tools/check_icon_attribution.py
+python3 -m unittest tools/test_check_icon_attribution.py -v 2>&1 | tail -3
+
+python3 tools/check_library_shelves.py
+python3 -m unittest tools/test_check_library_shelves.py -v 2>&1 | tail -3
+
 python3 tools/check_rss_xsl.py
 python3 -m unittest tools/test_check_rss_xsl.py -v 2>&1 | tail -3
 

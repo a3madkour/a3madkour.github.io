@@ -56,6 +56,9 @@ class TestSectionFromPath(unittest.TestCase):
     def test_blog(self):
         self.assertEqual(section_from_path("/blog/"), "blog")
 
+    def test_credits(self):
+        self.assertEqual(section_from_path("/credits/"), "credits")
+
 
 class TestParseMeta(unittest.TestCase):
     def test_extracts_section_key_single_element(self):
