@@ -4657,14 +4657,17 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   height: 12px;
 }
 
-/* Tile / hero / shelf-page glyph fallback — fills the cover frame.
+/* Tile / hero / shelf-page glyph fallback — fills the cover frame,
+ * whatever the frame's aspect (portrait for reading/playing/watching,
+ * square for listening). Absolute-positioned so the wrap's own aspect
+ * dictates shape; otherwise a fixed portrait aspect on the glyph block
+ * would overflow a square wrap and push the centered SVG off-center.
  * Scoped to override the older inline leaf-row glyph at §37
  * (which fixes height: 3.5rem and would otherwise clip to a banner). */
 .library-cover-wrap .library-glyph-block,
 .library-hero-cover-wrap .library-glyph-block {
-  width: 100%;
-  height: auto;
-  aspect-ratio: 140 / 190;
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
