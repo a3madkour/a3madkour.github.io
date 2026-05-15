@@ -11,6 +11,11 @@
   <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} | {{ site.Title }}{{ end }}</title>
   <link rel="canonical" href="{{ .Permalink }}">
 
+  {{/* Favicon: hand-authored typographic monogram. SVG-only; modern browsers
+       respect the type="image/svg+xml" hint and don't fall back to /favicon.ico,
+       which keeps Lighthouse's errors-in-console audit quiet. */}}
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+
   {{/* Open Graph / Twitter */}}
   <meta property="og:title" content="{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }}{{ end }}">
   <meta property="og:type" content="{{ if .IsPage }}article{{ else }}website{{ end }}">

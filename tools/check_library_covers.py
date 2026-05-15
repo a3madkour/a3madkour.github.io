@@ -18,7 +18,7 @@ from typing import Iterable
 
 REPO_ROOT  = Path(__file__).resolve().parent.parent
 DATA_DIR   = REPO_ROOT / "data"
-COVERS_DIR = REPO_ROOT / "assets" / "images" / "library" / "covers"
+COVERS_DIR = REPO_ROOT / "static" / "library" / "covers"
 AUDIT_LOG  = REPO_ROOT / "tools" / ".cover-cache.json"
 LEAVES     = ("reading", "listening", "playing", "watching")
 

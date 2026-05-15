@@ -711,7 +711,7 @@ main { flex-grow: 1; }
   align-items: center;
 }
 .filter-label {
-  color: var(--color-ink-fade);
+  color: var(--color-ink-soft);
   font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.06em;

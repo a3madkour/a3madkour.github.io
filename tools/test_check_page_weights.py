@@ -57,10 +57,10 @@ class TestBudgetFor(unittest.TestCase):
         self.assertEqual(cpw.budget_for("/research/"), 600_000)
 
     def test_library_umbrella_is_media_heavy(self):
-        self.assertEqual(cpw.budget_for("/library/"), 500_000)
+        self.assertEqual(cpw.budget_for("/library/"), 900_000)
 
     def test_library_leaf_is_media_heavy(self):
-        self.assertEqual(cpw.budget_for("/library/reading/"), 500_000)
+        self.assertEqual(cpw.budget_for("/library/reading/"), 900_000)
 
 
 class TestExtractRefs(unittest.TestCase):

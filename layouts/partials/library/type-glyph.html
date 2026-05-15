@@ -1,6 +1,7 @@
 {{- /* Type glyph in tinted block OR <img> when cover cached. Inputs:
        .media_type, .size ("large"/"mini"), .slug, .extras (optional)
        Cover resolution: extras.cover_file > <slug>.jpg fallback.
+       Covers live in static/library/covers/ — served at /library/covers/<file>.
        See: docs/superpowers/specs/2026-05-12-library-cover-fetch-design.md §6 */ -}}
 {{- $mt := .media_type -}}
 {{- $size := .size | default "mini" -}}
@@ -9,12 +10,14 @@
 {{- $coverFile := index $extras "cover_file" -}}
 {{- $coverPath := "" -}}
 {{- if $coverFile -}}
-  {{- $coverPath = printf "images/library/covers/%s" $coverFile -}}
+  {{- $coverPath = printf "library/covers/%s" $coverFile -}}
 {{- else if $slug -}}
-  {{- $coverPath = printf "images/library/covers/%s.jpg" $slug -}}
+  {{- $coverPath = printf "library/covers/%s.jpg" $slug -}}
 {{- end -}}
 {{- $cover := "" -}}
-{{- if $coverPath -}}{{- $cover = resources.Get $coverPath -}}{{- end -}}
+{{- if and $coverPath (fileExists (printf "static/%s" $coverPath)) -}}
+  {{- $cover = $coverPath -}}
+{{- end -}}
 {{- $modifier := "" -}}
 {{- $iconPath := "" -}}
 {{- if eq $mt "book" -}}
@@ -32,7 +35,7 @@
 {{- $coverH := cond (eq $size "large") 72 56 -}}
 {{- if $cover -}}
   <span class="library-cover-block {{ $size }} {{ $modifier }}">
-    <img class="library-cover" src="{{ $cover.RelPermalink }}" alt="" width="{{ $coverW }}" height="{{ $coverH }}" loading="lazy" decoding="async" />
+    <img class="library-cover" src="/{{ $cover }}" alt="" width="{{ $coverW }}" height="{{ $coverH }}" loading="lazy" decoding="async" />
   </span>
 {{- else -}}
   <span class="{{ $cls }} {{ $modifier }}" aria-hidden="true">

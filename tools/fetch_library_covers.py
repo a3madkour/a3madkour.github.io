@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_library_fixtures import parse_library_yaml  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-COVERS_DIR = REPO_ROOT / "assets" / "images" / "library" / "covers"
+COVERS_DIR = REPO_ROOT / "static" / "library" / "covers"
 DATA_DIR   = REPO_ROOT / "data"
 AUDIT_LOG  = REPO_ROOT / "tools" / ".cover-cache.json"
 CONFIG     = REPO_ROOT / "tools" / ".fetch-config.json"

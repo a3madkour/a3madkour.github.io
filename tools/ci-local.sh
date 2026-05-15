@@ -91,4 +91,35 @@ python3 tools/check_page_weights.py
 
 python3 tools/check_smoke.py
 
+separator "Lighthouse CI (desktop + mobile)"
+
+# LHCI is the only CI gate that lives outside Python+Hugo. Catches things the
+# static linters can't — third-party cookies on hotlinked images, /favicon.ico
+# 404s, layout-shift, render-blocking resources, etc. Skipping it locally was
+# what let the library-redesign merge ship red.
+#
+# Run order mirrors the workflow (desktop first, then mobile). Each invocation
+# spins up a temporary static server against ./public, runs Lighthouse once
+# per URL, and asserts the four category thresholds in the matching config.
+#
+# Requires `npx` (Node ≥ 14) and a Chrome/Chromium binary on PATH. We don't
+# install Node from the script — fail loudly with a hint if either is missing.
+
+need_lhci_dep() {
+  local name="$1" hint="$2"
+  if ! command -v "$name" >/dev/null 2>&1; then
+    printf "\n\033[1;31m✘ %s not found.\033[0m %s\n" "$name" "$hint"
+    exit 1
+  fi
+}
+
+need_lhci_dep npx "Install Node.js (pacman -S nodejs npm). LHCI runs via 'npx --yes @lhci/cli'."
+if ! command -v chromium >/dev/null 2>&1 && ! command -v google-chrome >/dev/null 2>&1; then
+  printf "\n\033[1;31m✘ No chromium/google-chrome on PATH.\033[0m Install one (pacman -S chromium) — LHCI drives a headless browser.\n"
+  exit 1
+fi
+
+npx --yes @lhci/cli@0.13.x autorun --config=lighthouserc.json
+npx --yes @lhci/cli@0.13.x autorun --config=lighthouserc.mobile.json
+
 separator "CI-EQUIVALENT GREEN — safe to push"

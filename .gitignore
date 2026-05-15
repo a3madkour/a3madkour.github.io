@@ -3,6 +3,9 @@ public/
 resources/_gen/
 .hugo_build.lock
 
+# Lighthouse CI local output (CI uploads artifacts directly)
+.lighthouseci/
+
 # Superpowers brainstorm artifacts
 .superpowers/
 

@@ -58,7 +58,7 @@ items:
     preview: "Example notes line one. Lorem ipsum dolor sit amet."
     tags: [classical]
     extras:
-      cover_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Title_page_of_Brandenburg_Concertos.png/250px-Title_page_of_Brandenburg_Concertos.png"
+      cover_file: "brandenburg-concertos.jpg"
   - slug: the-entertainer
     title: The Entertainer
     creator: Scott Joplin
@@ -71,4 +71,4 @@ items:
     preview: "Example notes line two. Lorem ipsum dolor sit amet."
     tags: [ragtime, classical]
     extras:
-      cover_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/EntertainerJoplinCover.JPEG/250px-EntertainerJoplinCover.JPEG"
+      cover_file: "the-entertainer.jpg"

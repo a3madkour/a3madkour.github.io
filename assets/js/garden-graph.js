@@ -678,6 +678,7 @@ function openPanel({ animate = true } = {}) {
   // already open.
   if (animate) state.panel.classList.add('is-animating');
   state.panel.setAttribute('aria-hidden', 'false');
+  state.panel.removeAttribute('inert');
   state.panelOpen = true;
   try { sessionStorage.setItem(PANEL_KEY, '1'); } catch {}
   document.querySelectorAll('.graph-toggle').forEach(b => b.setAttribute('aria-expanded', 'true'));
@@ -694,6 +695,7 @@ function closePanel() {
   // Close is always user-initiated (button click or Esc) — always animate.
   state.panel.classList.add('is-animating');
   state.panel.setAttribute('aria-hidden', 'true');
+  state.panel.setAttribute('inert', '');
   state.panelOpen = false;
   try { sessionStorage.removeItem(PANEL_KEY); } catch {}
   document.querySelectorAll('.graph-toggle').forEach(b => b.setAttribute('aria-expanded', 'false'));

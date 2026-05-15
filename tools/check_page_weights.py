@@ -31,7 +31,10 @@ BUDGETS_PREFIX = [
     ("/garden/",         600_000),   # garden index + per-note pages
     ("/research/",       600_000),   # research index inlines the graph JS bundle
     ("/library/shelves/", 500_000),  # shelf detail pages carry cover-image grids
-    ("/library/",        500_000),   # library leaves carry cover-image payloads
+    ("/library/",        900_000),   # umbrella carries hero + catalogue + themed shelves;
+                                     # local covers (~80–150KB each, 8 files) replaced
+                                     # hotlinks for LHCI third-party-cookies fix
+
     ("/essays/",         200_000),   # essay pages — accumulated CSS growth (sidenotes, citations, Bento, §43)
     ("/about/",          150_000),   # thin page; site-wide CSS bundle dominates
     ("/credits/",        150_000),   # thin page; site-wide CSS bundle dominates

@@ -70,7 +70,7 @@ items:
     preview: "Example notes line one. Lorem ipsum dolor sit amet."
     tags: [silent, comedy]
     extras:
-      cover_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/The_General_%281926%29_-_Movie_Poster_2.png/250px-The_General_%281926%29_-_Movie_Poster_2.png"
+      cover_file: "the-general.jpg"
   - slug: nosferatu
     title: Nosferatu
     creator: F.W. Murnau
@@ -83,4 +83,4 @@ items:
     preview: "Example notes line two. Lorem ipsum dolor sit amet."
     tags: [silent, horror]
     extras:
-      cover_url: "https://upload.wikimedia.org/wikipedia/en/thumb/9/90/Nosferatu_poster_%28Albin_Grau%2C_1922%29_1.jpg/250px-Nosferatu_poster_%28Albin_Grau%2C_1922%29_1.jpg"
+      cover_file: "nosferatu.jpg"
