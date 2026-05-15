@@ -489,6 +489,19 @@ This slice closes a hard-constraint violation (icon provenance). Compliance goin
 - `feedback_visual_companion_for_visual_designs` — drove the browser-mockup-first walkthrough.
 - `reference_duplicate_id_anchor_race` — informs the cite-cta button-vs-anchor choice; carries forward unchanged.
 
+## 11.5. Phase 3 round-trip requirement (forward-looking note)
+
+The tag-driven shelf mechanism (§3.3) is already wired in the Hugo template: a shelf entry with `tag: <name>` filters items across all four medium yamls whose `tags:` array contains that string. Hand-authored fixtures exercise this today.
+
+When Phase 3 (org-mode → ox-hugo pipeline) lands, the library-publish command must round-trip org-mode item tags into each `data/<medium>.yaml`'s per-item `tags: [...]` field. Concretely:
+
+- Org-mode source for a library item carries tags via either `#+filetags:` or per-heading `:tags:` (TBD by the Phase 3 spec — pick one and document).
+- The library-publish elisp/ox-hugo writer extracts those tags and emits them into the YAML item under `tags:` as a list.
+- `data/library-shelves.yaml` stays hand-authored — shelves are a *curation* decision, not a content one. The pipeline does NOT generate shelves from tags automatically. Authors decide which tags warrant a shelf and add the shelf entry by hand.
+- Existing linter `tools/check_library_shelves.py` already gates this: a shelf with `tag: <name>` resolving to zero items fails the build, so a mis-spelled tag or empty tag set is caught at CI time.
+
+This split keeps the *what's in the library* idempotent (publishable on every save, no human review) and the *how it's surfaced* deliberate (a shelf is a small editorial act).
+
 ## 12. Deferred from this slice
 
 - **Per-icon stroke-width tuning** at 22px badges — defer to QA pass; only fix specific icons that fail in production.
