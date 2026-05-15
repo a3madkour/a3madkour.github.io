@@ -1,8 +1,0 @@
-{{- /* Medium pill rail for the library umbrella. Reads data/library-media.yaml. */ -}}
-{{- $media := index site.Data "library-media" -}}
-<nav class="medium-rail" aria-label="Library mediums">
-  <a class="medium-pill is-active" href="/library/" data-key="all">All</a>
-  {{- range $entry := $media.media }}
-  <a class="medium-pill" href="/library/{{ $entry.key }}/" data-key="{{ $entry.key }}">{{ $entry.label }}</a>
-  {{- end }}
-</nav>
