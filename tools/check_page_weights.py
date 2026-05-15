@@ -35,6 +35,7 @@ BUDGETS_PREFIX = [
     ("/essays/",         200_000),   # essay pages — accumulated CSS growth (sidenotes, citations, Bento, §43)
     ("/about/",          150_000),   # thin page; site-wide CSS bundle dominates
     ("/credits/",        150_000),   # thin page; site-wide CSS bundle dominates
+    ("/blog/",           150_000),   # legacy thin page; site-wide CSS bundle dominates
 ]
 
 BUDGET_HOMEPAGE = 500_000   # exact match `/`
