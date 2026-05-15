@@ -1,0 +1,81 @@
+{{- /* Library hero block. Input dict: { hero_slug: <slug | "">, media_index: <slug -> {item, medium}> }
+       hero_slug → fall back to max-last_modified if absent or unresolvable. */ -}}
+{{- $hero_slug := .hero_slug -}}
+{{- $media_index := .media_index -}}
+
+{{- $entry := "" -}}
+{{- if $hero_slug -}}
+  {{- $entry = index $media_index $hero_slug -}}
+{{- end -}}
+{{- if not $entry -}}
+  {{/* Fallback — max last_modified across all media */}}
+  {{- $newest_date := "" -}}
+  {{- range $slug, $candidate := $media_index -}}
+    {{- $lm := default "1970-01-01" $candidate.item.last_modified -}}
+    {{- if gt $lm $newest_date -}}
+      {{- $newest_date = $lm -}}
+      {{- $entry = $candidate -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- if $entry -}}
+  {{- $item := $entry.item -}}
+  {{- $medium := $entry.medium -}}
+  {{- $aspect := default "portrait" $medium.cover_aspect -}}
+
+  {{- $citeDict := partial "cite/normalize-library-item.html" $item -}}
+  {{- $citeSelf := dict
+        "citekey" $citeDict.citekey
+        "title"   $citeDict.title
+        "url"     $citeDict.url
+        "notes_ref" (default "" $item.note_slug)
+        "formats" (dict
+          "bibtex"  (partial "cite/fmt-bibtex.html"  $citeDict)
+          "apa"     (partial "cite/fmt-apa.html"     $citeDict)
+          "chicago" (partial "cite/fmt-chicago.html" $citeDict)
+          "mla"     (partial "cite/fmt-mla.html"     $citeDict)
+          "ris"     (partial "cite/fmt-ris.html"     $citeDict))
+  -}}
+
+  {{- $citeLabel := "Cite this entry" -}}
+  {{- if   eq $item.media_type "book"   }}{{ $citeLabel = "Cite this book" }}
+  {{- else if eq $item.media_type "album"  }}{{ $citeLabel = "Cite this album" }}
+  {{- else if eq $item.media_type "track"  }}{{ $citeLabel = "Cite this track" }}
+  {{- else if eq $item.media_type "game"   }}{{ $citeLabel = "Cite this game" }}
+  {{- else if eq $item.media_type "film"   }}{{ $citeLabel = "Cite this movie" }}
+  {{- else if eq $item.media_type "series" }}{{ $citeLabel = "Cite this series" }}
+  {{- end -}}
+
+<article class="library-hero" id="hero" data-medium="{{ $medium.key }}">
+  <div class="library-hero-cover-wrap library-cover-{{ $aspect }}">
+    {{- $coverFile := default "" $item.extras.cover_file -}}
+    {{- $coverUrl := default "" $item.extras.cover_url -}}
+    {{- if $coverFile -}}
+      <img class="library-hero-cover" src="/library/covers/{{ $coverFile }}" alt="" loading="eager" fetchpriority="high">
+    {{- else if $coverUrl -}}
+      <img class="library-hero-cover" src="{{ $coverUrl }}" alt="" loading="eager" fetchpriority="high">
+    {{- else -}}
+      <div class="library-glyph-block library-hero-glyph {{ $medium.key }}" aria-hidden="true">
+        {{- with resources.Get (printf "images/icons/library/%s.svg" $medium.glyph) -}}{{ .Content | safeHTML }}
+        {{- else -}}{{ with resources.Get (printf "images/icons/%s.svg" $medium.glyph) }}{{ .Content | safeHTML }}{{ end -}}
+        {{- end -}}
+      </div>
+    {{- end -}}
+  </div>
+  <div class="library-hero-body">
+    <p class="library-hero-eyebrow">★ Featured · {{ $medium.label }}</p>
+    <h2 class="library-hero-title">{{ $item.title }}</h2>
+    <p class="library-hero-meta">
+      {{ $item.creator }}{{ with $item.year }} · {{ . }}{{ end }}{{ with $item.started }} · started {{ . }}{{ end }}{{ with $item.finished }} · finished {{ . }}{{ end }}
+    </p>
+    {{- with $item.preview }}<p class="library-hero-preview">{{ . }}</p>{{ end -}}
+    <script class="cite-data" type="application/json">{{ (dict "self" $citeSelf "refs" dict) | jsonify | safeJS }}</script>
+    <div class="library-hero-actions">
+      <button class="cite-cta" type="button" data-kind="{{ $item.media_type }}">{{ $citeLabel }}</button>
+      {{- with $item.note_slug }}<a class="ref-cite-note" href="/garden/{{ . }}/">Note</a>{{- end }}
+      {{- with $item.canonical_url }}<a class="ref-cite-source" href="{{ . }}" rel="external">Original</a>{{- end }}
+    </div>
+  </div>
+</article>
+{{- end -}}
