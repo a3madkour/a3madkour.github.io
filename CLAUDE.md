@@ -157,13 +157,12 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 - **Time-synced poetry**: `docs/superpowers/specs/2026-05-13-time-synced-poetry-design.md`. Independent works/poetry runtime — next up; spec drafted, plan still needed.
 - **Streams section**: `docs/superpowers/specs/2026-05-13-streams-section-design.md`. New `/streams/` top-level; cron-polled live state.
 - **Multi-target export**: `docs/superpowers/specs/2026-05-13-multi-target-export-design.md`. Phase 3 Slice 3 — literate org → Hugo + PDF + Word.
-- **Graph-view consistency stub**: `docs/superpowers/specs/2026-05-14-graph-view-consistency-design.md`. Brainstorm pending.
 - **TOC collapsible subsections stub**: `docs/superpowers/specs/2026-05-14-toc-collapsible-subsections-design.md`. Brainstorm pending — show only the active top-level section's subsections; collapse the rest. Needs a fixture with ≥3 heading levels.
 - **Persistent graph access stub**: `docs/superpowers/specs/2026-05-16-persistent-graph-access-design.md`. Brainstorm pending — keep a `⊞ Graph` launcher on every research + works page (theme/question/game/music/poem), like garden's note pages, so the graph survives node-click traversal instead of dead-ending. Soft-depends on the shipped graph-view chrome-consistency canon.
 
-## Project status (as of 2026-05-14)
+## Project status (as of 2026-05-16)
 
-**Shipped**: Phases 0–8 (modulo interactive QA walkthrough) plus Citation export + Library redesign polish slices. Per-slice merge details live in memory under `project_*.md` (one entry per shipped slice). Most recent: Library redesign merged 2026-05-14 (`3330559`).
+**Shipped**: Phases 0–8 (modulo interactive QA walkthrough) plus Citation export + Library redesign + Graph-view chrome-consistency polish slices. Per-slice merge details live in memory under `project_*.md` (one entry per shipped slice). Most recent: Graph-view chrome-consistency merged 2026-05-16 (`e6edadc`) — one canonical control/legend chrome system + shared `graph-legend.html` partial across all 6 graph surfaces; sibling-less `check_graph_chrome.py` gate.
 
 **Not started, in phase order:**
 
@@ -178,11 +177,10 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 | Time-synced poetry | Independent works/poetry runtime | `[mm:ss]` markers → audio-driven reveal + player. New linter pair. Foundation for the deferred lyrics runtime. |
 | Streams section | Independent (β parallel with Phase 3 or γ after) | New 7th top-level `/streams/`; cron GitHub Action polls Twitch + YouTube. Bidirectional cross-refs (2 new linter pairs). |
 | Multi-target export | **Phase 3 Slice 3** | One Emacs command publishes literate org → Hugo essay + PDF + Word. Hard dep on Phase 3 Slices 1+2. |
-| Graph-view consistency | Independent polish slice | Garden / research / works graphs drifted. Likely shares CSS §27 rewrite + a shared `graph-core.js`. Stub spec only. |
 | TOC collapsible subsections | Independent essay-polish slice | Show only the active section's subsections in the essay TOC; collapse the rest. Reuses `nav.js` scrollspy. Needs a fixture with ≥3 heading levels. Stub spec only. |
 | Persistent graph access (research + works) | Independent polish slice | `⊞ Graph` launcher on every research + works item page (not just umbrella/standalone), like garden's note pages, so the graph survives node-click traversal. Soft-depends on the shipped graph-view chrome-consistency canon. Stub spec only. |
 
-Recommended sequencing: **Time-synced poetry (next)** → Phase 3 Slice 1 (garden publish) → Phase 3 Slice 2 (essay publish) → Multi-target export → Streams section. Graph-view-consistency + TOC collapsible subsections are polish slices with stub specs only.
+Recommended sequencing: **Time-synced poetry (next)** → Phase 3 Slice 1 (garden publish) → Phase 3 Slice 2 (essay publish) → Multi-target export → Streams section. TOC collapsible subsections + Persistent graph access (research + works) are polish slices with stub specs only.
 
 To pick up a slice: read this file + parent spec §14, then `superpowers:brainstorming` → `superpowers:writing-plans` (no queued slice has a drafted plan yet). Confirm with the user whether the slice depends on the elisp pipeline (only Multi-target export does).
 
