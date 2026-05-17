@@ -201,6 +201,8 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 Single source of truth for all 6 surfaces. Structure key is always server-rendered (identical skeleton, per-section wording). Color key: research + works rendered server-side here from the global `site`; garden emits an empty `data-graph-legend-dynamic` slot that `garden-graph.js` fills with live tag swatches (Task 6).
 
+**Swatch coloring (do NOT use interpolated inline `style`):** server-rendered swatches use a `data-swatch="0|1|2"` attribute resolved by static §27 CSS rules (the codebase's existing `data-theme-color` precedent). Interpolating a CSS custom-property name into `style="background:var({{ … }})"` is sanitized by Go `html/template` to `var(ZgotmplZ)` (colorless) — it MUST NOT be used. Garden is the one exception: its swatches are injected by `garden-graph.js` via `el.style.background = tagColor(tag)` (a JS-set style, not a Go-template context, so not sanitized) — that stays inline-style and is correct (Task 6). Research theme order MUST mirror `partials/research/graph-data.html`'s `themePaletteOrder` exactly (two-pass: `sort "slug" "asc"` then `sort "weight" "asc"`, stable) so legend swatch colors match the graph nodes' `data-theme-color`.
+
 Create `layouts/partials/graph-legend.html`:
 
 ```go-html-template
@@ -208,8 +210,10 @@ Create `layouts/partials/graph-legend.html`:
        Param: dict "section" ("garden"|"research"|"works")
                    "variant" ("panel"|"page")
        Structure key: always server-rendered, identical skeleton.
-       Color key: research/works static here; garden = empty dynamic slot
-       filled by garden-graph.js (tag palette is content-dependent). */ -}}
+       Color key: research/works server-rendered here via data-swatch +
+       static §27 CSS; garden = empty dynamic slot. garden-graph.js fills
+       .graph-legend-colorkey[data-graph-legend-dynamic] with inline-styled
+       swatches (tag palette is content-dependent) — see Task 6. */ -}}
 {{- $section := .section -}}
 {{- $variant := .variant -}}
 {{- $primary := "" -}}
@@ -223,11 +227,18 @@ Create `layouts/partials/graph-legend.html`:
 {{- else if eq $section "research" -}}
   {{- $primary = "parent link" -}}
   {{- $secondary = "cross-theme" -}}
-  {{- $vars := slice "--color-burgundy" "--color-steel" "--color-green" -}}
+  {{- /* Mirror graph-data.html's themePaletteOrder EXACTLY (two-pass:
+         sort slug asc, then weight asc — stable) so legend swatch colors
+         match the graph nodes' data-theme-color. */ -}}
+  {{- $themes := slice -}}
+  {{- range where site.RegularPages "Type" "research-theme" -}}
+    {{- $themes = $themes | append (dict "label" .Title "slug" (path.Base .File.Dir) "weight" (default 0 .Params.weight)) -}}
+  {{- end -}}
+  {{- $sorted := sort (sort $themes "slug" "asc") "weight" "asc" -}}
   {{- $idx := 0 -}}
-  {{- range (where site.RegularPages "Type" "research-theme").ByWeight -}}
+  {{- range $sorted -}}
     {{- if lt $idx 3 -}}
-      {{- $colors = $colors | append (dict "label" .Title "var" (index $vars $idx)) -}}
+      {{- $colors = $colors | append (dict "label" .label "swatch" $idx) -}}
       {{- $idx = add $idx 1 -}}
     {{- end -}}
   {{- end -}}
@@ -235,14 +246,14 @@ Create `layouts/partials/graph-legend.html`:
   {{- $primary = "shared tags" -}}
   {{- $secondary = "cross-medium" -}}
   {{- $colors = slice
-        (dict "label" "Games" "var" "--color-burgundy")
-        (dict "label" "Music" "var" "--color-steel")
-        (dict "label" "Poetry" "var" "--color-green") -}}
+        (dict "label" "Games" "swatch" 0)
+        (dict "label" "Music" "swatch" 1)
+        (dict "label" "Poetry" "swatch" 2) -}}
 {{- end -}}
 <ul class="graph-legend graph-legend--{{ $variant }}" aria-label="Graph legend">
   <li class="graph-legend-colorkey"{{ if $dynamic }} data-graph-legend-dynamic{{ end }}>
     {{- range $colors }}
-    <span class="graph-legend-key"><span class="graph-legend-swatch" style="background:var({{ .var }})"></span>{{ .label }}</span>
+    <span class="graph-legend-key"><span class="graph-legend-swatch" data-swatch="{{ .swatch }}"></span>{{ .label }}</span>
     {{- end }}
   </li>
   <li class="graph-legend-structure">
@@ -320,6 +331,9 @@ Replace BOTH rules with the canonical legend system:
   border-radius: 50%;
   vertical-align: middle;
 }
+.graph-legend-swatch[data-swatch="0"] { background: var(--color-burgundy); }
+.graph-legend-swatch[data-swatch="1"] { background: var(--color-steel); }
+.graph-legend-swatch[data-swatch="2"] { background: var(--color-green); }
 .graph-legend-swatch--sm { width: 7px; height: 7px; background: var(--color-ink-fade); }
 .graph-legend-swatch--lg { width: 12px; height: 12px; background: var(--color-ink-fade); }
 .graph-legend-mark {
@@ -334,10 +348,18 @@ Replace BOTH rules with the canonical legend system:
 
 (The pruning of the now-orphaned per-section legend rules in §28/§31/§36 happens in Task 5, after the surfaces are repointed.)
 
-- [ ] **Step 3: Verify the partial renders for one section**
+- [ ] **Step 3: Verify the partial — syntactically valid AND free of the CSS-sanitization pitfall**
 
-Run: `pkill -f 'hugo server' 2>/dev/null; rm -rf public; HUGO_ENVIRONMENT=production hugo --minify >/dev/null 2>&1 && grep -c 'graph-legend' public/research/graph/index.html`
-Expected: a non-zero count (the partial is not yet wired into surfaces — this only confirms it compiles; expect `0` if not yet included, which is fine here — the real wiring check is Task 5). If `hugo --minify` errors, the partial has a template bug — fix before continuing. (No dev server may be alive during `hugo --minify`.)
+The partial is not yet wired into any surface (Task 5 does that), so it won't appear in `public/` yet. These checks confirm it compiles AND that the ZgotmplZ class of bug cannot occur:
+
+```bash
+grep -n 'style="background:var(' layouts/partials/graph-legend.html        # MUST print nothing
+grep -c 'data-swatch="{{ .swatch }}"' layouts/partials/graph-legend.html    # MUST print 1
+pkill -f 'hugo server' 2>/dev/null; rm -rf public
+HUGO_ENVIRONMENT=production hugo --minify >/tmp/t2-build.log 2>&1; echo "build exit=$?"; tail -3 /tmp/t2-build.log
+```
+
+Expected: first grep prints nothing (no Go-interpolated CSS — that would render `var(ZgotmplZ)`); second prints `1`; `build exit=0`. If the first grep prints a line, the colorless-swatch bug is present — fix to the `data-swatch` form before continuing. If `hugo --minify` errors, the partial has a template bug — fix before continuing (re-check `range`/`dict`/`slice`/`sort`/`add` against the verbatim spec above). No dev server may be alive during `hugo --minify`.
 
 - [ ] **Step 4: Commit**
 

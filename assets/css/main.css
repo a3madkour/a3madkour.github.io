@@ -1487,26 +1487,56 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   color: var(--color-ink);
 }
 
-.graph-panel-legend {
+.graph-legend {
   list-style: none;
   margin: 0;
-  padding: 0.5rem 0.75rem;
-  border-top: 1px solid var(--color-rule);
   font-family: var(--font-ui);
   font-size: var(--text-xs);
   color: var(--color-ink-soft);
   display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.graph-legend--panel {
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid var(--color-rule);
+}
+.graph-legend--page {
+  margin-top: 1rem;
+  padding: 0;
+}
+.graph-legend-colorkey,
+.graph-legend-structure {
+  display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
 }
-.graph-panel-legend .swatch {
+.graph-legend-colorkey:empty { display: none; }
+.graph-legend-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.graph-legend-swatch {
   display: inline-block;
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  margin-right: 0.25rem;
   vertical-align: middle;
 }
+.graph-legend-swatch[data-swatch="0"] { background: var(--color-burgundy); }
+.graph-legend-swatch[data-swatch="1"] { background: var(--color-steel); }
+.graph-legend-swatch[data-swatch="2"] { background: var(--color-green); }
+.graph-legend-swatch--sm { width: 7px; height: 7px; background: var(--color-ink-fade); }
+.graph-legend-swatch--lg { width: 12px; height: 12px; background: var(--color-ink-fade); }
+.graph-legend-mark {
+  display: inline-block;
+  width: 22px;
+  height: 0;
+  border-top: 2px solid var(--color-ink-soft);
+  vertical-align: middle;
+}
+.graph-legend-mark--dashed { border-top-style: dashed; }
 
 /* Force-directed graph node + edge styling */
 .garden-graph-node circle {
