@@ -159,6 +159,7 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 - **Multi-target export**: `docs/superpowers/specs/2026-05-13-multi-target-export-design.md`. Phase 3 Slice 3 — literate org → Hugo + PDF + Word.
 - **Graph-view consistency stub**: `docs/superpowers/specs/2026-05-14-graph-view-consistency-design.md`. Brainstorm pending.
 - **TOC collapsible subsections stub**: `docs/superpowers/specs/2026-05-14-toc-collapsible-subsections-design.md`. Brainstorm pending — show only the active top-level section's subsections; collapse the rest. Needs a fixture with ≥3 heading levels.
+- **Persistent graph access stub**: `docs/superpowers/specs/2026-05-16-persistent-graph-access-design.md`. Brainstorm pending — keep a `⊞ Graph` launcher on every research + works page (theme/question/game/music/poem), like garden's note pages, so the graph survives node-click traversal instead of dead-ending. Soft-depends on the shipped graph-view chrome-consistency canon.
 
 ## Project status (as of 2026-05-14)
 
@@ -179,6 +180,7 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 | Multi-target export | **Phase 3 Slice 3** | One Emacs command publishes literate org → Hugo essay + PDF + Word. Hard dep on Phase 3 Slices 1+2. |
 | Graph-view consistency | Independent polish slice | Garden / research / works graphs drifted. Likely shares CSS §27 rewrite + a shared `graph-core.js`. Stub spec only. |
 | TOC collapsible subsections | Independent essay-polish slice | Show only the active section's subsections in the essay TOC; collapse the rest. Reuses `nav.js` scrollspy. Needs a fixture with ≥3 heading levels. Stub spec only. |
+| Persistent graph access (research + works) | Independent polish slice | `⊞ Graph` launcher on every research + works item page (not just umbrella/standalone), like garden's note pages, so the graph survives node-click traversal. Soft-depends on the shipped graph-view chrome-consistency canon. Stub spec only. |
 
 Recommended sequencing: **Time-synced poetry (next)** → Phase 3 Slice 1 (garden publish) → Phase 3 Slice 2 (essay publish) → Multi-target export → Streams section. Graph-view-consistency + TOC collapsible subsections are polish slices with stub specs only.
 
