@@ -1,0 +1,58 @@
+{{- /* Shared graph legend — the ONLY place a graph legend is constructed.
+       Param: dict "section" ("garden"|"research"|"works")
+                   "variant" ("panel"|"page")
+       Structure key: always server-rendered, identical skeleton.
+       Color key: research/works server-rendered here via data-swatch +
+       static §27 CSS; garden = empty dynamic slot. garden-graph.js fills
+       .graph-legend-colorkey[data-graph-legend-dynamic] with inline-styled
+       swatches (tag palette is content-dependent) — see Task 6.
+       Never aria-hidden this legend: it is the only screen-reader key to
+       the graph's visual encoding (the SVG <desc> only carries counts). */ -}}
+{{- $section := .section -}}
+{{- $variant := .variant -}}
+{{- $primary := "" -}}
+{{- $secondary := "" -}}
+{{- $colors := slice -}}
+{{- $dynamic := false -}}
+{{- if eq $section "garden" -}}
+  {{- $primary = "same topic" -}}
+  {{- $secondary = "cross-topic" -}}
+  {{- $dynamic = true -}}
+{{- else if eq $section "research" -}}
+  {{- $primary = "parent link" -}}
+  {{- $secondary = "cross-theme" -}}
+  {{- /* Mirror graph-data.html's themePaletteOrder EXACTLY (two-pass:
+         sort slug asc, then weight asc — stable) so legend swatch colors
+         match the graph nodes' data-theme-color. */ -}}
+  {{- $themes := slice -}}
+  {{- range where site.RegularPages "Type" "research-theme" -}}
+    {{- $themes = $themes | append (dict "label" .Title "slug" (path.Base .File.Dir) "weight" (default 0 .Params.weight)) -}}
+  {{- end -}}
+  {{- $sorted := sort (sort $themes "slug" "asc") "weight" "asc" -}}
+  {{- $idx := 0 -}}
+  {{- range $sorted -}}
+    {{- if lt $idx 3 -}}
+      {{- $colors = $colors | append (dict "label" .label "swatch" $idx) -}}
+      {{- $idx = add $idx 1 -}}
+    {{- end -}}
+  {{- end -}}
+{{- else if eq $section "works" -}}
+  {{- $primary = "shared tags" -}}
+  {{- $secondary = "cross-medium" -}}
+  {{- $colors = slice
+        (dict "label" "Games" "swatch" 0)
+        (dict "label" "Music" "swatch" 1)
+        (dict "label" "Poetry" "swatch" 2) -}}
+{{- end -}}
+<ul class="graph-legend graph-legend--{{ $variant }}" aria-label="Graph legend">
+  <li class="graph-legend-colorkey"{{ if $dynamic }} data-graph-legend-dynamic{{ end }}>
+    {{- range $colors }}
+    <span class="graph-legend-key"><span class="graph-legend-swatch" data-swatch="{{ .swatch }}"></span>{{ .label }}</span>
+    {{- end }}
+  </li>
+  <li class="graph-legend-structure">
+    <span class="graph-legend-key"><span class="graph-legend-swatch graph-legend-swatch--sm"></span><span class="graph-legend-swatch graph-legend-swatch--lg"></span>size = connections</span>
+    <span class="graph-legend-key"><span class="graph-legend-mark" aria-hidden="true"></span>{{ $primary }}</span>
+    <span class="graph-legend-key"><span class="graph-legend-mark graph-legend-mark--dashed" aria-hidden="true"></span>{{ $secondary }}</span>
+  </li>
+</ul>

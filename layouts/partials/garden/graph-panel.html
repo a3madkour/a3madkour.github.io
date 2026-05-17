@@ -8,13 +8,9 @@
     <span class="graph-panel-title">Graph</span>
     <button type="button" class="graph-panel-close" aria-label="Close graph panel">×</button>
   </header>
-  <div class="graph-panel-toolbar" aria-label="Graph filters">
+  <div class="graph-toolbar graph-toolbar--panel" aria-label="Graph filters">
     {{- /* Tag/stage chips populated by garden-graph.js once data is parsed */ -}}
   </div>
   <div class="graph-panel-canvas"></div>
-  {{- /* No aria-hidden — the legend explains the visual encoding (color =
-         tag, size = link count, solid = same topic, dashed = cross-topic).
-         The SVG <desc> only gives node/edge counts; without this list a
-         screen-reader user has no key to what the graph is showing. */ -}}
-  <ul class="graph-panel-legend"></ul>
+  {{ partial "graph-legend.html" (dict "section" "garden" "variant" "panel") }}
 </aside>

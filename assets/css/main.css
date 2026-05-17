@@ -1194,12 +1194,10 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 .garden-path-log .path-log-count {
   color: var(--color-ink-soft);
 }
-/* .graph-toggle appears in two places: inside .garden-path-log on note
-   pages, and standalone on the garden index. Style both — without the
-   explicit color, the standalone button falls back to UA ButtonText which
-   doesn't respect dark mode. */
-.garden-path-log .path-log-clear,
-.graph-toggle {
+/* .path-log-clear (garden path-log "clear" button). Was co-styled with
+   .graph-toggle; now standalone so the graph launcher can live in §27.
+   Explicit color so it doesn't fall back to UA ButtonText (dark mode). */
+.garden-path-log .path-log-clear {
   background: transparent;
   border: 1px solid var(--color-rule);
   border-radius: 4px;
@@ -1208,15 +1206,9 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   color: var(--color-ink-soft);
   cursor: pointer;
 }
-.garden-path-log .path-log-clear:hover,
-.graph-toggle:hover {
+.garden-path-log .path-log-clear:hover {
   background: var(--color-stone);
   color: var(--color-ink);
-}
-.graph-toggle[aria-expanded="true"] {
-  background: var(--color-burgundy);
-  color: var(--color-tile);
-  border-color: var(--color-burgundy);
 }
 
 .garden-consent-banner {
@@ -1385,32 +1377,86 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   padding: 0.1rem 0.4rem;
 }
 .graph-panel-close:hover { color: var(--color-ink); }
-.graph-panel-toolbar {
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid var(--color-rule);
+/* --- Graph launcher button (every page that opens a graph) --- */
+.graph-toggle {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  background: transparent;
+  border: 1px solid var(--color-rule);
+  border-radius: 4px;
+  padding: 0.28rem 0.7rem;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+}
+.graph-toggle:hover {
+  background: var(--color-stone);
+  color: var(--color-ink);
+}
+.graph-toggle[aria-expanded="true"] {
+  background: var(--color-burgundy);
+  color: var(--color-tile);
+  border-color: var(--color-burgundy);
+}
+
+/* --- Graph toolbar (filter chips + actions). Context-free base; the
+       two modifiers carry only the panel-vs-page container chrome. --- */
+.graph-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.3rem;
+  align-items: center;
+  gap: 0.4rem;
   font-family: var(--font-ui);
   font-size: var(--text-xs);
 }
-.graph-panel-toolbar .label {
+.graph-toolbar--panel {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-rule);
+}
+.graph-toolbar--page {
+  padding: 0.5rem 0;
+  margin: 1rem 0;
+  border-top: 1px solid var(--color-rule);
+  border-bottom: 1px solid var(--color-rule);
+}
+.graph-toolbar .label {
   color: var(--color-ink-soft);
   margin-right: 0.2rem;
 }
-.graph-panel-toolbar .chip {
+.graph-chip {
   background: transparent;
   border: 1px solid var(--color-rule);
   border-radius: 999px;
-  padding: 0.1rem 0.55rem;
+  padding: 0.1rem 0.6rem;
   font: inherit;
   cursor: pointer;
   color: var(--color-ink-soft);
 }
-.graph-panel-toolbar .chip[aria-pressed="true"] {
+.graph-chip[aria-pressed="true"] {
   background: var(--color-burgundy);
   color: var(--color-tile);
   border-color: var(--color-burgundy);
+}
+.graph-action {
+  background: transparent;
+  border: 1px dashed var(--color-ink-fade);
+  border-radius: 999px;
+  padding: 0.1rem 0.6rem;
+  font: inherit;
+  font-style: italic;
+  cursor: pointer;
+  color: var(--color-ink-soft);
+}
+.graph-action:hover {
+  color: var(--color-ink);
+  border-color: var(--color-ink-soft);
+}
+.graph-toolbar-divider {
+  display: inline-block;
+  width: 1px;
+  height: 1rem;
+  background: var(--color-rule);
+  margin: 0 0.4rem;
+  vertical-align: middle;
 }
 .graph-panel-canvas {
   flex: 1;
@@ -1451,20 +1497,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   cursor: grabbing;
 }
 
-/* Toolbar divider between filter chips and action chips */
-.graph-panel-toolbar .toolbar-divider {
-  display: inline-block;
-  width: 1px;
-  height: 1rem;
-  background: var(--color-rule);
-  margin: 0 0.4rem;
-  vertical-align: middle;
-}
-
-/* Action chip variant: italic to visually separate from filter chips */
-.graph-panel-toolbar .chip.chip-action {
-  font-style: italic;
-}
 
 /* Gesture hint — small, muted, sits at the end of the toolbar. */
 .graph-hint {
@@ -1487,26 +1519,56 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   color: var(--color-ink);
 }
 
-.graph-panel-legend {
+.graph-legend {
   list-style: none;
   margin: 0;
-  padding: 0.5rem 0.75rem;
-  border-top: 1px solid var(--color-rule);
   font-family: var(--font-ui);
   font-size: var(--text-xs);
   color: var(--color-ink-soft);
   display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.graph-legend--panel {
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid var(--color-rule);
+}
+.graph-legend--page {
+  margin-top: 1rem;
+  padding: 0;
+}
+.graph-legend-colorkey,
+.graph-legend-structure {
+  display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
 }
-.graph-panel-legend .swatch {
+.graph-legend-colorkey:empty { display: none; }
+.graph-legend-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.graph-legend-swatch {
   display: inline-block;
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  margin-right: 0.25rem;
   vertical-align: middle;
 }
+.graph-legend-swatch[data-swatch="0"] { background: var(--color-burgundy); }
+.graph-legend-swatch[data-swatch="1"] { background: var(--color-steel); }
+.graph-legend-swatch[data-swatch="2"] { background: var(--color-green); }
+.graph-legend-swatch--sm { width: 7px; height: 7px; background: var(--color-ink-fade); }
+.graph-legend-swatch--lg { width: 12px; height: 12px; background: var(--color-ink-fade); }
+.graph-legend-mark {
+  display: inline-block;
+  width: 22px;
+  height: 0;
+  border-top: 2px solid var(--color-ink-soft);
+  vertical-align: middle;
+}
+.graph-legend-mark--dashed { border-top-style: dashed; }
 
 /* Force-directed graph node + edge styling */
 .garden-graph-node circle {
@@ -1553,35 +1615,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   cursor: grabbing;
 }
 
-.garden-graph-page .garden-graph-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  align-items: center;
-  padding: 0.5rem 0;
-  border-top: 1px solid var(--color-rule);
-  border-bottom: 1px solid var(--color-rule);
-  margin: 1rem 0;
-  font-family: var(--font-ui);
-  font-size: var(--text-sm);
-}
-.garden-graph-page .garden-graph-toolbar .label {
-  color: var(--color-ink-soft);
-}
-.garden-graph-page .garden-graph-toolbar .chip {
-  background: transparent;
-  border: 1px solid var(--color-rule);
-  border-radius: 999px;
-  padding: 0.1rem 0.65rem;
-  font: inherit;
-  cursor: pointer;
-  color: var(--color-ink-soft);
-}
-.garden-graph-page .garden-graph-toolbar .chip[aria-pressed="true"] {
-  background: var(--color-burgundy);
-  color: var(--color-tile);
-  border-color: var(--color-burgundy);
-}
 .garden-graph-page .garden-graph-canvas {
   min-height: 70vh;
   border: 1px solid var(--color-rule);
@@ -1598,38 +1631,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 }
 .garden-graph-page .garden-graph-canvas svg.is-panning {
   cursor: grabbing;
-}
-
-.garden-graph-page .garden-graph-toolbar .toolbar-divider {
-  display: inline-block;
-  width: 1px;
-  height: 1rem;
-  background: var(--color-rule);
-  margin: 0 0.4rem;
-  vertical-align: middle;
-}
-.garden-graph-page .garden-graph-toolbar .chip.chip-action {
-  font-style: italic;
-}
-
-.garden-graph-page .garden-graph-legend {
-  list-style: none;
-  margin: 1rem 0 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.7rem;
-  font-family: var(--font-ui);
-  font-size: var(--text-xs);
-  color: var(--color-ink-soft);
-}
-.garden-graph-page .garden-graph-legend .swatch {
-  display: inline-block;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  margin-right: 0.25rem;
-  vertical-align: middle;
 }
 
 /* ------------------------------------------------------------------
@@ -2095,48 +2096,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   margin: 0 0 0.5rem;
 }
 
-/* Toolbar: flex strip of chips + divider + action chips */
-.research-graph-page .research-graph-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  align-items: center;
-  padding: 0.5rem 0;
-  border-top: 1px solid var(--color-rule);
-  border-bottom: 1px solid var(--color-rule);
-  margin: 1rem 0;
-  font-family: var(--font-ui);
-  font-size: var(--text-sm);
-}
-.research-graph-page .research-graph-toolbar .label {
-  color: var(--color-ink-soft);
-}
-.research-graph-page .research-graph-toolbar .chip {
-  background: transparent;
-  border: 1px solid var(--color-rule);
-  border-radius: 999px;
-  padding: 0.1rem 0.65rem;
-  font: inherit;
-  cursor: pointer;
-  color: var(--color-ink-soft);
-}
-.research-graph-page .research-graph-toolbar .chip[aria-pressed="true"] {
-  background: var(--color-burgundy);
-  color: var(--color-tile);
-  border-color: var(--color-burgundy);
-}
-.research-graph-page .research-graph-toolbar .toolbar-divider {
-  display: inline-block;
-  width: 1px;
-  height: 1rem;
-  background: var(--color-rule);
-  margin: 0 0.4rem;
-  vertical-align: middle;
-}
-.research-graph-page .research-graph-toolbar .chip.chip-action {
-  font-style: italic;
-}
-
 /* Canvas mount target on the standalone page */
 .research-graph-page .research-graph-canvas {
   min-height: 70vh;
@@ -2148,19 +2107,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   width: 100%;
   height: 70vh;
   min-height: 480px;
-}
-
-/* Legend strip below the canvas */
-.research-graph-page .research-graph-legend {
-  list-style: none;
-  margin: 1rem 0 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.7rem;
-  font-family: var(--font-ui);
-  font-size: var(--text-xs);
-  color: var(--color-ink-soft);
 }
 
 /* =========================================================
@@ -2300,21 +2246,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   border: 1px solid var(--color-rule);
   border-radius: 4px;
   padding: 0.25rem 0.4rem;
-}
-.works-umbrella-toolbar .graph-toggle {
-  margin-left: auto;
-  font-family: var(--font-ui);
-  font-size: 0.78rem;
-  padding: 0.35rem 0.75rem;
-  border: 1px solid var(--color-burgundy);
-  color: var(--color-burgundy);
-  background: var(--color-stone);
-  border-radius: 4px;
-  cursor: pointer;
-}
-.works-umbrella-toolbar .graph-toggle[aria-expanded="true"] {
-  background: var(--color-burgundy);
-  color: var(--color-stone);
 }
 
 /* Bento grid */
@@ -2833,16 +2764,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   opacity: 0.8;
 }
 
-/* Standalone /works/graph/ */
-.works-graph-page .graph-page-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  margin: 1.5rem 0 1rem 0;
-  font-family: var(--font-ui);
-  font-size: 0.78rem;
-}
 .works-graph-summary {
   color: var(--color-ink-soft);
   margin-right: 1rem;
@@ -2875,27 +2796,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   border-radius: 4px;
   text-decoration: underline;
 }
-.graph-page-legend {
-  display: flex;
-  gap: 1.5rem;
-  margin-top: 0.75rem;
-  font-family: var(--font-ui);
-  font-size: 0.78rem;
-  color: var(--color-ink-soft);
-}
-.legend-mark {
-  display: inline-block;
-  width: 22px;
-  height: 1px;
-  margin-right: 0.4rem;
-  vertical-align: middle;
-  background: var(--color-ink-soft);
-}
-.legend-mark-dashed {
-  background: none;
-  border-top: 1.25px dashed var(--color-ink-soft);
-}
-
 /* ------------------------------------------------------------------
  * 37. Library
  * ------------------------------------------------------------------ */

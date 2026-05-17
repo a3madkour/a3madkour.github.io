@@ -11,7 +11,7 @@ Personal website for Abdelrahman Madkour, built as a Hugo static site with hand-
 - `hugo server --buildDrafts` — dev server with drafts visible.
 - `hugo --minify` — production build to `public/`. **Do not run with a dev server alive**; it poisons the dev-server CSS via a MIME mismatch.
 - `python3 tools/check-contrast.py` — WCAG 2.1 contrast verifier (CI gate).
-- Nineteen linter pairs under `tools/check_*.py` + `tools/test_check_*.py` (CI runs each linter then its unit-test sibling): essay fixtures, garden fixtures, garden links, filter-chips config, research fixtures, research links, citations, works fixtures, works links, library fixtures, library links, library covers, library shelves, icon attribution, RSS XSL, garden history, pagefind metadata, cite metadata, page weights. `tools/check_smoke.py` is a sibling-less linter (no paired test file — spec §3.1: logic is too thin to warrant pairing).
+- Nineteen linter pairs under `tools/check_*.py` + `tools/test_check_*.py` (CI runs each linter then its unit-test sibling): essay fixtures, garden fixtures, garden links, filter-chips config, research fixtures, research links, citations, works fixtures, works links, library fixtures, library links, library covers, library shelves, icon attribution, RSS XSL, garden history, pagefind metadata, cite metadata, page weights. `tools/check_smoke.py` and `tools/check_graph_chrome.py` are sibling-less linters (no paired test file — spec §3.1: logic is too thin to warrant pairing).
 
 No npm. Python tooling is stdlib-only. Hugo **extended** (≥ 0.148.0) is required — `.github/workflows/hugo.yaml` pins `HUGO_VERSION=0.148.0`.
 
@@ -148,7 +148,7 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 
 ### Deployment
 
-`.github/workflows/hugo.yaml` builds with Hugo extended and deploys `public/` to GitHub Pages on pushes to `master`. CI step order: pre-build linters (contrast + 16 linter pairs = 33 steps) → `hugo --minify` → pagefind metadata linter unit tests → verify pagefind metadata on built pages → cite metadata linter unit tests → verify cite metadata on built pages → install Pagefind 1.5.2 binary → build Pagefind index into `public/pagefind/` → smoke test → page-weight linter + unit tests → Lighthouse CI desktop (2 steps: `lighthouserc.json`) → Lighthouse CI mobile (`lighthouserc.mobile.json`) → upload artifact → deploy. Total: 50 named steps. Any failure blocks deploy. `public/pagefind/` is gitignored and CI-regenerated each run. Two separate LHCI config files (`lighthouserc.json` for desktop, `lighthouserc.mobile.json` for mobile) — simpler than an env-override approach.
+`.github/workflows/hugo.yaml` builds with Hugo extended and deploys `public/` to GitHub Pages on pushes to `master`. CI step order: pre-build linters (contrast + 16 linter pairs + 1 sibling-less = 34 steps) → `hugo --minify` → pagefind metadata linter unit tests → verify pagefind metadata on built pages → cite metadata linter unit tests → verify cite metadata on built pages → install Pagefind 1.5.2 binary → build Pagefind index into `public/pagefind/` → smoke test → page-weight linter + unit tests → Lighthouse CI desktop (2 steps: `lighthouserc.json`) → Lighthouse CI mobile (`lighthouserc.mobile.json`) → upload artifact → deploy. Total: 51 named steps. Any failure blocks deploy. `public/pagefind/` is gitignored and CI-regenerated each run. Two separate LHCI config files (`lighthouserc.json` for desktop, `lighthouserc.mobile.json` for mobile) — simpler than an env-override approach.
 
 ## Reference docs
 
@@ -159,6 +159,7 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 - **Multi-target export**: `docs/superpowers/specs/2026-05-13-multi-target-export-design.md`. Phase 3 Slice 3 — literate org → Hugo + PDF + Word.
 - **Graph-view consistency stub**: `docs/superpowers/specs/2026-05-14-graph-view-consistency-design.md`. Brainstorm pending.
 - **TOC collapsible subsections stub**: `docs/superpowers/specs/2026-05-14-toc-collapsible-subsections-design.md`. Brainstorm pending — show only the active top-level section's subsections; collapse the rest. Needs a fixture with ≥3 heading levels.
+- **Persistent graph access stub**: `docs/superpowers/specs/2026-05-16-persistent-graph-access-design.md`. Brainstorm pending — keep a `⊞ Graph` launcher on every research + works page (theme/question/game/music/poem), like garden's note pages, so the graph survives node-click traversal instead of dead-ending. Soft-depends on the shipped graph-view chrome-consistency canon.
 
 ## Project status (as of 2026-05-14)
 
@@ -179,6 +180,7 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 | Multi-target export | **Phase 3 Slice 3** | One Emacs command publishes literate org → Hugo essay + PDF + Word. Hard dep on Phase 3 Slices 1+2. |
 | Graph-view consistency | Independent polish slice | Garden / research / works graphs drifted. Likely shares CSS §27 rewrite + a shared `graph-core.js`. Stub spec only. |
 | TOC collapsible subsections | Independent essay-polish slice | Show only the active section's subsections in the essay TOC; collapse the rest. Reuses `nav.js` scrollspy. Needs a fixture with ≥3 heading levels. Stub spec only. |
+| Persistent graph access (research + works) | Independent polish slice | `⊞ Graph` launcher on every research + works item page (not just umbrella/standalone), like garden's note pages, so the graph survives node-click traversal. Soft-depends on the shipped graph-view chrome-consistency canon. Stub spec only. |
 
 Recommended sequencing: **Time-synced poetry (next)** → Phase 3 Slice 1 (garden publish) → Phase 3 Slice 2 (essay publish) → Multi-target export → Streams section. Graph-view-consistency + TOC collapsible subsections are polish slices with stub specs only.
 

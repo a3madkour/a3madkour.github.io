@@ -619,14 +619,10 @@ function wireToolbar(toolbar) {
       const key = btn.getAttribute('data-key') || 'all';
       state.filters.medium = key;
       toolbar.querySelectorAll('button[data-dim="medium"]').forEach(b => {
-        const isActive = b.getAttribute('data-key') === key;
-        b.classList.toggle('is-active', isActive);
-        b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        b.setAttribute('aria-pressed', b.getAttribute('data-key') === key ? 'true' : 'false');
       });
       rebuildGraph();
     });
-    // Seed aria-pressed from the SSR is-active class.
-    btn.setAttribute('aria-pressed', btn.classList.contains('is-active') ? 'true' : 'false');
   });
 
   const resetViewBtn = toolbar.querySelector('button[data-action="reset-view"]');
@@ -652,7 +648,7 @@ function openPanel({ animate = true } = {}) {
   try { sessionStorage.setItem(PANEL_KEY, '1'); } catch {}
   document.querySelectorAll('.graph-toggle').forEach(b => b.setAttribute('aria-expanded', 'true'));
 
-  const toolbar = state.panel.querySelector('.graph-panel-toolbar');
+  const toolbar = state.panel.querySelector('.graph-toolbar');
   wireToolbar(toolbar);
   rebuildGraph();
 }
@@ -680,7 +676,7 @@ function init() {
 
   if (isGraphPage) {
     // Standalone /works/graph/ — render immediately; no panel.
-    const toolbar = document.querySelector('.works-graph-page .works-graph-toolbar');
+    const toolbar = document.querySelector('.works-graph-page .graph-toolbar');
     if (toolbar) wireToolbar(toolbar);
     rebuildGraph();
     return;

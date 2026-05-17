@@ -66,6 +66,8 @@ python3 -m unittest tools/test_check_rss_xsl.py -v 2>&1 | tail -3
 python3 tools/check_garden_history.py
 python3 -m unittest tools/test_check_garden_history.py -v 2>&1 | tail -3
 
+python3 tools/check_graph_chrome.py
+
 separator "Production build (HUGO_ENVIRONMENT=production strips drafts; matches CI)"
 
 # Kill any dev server first — `hugo --minify` poisons the dev-server CSS via

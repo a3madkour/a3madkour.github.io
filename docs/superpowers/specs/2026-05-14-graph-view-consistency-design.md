@@ -171,6 +171,25 @@ top-of-CLAUDE.md linter inventory update accordingly.
 - **Bundle weight:** chrome-only edits; no new vendored code. Net JS should be
   flat-to-slightly-down (garden/research stop building legend DOM). Confirm against
   the existing page-weight gate.
+- **Server-rendered swatch colors:** interpolating a CSS custom-property name into
+  an inline `style="background:var(…)"` is sanitized by Go `html/template` to
+  `var(ZgotmplZ)` (colorless). The shared partial therefore colors research/works
+  swatches via a `data-swatch="0|1|2"` attribute + static §27 CSS rules (the
+  existing `data-theme-color` precedent), and research theme order mirrors
+  `graph-data.html`'s `themePaletteOrder` so legend colors match node colors.
+  Garden's JS-injected swatches keep inline `style.background` (a JS-set style,
+  not a Go-template context — not sanitized).
+
+## Known limitation (deferred — out of scope, same boundary as node/color encoding)
+
+The color key pairs a colored swatch with a text label. A colorblind / low-vision
+reader gets the label (so meaning is not strictly color-only) but cannot map a
+legend entry to graph nodes by color alone — the identical pre-existing limitation
+of the graph nodes themselves, which this slice explicitly does **not** touch
+(node shape/color encoding is out of scope per §Scope). A non-color legend↔node
+affordance (e.g. surfacing research's existing rect/circle shape encoding in the
+key) is deferred to a future graph-rendering slice, tracked with the rest of the
+node/color-encoding work the parent spec scopes out.
 
 ## Open items for the plan
 
