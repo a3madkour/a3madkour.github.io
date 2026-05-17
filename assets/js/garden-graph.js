@@ -575,7 +575,7 @@ function setupPanelResize() {
 function makeFilterChip(host, label, dim, value) {
   const b = document.createElement('button');
   b.type = 'button';
-  b.className = 'chip';
+  b.className = 'graph-chip';
   b.dataset.dim = dim;
   b.dataset.value = value;
   b.setAttribute('aria-pressed', state.filters[dim] === value ? 'true' : 'false');
@@ -593,7 +593,7 @@ function makeFilterChip(host, label, dim, value) {
 function makeActionChip(label, onClick) {
   const b = document.createElement('button');
   b.type = 'button';
-  b.className = 'chip chip-action';
+  b.className = 'graph-action';
   b.textContent = label;
   b.addEventListener('click', onClick);
   return b;
@@ -630,7 +630,7 @@ function buildFilterChips(host) {
 
 function buildActionChips(host) {
   const divider = document.createElement('span');
-  divider.className = 'toolbar-divider';
+  divider.className = 'graph-toolbar-divider';
   divider.setAttribute('aria-hidden', 'true');
   const hint = document.createElement('span');
   hint.className = 'graph-hint';
@@ -651,19 +651,22 @@ function buildToolbar(host) {
   buildActionChips(host);
 }
 
-function buildLegend(host) {
-  host.replaceChildren();
-  host.removeAttribute('hidden');
+function buildLegend(root) {
+  // The structure key (size / solid / dashed) is server-rendered by
+  // partials/graph-legend.html. Garden's tag palette is content-dependent,
+  // so we only inject swatches into the partial's dynamic color-key slot,
+  // matching its DOM shape (.graph-legend-key > .graph-legend-swatch).
+  const slot = root.querySelector('.graph-legend-colorkey[data-graph-legend-dynamic]');
+  if (!slot) return;
+  slot.replaceChildren();
   const tags = new Map();
   (state.data.nodes || []).forEach(n => { if (n.tag) tags.set(n.tag, true); });
   Array.from(tags.keys()).slice(0, 4).forEach(tag => {
-    const li = document.createElement('li');
-    li.innerHTML = `<span class="swatch" style="background:${tagColor(tag)}"></span>${tag}`;
-    host.appendChild(li);
+    const key = document.createElement('span');
+    key.className = 'graph-legend-key';
+    key.innerHTML = `<span class="graph-legend-swatch" style="background:${tagColor(tag)}"></span>${tag}`;
+    slot.appendChild(key);
   });
-  const note = document.createElement('li');
-  note.textContent = 'size = link count · solid = same topic · dashed = cross-topic';
-  host.appendChild(note);
 }
 
 function openPanel({ animate = true } = {}) {
@@ -683,10 +686,10 @@ function openPanel({ animate = true } = {}) {
   try { sessionStorage.setItem(PANEL_KEY, '1'); } catch {}
   document.querySelectorAll('.graph-toggle').forEach(b => b.setAttribute('aria-expanded', 'true'));
 
-  const toolbar = state.panel.querySelector('.graph-panel-toolbar');
-  const legend = state.panel.querySelector('.graph-panel-legend');
+  const toolbar = state.panel.querySelector('.graph-toolbar');
+  const legend = state.panel.querySelector('.graph-legend');
   if (toolbar && !toolbar.children.length) buildToolbar(toolbar);
-  if (legend && !legend.children.length) buildLegend(legend);
+  if (legend) buildLegend(legend);
   rebuildGraph();
 }
 
@@ -721,8 +724,8 @@ function init() {
 
   if (isGraphPage) {
     // Standalone /garden/graph/ — render immediately; no panel.
-    const toolbar = document.querySelector('.garden-graph-page .garden-graph-toolbar');
-    const legend = document.querySelector('.garden-graph-page .garden-graph-legend');
+    const toolbar = document.querySelector('.garden-graph-page .graph-toolbar');
+    const legend = document.querySelector('.garden-graph-page .graph-legend');
     if (toolbar) buildToolbar(toolbar);
     if (legend) buildLegend(legend);
     rebuildGraph();

@@ -578,7 +578,7 @@ function chipIsActive(dim, value) {
 function makeFilterChip(host, label, dim, value) {
   const b = document.createElement('button');
   b.type = 'button';
-  b.className = 'chip';
+  b.className = 'graph-chip';
   b.dataset.dim = dim;
   b.dataset.value = value;
   b.setAttribute('aria-pressed', chipIsActive(dim, value) ? 'true' : 'false');
@@ -615,7 +615,7 @@ function makeFilterChip(host, label, dim, value) {
 function makeActionChip(label, onClick) {
   const b = document.createElement('button');
   b.type = 'button';
-  b.className = 'chip chip-action';
+  b.className = 'graph-action';
   b.textContent = label;
   b.addEventListener('click', onClick);
   return b;
@@ -644,7 +644,7 @@ function buildFilterChips(host) {
 
 function buildActionChips(host) {
   const divider = document.createElement('span');
-  divider.className = 'toolbar-divider';
+  divider.className = 'graph-toolbar-divider';
   divider.setAttribute('aria-hidden', 'true');
   const hint = document.createElement('span');
   hint.className = 'graph-hint';
@@ -665,13 +665,6 @@ function buildToolbar(host) {
   buildActionChips(host);
 }
 
-function buildLegend(host) {
-  host.replaceChildren();
-  host.removeAttribute('hidden');
-  const note = document.createElement('li');
-  note.textContent = 'square = theme · circle = question · size = link count · dashed = cross-theme';
-  host.appendChild(note);
-}
 
 function openPanel({ animate = true } = {}) {
   if (!state.panel) return;
@@ -690,10 +683,8 @@ function openPanel({ animate = true } = {}) {
   try { sessionStorage.setItem(PANEL_KEY, '1'); } catch {}
   document.querySelectorAll('.graph-toggle').forEach(b => b.setAttribute('aria-expanded', 'true'));
 
-  const toolbar = state.panel.querySelector('.graph-panel-toolbar');
-  const legend = state.panel.querySelector('.graph-panel-legend');
+  const toolbar = state.panel.querySelector('.graph-toolbar');
   if (toolbar && !toolbar.children.length) buildToolbar(toolbar);
-  if (legend && !legend.children.length) buildLegend(legend);
   rebuildGraph();
 }
 
@@ -720,10 +711,8 @@ function init() {
 
   if (isGraphPage) {
     // Standalone /research/graph/ — render immediately; no panel.
-    const toolbar = document.querySelector('.research-graph-page .research-graph-toolbar');
-    const legend = document.querySelector('.research-graph-page .research-graph-legend');
+    const toolbar = document.querySelector('.research-graph-page .graph-toolbar');
     if (toolbar) buildToolbar(toolbar);
-    if (legend) buildLegend(legend);
     rebuildGraph();
     return;
   }

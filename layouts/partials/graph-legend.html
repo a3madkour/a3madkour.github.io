@@ -5,7 +5,9 @@
        Color key: research/works server-rendered here via data-swatch +
        static §27 CSS; garden = empty dynamic slot. garden-graph.js fills
        .graph-legend-colorkey[data-graph-legend-dynamic] with inline-styled
-       swatches (tag palette is content-dependent) — see Task 6. */ -}}
+       swatches (tag palette is content-dependent) — see Task 6.
+       Never aria-hidden this legend: it is the only screen-reader key to
+       the graph's visual encoding (the SVG <desc> only carries counts). */ -}}
 {{- $section := .section -}}
 {{- $variant := .variant -}}
 {{- $primary := "" -}}
