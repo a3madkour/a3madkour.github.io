@@ -6,7 +6,7 @@
   <h1>{{ .Title }}</h1>
   <p class="garden-graph-summary">Click a node to open it in a stack.</p>
 
-  <nav class="garden-graph-toolbar" aria-label="Graph filters">
+  <nav class="graph-toolbar graph-toolbar--page" aria-label="Graph filters">
     {{- /* populated by garden-graph.js */ -}}
   </nav>
 
@@ -16,7 +16,7 @@
     {{- /* SVG mounted by garden-graph.js */ -}}
   </div>
 
-  <ul class="garden-graph-legend" hidden></ul>
+  {{ partial "graph-legend.html" (dict "section" "garden" "variant" "page") }}
 
   <span id="garden-graph-skip" tabindex="-1"></span>
 </section>

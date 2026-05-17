@@ -1,22 +1,20 @@
 <aside id="works-graph-panel" class="graph-panel" hidden role="region" aria-label="Works constellation">
   <header class="graph-panel-header">
     <h3 class="graph-panel-title">Constellation</h3>
-    <button type="button" class="graph-panel-close" aria-controls="works-graph-panel" aria-label="Close graph panel">✕</button>
+    <button type="button" class="graph-panel-close" aria-controls="works-graph-panel" aria-label="Close graph panel">×</button>
   </header>
-  <div class="graph-panel-toolbar">
-    <span class="graph-panel-toolbar-label">Medium</span>
-    <button type="button" class="filter-chip is-active" data-dim="medium" data-key="all">All</button>
-    <button type="button" class="filter-chip" data-dim="medium" data-key="game">Games</button>
-    <button type="button" class="filter-chip" data-dim="medium" data-key="music">Music</button>
-    <button type="button" class="filter-chip" data-dim="medium" data-key="poetry">Poetry</button>
-    <button type="button" class="graph-panel-toolbtn" data-action="reset-view">Reset view</button>
-    <button type="button" class="graph-panel-toolbtn" data-action="reset-positions">Reset positions</button>
+  <div class="graph-toolbar graph-toolbar--panel">
+    <span class="label">Medium</span>
+    <button type="button" class="graph-chip" data-dim="medium" data-key="all" aria-pressed="true">All</button>
+    <button type="button" class="graph-chip" data-dim="medium" data-key="game" aria-pressed="false">Games</button>
+    <button type="button" class="graph-chip" data-dim="medium" data-key="music" aria-pressed="false">Music</button>
+    <button type="button" class="graph-chip" data-dim="medium" data-key="poetry" aria-pressed="false">Poetry</button>
+    <span class="graph-toolbar-divider" aria-hidden="true"></span>
+    <button type="button" class="graph-action" data-action="reset-view">Reset view</button>
+    <button type="button" class="graph-action" data-action="reset-positions">Reset positions</button>
     <span class="graph-hint" aria-hidden="true"><kbd>Shift</kbd>+drag to pin</span>
   </div>
   <svg class="graph-panel-canvas" role="img" aria-label="Force-directed map of works"></svg>
   <div class="graph-panel-resize" aria-hidden="true"></div>
-  <div class="graph-panel-legend">
-    <span class="legend-item"><span class="legend-mark legend-mark-solid" aria-hidden="true"></span> tag-share</span>
-    <span class="legend-item"><span class="legend-mark legend-mark-dashed" aria-hidden="true"></span> cross-medium ref</span>
-  </div>
+  {{ partial "graph-legend.html" (dict "section" "works" "variant" "panel") }}
 </aside>
