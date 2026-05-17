@@ -11,7 +11,7 @@ Personal website for Abdelrahman Madkour, built as a Hugo static site with hand-
 - `hugo server --buildDrafts` — dev server with drafts visible.
 - `hugo --minify` — production build to `public/`. **Do not run with a dev server alive**; it poisons the dev-server CSS via a MIME mismatch.
 - `python3 tools/check-contrast.py` — WCAG 2.1 contrast verifier (CI gate).
-- Nineteen linter pairs under `tools/check_*.py` + `tools/test_check_*.py` (CI runs each linter then its unit-test sibling): essay fixtures, garden fixtures, garden links, filter-chips config, research fixtures, research links, citations, works fixtures, works links, library fixtures, library links, library covers, library shelves, icon attribution, RSS XSL, garden history, pagefind metadata, cite metadata, page weights. `tools/check_smoke.py` is a sibling-less linter (no paired test file — spec §3.1: logic is too thin to warrant pairing).
+- Nineteen linter pairs under `tools/check_*.py` + `tools/test_check_*.py` (CI runs each linter then its unit-test sibling): essay fixtures, garden fixtures, garden links, filter-chips config, research fixtures, research links, citations, works fixtures, works links, library fixtures, library links, library covers, library shelves, icon attribution, RSS XSL, garden history, pagefind metadata, cite metadata, page weights. `tools/check_smoke.py` and `tools/check_graph_chrome.py` are sibling-less linters (no paired test file — spec §3.1: logic is too thin to warrant pairing).
 
 No npm. Python tooling is stdlib-only. Hugo **extended** (≥ 0.148.0) is required — `.github/workflows/hugo.yaml` pins `HUGO_VERSION=0.148.0`.
 
@@ -148,7 +148,7 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 
 ### Deployment
 
-`.github/workflows/hugo.yaml` builds with Hugo extended and deploys `public/` to GitHub Pages on pushes to `master`. CI step order: pre-build linters (contrast + 16 linter pairs = 33 steps) → `hugo --minify` → pagefind metadata linter unit tests → verify pagefind metadata on built pages → cite metadata linter unit tests → verify cite metadata on built pages → install Pagefind 1.5.2 binary → build Pagefind index into `public/pagefind/` → smoke test → page-weight linter + unit tests → Lighthouse CI desktop (2 steps: `lighthouserc.json`) → Lighthouse CI mobile (`lighthouserc.mobile.json`) → upload artifact → deploy. Total: 50 named steps. Any failure blocks deploy. `public/pagefind/` is gitignored and CI-regenerated each run. Two separate LHCI config files (`lighthouserc.json` for desktop, `lighthouserc.mobile.json` for mobile) — simpler than an env-override approach.
+`.github/workflows/hugo.yaml` builds with Hugo extended and deploys `public/` to GitHub Pages on pushes to `master`. CI step order: pre-build linters (contrast + 16 linter pairs + 1 sibling-less = 34 steps) → `hugo --minify` → pagefind metadata linter unit tests → verify pagefind metadata on built pages → cite metadata linter unit tests → verify cite metadata on built pages → install Pagefind 1.5.2 binary → build Pagefind index into `public/pagefind/` → smoke test → page-weight linter + unit tests → Lighthouse CI desktop (2 steps: `lighthouserc.json`) → Lighthouse CI mobile (`lighthouserc.mobile.json`) → upload artifact → deploy. Total: 51 named steps. Any failure blocks deploy. `public/pagefind/` is gitignored and CI-regenerated each run. Two separate LHCI config files (`lighthouserc.json` for desktop, `lighthouserc.mobile.json` for mobile) — simpler than an env-override approach.
 
 ## Reference docs
 
