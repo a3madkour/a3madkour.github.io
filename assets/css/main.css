@@ -2228,7 +2228,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 .works-umbrella-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 0.6rem;
   font-family: var(--font-ui);
   font-size: 0.78rem;
