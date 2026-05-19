@@ -595,10 +595,12 @@ Run:
 hugo --quiet --destination /tmp/pga-build
 python3 tools/check_research_fixtures.py
 python3 tools/check_research_links.py
-grep -o 'class="graph-launcher-bar" aria-label="Graph access" data-graph-current="[^"]*"' /tmp/pga-build/research/themes/*/index.html | head -1
+grep -o 'class="graph-launcher-bar"' /tmp/pga-build/research/themes/*/index.html | head -1
+grep -o 'data-graph-current="[^"]*"' /tmp/pga-build/research/themes/*/index.html | head -1
+grep -o '⊞ Graph' /tmp/pga-build/research/questions/*/index.html | head -1
 grep -c 'id="research-graph-panel"' /tmp/pga-build/research/questions/*/index.html | head -1
 ```
-Expected: build succeeds; both linters print OK; the `data-graph-current` `grep` prints one match; the panel `grep -c` prints `1`.
+Expected: build succeeds; both linters print OK; the bar-class `grep` prints one match; the `data-graph-current` `grep` prints one match; the `⊞ Graph` `grep` prints one match; the panel `grep -c` prints `1`. (Greps test each attribute independently — Hugo renders the `<nav>`'s attributes across source lines, so a single combined-line grep would falsely fail even when correct.)
 
 - [ ] **Step 8: Commit**
 
