@@ -1147,6 +1147,26 @@ git add assets/js/poem-synced.js assets/js/entry-poetry.js layouts/partials/scri
 git commit -m "feat(poetry): synced-reveal JS runtime + page-narrow bundle"
 ```
 
+> **Amendment (applied during execution, code-review-driven):** a follow-up
+> commit hardens `poem-synced.js`:
+> - **Stale flourish timer:** track each span's 600 ms `setTimeout` in a
+>   `Map`; `clearTimeout` + delete it in `render`'s hide branch so a
+>   reset / backward-seek within 600 ms of a reveal can't let a stale timer
+>   re-add `.is-visible`.
+> - **`pointercancel`:** `bar.addEventListener('pointercancel', () => {
+>   dragging = false; })` — matches the repo's other drag surfaces
+>   (garden/research/works-graph) so an interrupted touch doesn't stick the
+>   scrub bar in drag mode.
+> - **a11y:** `aria-valuetext` ("`m:ss of m:ss`") on the slider each render;
+>   show-all button gets `aria-label="Show all verses"` with the emoji
+>   wrapped `<span aria-hidden="true">👁</span>`.
+> - **Consciously NOT changed** (reviewer Minors, with rationale):
+>   `aria-valuemax` stays in `render()` — single source of truth, robust to
+>   duration changes on `loadedmetadata` / audio-error fallback, per-tick
+>   idempotent write is negligible; the ▶ ⏸ ↻ 👁 control glyphs stay Unicode
+>   — spec §1-mandated control characters (not illustrations), changing them
+>   would deviate from "exactly as spec'd".
+
 ---
 
 ## Task 6: CSS §45
