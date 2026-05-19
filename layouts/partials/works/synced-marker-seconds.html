@@ -1,21 +1,27 @@
 {{- /* Input: a marker string like "[12:34]" or "[00:03.5]".
        Output: float seconds. Hugo findRE has no capture groups, so we
        strip brackets and split manually. Shared by synced-text-parser and
-       the future lyrics slice. */ -}}
+       the future lyrics slice.
+
+       GOTCHA: Hugo's `int` casts strings via base-0 strconv, so a
+       zero-padded value like "08"/"09" is read as OCTAL and the digits
+       8/9 raise "invalid syntax". Seconds are always 2-digit (and minutes
+       may be zero-padded), so every string→number step goes through
+       `float` (decimal ParseFloat — never octal) before `int`. */ -}}
 {{- $inner := substr . 1 (sub (len .) 2) -}}
 {{- $parts := split $inner ":" -}}
-{{- $mm := int (index $parts 0) -}}
+{{- $mm := int (float (index $parts 0)) -}}
 {{- $rest := index $parts 1 -}}
 {{- $sec := 0.0 -}}
 {{- if in $rest "." -}}
   {{- $sp := split $rest "." -}}
-  {{- $ss := int (index $sp 0) -}}
+  {{- $ss := int (float (index $sp 0)) -}}
   {{- $fracStr := index $sp 1 -}}
   {{- $divisor := cond (eq (len $fracStr) 1) 10.0 100.0 -}}
-  {{- $frac := div (float (int $fracStr)) $divisor -}}
+  {{- $frac := div (float $fracStr) $divisor -}}
   {{- $sec = add (float (add (mul $mm 60) $ss)) $frac -}}
 {{- else -}}
-  {{- $ss := int $rest -}}
+  {{- $ss := int (float $rest) -}}
   {{- $sec = float (add (mul $mm 60) $ss) -}}
 {{- end -}}
 {{- return $sec -}}
