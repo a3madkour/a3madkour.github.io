@@ -53,6 +53,10 @@ jobs:
         run: python3 tools/check_fixtures.py
       - name: Run essay linter unit tests
         run: python3 -m unittest tools/test_check_fixtures.py -v
+      - name: Verify essay TOC depth
+        run: python3 tools/check_toc_depth.py
+      - name: Run essay TOC depth linter unit tests
+        run: python3 -m unittest tools/test_check_toc_depth.py -v
       - name: Verify garden fixtures
         run: python3 tools/check_garden_fixtures.py
       - name: Run garden linter unit tests

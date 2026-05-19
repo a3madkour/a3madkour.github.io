@@ -1,10 +1,18 @@
-// TOC active-link highlighter — uses the same "last heading whose top has
-// crossed the trigger line" algorithm as the page-sidebar scrollspy
-// below. The previous IntersectionObserver version only fired when a
-// heading crossed the viewport edge, so scrolling DOWN within a long
-// section never updated the highlight.
+// TOC active-link highlighter + collapsible subsections.
+//
+// Active-link highlight: "last heading whose top has crossed the trigger
+// line" (same algorithm as the page-sidebar scrollspy below).
+//
+// Collapse: each top-level #TableOfContents > ul > li (level-agnostic) with
+// a child <ul> gets a .toc-toggle button; its child <ul> is wrapped in an
+// animatable .toc-disclosure. Scrollspy keeps exactly the active section
+// expanded (instant, no animation, clears manual "peek"). A manual chevron
+// click is an additive animated peek the next scroll re-asserts away.
+// No JS -> Hugo's full tree stays visible (true progressive enhancement).
 window.addEventListener('DOMContentLoaded', () => {
-  const tocLinks = document.querySelectorAll('#TableOfContents a[href^="#"]');
+  const tocRoot = document.getElementById('TableOfContents');
+  if (!tocRoot) return;
+  const tocLinks = tocRoot.querySelectorAll('a[href^="#"]');
   if (tocLinks.length === 0) return;
 
   const sections = Array.from(tocLinks)
@@ -12,7 +20,102 @@ window.addEventListener('DOMContentLoaded', () => {
     .filter((s) => s.target);
   if (sections.length === 0) return;
 
+  // --- Collapse: one-time DOM transform ---------------------------------
+  let uid = 0;
+  const metas = []; // { li, btn, disclosure }
+
+  function setExpanded(meta, open, instant) {
+    if (instant) meta.disclosure.classList.add('is-instant');
+    meta.btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    meta.li.classList.toggle('is-expanded', open);
+    meta.disclosure.inert = !open;
+    if (instant) {
+      // Force layout so the no-transition state is committed, then drop
+      // .is-instant so a later manual toggle on this section animates.
+      void meta.disclosure.offsetHeight;
+      meta.disclosure.classList.remove('is-instant');
+    }
+  }
+
+  Array.from(tocRoot.querySelectorAll(':scope > ul > li')).forEach((li) => {
+    const subList = li.querySelector(':scope > ul');
+    if (!subList) return;
+    uid += 1;
+    const id = `toc-sub-${uid}`;
+    const disclosure = document.createElement('div');
+    disclosure.className = 'toc-disclosure';
+    disclosure.id = id;
+    li.insertBefore(disclosure, subList);
+    disclosure.appendChild(subList);
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'toc-toggle';
+    btn.setAttribute('aria-controls', id);
+    const label = (li.querySelector(':scope > a')?.textContent || 'section').trim();
+    btn.setAttribute('aria-label', `Toggle ${label} subsections`);
+    li.insertBefore(btn, li.firstChild);
+    li.classList.add('toc-section');
+
+    const meta = { li, btn, disclosure };
+    metas.push(meta);
+    setExpanded(meta, false, true); // start collapsed, no flash/animation
+
+    btn.addEventListener('click', () => {
+      const willOpen = btn.getAttribute('aria-expanded') !== 'true';
+      // Spec decision 3: a manual click is an additive peek — it must not
+      // collapse the section scrollspy considers active (it would only
+      // snap back open on the next scroll). Closing any OTHER section, or
+      // opening any section, is allowed.
+      const activeLink = tocRoot.querySelector('.is-active');
+      const activeMeta = activeLink
+        ? metas.find((m) => m.li.contains(activeLink))
+        : null;
+      if (!willOpen && meta === activeMeta) return;
+      setExpanded(meta, willOpen, false); // manual => animated peek
+    });
+  });
+
+  function applyActive(activeLink) {
+    if (metas.length === 0) return;
+    const activeMeta = activeLink
+      ? metas.find((m) => m.li.contains(activeLink))
+      : null;
+    metas.forEach((m) => {
+      const shouldOpen = m === activeMeta;
+      const isOpen = m.btn.getAttribute('aria-expanded') === 'true';
+      // Scrollspy wins: re-assert exactly the active section (instant),
+      // collapsing any manually-peeked inactive section on this scroll.
+      if (shouldOpen !== isOpen) setExpanded(m, shouldOpen, true);
+    });
+  }
+
+  // --- Scrollspy (drives both highlight and collapse) -------------------
+  // Suppress scrollspy while a TOC-click smooth-scroll is animating, so
+  // the highlight/collapse doesn't churn through every intervening
+  // section. Released on scrollend, a timeout backstop, or as soon as
+  // the reader takes over scrolling (wheel/touch).
+  let scrollLock = false;
+  let lockTimer = 0;
+  function releaseLock() {
+    if (!scrollLock) return;
+    scrollLock = false;
+    clearTimeout(lockTimer);
+    updateActive();
+  }
+
+  function setActiveByHref(activeHref) {
+    let activeLink = null;
+    tocLinks.forEach((a) => {
+      const on = a.getAttribute('href') === activeHref;
+      a.classList.toggle('is-active', on);
+      if (on) activeLink = a;
+    });
+    applyActive(activeLink);
+  }
+
   function updateActive() {
+    if (scrollLock) return;
     const scrollY = window.scrollY;
     const viewHeight = window.innerHeight;
     const docHeight = document.documentElement.scrollHeight;
@@ -29,12 +132,26 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       }
     }
-
-    tocLinks.forEach((a) => a.classList.toggle('is-active', a.getAttribute('href') === activeHref));
+    setActiveByHref(activeHref);
   }
 
   window.addEventListener('scroll', updateActive, { passive: true });
   window.addEventListener('resize', updateActive, { passive: true });
+  tocLinks.forEach((a) => {
+    a.addEventListener('click', () => {
+      const href = a.getAttribute('href');
+      if (!href || !document.querySelector(href)) return;
+      // essay.js owns the smooth-scroll + history; we only freeze the
+      // scrollspy and snap state straight to the clicked target.
+      scrollLock = true;
+      clearTimeout(lockTimer);
+      lockTimer = setTimeout(releaseLock, 1000);
+      setActiveByHref(href);
+    });
+  });
+  window.addEventListener('scrollend', releaseLock);
+  window.addEventListener('wheel', releaseLock, { passive: true });
+  window.addEventListener('touchmove', releaseLock, { passive: true });
   updateActive();
 });
 

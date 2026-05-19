@@ -673,6 +673,50 @@ main { flex-grow: 1; }
 .essay-toc a:hover { color: var(--color-burgundy); }
 .essay-toc #TableOfContents > ul > li > ul { padding-left: 1rem; }
 
+/* TOC collapsible subsections — spec
+   docs/superpowers/specs/2026-05-14-toc-collapsible-subsections-design.md.
+   assets/js/nav.js injects .toc-toggle buttons and wraps each section's
+   child <ul> in .toc-disclosure. No-JS: none of this matches and the rule
+   above shows the full indented tree (progressive-enhancement floor). */
+.toc-toggle {
+  appearance: none;
+  background: none;
+  border: 0;
+  margin: 0;
+  padding: 0 0.4rem 0 0;
+  cursor: pointer;
+  color: var(--color-ink-soft);
+  font: inherit;
+  line-height: 1;
+}
+.toc-toggle::before {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-left: 0.32rem solid currentColor;
+  border-top: 0.26rem solid transparent;
+  border-bottom: 0.26rem solid transparent;
+  transition: transform 180ms ease;
+}
+.toc-toggle[aria-expanded="true"]::before { transform: rotate(90deg); }
+.toc-toggle:hover { color: var(--color-burgundy); }
+
+.toc-disclosure {
+  display: grid;
+  grid-template-rows: 0fr;
+  overflow: hidden;
+  transition: grid-template-rows 180ms ease;
+}
+.toc-section.is-expanded > .toc-disclosure { grid-template-rows: 1fr; }
+.toc-disclosure > ul {
+  min-height: 0;        /* required so the 0fr row actually clips the <ul> */
+  padding-left: 1rem;   /* preserves the indent the > li > ul rule gave pre-wrap */
+}
+.toc-disclosure.is-instant { transition: none; }
+/* prefers-reduced-motion is handled globally by the §8 universal rule
+   (transition-duration: 0.01ms !important) — no local @media needed here. */
+
 @media (min-width: 1100px) {
   /* Fixed at the left viewport edge, not in the grid flow. The body's
    * min-left-margin (set in .essay .reading-column above) reserves enough

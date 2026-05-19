@@ -1,5 +1,6 @@
-{{/* Server-rendered TOC. essay.js (existing nav.js) attaches the
-     active-link highlighter via IntersectionObserver. */}}
+{{/* Server-rendered TOC (full tree). assets/js/nav.js progressively
+     enhances it: active-link scrollspy highlight + collapsible
+     subsections. Without JS the whole tree stays visible. */}}
 {{ if .TableOfContents }}
 <nav class="essay-toc" aria-label="Table of contents">
   <details open>
