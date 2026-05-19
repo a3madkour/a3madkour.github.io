@@ -1522,6 +1522,38 @@ git commit -m "docs(claude.md): register synced-poetry slice (shipped)"
 > effective opacity 1 on reveal (DOM-structure + logic trace) and the
 > `*irure*` markdown line still carries `data-t="16"`.
 
+> **Step 0b — Spot-check findings (user-driven, during Task 10 dev-server QA):**
+> 1. **Out-of-order reveal.** The original fixture's untimed continuation
+>    lines inherited `prev_line_t + 0.5`, which fell *before* the preceding
+>    line's mid-line markers (e.g. `incididunt…`@5.5 revealed before
+>    `eiusmod`@6 / `tempor`@7). Spec-correct but a confusing demo. At the
+>    user's request the fixture was redesigned to **strictly in-order, fixed
+>    1 s step**: every word carries its own `[00:NN]`, `Lorem`@0:01 →
+>    `veniam`@0:21; one markdown line `[00:17]Duis aute *irure*
+>    reprehenderit` (line-mode unit at 0:17); escaped `\[00:99]` literal at
+>    0:19. No untimed lines ⇒ `check_poetry_synced` now emits **zero**
+>    warnings; `data-duration="21"`. This **supersedes** the earlier
+>    Task 3/Task 4 expectations (`data-t="12.5"`, `data-duration="16.5"`,
+>    "4 untimed WARN"). Untimed-inheritance behaviour remains covered by the
+>    `check_poetry_synced` unit tests, not the live fixture.
+> 2. **Hugo `int` octal bug (latent, Critical).** `synced-marker-seconds.html`
+>    used `int <string>` on marker components. Hugo's `int` casts via base-0
+>    `strconv`, so a zero-padded `"08"`/`"09"` is parsed as **octal** →
+>    digits 8/9 raise `invalid syntax`. The spec/plan shipped this `int`
+>    verbatim; no prior fixture had an 8- or 9-in-a-zero-padded seconds field
+>    (old fixture: `01,05,06,07,12,16`), so every review missed it. The
+>    in-order fixture (`[00:08]`,`[00:09]`) surfaced it as a build failure at
+>    `synced-marker-seconds.html:18:13`. **Fix:** cast every string→number
+>    step through `float` (decimal `ParseFloat`, never octal) before `int`.
+>    The fixture deliberately keeps `[00:08]`/`[00:09]` so the CI build +
+>    smoke now exercise this path (regression guard). See memory
+>    `reference_hugo_int_octal_gotcha`.
+>
+> Both fixed + committed (`ff35ee1` octal cast, `04ee59e` in-order fixture).
+> Build verification is the user's live dev server + CI-on-push (this
+> sandbox SIGKILLs `hugo`, exit 144 — Hugo cannot be built by the agent
+> here; the stdlib linters, which can run, stay green).
+
 - [ ] **Step 1: Run the full CI-equivalent locally**
 
 Run: `cd /Stuff/a3madkour/Sync/Workspace/a3madkour.github.io/.worktrees/time-synced-poetry && tools/ci-local.sh 2>&1 | tail -40`
