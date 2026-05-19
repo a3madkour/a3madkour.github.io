@@ -1,0 +1,51 @@
+{{- /* Shared sticky graph-launcher bar. One source of truth for the
+       launcher chrome across garden + research + works.
+
+       Params (dict):
+         variant      — "garden" | "generic"
+         panelId      — id of the <aside class="graph-panel"> this toggle controls
+         page         — the Hugo Page (variant "garden" only)
+         crumbs       — slice of dicts {label, url?} ; last entry = current
+                         page (omit url) (variant "generic" only)
+         currentSlug  — slug of the current page; emitted as data-graph-current
+                         so <section>-graph.js can mark the "you are here" node
+                         (variant "generic" only; garden has its own in-stack model)
+         extraClass   — extra class(es) on the <nav> (variant "garden": the
+                         literal "garden-path-log", preserved for garden JS +
+                         the garden-history linter)
+
+       The launcher is the FIRST child (left-aligned) so the fixed
+       right-side .graph-panel (320px, user-resizable) never covers it.
+       Sticky-bar shell CSS is .graph-launcher-bar (§27). */ -}}
+{{- $variant := .variant -}}
+{{- $panelId := .panelId -}}
+{{- $extraClass := .extraClass | default "" -}}
+<nav class="graph-launcher-bar{{ with $extraClass }} {{ . }}{{ end }}"
+     aria-label="{{ if eq $variant "garden" }}Reading path{{ else }}Graph access{{ end }}"
+     {{- if and (eq $variant "generic") .currentSlug }} data-graph-current="{{ .currentSlug }}"{{ end }}>
+  <button type="button" class="graph-toggle" aria-expanded="false" aria-controls="{{ $panelId }}">⊞ Graph</button>
+  {{- if eq $variant "garden" -}}
+    {{- $p := .page -}}
+    <span class="path-log-label">Path:</span>
+    <a class="path-log-crumb" href="{{ "/garden/" | relURL }}">Garden</a>
+    <span class="path-log-sep" aria-hidden="true">›</span>
+    <a class="path-log-crumb is-active" aria-current="page" href="{{ $p.RelPermalink }}" data-slug="{{ path.Base $p.File.Dir }}">{{ $p.Title }}</a>
+    <span class="path-log-actions">
+      <span class="path-log-count" data-stack-count="1">1 in stack</span>
+      <button type="button" class="path-log-clear" hidden>clear</button>
+      <a class="path-log-history" href="{{ "/garden/history/" | relURL }}">history</a>
+    </span>
+  {{- else -}}
+    <span class="graph-launcher-crumbs">
+      {{- $n := len .crumbs -}}
+      {{- range $i, $c := .crumbs -}}
+        {{- if $c.url -}}
+          <a class="graph-launcher-crumb" href="{{ $c.url | relURL }}">{{ $c.label }}</a>
+        {{- else -}}
+          <span class="graph-launcher-crumb is-active" aria-current="page">{{ $c.label }}</span>
+        {{- end -}}
+        {{- if lt (add $i 1) $n }}<span class="path-log-sep" aria-hidden="true">›</span>{{ end -}}
+      {{- end -}}
+    </span>
+  {{- end -}}
+</nav>

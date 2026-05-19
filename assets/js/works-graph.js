@@ -324,7 +324,8 @@ async function buildSimulation(canvas) {
   // get the larger 72-px badge + 40-px glyph; regular nodes get 52 + 30.
   const nodeEls = nodes.map(n => {
     const g = document.createElementNS(SVG_NS, 'g');
-    g.setAttribute('class', `works-graph-node${n.featured ? ' works-graph-node-featured' : ''}`);
+    g.setAttribute('class', `works-graph-node${n.featured ? ' works-graph-node-featured' : ''}`
+      + (state.page.currentSlug && n.slug === state.page.currentSlug ? ' is-here' : ''));
     g.setAttribute('data-medium', n.medium);
     g.setAttribute('data-featured', n.featured ? 'true' : 'false');
     g.setAttribute('tabindex', '0');
@@ -671,6 +672,8 @@ function init() {
   if (!state.data) return;
   state.panel = document.getElementById('works-graph-panel');
   state.page.isMobile = isMobile();
+  const hereBar = document.querySelector('.graph-launcher-bar[data-graph-current]');
+  state.page.currentSlug = hereBar ? hereBar.dataset.graphCurrent : null;
 
   const isGraphPage = !!document.querySelector('.works-graph-page');
 

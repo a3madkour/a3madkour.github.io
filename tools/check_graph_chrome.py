@@ -57,6 +57,19 @@ FORBIDDEN_MARKUP = [
     "legend-mark-dashed",
 ]
 
+# Item-page surfaces added by the persistent-graph-access slice
+# (2026-05-16 spec). Each must include the shared launcher bar AND its
+# section's graph panel + graph-data script, so the launcher/panel/legend
+# canon stays enforced as surfaces grow.
+LAUNCHER_BAR_CALL = 'partial "graph-launcher-bar.html"'
+ITEM_SURFACES = {
+    Path("layouts/research-theme/single.html"): "research",
+    Path("layouts/research-question/single.html"): "research",
+    Path("layouts/works-games/single.html"): "works",
+    Path("layouts/works-music/single.html"): "works",
+    Path("layouts/works-poetry/single.html"): "works",
+}
+
 
 def main() -> int:
     errors = []
@@ -80,13 +93,30 @@ def main() -> int:
             if bad in text:
                 errors.append(f"{surface}: still contains hand-rolled chrome: {bad!r}")
 
+    for surface, section in ITEM_SURFACES.items():
+        if not surface.is_file():
+            errors.append(f"missing item surface file: {surface}")
+            continue
+        text = surface.read_text(encoding="utf-8")
+        if LAUNCHER_BAR_CALL not in text:
+            errors.append(f"{surface}: does not include {LAUNCHER_BAR_CALL}")
+        panel_call = f'partial "{section}/graph-panel.html"'
+        script_call = f'partial "{section}/graph-script.html"'
+        if panel_call not in text:
+            errors.append(f"{surface}: does not include {panel_call}")
+        if script_call not in text:
+            errors.append(f"{surface}: does not include {script_call}")
+
     if errors:
         print(f"check_graph_chrome: {len(errors)} issue(s):", file=sys.stderr)
         for e in errors:
             print(f"  - {e}", file=sys.stderr)
         return 1
 
-    print(f"check_graph_chrome: OK ({len(SURFACES)} surfaces)")
+    print(
+        f"check_graph_chrome: OK ({len(SURFACES)} graph surfaces, "
+        f"{len(ITEM_SURFACES)} item surfaces)"
+    )
     return 0
 
 

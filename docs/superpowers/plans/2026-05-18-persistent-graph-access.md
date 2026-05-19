@@ -107,14 +107,22 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ---
 
-## Task 2: Garden path-log delegates to the shared partial
+## Task 2: Garden path-log delegates to the shared partial (+ two regression fixes)
 
-The garden branch above reproduces the current `path-log.html` DOM **exactly** (same `.garden-path-log` class via `extraClass`, same `.path-log-*` children, same `data-slug`), with one intended change: the `⊞ Graph` toggle moves from inside `.path-log-actions` to the first (left) child. `garden-stack.js`, `garden-pathlog-popover.js`, and `check_garden_history.py` depend on the preserved markup and are unaffected; `garden-graph.js` selects `.graph-toggle` globally so the move is safe.
+The garden branch of the shared partial reproduces the current `path-log.html` DOM (same `.garden-path-log` class via `extraClass`, same `.path-log-*` children, same `data-slug`), with one intended change: the `⊞ Graph` toggle moves from inside `.path-log-actions` to the first (left) child. **That relocation creates two regressions** (found in Task 1 code review, confirmed by reading the code), both fixed here in the same atomic task:
+
+- **Fix A:** `assets/js/garden-stack.js` `updatePathLog()` (called at lines ~251/271/319 on every stack mutation) prunes every child of `.garden-path-log` that is not `.path-log-label`, `.path-log-actions`, or the `/garden/` anchor. The launcher used to survive because it lived *inside* `.path-log-actions`; as the nav's first child it would be **deleted on the first stack rebuild**, defeating the feature exactly during garden traversal. Add the launcher to the keep-set.
+- **Fix B:** `tools/check_garden_history.py` assertion 5 asserts the literal `/garden/history/` lives in `layouts/partials/garden/path-log.html`. After delegation that string moves into `graph-launcher-bar.html`; the gate (and its paired `test_check_garden_history.py`, which hard-codes the path-log expectation at line ~141) would fail. Retarget assertion 5 + its paired test to the link's real new home — no fake reference comment in the delegator.
+
+`garden-pathlog-popover.js` (selects `.path-log-count` / `.path-log-crumb.is-active[data-slug]`) and `garden-graph.js` (selects `.graph-toggle` globally) are genuinely unaffected — the preserved markup and the global toggle selector still work.
 
 **Files:**
 - Modify: `layouts/partials/garden/path-log.html` (full rewrite — 17 lines → delegator)
+- Modify: `assets/js/garden-stack.js` (Fix A — `updatePathLog()` keep-set, ~line 144-150)
+- Modify: `tools/check_garden_history.py` (Fix B — assertion 5 + docstring)
+- Modify: `tools/test_check_garden_history.py` (Fix B — paired-test fixture + retargeted case)
 
-- [ ] **Step 1: Replace the file contents**
+- [ ] **Step 1: Replace path-log.html with the delegator**
 
 Replace the entire contents of `layouts/partials/garden/path-log.html` with:
 
@@ -123,10 +131,12 @@ Replace the entire contents of `layouts/partials/garden/path-log.html` with:
        . — Hugo Page (the note being rendered)
    Delegates to the shared graph-launcher-bar (variant "garden"), which
    reproduces this nav's DOM verbatim (class .garden-path-log + .path-log-*
-   children + data-slug) so garden-stack.js / garden-pathlog-popover.js /
-   check_garden_history.py keep working. The only change vs. the old inline
-   markup: the ⊞ Graph launcher is now the left-most child (was inside
-   .path-log-actions), matching research + works. */ -}}
+   children + data-slug) so garden-stack.js / garden-pathlog-popover.js
+   keep working. The only change vs. the old inline markup: the ⊞ Graph
+   launcher is now the left-most child (was inside .path-log-actions),
+   matching research + works. The /garden/history/ chrome link now lives
+   in graph-launcher-bar.html (its garden branch); check_garden_history.py
+   assertion 5 tracks it there. */ -}}
 {{ partial "graph-launcher-bar.html" (dict
     "variant" "garden"
     "panelId" "garden-graph-panel"
@@ -135,7 +145,119 @@ Replace the entire contents of `layouts/partials/garden/path-log.html` with:
 ) }}
 ```
 
-- [ ] **Step 2: Build and confirm garden DOM is preserved**
+- [ ] **Step 2: Fix A — preserve the launcher across stack rebuilds**
+
+In `assets/js/garden-stack.js`, find (in `updatePathLog()`, ~line 142-150):
+
+```js
+  const label = log.querySelector('.path-log-label');
+  const actions = log.querySelector('.path-log-actions');
+  const gardenAnchor = log.querySelector('.path-log-crumb[href$="/garden/"]');
+
+  // Clear everything between label and actions, except the static "Garden" anchor
+  Array.from(log.children).forEach(child => {
+    if (child !== label && child !== actions && child !== gardenAnchor) {
+      log.removeChild(child);
+    }
+  });
+```
+
+Replace with:
+
+```js
+  const label = log.querySelector('.path-log-label');
+  const actions = log.querySelector('.path-log-actions');
+  const gardenAnchor = log.querySelector('.path-log-crumb[href$="/garden/"]');
+  // The ⊞ Graph launcher is now the bar's first child (shared
+  // graph-launcher-bar). It is persistent chrome — never prune it.
+  const toggle = log.querySelector('.graph-toggle');
+
+  // Clear everything between label and actions, except the static "Garden"
+  // anchor and the persistent graph launcher.
+  Array.from(log.children).forEach(child => {
+    if (child !== label && child !== actions && child !== gardenAnchor && child !== toggle) {
+      log.removeChild(child);
+    }
+  });
+```
+
+- [ ] **Step 3: Fix B — retarget the linter assertion**
+
+In `tools/check_garden_history.py`, the module docstring line currently reads:
+
+```
+  5. layouts/partials/garden/path-log.html references /garden/history/.
+```
+
+Replace it with:
+
+```
+  5. layouts/partials/graph-launcher-bar.html references /garden/history/
+     (the garden branch of the shared launcher bar; path-log.html delegates
+     to it).
+```
+
+Then find assertion 5's code:
+
+```python
+    # 5: path-log.html links to /garden/history/
+    pathlog = project_root / "layouts/partials/garden/path-log.html"
+    if pathlog.is_file():
+        text = pathlog.read_text(encoding="utf-8")
+        if "/garden/history/" not in text:
+            errors.append("layouts/partials/garden/path-log.html: missing chrome link to /garden/history/")
+    else:
+        errors.append("layouts/partials/garden/path-log.html: missing")
+```
+
+Replace with:
+
+```python
+    # 5: the shared launcher bar (garden branch) links to /garden/history/
+    launcher = project_root / "layouts/partials/graph-launcher-bar.html"
+    if launcher.is_file():
+        text = launcher.read_text(encoding="utf-8")
+        if "/garden/history/" not in text:
+            errors.append("layouts/partials/graph-launcher-bar.html: missing chrome link to /garden/history/")
+    else:
+        errors.append("layouts/partials/graph-launcher-bar.html: missing")
+```
+
+- [ ] **Step 4: Fix B — update the paired test**
+
+In `tools/test_check_garden_history.py`:
+
+(a) After the `PATHLOG_PARTIAL = """..."""` block (~line 49), add a fixture for the shared bar:
+
+```python
+GRAPH_LAUNCHER_BAR_PARTIAL = """\
+<nav class="graph-launcher-bar garden-path-log">
+  <button type="button" class="graph-toggle">⊞ Graph</button>
+  <a class="path-log-history" href="{{ "/garden/history/" | relURL }}">history</a>
+</nav>
+"""
+```
+
+(b) In `_layout_fixture`'s `files` dict, add the new file alongside the path-log entry:
+
+```python
+        "layouts/partials/garden/path-log.html": PATHLOG_PARTIAL,
+        "layouts/partials/graph-launcher-bar.html": GRAPH_LAUNCHER_BAR_PARTIAL,
+```
+
+(c) Replace the whole `test_pathlog_missing_history_link` method with a retargeted case:
+
+```python
+    def test_launcher_bar_missing_history_link(self):
+        bad = "<nav class=\"graph-launcher-bar garden-path-log\"></nav>\n"
+        with tempfile.TemporaryDirectory() as td:
+            root = _layout_fixture(Path(td), **{"layouts/partials/graph-launcher-bar.html": bad})
+            errors = lint.lint_garden_history(root)
+            self.assertTrue(any("graph-launcher-bar.html" in e and "/garden/history/" in e for e in errors),
+                            f"expected 'graph-launcher-bar missing /garden/history/', got: {errors}")
+```
+
+- [ ] **Step 5: Build and confirm garden DOM is preserved**
 
 Run:
 ```bash
@@ -144,19 +266,37 @@ grep -o 'class="graph-launcher-bar garden-path-log"' /tmp/pga-build/garden/*/ind
 grep -o 'class="path-log-crumb is-active"' /tmp/pga-build/garden/*/index.html | head -1
 grep -o 'class="path-log-count" data-stack-count="1"' /tmp/pga-build/garden/*/index.html | head -1
 grep -o 'class="path-log-history"' /tmp/pga-build/garden/*/index.html | head -1
+grep -o '/garden/history/' layouts/partials/graph-launcher-bar.html | head -1
 ```
-Expected: each `grep` prints one match (the garden DOM is intact under the shared partial).
+Expected: the first four `grep`s each print one match (garden DOM intact); the fifth confirms the history link now lives in the shared partial.
 
-- [ ] **Step 3: Run the garden-history gate (it asserts the path-log markup)**
+- [ ] **Step 6: Run the garden-history gate + paired test + a launcher-survives-prune check**
 
-Run: `python3 tools/check_garden_history.py && python3 -m unittest tools/test_check_garden_history.py 2>&1 | tail -1`
-Expected: `check_garden_history` prints OK; unittest prints `OK`.
+Run:
+```bash
+python3 tools/check_garden_history.py
+python3 -m unittest tools/test_check_garden_history.py 2>&1 | tail -1
+node -e '
+const fs=require("fs");
+const src=fs.readFileSync("assets/js/garden-stack.js","utf8");
+if(!/const toggle = log\.querySelector\(.\.graph-toggle.\);/.test(src)) { console.error("FAIL: keep-set toggle lookup missing"); process.exit(1); }
+if(!/child !== toggle/.test(src)) { console.error("FAIL: prune guard missing child !== toggle"); process.exit(1); }
+console.log("OK: Fix A guard present");
+' 2>/dev/null || grep -q "child !== toggle" assets/js/garden-stack.js && echo "OK: Fix A guard present"
+```
+Expected: `check_garden_history: OK`; unittest prints `OK`; `OK: Fix A guard present`. (The last line falls back to `grep` if `node` is unavailable — no npm in this repo; `node` may or may not be on PATH. Either path must print the OK line.)
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add layouts/partials/garden/path-log.html
+git add layouts/partials/garden/path-log.html assets/js/garden-stack.js tools/check_garden_history.py tools/test_check_garden_history.py
 git commit -m "refactor(graph): garden path-log delegates to shared launcher-bar
+
+Fix A: garden-stack.js updatePathLog() keep-set guards the relocated
+  ⊞ Graph launcher (now the bar's first child) from being pruned on
+  stack rebuilds.
+Fix B: check_garden_history.py assertion 5 + paired test track the
+  /garden/history/ chrome link at its new home (graph-launcher-bar.html).
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ```
@@ -455,10 +595,12 @@ Run:
 hugo --quiet --destination /tmp/pga-build
 python3 tools/check_research_fixtures.py
 python3 tools/check_research_links.py
-grep -o 'class="graph-launcher-bar" aria-label="Graph access" data-graph-current="[^"]*"' /tmp/pga-build/research/themes/*/index.html | head -1
+grep -o 'class="graph-launcher-bar"' /tmp/pga-build/research/themes/*/index.html | head -1
+grep -o 'data-graph-current="[^"]*"' /tmp/pga-build/research/themes/*/index.html | head -1
+grep -o '⊞ Graph' /tmp/pga-build/research/questions/*/index.html | head -1
 grep -c 'id="research-graph-panel"' /tmp/pga-build/research/questions/*/index.html | head -1
 ```
-Expected: build succeeds; both linters print OK; the `data-graph-current` `grep` prints one match; the panel `grep -c` prints `1`.
+Expected: build succeeds; both linters print OK; the bar-class `grep` prints one match; the `data-graph-current` `grep` prints one match; the `⊞ Graph` `grep` prints one match; the panel `grep -c` prints `1`. (Greps test each attribute independently — Hugo renders the `<nav>`'s attributes across source lines, so a single combined-line grep would falsely fail even when correct.)
 
 - [ ] **Step 8: Commit**
 
@@ -947,9 +1089,117 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ## Task 9: Full CI mirror + page-weight/LHCI verification + visual spot-check
 
-This task discharges the spec's "must verify, do not assume" risks (page-weight gate headroom; LHCI URLs) and the user's standing preference for a dev-server spot-check with an eyeball checklist before merge.
+This task discharges the spec's "must verify, do not assume" risks (page-weight gate headroom; LHCI URLs), retires dead CSS the slice orphaned, and the user's standing preference for a dev-server spot-check with an eyeball checklist before merge.
 
-**Files:** none (verification only)
+**Files:** `assets/css/main.css` (Step 0 dead-CSS removal); otherwise verification only.
+
+- [ ] **Step 0: Remove the orphaned `.research-breadcrumb` CSS (slice created the orphan)**
+
+Task 4 deleted the only `.research-breadcrumb` markup (both research single layouts now route the breadcrumb through the shared launcher bar). The CSS rules are now fully dead — confirm and remove:
+
+```bash
+grep -rn 'research-breadcrumb' layouts/ assets/ content/
+```
+Expected: matches ONLY in `assets/css/main.css` (the rule block + its `/* Breadcrumb … */` comment, ~lines 1858-1866). If any `layouts/`/`content/` match exists, STOP — the orphan assumption is wrong; report it.
+
+Delete the `.research-breadcrumb` rule block and its immediately-preceding comment line, e.g.:
+
+```css
+/* Breadcrumb … */
+.research-breadcrumb {
+  …
+}
+.research-breadcrumb a { color: var(--color-ink-soft); }
+.research-breadcrumb [aria-current="page"] { color: var(--color-ink); }
+```
+
+(Match the exact current text via `grep -n 'research-breadcrumb' assets/css/main.css`; delete only those rules + the one comment line that introduces them. Touch nothing else.)
+
+Then:
+```bash
+hugo --quiet --destination /tmp/pga-build
+python3 tools/check-contrast.py
+git add assets/css/main.css
+git commit -m "style(graph): remove orphaned .research-breadcrumb CSS
+
+Task 4 routed the research breadcrumb through the shared launcher bar
+and deleted the inline .research-breadcrumb navs; these rules are now
+dead. No remaining markup references them.
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
+```
+Expected: build clean; contrast gate green (the deleted rules used already-validated tokens; no checked pairing affected).
+
+- [ ] **Step 0b: A11y remediation — `inert` on `research/graph-panel.html` (regression caught by Step 1's LHCI)**
+
+The first CI-mirror run failed: LHCI `categories.accessibility` = **0.89 < 0.90** on the two LHCI-tested research item pages (`/research/themes/memory-and-play/`, `/research/questions/what-is-a-narrative-atom/`). Authoritative failing audits (`.lighthouseci/` LHR):
+- `aria-hidden-focus`: `<aside id="research-graph-panel" … aria-hidden="true">` contains focusable descendants. **This is our regression** — Tasks 4 put this panel on the LHCI-tested research item pages. `layouts/partials/garden/graph-panel.html` ships `inert` (so `aria-hidden`+focusable is valid); `research/graph-panel.html` does **not**, yet `research-graph.js` already round-trips it (`removeAttribute('inert')` on open, `setAttribute('inert','')` on close) — the static partial is simply missing the initial attribute.
+- `color-contrast` on `.tile-meta`: **pre-existing, not ours.** `note-tile.html` carried `.tile-meta` at branch-point `e036d0d`; research item pages have rendered supporting-notes/garden-topic tiles since before this slice (master is green only because pre-slice research items had no panel → no `aria-hidden-focus` → stayed ≥0.9 despite this). Out of scope for this slice; record as a discovered pre-existing bug for a separate ticket — do **not** fix here (it touches shared garden note-tile chrome).
+
+Fix (research only — `works/graph-panel.html` uses `hidden`, an already-a11y-safe closed state that `works-graph.js` manages differently; do not touch it):
+
+In `layouts/partials/research/graph-panel.html`, the opening tag:
+```html
+<aside id="research-graph-panel" class="graph-panel" aria-hidden="true"
+      role="region" aria-label="Research graph">
+```
+becomes (add `inert`, matching `garden/graph-panel.html`):
+```html
+<aside id="research-graph-panel" class="graph-panel" aria-hidden="true"
+      role="region" aria-label="Research graph" inert>
+```
+
+Then **empirically re-verify** (do not assume the score returns):
+```bash
+hugo --minify --quiet --destination ./public
+npx --yes @lhci/cli@0.13.x autorun --config=lighthouserc.mobile.json 2>&1 | tail -20
+python3 -m json.tool .lighthouseci/assertion-results.json
+```
+Expected: `.lighthouseci/assertion-results.json` is `[]` (or contains NO `accessibility` minScore failure for the two research item URLs); the two URLs now score accessibility ≥ 0.90. If still < 0.90, STOP and report — the tile-meta pre-existing issue may be load-bearing and needs escalation, not a silent budget change.
+
+Commit:
+```bash
+git add layouts/partials/research/graph-panel.html
+git commit -m "fix(a11y): inert on research graph-panel (LHCI aria-hidden-focus)
+
+Tasks 4 put research/graph-panel.html on the LHCI-tested research item
+pages; it lacked the `inert` that garden/graph-panel.html has, tripping
+aria-hidden-focus and dropping accessibility to 0.89 < 0.90. research-graph.js
+already round-trips inert (remove on open / restore on close); the static
+partial was just missing the initial attribute. Works panel uses `hidden`
+(already safe) and is intentionally untouched.
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
+```
+
+- [ ] **Step 0c: Works glyph-sprite regression (caught in Step 4 spot-check)**
+
+`works-graph.js` renders each node with an inline `<use href="#g-{medium}">`
+glyph resolved against `partials/works/glyph-sprite.html` (3 `<symbol>`s,
+`display:none`, "once per page"). The sprite is included on `works/list.html`
+(umbrella) + `works/graph.html` (standalone) but **not** on the 3 works single
+layouts — Task 5 added the works graph panel there without it, so item-page
+graph nodes have no icons (evidence: built `/works/games/<item>` has
+`works-graph-panel` but zero `id="g-game"` symbols; umbrella has the symbol).
+**Our regression.** Fix: add `{{ partial "works/glyph-sprite.html" . }}`
+immediately before the `{{ partial "works/graph-panel.html" . }}` line in
+`works-games/single.html`, `works-music/single.html`, `works-poetry/single.html`
+(co-located with the consumer; one inclusion per page = the established pattern;
+research has no glyphs so research layouts need no equivalent). Verify built
+item pages now contain `id="g-game"`/`g-music`/`g-poetry` and `<use href="#g-`.
+Commit: `fix(graph): include works glyph-sprite on works item pages (panel glyphs)`.
+
+- [ ] **Step 0d: Slim the canonical `.graph-toggle` (Step 4 spot-check — too chunky vs breadcrumb)**
+
+`.graph-toggle` (§27) is `padding: 0.28rem 0.7rem` + 1px border at
+`var(--text-xs)`; visually heavy beside the plain `--text-xs` breadcrumb in the
+launcher bar. The chrome-consistency canon is one rule / no per-section
+overrides, so refine the single rule uniformly: `padding: 0.28rem 0.7rem`
+→ `padding: 0.12rem 0.5rem` (font-size unchanged — the bulk is box padding, not
+text). Affects all 6+ launcher surfaces consistently (umbrella/standalone/garden
+path-log/item bars) — a uniform compaction, canon-preserving. Build + contrast
+gate (token-neutral; expect green). Commit:
+`style(graph): slim canonical .graph-toggle padding (spot-check)`.
 
 - [ ] **Step 1: Run the full CI mirror**
 
@@ -997,7 +1247,7 @@ Summarize: CI-mirror result, the page-weight numbers for the new pages, the LHCI
 - Option D shared sticky bar, left-aligned launcher → Task 1 (partial) + Task 3 (`.graph-launcher-bar` shell, launcher as first child).
 - Garden path-log refactored into the shared partial → Tasks 1 (garden branch) + 2 (delegator) + 3 (shell migration); DOM-preservation + linter coverage verified (Task 2 Steps 2-3).
 - `is-here` on research/works only, garden excluded → Task 1 (attribute only on `generic` variant) + Task 3 (CSS) + Task 7 (JS); garden branch never emits `data-graph-current`.
-- Stack coordination out of scope → no task touches `garden-stack.js`; garden DOM preserved so stack keeps working (verified Task 9 Step 4.4).
+- Stack *coordination* out of scope for research/works (they navigate, never stack) → Tasks 4-7 add no stacking. **Correction (Task 1 review):** the launcher relocation in Task 2 *does* require a defensive 2-line guard in `garden-stack.js` `updatePathLog()` (Fix A) so the stack renderer doesn't prune the relocated launcher — that is not stack coordination, just protecting persistent chrome. Garden stack behavior itself is unchanged; verified Task 6 (launcher-survives-prune) + Task 9 Step 4.4.
 - Mobile fallback → pre-existing `isMobile()` branch; verified Task 9 Step 4.5.
 - Gate extension → Task 8.
 - Page-weight + LHCI verify-not-assume → Task 9 Steps 2-3 (explicit stop-and-report on failure).

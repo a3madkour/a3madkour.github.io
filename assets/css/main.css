@@ -1146,7 +1146,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
  * popover, included for reference):
  *   1   — graph panel resize handle (inside .graph-panel, so
  *         it's already scoped under z=20; this value is intra-panel)
- *   5   — garden path log (sticky breadcrumb at top of stack)
+ *   5   — graph launcher bar (shared sticky launcher, .graph-launcher-bar §27)
  *  10   — essay narrow-viewport sidenote popover (§12)
  *  20   — garden graph side panel (slides over the page)
  *
@@ -1154,20 +1154,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
  * panel (modal, toast). Keep increments to round 5s so future additions
  * have headroom without renumbering.
  * ------------------------------------------------------------------ */
-.garden-path-log {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.55rem var(--page-gutter);
-  border-bottom: 1px solid var(--color-rule);
-  background: var(--color-tile);
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  font-family: var(--font-ui);
-  font-size: var(--text-xs);
-  flex-wrap: wrap;
-}
 .garden-path-log .path-log-label {
   color: var(--color-ink-soft);
   font-weight: 500;
@@ -1384,7 +1370,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   background: transparent;
   border: 1px solid var(--color-rule);
   border-radius: 4px;
-  padding: 0.28rem 0.7rem;
+  padding: 0.12rem 0.5rem;
   color: var(--color-ink-soft);
   cursor: pointer;
 }
@@ -1396,6 +1382,46 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   background: var(--color-burgundy);
   color: var(--color-tile);
   border-color: var(--color-burgundy);
+}
+
+/* --- Shared sticky graph-launcher bar (garden + research + works).
+       Shell migrated here from §24 .garden-path-log so all three sections
+       share one source of truth. The launcher is the first child
+       (left-aligned) so the fixed right-side .graph-panel never covers it. --- */
+.graph-launcher-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem var(--page-gutter);
+  border-bottom: 1px solid var(--color-rule);
+  background: var(--color-tile);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  flex-wrap: wrap;
+}
+.graph-launcher-bar .graph-toggle {
+  flex: 0 0 auto;
+}
+.graph-launcher-crumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--color-ink-soft);
+  min-width: 0;
+}
+.graph-launcher-crumb {
+  color: var(--color-burgundy);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--color-burgundy);
+  padding-bottom: 1px;
+}
+.graph-launcher-crumb.is-active {
+  color: var(--color-ink);
+  font-weight: 600;
+  border-bottom: none;
 }
 
 /* --- Graph toolbar (filter chips + actions). Context-free base; the
@@ -1829,16 +1855,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   color: var(--color-ink-soft);
 }
 
-/* Breadcrumb (used on theme page + question hub) */
-.research-breadcrumb {
-  font-family: var(--font-ui);
-  font-size: var(--text-xs);
-  color: var(--color-ink-soft);
-  margin: 1.5rem 0 0.5rem;
-}
-.research-breadcrumb a { color: var(--color-ink-soft); }
-.research-breadcrumb [aria-current="page"] { color: var(--color-ink); }
-
 /* Theme page */
 .research-theme-page { padding-top: 1rem; padding-bottom: 4rem; }
 .research-theme-hero { margin-bottom: 2rem; }
@@ -2069,6 +2085,17 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 }
 .research-graph-page .research-graph-canvas svg.is-panning {
   cursor: grabbing;
+}
+/* "You are here": the node for the current research item page. Shape
+   (thicker stroke ring) + color, never color-only (spec §1 a11y). */
+.research-graph-node.is-here circle,
+.research-graph-node.is-here rect {
+  stroke: var(--color-burgundy);
+  stroke-width: 3px;
+  paint-order: stroke;
+}
+.research-graph-node.is-here text {
+  font-weight: 700;
 }
 .research-graph-page .research-graph-canvas svg.is-dragging-node .research-graph-node,
 .graph-panel-canvas svg.is-dragging-node .research-graph-node {
@@ -2737,6 +2764,16 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   fill: url(#works-graph-badge-gradient);
   stroke: var(--color-rule);
   stroke-width: 1;
+}
+/* "You are here": the node for the current works item page. Shape +
+   color, never color-only (spec §1 a11y). */
+.works-graph-node.is-here .works-graph-node-badge {
+  stroke: var(--color-burgundy);
+  stroke-width: 3px;
+  paint-order: stroke;
+}
+.works-graph-node.is-here text {
+  font-weight: 700;
 }
 .works-graph-node[data-medium="game"] use { color: var(--color-burgundy); }
 .works-graph-node[data-medium="music"] use { color: var(--color-steel); }

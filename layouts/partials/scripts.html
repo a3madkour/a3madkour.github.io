@@ -27,9 +27,10 @@
 <script src="{{ $garden.RelPermalink }}" integrity="{{ $garden.Data.Integrity }}" defer></script>
 {{- end }}
 
-{{- $loadResearch := or
-     (and (eq .Section "research") (eq .Kind "section"))
-     (and (eq .Section "research") (eq .Layout "graph")) -}}
+{{- /* Graph JS on every research page: index + standalone graph (as before)
+       AND theme/question item pages, so the panel survives node-click
+       traversal (persistent-graph-access slice). */ -}}
+{{- $loadResearch := eq .Section "research" -}}
 {{- if $loadResearch }}
 {{- $researchOpts := dict "targetPath" "js/research.js" "minify" true -}}
 {{- $research := resources.Get "js/entry-research.js" | js.Build $researchOpts | fingerprint }}
@@ -37,10 +38,16 @@
 {{- end }}
 
 {{- /* Works split:
-       umbrella + standalone graph → entry-works-umbrella.js (~110 KB w/ d3)
-       per-item works pages       → entry-works.js (~6 KB, no d3) */ -}}
+       umbrella + standalone graph + per-item single pages
+                                  → entry-works-umbrella.js (~112 KB w/ d3),
+                                    so the graph panel survives node-click
+                                    traversal (persistent-graph-access slice).
+                                    Single pages have no filter-chip strip, so
+                                    they don't need entry-works.js.
+       works sub-index list pages → entry-works.js (~6 KB, no d3) */ -}}
 {{- $isUmbrella := or (eq .RelPermalink "/works/") (eq .RelPermalink "/works/graph/") -}}
-{{- if $isUmbrella }}
+{{- $loadWorksUmb := or $isUmbrella (and (eq .Section "works") (eq .Kind "page")) -}}
+{{- if $loadWorksUmb }}
 {{- $worksUmbOpts := dict "targetPath" "js/works-umbrella.js" "minify" true -}}
 {{- $worksUmb := resources.Get "js/entry-works-umbrella.js" | js.Build $worksUmbOpts | fingerprint }}
 <script src="{{ $worksUmb.RelPermalink }}" integrity="{{ $worksUmb.Data.Integrity }}" defer></script>

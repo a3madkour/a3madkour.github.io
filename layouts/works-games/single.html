@@ -1,4 +1,14 @@
 {{ define "main" }}
+{{ partial "graph-launcher-bar.html" (dict
+    "variant" "generic"
+    "panelId" "works-graph-panel"
+    "currentSlug" (path.Base .File.Dir)
+    "crumbs" (slice
+       (dict "label" "Works" "url" "/works/")
+       (dict "label" "Games" "url" "/works/games/")
+       (dict "label" .Title)
+    )
+) }}
 <article class="page works-game-page">
   <span data-pagefind-meta="section:works" hidden></span>
   <span data-pagefind-meta="medium:game" hidden></span>
@@ -69,4 +79,7 @@
   {{ partial "cite/static-fallback.html" . }}
   {{ partial "cite/data-blob.html" . }}
 </article>
+{{ partial "works/glyph-sprite.html" . }}
+{{ partial "works/graph-panel.html" . }}
+{{ partial "works/graph-script.html" . }}
 {{ end }}

@@ -160,12 +160,48 @@ stays enforced as the surface count grows.
   panel still not covered) before merge.
 - Run `tools/ci-local.sh` before pushing (mirrors CI step-for-step).
 
+## Known limitation (recorded during implementation)
+
+The shared partial's `generic` breadcrumb is a **two-state model**: a crumb
+with a `url` renders as a link; a crumb without a `url` renders as the
+current page (`<span … aria-current="page">`). There is no third "plain,
+non-link, non-current" state. The only place this matters is the
+research-question theme crumb's *fallback* branch (when a question's
+`theme` does not resolve to a rendered theme page): it is given
+`url: /research/` so it stays a single-`aria-current` page with a link to
+the research index (slightly off-target label, but valid markup). The old
+inline breadcrumb rendered that fallback as plain non-link text. This is
+acceptable because `tools/check_research_links.py` (a CI gate) guarantees
+every question's `theme` resolves, so the fallback is unreachable in a
+green build. If a future caller needs a genuine plain non-current crumb,
+add a third state to `graph-launcher-bar.html` then — out of scope here.
+
 ## Out of scope
 
 - Graph rendering, node/edge semantics, physics, filter dimensions — unchanged.
 - No `graph-core.js` extraction (ruled out in the prior slice; not revisited).
-- Garden graph *behavior* unchanged; only the launcher position moves.
+- Garden graph *behavior* unchanged; only the launcher position moves. (One
+  consequence found in implementation review: relocating the launcher to the
+  bar's first child requires a 2-line defensive guard in `garden-stack.js`
+  `updatePathLog()` so the stack renderer does not prune persistent chrome —
+  this protects the launcher, it is not new stack behavior.)
 - Stack coordination for research/works.
+
+## Discovered pre-existing issues (recorded during Task 9 verification — not fixed here)
+
+- **`.tile-meta` color-contrast** fails Lighthouse `color-contrast` on research
+  item pages. Pre-existing on master (`note-tile.html` carried `.tile-meta` at
+  branch-point; research items render supporting-notes/garden tiles since before
+  this slice). Master stayed ≥0.9 only because pre-slice research items had no
+  graph panel (hence no `aria-hidden-focus` penalty). Not this slice's
+  regression; touches shared garden note-tile chrome. **Action:** separate
+  ticket — out of scope here.
+- **Graph-panel closed-state mechanism diverges across sections** (a pre-existing
+  chrome inconsistency the prior chrome-consistency slice did not unify, since it
+  scoped only toolbar/legend): garden + research use `aria-hidden="true" inert`;
+  works uses `hidden`. Both are a11y-valid closed states. This slice fixes only
+  the missing `inert` on `research/graph-panel.html` (the actual LHCI-confirmed
+  regression); unifying the mechanism is out of scope.
 
 ## Dependency / sequencing
 
