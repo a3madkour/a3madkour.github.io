@@ -1172,6 +1172,35 @@ partial was just missing the initial attribute. Works panel uses `hidden`
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ```
 
+- [ ] **Step 0c: Works glyph-sprite regression (caught in Step 4 spot-check)**
+
+`works-graph.js` renders each node with an inline `<use href="#g-{medium}">`
+glyph resolved against `partials/works/glyph-sprite.html` (3 `<symbol>`s,
+`display:none`, "once per page"). The sprite is included on `works/list.html`
+(umbrella) + `works/graph.html` (standalone) but **not** on the 3 works single
+layouts — Task 5 added the works graph panel there without it, so item-page
+graph nodes have no icons (evidence: built `/works/games/<item>` has
+`works-graph-panel` but zero `id="g-game"` symbols; umbrella has the symbol).
+**Our regression.** Fix: add `{{ partial "works/glyph-sprite.html" . }}`
+immediately before the `{{ partial "works/graph-panel.html" . }}` line in
+`works-games/single.html`, `works-music/single.html`, `works-poetry/single.html`
+(co-located with the consumer; one inclusion per page = the established pattern;
+research has no glyphs so research layouts need no equivalent). Verify built
+item pages now contain `id="g-game"`/`g-music`/`g-poetry` and `<use href="#g-`.
+Commit: `fix(graph): include works glyph-sprite on works item pages (panel glyphs)`.
+
+- [ ] **Step 0d: Slim the canonical `.graph-toggle` (Step 4 spot-check — too chunky vs breadcrumb)**
+
+`.graph-toggle` (§27) is `padding: 0.28rem 0.7rem` + 1px border at
+`var(--text-xs)`; visually heavy beside the plain `--text-xs` breadcrumb in the
+launcher bar. The chrome-consistency canon is one rule / no per-section
+overrides, so refine the single rule uniformly: `padding: 0.28rem 0.7rem`
+→ `padding: 0.12rem 0.5rem` (font-size unchanged — the bulk is box padding, not
+text). Affects all 6+ launcher surfaces consistently (umbrella/standalone/garden
+path-log/item bars) — a uniform compaction, canon-preserving. Build + contrast
+gate (token-neutral; expect green). Commit:
+`style(graph): slim canonical .graph-toggle padding (spot-check)`.
+
 - [ ] **Step 1: Run the full CI mirror**
 
 Run: `tools/ci-local.sh 2>&1 | tail -40`
