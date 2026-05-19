@@ -161,6 +161,25 @@ class CheckPoetrySyncedTest(unittest.TestCase):
         errs, _ = lint.lint_file(p)
         self.assertTrue(any("no content" in e.lower() or "empty" in e.lower() for e in errs), errs)
 
+    # --- spec §3 edge-case warnings ---
+
+    def test_untimed_line_warns_but_passes(self) -> None:
+        p = self.repo.write("untimed", poem("[00:01]Lorem ipsum dolor\ncontinuation line here\n"))
+        errs, warns = lint.lint_file(p)
+        self.assertEqual(errs, [])
+        self.assertTrue(any("untimed" in w.lower() for w in warns), warns)
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 0)
+
+    def test_marker_at_eol_no_following_word_warns(self) -> None:
+        p = self.repo.write("eolmark", poem("[00:01]Lorem ipsum [00:05]\n"))
+        errs, warns = lint.lint_file(p)
+        self.assertEqual(errs, [])
+        self.assertTrue(
+            any("end of line" in w.lower() or "no following word" in w.lower() for w in warns),
+            warns,
+        )
+
     # --- runner ---
 
     def test_run_aggregates_and_returns_rc(self) -> None:

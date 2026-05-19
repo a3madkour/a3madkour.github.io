@@ -48,7 +48,7 @@ def _split_body(text: str) -> str:
 def _mask_escaped(body: str) -> str:
     """Replace every \\[mm:ss] with a bracket-free sentinel run so it is
     neither counted nor shape-checked."""
-    return ESCAPED_RE.sub(lambda m: _ESC_SENTINEL, body)
+    return ESCAPED_RE.sub(_ESC_SENTINEL, body)
 
 
 def _marker_seconds(mm: str, ss: str, frac: str | None) -> float:
@@ -137,6 +137,36 @@ def lint_file(md: Path) -> tuple[list[str], list[str]]:
                 f"plays in marker order; visual jumps possible"
             )
             break
+
+    # spec §3 edge-case warnings (informational; rc stays 0) ---------------
+    untimed = 0
+    first_untimed = ""
+    eol_marker = 0
+    first_eol = ""
+    for line in masked.splitlines():
+        content = LOOSE_RE.sub("", line).strip()
+        matches = list(LOOSE_RE.finditer(line))
+        if content:
+            if not LOOSE_RE.match(line.lstrip()):
+                untimed += 1
+                if not first_untimed:
+                    first_untimed = content[:40]
+        if matches:
+            last = matches[-1]
+            if line[last.end():].strip() == "":
+                eol_marker += 1
+                if not first_eol:
+                    first_eol = last.group(0)
+    if untimed:
+        warnings.append(
+            f"{md}: {untimed} untimed line(s) in a synced poem (each "
+            f"inherits prev_t + 0.5s); first: '{first_untimed}'"
+        )
+    if eol_marker:
+        warnings.append(
+            f"{md}: {eol_marker} marker(s) at end of line with no following "
+            f"word (ignored at runtime); first: {first_eol}"
+        )
 
     return errors, warnings
 
