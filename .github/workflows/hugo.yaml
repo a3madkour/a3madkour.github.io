@@ -89,6 +89,10 @@ jobs:
         run: python3 tools/check_works_links.py
       - name: Run works links linter unit tests
         run: python3 -m unittest tools/test_check_works_links.py -v
+      - name: Verify synced-poetry markers
+        run: python3 tools/check_poetry_synced.py
+      - name: Run synced-poetry linter unit tests
+        run: python3 -m unittest tools/test_check_poetry_synced.py -v
       - name: Verify library fixtures
         run: python3 tools/check_library_fixtures.py
       - name: Run library fixture linter unit tests
