@@ -63,6 +63,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
     btn.addEventListener('click', () => {
       const willOpen = btn.getAttribute('aria-expanded') !== 'true';
+      // Spec decision 3: a manual click is an additive peek — it must not
+      // collapse the section scrollspy considers active (it would only
+      // snap back open on the next scroll). Closing any OTHER section, or
+      // opening any section, is allowed.
+      const activeLink = tocRoot.querySelector('.is-active');
+      const activeMeta = activeLink
+        ? metas.find((m) => m.li.contains(activeLink))
+        : null;
+      if (!willOpen && meta === activeMeta) return;
       setExpanded(meta, willOpen, false); // manual => animated peek
     });
   });
