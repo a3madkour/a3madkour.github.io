@@ -1437,7 +1437,15 @@ git commit -m "ci: wire synced-poetry linter pair (workflow + ci-local)"
 
 - [ ] **Step 1: Update the linter-pair count + enumeration**
 
-In the `## Commands` section, change `Twenty linter pairs under tools/check_*.py ...` to `Twenty-one linter pairs ...` and append `, synced poetry` to the enumerated list (after `page weights`... — actually after `works links`/in the works grouping; place `synced poetry` right after `works links` in the prose list).
+In the `## Commands` section, change `Twenty linter pairs under tools/check_*.py ...` to `Twenty-one linter pairs ...` and insert `synced poetry, ` into the enumerated list immediately after `works links, ` (so the works grouping reads `… works fixtures, works links, synced poetry, library fixtures, …`).
+
+- [ ] **Step 1b: Reconcile the Deployment step counts (verified, not guessed)**
+
+In the `### Deployment` section, the pre-build parenthetical is pre-existing-stale (`17 linter pairs` while Commands already said twenty) AND this slice adds the 21st pair (+2 named workflow steps). The correct figures were verified against the actual workflow (`grep -c '^      - name:' .github/workflows/hugo.yaml` → 55; 21 paired linters; `check_graph_chrome.py` is the one pre-build sibling-less step; pre-build = contrast 1 + 21·2 + 1 = 44). Make these three exact replacements on the Deployment line:
+- `contrast + 17 linter pairs + 1 sibling-less = 36 steps` → `contrast + 21 linter pairs + 1 sibling-less = 44 steps`
+- `Total: 53 named steps` → `Total: 55 named steps`
+
+(These are now exactly accurate against the workflow; this also closes the long-standing Commands-vs-Deployment count drift.)
 
 - [ ] **Step 2: Update the JS pipeline entry table**
 
