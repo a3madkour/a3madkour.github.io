@@ -1130,6 +1130,48 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ```
 Expected: build clean; contrast gate green (the deleted rules used already-validated tokens; no checked pairing affected).
 
+- [ ] **Step 0b: A11y remediation — `inert` on `research/graph-panel.html` (regression caught by Step 1's LHCI)**
+
+The first CI-mirror run failed: LHCI `categories.accessibility` = **0.89 < 0.90** on the two LHCI-tested research item pages (`/research/themes/memory-and-play/`, `/research/questions/what-is-a-narrative-atom/`). Authoritative failing audits (`.lighthouseci/` LHR):
+- `aria-hidden-focus`: `<aside id="research-graph-panel" … aria-hidden="true">` contains focusable descendants. **This is our regression** — Tasks 4 put this panel on the LHCI-tested research item pages. `layouts/partials/garden/graph-panel.html` ships `inert` (so `aria-hidden`+focusable is valid); `research/graph-panel.html` does **not**, yet `research-graph.js` already round-trips it (`removeAttribute('inert')` on open, `setAttribute('inert','')` on close) — the static partial is simply missing the initial attribute.
+- `color-contrast` on `.tile-meta`: **pre-existing, not ours.** `note-tile.html` carried `.tile-meta` at branch-point `e036d0d`; research item pages have rendered supporting-notes/garden-topic tiles since before this slice (master is green only because pre-slice research items had no panel → no `aria-hidden-focus` → stayed ≥0.9 despite this). Out of scope for this slice; record as a discovered pre-existing bug for a separate ticket — do **not** fix here (it touches shared garden note-tile chrome).
+
+Fix (research only — `works/graph-panel.html` uses `hidden`, an already-a11y-safe closed state that `works-graph.js` manages differently; do not touch it):
+
+In `layouts/partials/research/graph-panel.html`, the opening tag:
+```html
+<aside id="research-graph-panel" class="graph-panel" aria-hidden="true"
+      role="region" aria-label="Research graph">
+```
+becomes (add `inert`, matching `garden/graph-panel.html`):
+```html
+<aside id="research-graph-panel" class="graph-panel" aria-hidden="true"
+      role="region" aria-label="Research graph" inert>
+```
+
+Then **empirically re-verify** (do not assume the score returns):
+```bash
+hugo --minify --quiet --destination ./public
+npx --yes @lhci/cli@0.13.x autorun --config=lighthouserc.mobile.json 2>&1 | tail -20
+python3 -m json.tool .lighthouseci/assertion-results.json
+```
+Expected: `.lighthouseci/assertion-results.json` is `[]` (or contains NO `accessibility` minScore failure for the two research item URLs); the two URLs now score accessibility ≥ 0.90. If still < 0.90, STOP and report — the tile-meta pre-existing issue may be load-bearing and needs escalation, not a silent budget change.
+
+Commit:
+```bash
+git add layouts/partials/research/graph-panel.html
+git commit -m "fix(a11y): inert on research graph-panel (LHCI aria-hidden-focus)
+
+Tasks 4 put research/graph-panel.html on the LHCI-tested research item
+pages; it lacked the `inert` that garden/graph-panel.html has, tripping
+aria-hidden-focus and dropping accessibility to 0.89 < 0.90. research-graph.js
+already round-trips inert (remove on open / restore on close); the static
+partial was just missing the initial attribute. Works panel uses `hidden`
+(already safe) and is intentionally untouched.
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
+```
+
 - [ ] **Step 1: Run the full CI mirror**
 
 Run: `tools/ci-local.sh 2>&1 | tail -40`

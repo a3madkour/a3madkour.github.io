@@ -187,6 +187,22 @@ add a third state to `graph-launcher-bar.html` then — out of scope here.
   this protects the launcher, it is not new stack behavior.)
 - Stack coordination for research/works.
 
+## Discovered pre-existing issues (recorded during Task 9 verification — not fixed here)
+
+- **`.tile-meta` color-contrast** fails Lighthouse `color-contrast` on research
+  item pages. Pre-existing on master (`note-tile.html` carried `.tile-meta` at
+  branch-point; research items render supporting-notes/garden tiles since before
+  this slice). Master stayed ≥0.9 only because pre-slice research items had no
+  graph panel (hence no `aria-hidden-focus` penalty). Not this slice's
+  regression; touches shared garden note-tile chrome. **Action:** separate
+  ticket — out of scope here.
+- **Graph-panel closed-state mechanism diverges across sections** (a pre-existing
+  chrome inconsistency the prior chrome-consistency slice did not unify, since it
+  scoped only toolbar/legend): garden + research use `aria-hidden="true" inert`;
+  works uses `hidden`. Both are a11y-valid closed states. This slice fixes only
+  the missing `inert` on `research/graph-panel.html` (the actual LHCI-confirmed
+  regression); unifying the mechanism is out of scope.
+
 ## Dependency / sequencing
 
 Soft-depends on the graph-view chrome-consistency slice (shipped 2026-05-16) for
