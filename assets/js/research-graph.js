@@ -288,7 +288,8 @@ async function buildSimulation(canvas) {
   // data-theme-color drives fill via CSS §31; data-status surfaces for filtering.
   const nodeEls = nodes.map(n => {
     const g = document.createElementNS(SVG_NS, 'g');
-    g.setAttribute('class', `research-graph-node research-graph-node-${n.kind}`);
+    g.setAttribute('class', `research-graph-node research-graph-node-${n.kind}`
+      + (state.page.currentSlug && n.slug === state.page.currentSlug ? ' is-here' : ''));
     g.setAttribute('data-theme-color', String(n.themeColorIdx));
     g.setAttribute('data-status', n.status || '');
     g.setAttribute('tabindex', '0');
@@ -706,6 +707,8 @@ function init() {
   if (!state.data) return;
   state.panel = document.getElementById('research-graph-panel');
   state.page.isMobile = isMobile();
+  const hereBar = document.querySelector('.graph-launcher-bar[data-graph-current]');
+  state.page.currentSlug = hereBar ? hereBar.dataset.graphCurrent : null;
 
   const isGraphPage = !!document.querySelector('.research-graph-page');
 
