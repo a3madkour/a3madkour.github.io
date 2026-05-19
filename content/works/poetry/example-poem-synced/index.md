@@ -6,6 +6,7 @@ draft: false
 lines: 8
 collection: greenhouse-demos
 tags: [example, synced]
+summary: "Example synced poem — dummy filler exercising the timed-reveal runtime."
 audio_url: "https://example.com/example-reading.mp3"
 ---
 

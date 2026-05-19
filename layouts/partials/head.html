@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="author" content="Abdelrahman Madkour">
-  {{ $description := or .Description .Summary site.Params.description }}
+  {{ $description := replaceRE `\[\d{1,2}:\d{2}(?:\.\d{1,2})?\]` "" (or .Description .Summary site.Params.description "") }}
   {{ with $description }}<meta name="description" content="{{ . }}">{{ end }}
   <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} | {{ site.Title }}{{ end }}</title>
   <link rel="canonical" href="{{ .Permalink }}">
