@@ -91,7 +91,31 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Scrollspy (drives both highlight and collapse) -------------------
+  // Suppress scrollspy while a TOC-click smooth-scroll is animating, so
+  // the highlight/collapse doesn't churn through every intervening
+  // section. Released on scrollend, a timeout backstop, or as soon as
+  // the reader takes over scrolling (wheel/touch).
+  let scrollLock = false;
+  let lockTimer = 0;
+  function releaseLock() {
+    if (!scrollLock) return;
+    scrollLock = false;
+    clearTimeout(lockTimer);
+    updateActive();
+  }
+
+  function setActiveByHref(activeHref) {
+    let activeLink = null;
+    tocLinks.forEach((a) => {
+      const on = a.getAttribute('href') === activeHref;
+      a.classList.toggle('is-active', on);
+      if (on) activeLink = a;
+    });
+    applyActive(activeLink);
+  }
+
   function updateActive() {
+    if (scrollLock) return;
     const scrollY = window.scrollY;
     const viewHeight = window.innerHeight;
     const docHeight = document.documentElement.scrollHeight;
@@ -108,18 +132,26 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       }
     }
-
-    let activeLink = null;
-    tocLinks.forEach((a) => {
-      const on = a.getAttribute('href') === activeHref;
-      a.classList.toggle('is-active', on);
-      if (on) activeLink = a;
-    });
-    applyActive(activeLink);
+    setActiveByHref(activeHref);
   }
 
   window.addEventListener('scroll', updateActive, { passive: true });
   window.addEventListener('resize', updateActive, { passive: true });
+  tocLinks.forEach((a) => {
+    a.addEventListener('click', () => {
+      const href = a.getAttribute('href');
+      if (!href || !document.querySelector(href)) return;
+      // essay.js owns the smooth-scroll + history; we only freeze the
+      // scrollspy and snap state straight to the clicked target.
+      scrollLock = true;
+      clearTimeout(lockTimer);
+      lockTimer = setTimeout(releaseLock, 1000);
+      setActiveByHref(href);
+    });
+  });
+  window.addEventListener('scrollend', releaseLock);
+  window.addEventListener('wheel', releaseLock, { passive: true });
+  window.addEventListener('touchmove', releaseLock, { passive: true });
   updateActive();
 });
 
