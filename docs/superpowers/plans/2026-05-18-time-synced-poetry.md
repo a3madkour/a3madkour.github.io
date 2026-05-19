@@ -523,6 +523,16 @@ git add tools/check_poetry_synced.py tools/test_check_poetry_synced.py
 git commit -m "feat(tools): synced-poetry marker linter (21st linter pair)"
 ```
 
+> **Amendment (applied during execution, code-review-driven):** spec §3's
+> edge-case table additionally mandates two **warning-only** linter checks
+> beyond the six in §8 — "Untimed line within a synced poem" and "Marker at
+> end-of-line with no following word". These were added to `lint_file` as
+> warnings (appended to `warnings`, never `errors`; `run()` rc stays 0) plus
+> regression tests, in follow-up commits. The untimed-line check fires only
+> when a content line has **no marker anywhere** (`LOOSE_RE.search`), so a
+> partially-timed mid-line-marker line is not flagged. Net: the linter pair
+> shipped is 24 tests, fully spec §3+§8 compliant.
+
 ---
 
 ## Task 3: Synced-poetry fixture
@@ -575,7 +585,14 @@ Expected:
 check_works_fixtures: OK
 check_poetry_synced: OK
 ```
-(No stderr `WARN` lines — markers are monotonic.)
+**Expected stderr:** exactly one informational line —
+`WARN .../example-poem-synced/index.md: 4 untimed line(s) in a synced poem
+(each inherits prev_t + 0.5s); first: '...'`. This is **expected and
+correct**: the fixture deliberately exercises spec §3's untimed-line
+inheritance (only the first line of each stanza is timed). Warnings do not
+fail the linter — `check_poetry_synced` still exits 0 / prints `OK`, so CI
+stays green. There must be **no** `ERROR`/non-zero exit, no monotonic
+warning, and no trailing-marker warning.
 
 - [ ] **Step 3: Commit**
 
@@ -1408,7 +1425,7 @@ After merge + push: add `project_time_synced_poetry_slice.md` to memory (merge h
 **1. Spec coverage:**
 - §1 scope / two modes / player UI / fade-in flourish → Tasks 4–6 (parser, JS, CSS).
 - §2 Hugo-side parse, DOM-first, mode by `data-audio-src` → Tasks 4, 5.
-- §3 marker grammar incl. all edge cases (untimed +0.5, escape, non-monotonic, audio fail) → parser Task 4 + JS Task 5 + linter Task 2.
+- §3 marker grammar incl. all edge cases (untimed +0.5, escape, non-monotonic, audio fail) → parser Task 4 + JS Task 5 + linter Task 2. **§3's two "Linter warns" rows (untimed-line, trailing-marker) were added to Task 2's linter during execution (see the Task 2 amendment note) — initially missed in this plan; fixed.**
 - §4 auto-detection routing, partial signatures, per-line/per-word logic, build-time stripping → Task 4 (router counts real = total − escaped; `.RawContent` is already frontmatter-free, improving on the spec's "strip frontmatter" wording).
 - §5 `audio_url` frontmatter (relative/absolute/absent) → Task 1 (fixture-linter accepts), Task 2 (validity), Task 5 (runtime resolves).
 - §6 JS runtime responsibilities 1–10 → Task 5 (`poem-synced.js` covers init, mode, JS-built player, play/pause, reveal+flourish, reset, seek drag, show-all, audio-error fallback).
