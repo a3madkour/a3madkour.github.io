@@ -3,14 +3,21 @@
        Output: HTML string (stanzas/lines/words with data-t + the wrapper's
        data-duration computed). Caller pipes through safeHTML.
 
-       Marker grammar: \[\d{1,2}:\d{2}(?:\.\d{1,2})?\]  (spec §3).
+       Marker grammar: \[\d{1,2}:\d{2}(?:\.\d{1,2})?\]  (spec §3). This
+       grammar is duplicated (no cross-partial constants in Hugo) in
+       works-poetry/single.html, head.html, and this file; the canonical
+       copy + validation lives in tools/check_poetry_synced.py — change all
+       sites in lockstep.
        Escaped \[mm:ss] → literal [mm:ss] text (sentinel round-trip).      */ -}}
 
 {{- $raw := .raw -}}
 {{- $page := .page -}}
 {{- $markerRE := `\[\d{1,2}:\d{2}(?:\.\d{1,2})?\]` -}}
 
-{{- /* Protect escaped markers: \[02:03] → ⟦ESC:02:03⟧ (bracket-free). */ -}}
+{{- /* Protect escaped markers: \[02:03] → ⟦ESC:02:03⟧ (bracket-free).
+       U+27E6/U+27E7 chosen as collision-improbable in prose; NOT safe
+       against input that literally contains "⟦ESC:mm:ss⟧" — acceptable for
+       hand-authored poetry / fixtures (no untrusted input). */ -}}
 {{- $raw = replaceRE `\\\[(\d{1,2}:\d{2}(?:\.\d{1,2})?)\]` "⟦ESC:$1⟧" $raw -}}
 
 {{- $lines := split $raw "\n" -}}
