@@ -20,6 +20,8 @@ function setupOne(wrap) {
   ).map((el) => ({ el, t: parseFloat(el.getAttribute('data-t')) || 0 }))
    .sort((a, b) => a.t - b.t);
 
+  const flourishTimers = new Map(); // span-record → pending setTimeout id
+
   let duration = parseFloat(wrap.getAttribute('data-duration')) || 0;
   const src = wrap.getAttribute('data-audio-src');
 
@@ -37,7 +39,8 @@ function setupOne(wrap) {
     '<div class="poem-player-progress-thumb"></div></div>' +
     '<span class="poem-player-time">0:00 / 0:00</span>' +
     '<button type="button" class="poem-player-show-all" data-act="showall" ' +
-    'aria-pressed="false">👁 Show all</button>';
+    'aria-pressed="false" aria-label="Show all verses">' +
+    '<span aria-hidden="true">👁</span> Show all</button>';
   wrap.parentNode.insertBefore(player, wrap);
 
   const playBtn = player.querySelector('[data-act="play"]');
@@ -91,12 +94,16 @@ function setupOne(wrap) {
         if (!s.el.classList.contains('is-visible') &&
             !s.el.classList.contains('is-current')) {
           s.el.classList.add('is-current');
-          setTimeout(() => {
+          const tid = setTimeout(() => {
+            flourishTimers.delete(s);
             s.el.classList.remove('is-current');
             s.el.classList.add('is-visible');
           }, FLOURISH_MS);
+          flourishTimers.set(s, tid);
         }
       } else {
+        const tid = flourishTimers.get(s);
+        if (tid !== undefined) { clearTimeout(tid); flourishTimers.delete(s); }
         s.el.classList.remove('is-current', 'is-visible');
       }
     }
@@ -106,6 +113,7 @@ function setupOne(wrap) {
     timeEl.textContent = `${fmt(now)} / ${fmt(duration)}`;
     bar.setAttribute('aria-valuemax', String(Math.floor(duration)));
     bar.setAttribute('aria-valuenow', String(Math.floor(now)));
+    bar.setAttribute('aria-valuetext', `${fmt(now)} of ${fmt(duration)}`);
   }
 
   function tick() {
@@ -182,6 +190,7 @@ function setupOne(wrap) {
   });
   bar.addEventListener('pointermove', (e) => { if (dragging) seek(e.clientX); });
   bar.addEventListener('pointerup', () => { dragging = false; });
+  bar.addEventListener('pointercancel', () => { dragging = false; });
   bar.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
       e.preventDefault();
