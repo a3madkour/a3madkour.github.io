@@ -1121,17 +1121,23 @@ In `layouts/partials/scripts.html`, append this block at the end of the file (af
 
 Run:
 
+Run (non-minified build for stable attribute quoting — the production HTML
+minifier can unquote `src=`; bundle wiring is orthogonal to minification, so
+assert on non-minified then separately confirm the minified build succeeds):
+
 ```bash
 cd /Stuff/a3madkour/Sync/Workspace/a3madkour.github.io/.worktrees/time-synced-poetry
 pkill -f 'hugo server' 2>/dev/null || true
-rm -rf public && HUGO_ENVIRONMENT=production hugo --minify >/dev/null 2>&1 && echo BUILD_OK
-grep -o 'src="/js/poetry\.[0-9a-f]*\.js"' public/works/poetry/example-poem-synced/index.html | head -1
-grep -l 'js/poetry\.' public/works/games/*/index.html 2>/dev/null && echo "LEAKED_TO_GAMES" || echo "NOT_ON_GAMES"
-grep -l 'js/poetry\.' public/works/music/*/index.html 2>/dev/null && echo "LEAKED_TO_MUSIC" || echo "NOT_ON_MUSIC"
-ls -la public/js/poetry.*.js
+rm -rf public && HUGO_ENVIRONMENT=production hugo 2>&1 | tail -3
+echo "--- poetry bundle on the synced poem page ---"; grep -oE '/js/poetry\.[0-9a-f]+\.js' public/works/poetry/example-poem-synced/index.html | head -1
+echo "--- SRI integrity present on the poetry script tag ---"; grep -oE '<script src="/js/poetry\.[0-9a-f]+\.js" integrity="sha[0-9]+-[^"]+" defer>' public/works/poetry/example-poem-synced/index.html | head -1
+echo "--- NOT on games single pages ---"; grep -lE '/js/poetry\.[0-9a-f]+\.js' public/works/games/*/index.html 2>/dev/null && echo LEAKED_TO_GAMES || echo NOT_ON_GAMES
+echo "--- NOT on music single pages ---"; grep -lE '/js/poetry\.[0-9a-f]+\.js' public/works/music/*/index.html 2>/dev/null && echo LEAKED_TO_MUSIC || echo NOT_ON_MUSIC
+echo "--- bundle artifact + size ---"; ls -la public/js/poetry.*.js
+echo "--- minified production build also succeeds ---"; rm -rf public && HUGO_ENVIRONMENT=production hugo --minify 2>&1 | tail -1; test -f public/works/poetry/example-poem-synced/index.html && echo MINIFY_BUILD_OK
 ```
 
-Expected: `BUILD_OK`; one `src="/js/poetry.<hash>.js"` on the poetry page; `NOT_ON_GAMES`; `NOT_ON_MUSIC`; the built bundle exists (~6–8 KB).
+Expected: no Hugo `ERROR`; a `/js/poetry.<hash>.js` path on the poetry page; the SRI grep matches (the script tag carries `integrity="sha…"` + `defer`); `NOT_ON_GAMES`; `NOT_ON_MUSIC` (games/music single pages load `works-umbrella.<hash>.js`, not poetry); the built `public/js/poetry.<hash>.js` exists (~6–8 KB minified by `js.Build`'s own `minify:true`, independent of HTML minification); and `MINIFY_BUILD_OK`. (The poetry page legitimately *also* carries `works-umbrella.<hash>.js` — that's the pre-existing persistent-graph bundle, not a conflict.)
 
 - [ ] **Step 5: Commit**
 
