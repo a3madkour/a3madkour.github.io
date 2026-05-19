@@ -14,10 +14,14 @@ function fmt(t) {
 }
 
 function setupOne(wrap) {
-  const wordSel = wrap.querySelectorAll('.poem-word[data-t]');
-  const spans = Array.from(
-    wordSel.length ? wordSel : wrap.querySelectorAll('.poem-line[data-t]')
-  ).map((el) => ({ el, t: parseFloat(el.getAttribute('data-t')) || 0 }))
+  // Track every individually-timed element: word spans (word/uniform mode)
+  // PLUS markdown line-mode lines. Since word-wrapper lines carry NO data-t
+  // (only words/line-mode lines do), these two sets never overlap, so a
+  // poem mixing word lines and markdown lines reveals both.
+  const spans = [
+    ...wrap.querySelectorAll('.poem-word[data-t]'),
+    ...wrap.querySelectorAll('.poem-line[data-t]'),
+  ].map((el) => ({ el, t: parseFloat(el.getAttribute('data-t')) || 0 }))
    .sort((a, b) => a.t - b.t);
 
   const flourishTimers = new Map(); // span-record → pending setTimeout id

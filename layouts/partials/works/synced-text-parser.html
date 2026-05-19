@@ -79,7 +79,7 @@
           {{- end -}}
         {{- end -}}
       {{- end -}}
-      {{- $lineHTML = printf "<span class=\"poem-line\" data-t=\"%g\">%s</span>" $lineT (delimit $words "") -}}
+      {{- $lineHTML = printf "<span class=\"poem-line\">%s</span>" (delimit $words "") -}}
     {{- else if gt (len $hasMd) 0 -}}
       {{- /* inline markdown, no mid-line markers → single line span */ -}}
       {{- $rendered := chomp ($page.RenderString (dict "display" "inline") $line) -}}
@@ -93,7 +93,7 @@
           {{- $words = $words | append (printf "<span class=\"poem-word\" data-t=\"%g\">%s </span>" $lineT (htmlEscape $tok)) -}}
         {{- end -}}
       {{- end -}}
-      {{- $lineHTML = printf "<span class=\"poem-line\" data-t=\"%g\">%s</span>" $lineT (delimit $words "") -}}
+      {{- $lineHTML = printf "<span class=\"poem-line\">%s</span>" (delimit $words "") -}}
     {{- end -}}
 
     {{- $cur = $cur | append $lineHTML -}}
