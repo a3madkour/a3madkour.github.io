@@ -21,6 +21,9 @@ python3 tools/check-contrast.py
 python3 tools/check_fixtures.py
 python3 -m unittest tools/test_check_fixtures.py -v 2>&1 | tail -3
 
+python3 tools/check_toc_depth.py
+python3 -m unittest tools/test_check_toc_depth.py -v 2>&1 | tail -3
+
 python3 tools/check_garden_fixtures.py
 python3 -m unittest tools/test_check_garden_fixtures.py -v 2>&1 | tail -3
 
