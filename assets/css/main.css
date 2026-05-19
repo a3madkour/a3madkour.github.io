@@ -1855,16 +1855,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   color: var(--color-ink-soft);
 }
 
-/* Breadcrumb (used on theme page + question hub) */
-.research-breadcrumb {
-  font-family: var(--font-ui);
-  font-size: var(--text-xs);
-  color: var(--color-ink-soft);
-  margin: 1.5rem 0 0.5rem;
-}
-.research-breadcrumb a { color: var(--color-ink-soft); }
-.research-breadcrumb [aria-current="page"] { color: var(--color-ink); }
-
 /* Theme page */
 .research-theme-page { padding-top: 1rem; padding-bottom: 4rem; }
 .research-theme-hero { margin-bottom: 2rem; }
