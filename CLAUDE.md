@@ -156,6 +156,7 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 - **Design spec (canonical)**: `docs/superpowers/specs/2026-05-03-personal-site-design.md`. §14 is the master phase list.
 - **Per-slice specs and plans** under `docs/superpowers/{specs,plans}/`, dated by slice. Memory has shipped-slice details (`project_*.md`); the queued-work entries below cover what's still ahead.
 - **Time-synced poetry**: `docs/superpowers/specs/2026-05-13-time-synced-poetry-design.md` (designed) + `docs/superpowers/plans/2026-05-18-time-synced-poetry.md` (plan). Shipped — see memory `project_time_synced_poetry_slice.md`.
+- **Org → synced-poetry export**: `docs/superpowers/specs/2026-05-19-org-synced-poetry-export.md` (stub, no plan). Phase 3 — elisp/ox-hugo emits the shipped synced-poetry markup contract from real org content.
 - **Streams section**: `docs/superpowers/specs/2026-05-13-streams-section-design.md`. New `/streams/` top-level; cron-polled live state.
 - **Multi-target export**: `docs/superpowers/specs/2026-05-13-multi-target-export-design.md`. Phase 3 Slice 3 — literate org → Hugo + PDF + Word.
 - **TOC collapsible subsections**: `docs/superpowers/specs/2026-05-14-toc-collapsible-subsections-design.md` (designed) + `docs/superpowers/plans/2026-05-18-toc-collapsible-subsections.md` (plan). Shipped — see memory `project_toc_collapsible_subsections_slice.md`.
@@ -167,7 +168,7 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 **Not started, in phase order:**
 
 - **About Now widget** — Phase 3-blocked (needs elisp pipeline).
-- **Phase 3 — org-mode pipeline**: elisp + ox-hugo wires real content into the fixture-shaped data files. **Two separate publishing commands** required (spec §14 Phase 3): Garden/Library/Research publish (frequent, idempotent — "living" surfaces) and Essay publish (per-post, deliberate — hero/figures/sidenotes/citations rolled in).
+- **Phase 3 — org-mode pipeline**: elisp + ox-hugo wires real content into the fixture-shaped data files. **Two separate publishing commands** required (spec §14 Phase 3): Garden/Library/Research publish (frequent, idempotent — "living" surfaces) and Essay publish (per-post, deliberate — hero/figures/sidenotes/citations rolled in). The Essay/poetry publish must additionally emit the **synced-poetry markup contract** (`[mm:ss]` body markers + optional `audio_url`) for the runtime shipped 2026-05-19 — stub `docs/superpowers/specs/2026-05-19-org-synced-poetry-export.md`.
 - **Phase 8 follow-up: interactive QA walkthrough.** Static-findable issues resolved (commit `7ac2539`). Remaining items in `docs/superpowers/qa-checklists/2026-05-13-phase-8-final-qa.md` need a human at keyboard / screen-reader / DevTools deficiency emulation / mobile device (§1.1–1.5, §1.7–1.9, §2, §3, §4 at breakpoints 360/414/768/960/1220, §5).
 
 **Designed but not yet implemented** (pick up via `superpowers:executing-plans` when scheduled):
@@ -176,6 +177,7 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 |---|---|---|
 | Streams section | Independent (β parallel with Phase 3 or γ after) | New 7th top-level `/streams/`; cron GitHub Action polls Twitch + YouTube. Bidirectional cross-refs (2 new linter pairs). |
 | Multi-target export | **Phase 3 Slice 3** | One Emacs command publishes literate org → Hugo essay + PDF + Word. Hard dep on Phase 3 Slices 1+2. |
+| Org → synced-poetry export | **Phase 3** (rides Essay/poetry publish) | elisp/ox-hugo emits the shipped `[mm:ss]` body-marker + `audio_url` contract; output must pass `check_poetry_synced` + `check_works_fixtures`. No new runtime. Stub spec `2026-05-19-org-synced-poetry-export.md`; brainstorm the org authoring affordance when scheduled. |
 
 Recommended sequencing: **Phase 3 Slice 1 — garden publish (next)** → Phase 3 Slice 2 (essay publish) → Multi-target export → Streams section. Time-synced poetry shipped 2026-05-19.
 
