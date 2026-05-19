@@ -1,4 +1,14 @@
 {{ define "main" }}
+{{ partial "graph-launcher-bar.html" (dict
+    "variant" "generic"
+    "panelId" "works-graph-panel"
+    "currentSlug" (path.Base .File.Dir)
+    "crumbs" (slice
+       (dict "label" "Works" "url" "/works/")
+       (dict "label" "Poetry" "url" "/works/poetry/")
+       (dict "label" .Title)
+    )
+) }}
 <article class="page works-poem-page">
   <span data-pagefind-meta="section:works" hidden></span>
   <span data-pagefind-meta="medium:poetry" hidden></span>
@@ -23,4 +33,6 @@
   {{ partial "cite/static-fallback.html" . }}
   {{ partial "cite/data-blob.html" . }}
 </article>
+{{ partial "works/graph-panel.html" . }}
+{{ partial "works/graph-script.html" . }}
 {{ end }}
