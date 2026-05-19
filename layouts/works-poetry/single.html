@@ -27,7 +27,13 @@
   <div class="cite-cta-zone works-cite-zone">{{ partial "cite/button.html" . }}</div>
 
   <section class="works-poem-body">
-    {{ .Content }}
+    {{- $all := findRE `\[\d{1,2}:\d{2}(?:\.\d{1,2})?\]` .RawContent -}}
+    {{- $esc := findRE `\\\[\d{1,2}:\d{2}(?:\.\d{1,2})?\]` .RawContent -}}
+    {{- if gt (len $all) (len $esc) -}}
+      {{ partial "works/poem-synced.html" . }}
+    {{- else -}}
+      {{ .Content }}
+    {{- end -}}
   </section>
 
   {{ partial "cite/static-fallback.html" . }}

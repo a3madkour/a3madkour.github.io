@@ -1,0 +1,21 @@
+{{- /* Input: a marker string like "[12:34]" or "[00:03.5]".
+       Output: float seconds. Hugo findRE has no capture groups, so we
+       strip brackets and split manually. Shared by synced-text-parser and
+       the future lyrics slice. */ -}}
+{{- $inner := substr . 1 (sub (len .) 2) -}}
+{{- $parts := split $inner ":" -}}
+{{- $mm := int (index $parts 0) -}}
+{{- $rest := index $parts 1 -}}
+{{- $sec := 0.0 -}}
+{{- if in $rest "." -}}
+  {{- $sp := split $rest "." -}}
+  {{- $ss := int (index $sp 0) -}}
+  {{- $fracStr := index $sp 1 -}}
+  {{- $divisor := cond (eq (len $fracStr) 1) 10.0 100.0 -}}
+  {{- $frac := div (float (int $fracStr)) $divisor -}}
+  {{- $sec = add (float (add (mul $mm 60) $ss)) $frac -}}
+{{- else -}}
+  {{- $ss := int $rest -}}
+  {{- $sec = float (add (mul $mm 60) $ss) -}}
+{{- end -}}
+{{- return $sec -}}
