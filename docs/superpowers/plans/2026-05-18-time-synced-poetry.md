@@ -692,17 +692,31 @@ Create `layouts/partials/works/synced-text-parser.html`:
     {{- $lineHTML := "" -}}
 
     {{- if gt (len $midMarkers) 0 -}}
-      {{- /* per-word: tokens; marker tokens advance the clock */ -}}
+      {{- /* per-word: whitespace tokens; a token may carry a LEADING
+             marker glued to its word (e.g. "[00:06]eiusmod" — spec §3:
+             the marker immediately precedes the word it times) which both
+             advances the clock and times that word. A token that is only
+             a marker (source "word [00:06] word") just advances the clock.
+             Embedded mid-token markers can't occur: the linter's placement
+             rule forbids non-space before a marker, and whitespace-split
+             means any marker in a token is at its start. */ -}}
       {{- $curT := $lineT -}}
       {{- $words := slice -}}
+      {{- $tokMarkerRE := printf "^%s" $markerRE -}}
       {{- range (split $line " ") -}}
-        {{- $tok := . -}}
-        {{- if eq (trim $tok " \t") "" -}}
-        {{- else if findRE (printf "^%s$" $markerRE) $tok 1 -}}
-          {{- $curT = partial "works/synced-marker-seconds.html" $tok -}}
-          {{- if gt $curT $maxT -}}{{- $maxT = $curT -}}{{- end -}}
-        {{- else -}}
-          {{- $words = $words | append (printf "<span class=\"poem-word\" data-t=\"%g\">%s </span>" $curT (htmlEscape $tok)) -}}
+        {{- $tok := trim . " \t" -}}
+        {{- if ne $tok "" -}}
+          {{- $tm := findRE $tokMarkerRE $tok 1 -}}
+          {{- if gt (len $tm) 0 -}}
+            {{- $curT = partial "works/synced-marker-seconds.html" (index $tm 0) -}}
+            {{- if gt $curT $maxT -}}{{- $maxT = $curT -}}{{- end -}}
+            {{- $rest := trim (replaceRE $tokMarkerRE "" $tok 1) " \t" -}}
+            {{- if ne $rest "" -}}
+              {{- $words = $words | append (printf "<span class=\"poem-word\" data-t=\"%g\">%s </span>" $curT (htmlEscape $rest)) -}}
+            {{- end -}}
+          {{- else -}}
+            {{- $words = $words | append (printf "<span class=\"poem-word\" data-t=\"%g\">%s </span>" $curT (htmlEscape $tok)) -}}
+          {{- end -}}
         {{- end -}}
       {{- end -}}
       {{- $lineHTML = printf "<span class=\"poem-line\" data-t=\"%g\">%s</span>" $lineT (delimit $words "") -}}
@@ -784,24 +798,45 @@ with:
 
 Run:
 
+> **`data-duration` semantics (intentional refinement of spec §4):** spec
+> §4 says `data-duration = max [mm:ss] value`. Taken literally, a trailing
+> untimed line (inherits `prev + 0.5`, spec §3) would sit *past* duration
+> and never reveal in animation mode (the rAF loop ends at `now >=
+> duration`), stranding authored content. So `$maxT` is the max **effective
+> span time** (markers AND inherited untimed-line times) — identical to
+> max-marker whenever there are no trailing untimed lines (the common
+> case), only larger by the `+0.5` tail otherwise, guaranteeing full
+> reveal. For this fixture: max marker = 16; the final line
+> (`in [00:99] reprehenderit voluptate.`, untimed) inherits `16 + 0.5` ⇒
+> **`data-duration="16.5"`**.
+
+Run (a **non-minified** production build — the production HTML minifier
+unquotes simple attribute values, which would cause false-negative greps;
+minification is orthogonal to whether the parser emits correct DOM, so we
+assert on stable non-minified output then separately confirm the minified
+build also succeeds):
+
 ```bash
 cd /Stuff/a3madkour/Sync/Workspace/a3madkour.github.io/.worktrees/time-synced-poetry
 pkill -f 'hugo server' 2>/dev/null || true
-rm -rf public && HUGO_ENVIRONMENT=production hugo --minify >/dev/null 2>&1 && echo BUILD_OK
+rm -rf public && HUGO_ENVIRONMENT=production hugo 2>&1 | tail -3
 F=public/works/poetry/example-poem-synced/index.html
-grep -o 'class="poem-synced"[^>]*' "$F"
-grep -o 'data-duration="16"' "$F"
-grep -o 'data-audio-src="https://example.com/example-reading.mp3"' "$F"
-grep -oc 'class="poem-word"' "$F"
-grep -o 'class="poem-line" data-t="12.5"' "$F"   # untimed "veniam..." line: 12 + 0.5
-grep -o '<em>irure</em>' "$F"                      # markdown line preserved
-grep -o '\[00:99\]' "$F"                           # escaped marker restored as literal
-! grep -q 'class="poem-synced"' public/works/poetry/example-poem-minimal/index.html && echo "PLAIN_POEM_UNCHANGED"
+echo "--- wrapper (expect class+data-audio-src+data-duration) ---"; grep -o 'class="poem-synced"[^>]*' "$F"
+echo "--- duration 16.5 ---"; grep -o 'data-duration="16.5"' "$F"
+echo "--- audio-src ---"; grep -o 'data-audio-src="https://example.com/example-reading.mp3"' "$F"
+echo "--- word-span count (nonzero) ---"; grep -oc 'class="poem-word"' "$F"
+echo "--- mid-line markers consumed + timed (eiusmod@6, tempor@7) ---"; grep -o 'data-t="6"' "$F" | head -1; grep -o 'data-t="7"' "$F" | head -1
+echo "--- real markers NOT leaked as literal text ---"; grep -q '\[00:05\]' "$F" && echo LEAK_0005 || echo no-0005-leak; grep -q '\[00:06\]' "$F" && echo LEAK_0006 || echo no-0006-leak
+echo "--- escaped marker survives as literal ---"; grep -o '\[00:99\]' "$F" | head -1
+echo "--- untimed inheritance (veniam line: 12 + 0.5) ---"; grep -o 'data-t="12.5"' "$F" | head -1
+echo "--- markdown preserved ---"; grep -o '<em>irure</em>' "$F"
+echo "--- markerless poem unchanged ---"; grep -q 'class="poem-synced"' public/works/poetry/example-poem-minimal/index.html && echo MINIMAL_BROKEN || echo PLAIN_POEM_UNCHANGED
+echo "--- minified production build also succeeds ---"; rm -rf public && HUGO_ENVIRONMENT=production hugo --minify 2>&1 | tail -1; test -f public/works/poetry/example-poem-synced/index.html && echo MINIFY_BUILD_OK
 ```
 
-Expected: `BUILD_OK`; `class="poem-synced" data-duration="16" data-audio-src=...`; `data-duration="16"`; the audio-src match; a non-zero `poem-word` count; the `data-t="12.5"` line; `<em>irure</em>`; a literal `[00:99]`; and `PLAIN_POEM_UNCHANGED` (markerless poems still render via `.Content`).
+Expected: the `hugo` runs print **no `ERROR`** / no `execute of template failed`; wrapper line shows `class="poem-synced" data-audio-src="https://example.com/example-reading.mp3" data-duration="16.5"`; `data-duration="16.5"`; the audio-src match; a non-zero `poem-word` count; `data-t="6"` and `data-t="7"` both present (mid-line markers consumed + timed correctly); `no-0005-leak` and `no-0006-leak` (real markers consumed, not rendered as text); a literal `[00:99]` (escaped marker preserved); `data-t="12.5"`; `<em>irure</em>`; `PLAIN_POEM_UNCHANGED`; and `MINIFY_BUILD_OK`.
 
-> If `data-t="12.5"` is absent, inspect the untimed-line inheritance (`$prevT + 0.5`). If `<em>irure</em>` is absent, the inline-markdown branch (`RenderString` `display: inline`) needs checking. Fix the parser, rebuild, re-assert before committing.
+> Diagnose, don't mask: if `data-t="6"`/`"7"` is absent or a real marker leaks (`LEAK_*`), the per-token leading-marker logic in Step 2's mid-line branch is wrong — fix the parser. If `data-t="12.5"` is absent, inspect untimed-line inheritance (`$prevT + 0.5` and that `$maxT`/`$prevT` are not updated for untimed lines incorrectly). If `<em>irure</em>` is absent, check the inline-markdown branch (`RenderString` with `(dict "display" "inline")`). If a Hugo `ERROR`/template-execute failure mentions the new partials, the template syntax is wrong. Fix the parser, rebuild, re-assert — never weaken the asserts or the fixture to make them pass.
 
 - [ ] **Step 6: Run the full pre-build linter sweep (no Hugo-side regressions)**
 
@@ -1426,7 +1461,7 @@ After merge + push: add `project_time_synced_poetry_slice.md` to memory (merge h
 - §1 scope / two modes / player UI / fade-in flourish → Tasks 4–6 (parser, JS, CSS).
 - §2 Hugo-side parse, DOM-first, mode by `data-audio-src` → Tasks 4, 5.
 - §3 marker grammar incl. all edge cases (untimed +0.5, escape, non-monotonic, audio fail) → parser Task 4 + JS Task 5 + linter Task 2. **§3's two "Linter warns" rows (untimed-line, trailing-marker) were added to Task 2's linter during execution (see the Task 2 amendment note) — initially missed in this plan; fixed.**
-- §4 auto-detection routing, partial signatures, per-line/per-word logic, build-time stripping → Task 4 (router counts real = total − escaped; `.RawContent` is already frontmatter-free, improving on the spec's "strip frontmatter" wording).
+- §4 auto-detection routing, partial signatures, per-line/per-word logic, build-time stripping → Task 4 (router counts real = total − escaped; `.RawContent` is already frontmatter-free, improving on the spec's "strip frontmatter" wording; per-token leading-marker handling so glued `[mm:ss]word` times the word per spec §3; `data-duration` = max **effective** span time — refinement of §4's literal "max [mm:ss]" so trailing untimed lines aren't stranded past duration, documented inline in Task 4 Step 5).
 - §5 `audio_url` frontmatter (relative/absolute/absent) → Task 1 (fixture-linter accepts), Task 2 (validity), Task 5 (runtime resolves).
 - §6 JS runtime responsibilities 1–10 → Task 5 (`poem-synced.js` covers init, mode, JS-built player, play/pause, reveal+flourish, reset, seek drag, show-all, audio-error fallback).
 - §7 CSS §45 verbatim → Task 6.
