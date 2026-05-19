@@ -14,6 +14,16 @@
   {{- end -}}
 {{- end -}}
 
+{{ partial "graph-launcher-bar.html" (dict
+    "variant" "generic"
+    "panelId" "research-graph-panel"
+    "currentSlug" $thisSlug
+    "crumbs" (slice
+       (dict "label" "Research" "url" "/research/")
+       (dict "label" .Title)
+    )
+) }}
+
 <article class="reading-column research-theme-page">
   <span data-pagefind-meta="section:research" hidden></span>
   <span data-pagefind-meta="subtype:theme" hidden></span>
@@ -34,11 +44,6 @@
     {{- $sections = $sections | append (dict "id" "framing" "label" "Framing") -}}
   {{- end -}}
   {{ partial "page-sidebar.html" (dict "sections" $sections) }}
-
-  <nav class="research-breadcrumb" aria-label="Breadcrumb">
-    <a href="/research/">Research</a> ›
-    <span aria-current="page">{{ .Title }}</span>
-  </nav>
 
   <header class="research-theme-hero">
     <h1>{{ .Title }}</h1>
@@ -136,4 +141,6 @@
   {{ partial "cite/static-fallback.html" . }}
   {{ partial "cite/data-blob.html" . }}
 </article>
+{{ partial "research/graph-panel.html" . }}
+{{ partial "research/graph-script.html" .Site }}
 {{ end }}

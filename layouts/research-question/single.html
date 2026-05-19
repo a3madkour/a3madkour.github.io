@@ -34,6 +34,20 @@
 {{- $backlinksData := partialCached "research/backlinks-data.html" . -}}
 {{- $myBacklinks := index $backlinksData $thisSlug | default slice -}}
 
+{{- $rqCrumbs := slice (dict "label" "Research" "url" "/research/") -}}
+{{- if $themePage -}}
+  {{- $rqCrumbs = $rqCrumbs | append (dict "label" $themePage.Title "url" $themePage.RelPermalink) -}}
+{{- else -}}
+  {{- $rqCrumbs = $rqCrumbs | append (dict "label" $themeSlug "url" "/research/") -}}
+{{- end -}}
+{{- $rqCrumbs = $rqCrumbs | append (dict "label" .Title) -}}
+{{ partial "graph-launcher-bar.html" (dict
+    "variant" "generic"
+    "panelId" "research-graph-panel"
+    "currentSlug" $thisSlug
+    "crumbs" $rqCrumbs
+) }}
+
 <article class="reading-column research-question-hub">
   <span data-pagefind-meta="section:research" hidden></span>
   <span data-pagefind-meta="subtype:question" hidden></span>
@@ -61,16 +75,6 @@
   {{- end -}}
   {{- $sections = $sections | append (dict "id" "backlinks" "label" "Links") -}}
   {{ partial "page-sidebar.html" (dict "sections" $sections) }}
-
-  <nav class="research-breadcrumb" aria-label="Breadcrumb">
-    <a href="/research/">Research</a> ›
-    {{ if $themePage }}
-      <a href="{{ $themePage.RelPermalink }}">{{ $themePage.Title }}</a> ›
-    {{ else }}
-      <span>{{ $themeSlug }}</span> ›
-    {{ end }}
-    <span aria-current="page">{{ .Title }}</span>
-  </nav>
 
   <header class="research-question-status-strip">
     {{ partial "research/status-pill.html" .Params.status }}
@@ -185,4 +189,6 @@
   {{ partial "cite/static-fallback.html" . }}
   {{ partial "cite/data-blob.html" . }}
 </article>
+{{ partial "research/graph-panel.html" . }}
+{{ partial "research/graph-script.html" .Site }}
 {{ end }}
