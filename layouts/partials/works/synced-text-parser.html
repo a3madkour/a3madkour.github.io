@@ -1,0 +1,111 @@
+{{- /* Input dict: { "raw": <markdown body, frontmatter-free>,
+                      "page": <Page, for inline RenderString> }
+       Output: HTML string (stanzas/lines/words with data-t + the wrapper's
+       data-duration computed). Caller pipes through safeHTML.
+
+       Marker grammar: \[\d{1,2}:\d{2}(?:\.\d{1,2})?\]  (spec §3). This
+       grammar is duplicated (no cross-partial constants in Hugo) in
+       works-poetry/single.html, head.html, and this file; the canonical
+       copy + validation lives in tools/check_poetry_synced.py — change all
+       sites in lockstep.
+       Escaped \[mm:ss] → literal [mm:ss] text (sentinel round-trip).      */ -}}
+
+{{- $raw := .raw -}}
+{{- $page := .page -}}
+{{- $markerRE := `\[\d{1,2}:\d{2}(?:\.\d{1,2})?\]` -}}
+
+{{- /* Protect escaped markers: \[02:03] → ⟦ESC:02:03⟧ (bracket-free).
+       U+27E6/U+27E7 chosen as collision-improbable in prose; NOT safe
+       against input that literally contains "⟦ESC:mm:ss⟧" — acceptable for
+       hand-authored poetry / fixtures (no untrusted input). */ -}}
+{{- $raw = replaceRE `\\\[(\d{1,2}:\d{2}(?:\.\d{1,2})?)\]` "⟦ESC:$1⟧" $raw -}}
+
+{{- $lines := split $raw "\n" -}}
+{{- $maxT := 0.0 -}}
+{{- $prevT := -0.5 -}}      {{- /* first untimed line → 0.0 */ -}}
+{{- $stanzas := slice -}}
+{{- $cur := slice -}}       {{- /* rendered <span class=poem-line> for open stanza */ -}}
+
+{{- range $lines -}}
+  {{- $line := trim . " \t\r" -}}
+  {{- if eq $line "" -}}
+    {{- if gt (len $cur) 0 -}}
+      {{- $stanzas = $stanzas | append (printf "<p class=\"poem-stanza\">%s</p>" (delimit $cur "<br>\n")) -}}
+      {{- $cur = slice -}}
+    {{- end -}}
+  {{- else -}}
+    {{- /* leading marker → line data-t; else inherit prevT + 0.5 */ -}}
+    {{- $leadRE := `^\[\d{1,2}:\d{2}(?:\.\d{1,2})?\]` -}}
+    {{- $lead := findRE $leadRE $line 1 -}}
+    {{- $lineT := 0.0 -}}
+    {{- if gt (len $lead) 0 -}}
+      {{- $lineT = partial "works/synced-marker-seconds.html" (index $lead 0) -}}
+      {{- $line = trim (replaceRE $leadRE "" $line 1) " \t" -}}
+    {{- else -}}
+      {{- $lineT = add $prevT 0.5 -}}
+    {{- end -}}
+    {{- $prevT = $lineT -}}
+    {{- if gt $lineT $maxT -}}{{- $maxT = $lineT -}}{{- end -}}
+
+    {{- $midMarkers := findRE $markerRE $line -}}
+    {{- $hasMd := findRE "[*_`]|\\]\\(" $line 1 -}}
+    {{- $lineHTML := "" -}}
+
+    {{- if gt (len $midMarkers) 0 -}}
+      {{- /* per-word: whitespace tokens; a token may carry a LEADING
+             marker glued to its word (e.g. "[00:06]eiusmod" — spec §3:
+             the marker immediately precedes the word it times) which both
+             advances the clock and times that word. A token that is only
+             a marker (source "word [00:06] word") just advances the clock.
+             Embedded mid-token markers can't occur: the linter's placement
+             rule forbids non-space before a marker, and whitespace-split
+             means any marker in a token is at its start. */ -}}
+      {{- $curT := $lineT -}}
+      {{- $words := slice -}}
+      {{- $tokMarkerRE := printf "^%s" $markerRE -}}
+      {{- range (split $line " ") -}}
+        {{- $tok := trim . " \t" -}}
+        {{- if ne $tok "" -}}
+          {{- $tm := findRE $tokMarkerRE $tok 1 -}}
+          {{- if gt (len $tm) 0 -}}
+            {{- $curT = partial "works/synced-marker-seconds.html" (index $tm 0) -}}
+            {{- if gt $curT $maxT -}}{{- $maxT = $curT -}}{{- end -}}
+            {{- $rest := trim (replaceRE $tokMarkerRE "" $tok 1) " \t" -}}
+            {{- if ne $rest "" -}}
+              {{- $words = $words | append (printf "<span class=\"poem-word\" data-t=\"%g\">%s </span>" $curT (htmlEscape $rest)) -}}
+            {{- end -}}
+          {{- else -}}
+            {{- $words = $words | append (printf "<span class=\"poem-word\" data-t=\"%g\">%s </span>" $curT (htmlEscape $tok)) -}}
+          {{- end -}}
+        {{- end -}}
+      {{- end -}}
+      {{- $lineHTML = printf "<span class=\"poem-line\">%s</span>" (delimit $words "") -}}
+    {{- else if gt (len $hasMd) 0 -}}
+      {{- /* inline markdown, no mid-line markers → single line span */ -}}
+      {{- $rendered := chomp ($page.RenderString (dict "display" "inline") $line) -}}
+      {{- $lineHTML = printf "<span class=\"poem-line\" data-t=\"%g\">%s</span>" $lineT $rendered -}}
+    {{- else -}}
+      {{- /* plain text, no markdown, no mid-line markers → uniform words */ -}}
+      {{- $words := slice -}}
+      {{- range (split $line " ") -}}
+        {{- $tok := . -}}
+        {{- if ne (trim $tok " \t") "" -}}
+          {{- $words = $words | append (printf "<span class=\"poem-word\" data-t=\"%g\">%s </span>" $lineT (htmlEscape $tok)) -}}
+        {{- end -}}
+      {{- end -}}
+      {{- $lineHTML = printf "<span class=\"poem-line\">%s</span>" (delimit $words "") -}}
+    {{- end -}}
+
+    {{- $cur = $cur | append $lineHTML -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* flush trailing stanza */ -}}
+{{- if gt (len $cur) 0 -}}
+  {{- $stanzas = $stanzas | append (printf "<p class=\"poem-stanza\">%s</p>" (delimit $cur "<br>\n")) -}}
+{{- end -}}
+
+{{- $body := delimit $stanzas "\n" -}}
+{{- /* restore escaped markers as literal text */ -}}
+{{- $body = replaceRE `⟦ESC:(\d{1,2}:\d{2}(?:\.\d{1,2})?)⟧` "[$1]" $body -}}
+{{- return (printf "<div class=\"poem-synced\" data-duration=\"%g\">%s</div>" $maxT $body) -}}

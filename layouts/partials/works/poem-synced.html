@@ -1,0 +1,8 @@
+{{- /* Entry partial for synced poetry. Hugo's .RawContent is already
+       frontmatter-free. Wrap the parser output so data-audio-src lives on
+       the synced wrapper without the parser needing the audio URL. */ -}}
+{{- $parsed := partial "works/synced-text-parser.html" (dict "raw" .RawContent "page" .) -}}
+{{- with .Params.audio_url -}}
+  {{- $parsed = replaceRE `^<div class="poem-synced"` (printf `<div class="poem-synced" data-audio-src="%s"` (htmlEscape .)) $parsed 1 -}}
+{{- end -}}
+{{ $parsed | safeHTML }}

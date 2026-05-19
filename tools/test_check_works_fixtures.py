@@ -235,6 +235,24 @@ Body.
         p = self._write("poetry", "with-optionals", body)
         self.assertEqual(lint.lint_file(p), [])
 
+    def test_poem_accepts_audio_url(self):
+        body = POEM_VALID.replace(
+            "lines: 14\n",
+            'lines: 14\naudio_url: "https://example.com/reading.mp3"\n',
+        )
+        p = self._write("poetry", "with-audio", body)
+        self.assertEqual(lint.lint_file(p), [])
+
+    def test_poem_audio_url_relative_accepted_by_fixture_linter(self):
+        # check_works_fixtures only validates *shape* (unknown-field gate);
+        # path/URL validity is the synced-poetry linter's job (Task 2).
+        body = POEM_VALID.replace(
+            "lines: 14\n",
+            'lines: 14\naudio_url: reading.mp3\n',
+        )
+        p = self._write("poetry", "with-audio-rel", body)
+        self.assertEqual(lint.lint_file(p), [])
+
     # --- umbrella (Bento grid) fields ---
 
     def test_game_accepts_tile_size_featured_hero(self):

@@ -76,3 +76,13 @@
 {{- $cite := resources.Get "js/entry-cite.js" | js.Build $citeOpts | fingerprint }}
 <script src="{{ $cite.RelPermalink }}" integrity="{{ $cite.Data.Integrity }}" defer></script>
 {{- end }}
+
+{{- /* Synced-poetry runtime: only on poetry single pages. games/music
+       single pages do not load this; entry-works-umbrella.js (filter chips
+       + works graph) continues to load on all works single pages
+       independently. */ -}}
+{{- if and (eq .Section "works") (eq .Kind "page") (eq .Type "works-poetry") }}
+{{- $poetryOpts := dict "targetPath" "js/poetry.js" "minify" true -}}
+{{- $poetry := resources.Get "js/entry-poetry.js" | js.Build $poetryOpts | fingerprint }}
+<script src="{{ $poetry.RelPermalink }}" integrity="{{ $poetry.Data.Integrity }}" defer></script>
+{{- end }}

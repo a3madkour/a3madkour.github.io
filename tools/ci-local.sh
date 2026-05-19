@@ -48,6 +48,9 @@ python3 -m unittest tools/test_check_works_fixtures.py -v 2>&1 | tail -3
 python3 tools/check_works_links.py
 python3 -m unittest tools/test_check_works_links.py -v 2>&1 | tail -3
 
+python3 tools/check_poetry_synced.py
+python3 -m unittest tools/test_check_poetry_synced.py -v 2>&1 | tail -3
+
 python3 tools/check_library_fixtures.py
 python3 -m unittest tools/test_check_library_fixtures.py -v 2>&1 | tail -3
 
