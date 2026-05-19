@@ -50,6 +50,11 @@
   {{- end -}}
 {{- end -}}
 
+{{- /* Synced poetry with a recorded reading — flag the audio performance. */ -}}
+{{- if and (eq .Section "works") (eq .Type "works-poetry") .Params.audio_url -}}
+  {{- $note = "With audio reading." -}}
+{{- end -}}
+
 {{- /* Dates as YYYY-MM-DD for meta tags. */ -}}
 {{- $pub_date := "" -}}
 {{- if not .Date.IsZero -}}
