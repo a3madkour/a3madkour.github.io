@@ -40,7 +40,7 @@ MUSIC_FORMATS = {"album", "track", "experiment", "live"}
 PLATFORM_KINDS = {"bandcamp", "soundcloud", "youtube"}
 
 POEM_REQUIRED = {"title", "date", "lastmod", "draft", "lines"}
-POEM_OPTIONAL = {"tags", "collection", "set_to_music", "summary"} | UMBRELLA_OPTIONAL
+POEM_OPTIONAL = {"tags", "collection", "set_to_music", "summary", "audio_url"} | UMBRELLA_OPTIONAL
 POEM_FIELDS = POEM_REQUIRED | POEM_OPTIONAL
 
 
