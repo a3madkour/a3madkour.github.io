@@ -1291,6 +1291,12 @@ Append to the end of `assets/css/main.css` (after the final `}` at line 4843), m
   border-color: var(--color-burgundy);
 }
 
+/* Reserved: the OPTIONAL in-audio-mode pill (spec §6.4 marks it "Optional").
+   poem-synced.js does not build a .poem-audio-pill element yet — the
+   audio-mode pill + its pulse animation are a documented deferral (see
+   CLAUDE.md deferred-features: "Audio-pill pulse animation"); the style
+   lives here so it round-trips when that JS lands. Distinct from
+   .works-audio-pill (the set_to_music cross-link from audio-pill.html). */
 .poem-audio-pill {
   display: inline-flex; align-items: center; gap: 0.4rem;
   margin-top: 0.4rem;
