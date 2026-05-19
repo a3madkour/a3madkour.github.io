@@ -1,17 +1,16 @@
 {{- /* Inputs:
        . — Hugo Page (the note being rendered)
-   Output: <nav class="garden-path-log"> with one crumb (the URL note).
-   garden-stack.js extends the crumb list when ?stack= is present and on click.
-*/ -}}
-<nav class="garden-path-log" aria-label="Reading path">
-  <span class="path-log-label">Path:</span>
-  <a class="path-log-crumb" href="{{ "/garden/" | relURL }}">Garden</a>
-  <span class="path-log-sep" aria-hidden="true">›</span>
-  <a class="path-log-crumb is-active" aria-current="page" href="{{ .RelPermalink }}" data-slug="{{ path.Base .File.Dir }}">{{ .Title }}</a>
-  <span class="path-log-actions">
-    <span class="path-log-count" data-stack-count="1">1 in stack</span>
-    <button type="button" class="path-log-clear" hidden>clear</button>
-    <button type="button" class="graph-toggle" aria-expanded="false" aria-controls="garden-graph-panel">⊞ Graph</button>
-    <a class="path-log-history" href="{{ "/garden/history/" | relURL }}">history</a>
-  </span>
-</nav>
+   Delegates to the shared graph-launcher-bar (variant "garden"), which
+   reproduces this nav's DOM verbatim (class .garden-path-log + .path-log-*
+   children + data-slug) so garden-stack.js / garden-pathlog-popover.js
+   keep working. The only change vs. the old inline markup: the ⊞ Graph
+   launcher is now the left-most child (was inside .path-log-actions),
+   matching research + works. The /garden/history/ chrome link now lives
+   in graph-launcher-bar.html (its garden branch); check_garden_history.py
+   assertion 5 tracks it there. */ -}}
+{{ partial "graph-launcher-bar.html" (dict
+    "variant" "garden"
+    "panelId" "garden-graph-panel"
+    "extraClass" "garden-path-log"
+    "page" .
+) }}

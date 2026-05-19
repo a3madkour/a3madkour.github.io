@@ -48,6 +48,13 @@ PATHLOG_PARTIAL = """\
 </nav>
 """
 
+GRAPH_LAUNCHER_BAR_PARTIAL = """\
+<nav class="graph-launcher-bar garden-path-log">
+  <button type="button" class="graph-toggle">⊞ Graph</button>
+  <a class="path-log-history" href="{{ "/garden/history/" | relURL }}">history</a>
+</nav>
+"""
+
 GARDEN_HISTORY_JS = '// shared core\nexport function readHistory() { return []; }\n'
 GARDEN_RECENT_JS = "import {readHistory} from './garden-history.js';\n"
 GARDEN_POPOVER_JS = "import {readHistory} from './garden-history.js';\n"
@@ -79,6 +86,7 @@ def _layout_fixture(td: Path, **overrides) -> Path:
         "content/garden/history/_index.md": HISTORY_CONTENT,
         "layouts/garden/list.html": LIST_HTML,
         "layouts/partials/garden/path-log.html": PATHLOG_PARTIAL,
+        "layouts/partials/graph-launcher-bar.html": GRAPH_LAUNCHER_BAR_PARTIAL,
         "assets/js/garden-history.js": GARDEN_HISTORY_JS,
         "assets/js/garden-recent-paths.js": GARDEN_RECENT_JS,
         "assets/js/garden-pathlog-popover.js": GARDEN_POPOVER_JS,
@@ -138,13 +146,13 @@ class TestGardenHistoryLinter(unittest.TestCase):
             self.assertTrue(any("list.html" in e and "recent-paths" in e for e in errors),
                             f"expected 'list.html missing recent-paths include', got: {errors}")
 
-    def test_pathlog_missing_history_link(self):
-        bad = "<nav class=\"garden-path-log\"></nav>\n"
+    def test_launcher_bar_missing_history_link(self):
+        bad = "<nav class=\"graph-launcher-bar garden-path-log\"></nav>\n"
         with tempfile.TemporaryDirectory() as td:
-            root = _layout_fixture(Path(td), **{"layouts/partials/garden/path-log.html": bad})
+            root = _layout_fixture(Path(td), **{"layouts/partials/graph-launcher-bar.html": bad})
             errors = lint.lint_garden_history(root)
-            self.assertTrue(any("path-log.html" in e and "/garden/history/" in e for e in errors),
-                            f"expected 'path-log missing /garden/history/', got: {errors}")
+            self.assertTrue(any("graph-launcher-bar.html" in e and "/garden/history/" in e for e in errors),
+                            f"expected 'graph-launcher-bar missing /garden/history/', got: {errors}")
 
     def test_missing_js_module(self):
         with tempfile.TemporaryDirectory() as td:

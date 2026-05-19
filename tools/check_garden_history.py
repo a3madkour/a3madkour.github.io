@@ -6,7 +6,9 @@ Asserts source-side integration points for the path-log retrieval slice:
   2. layouts/garden/history.html exists.
   3. content/garden/history/_index.md exists with `layout: history` in frontmatter.
   4. layouts/garden/list.html includes the recent-paths partial.
-  5. layouts/partials/garden/path-log.html references /garden/history/.
+  5. layouts/partials/graph-launcher-bar.html references /garden/history/
+     (the garden branch of the shared launcher bar; path-log.html delegates
+     to it).
   6-8. assets/js/{garden-history.js, garden-recent-paths.js, garden-pathlog-popover.js} exist.
   9. assets/js/entry-garden.js imports both new mount scripts.
  10. assets/js/garden-stack.js carries the literal `"version": 2` sentinel.
@@ -51,14 +53,14 @@ def lint_garden_history(project_root: Path) -> list[str]:
     else:
         errors.append("layouts/garden/list.html: missing")
 
-    # 5: path-log.html links to /garden/history/
-    pathlog = project_root / "layouts/partials/garden/path-log.html"
-    if pathlog.is_file():
-        text = pathlog.read_text(encoding="utf-8")
+    # 5: the shared launcher bar (garden branch) links to /garden/history/
+    launcher = project_root / "layouts/partials/graph-launcher-bar.html"
+    if launcher.is_file():
+        text = launcher.read_text(encoding="utf-8")
         if "/garden/history/" not in text:
-            errors.append("layouts/partials/garden/path-log.html: missing chrome link to /garden/history/")
+            errors.append("layouts/partials/graph-launcher-bar.html: missing chrome link to /garden/history/")
     else:
-        errors.append("layouts/partials/garden/path-log.html: missing")
+        errors.append("layouts/partials/graph-launcher-bar.html: missing")
 
     # 6-8: new JS modules
     for rel in (

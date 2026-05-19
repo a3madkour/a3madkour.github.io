@@ -142,10 +142,14 @@ function updatePathLog() {
   const label = log.querySelector('.path-log-label');
   const actions = log.querySelector('.path-log-actions');
   const gardenAnchor = log.querySelector('.path-log-crumb[href$="/garden/"]');
+  // The ⊞ Graph launcher is now the bar's first child (shared
+  // graph-launcher-bar). It is persistent chrome — never prune it.
+  const toggle = log.querySelector('.graph-toggle');
 
-  // Clear everything between label and actions, except the static "Garden" anchor
+  // Clear everything between label and actions, except the static "Garden"
+  // anchor and the persistent graph launcher.
   Array.from(log.children).forEach(child => {
-    if (child !== label && child !== actions && child !== gardenAnchor) {
+    if (child !== label && child !== actions && child !== gardenAnchor && child !== toggle) {
       log.removeChild(child);
     }
   });
