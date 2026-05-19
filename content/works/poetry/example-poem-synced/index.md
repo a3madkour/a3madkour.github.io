@@ -3,21 +3,19 @@ title: "Example Poem Synced"
 date: 2026-05-18
 lastmod: 2026-05-18
 draft: false
-lines: 8
+lines: 6
 collection: greenhouse-demos
 tags: [example, synced]
 summary: "Example synced poem — dummy filler exercising the timed-reveal runtime."
 audio_url: "https://example.com/example-reading.mp3"
 ---
 
-[00:01]Lorem ipsum dolor sit amet,
-consectetur adipiscing elit.
+[00:01]Lorem [00:02]ipsum [00:03]dolor [00:04]sit
+[00:05]amet [00:06]consectetur [00:07]adipiscing [00:08]elit
 
-[00:05]Sed do [00:06]eiusmod [00:07]tempor
-incididunt ut labore et dolore.
+[00:09]sed [00:10]do [00:11]eiusmod [00:12]tempor
+[00:13]incididunt [00:14]ut [00:15]labore [00:16]dolore
 
-[00:12]Ut enim ad minim
-veniam quis nostrud.
+[00:17]Duis aute *irure* reprehenderit
 
-[00:16]Duis aute *irure* dolor
-in \[00:99] reprehenderit voluptate.
+[00:18]ut [00:19]enim \[00:99] [00:20]minim [00:21]veniam
