@@ -164,7 +164,11 @@ stays enforced as the surface count grows.
 
 - Graph rendering, node/edge semantics, physics, filter dimensions — unchanged.
 - No `graph-core.js` extraction (ruled out in the prior slice; not revisited).
-- Garden graph *behavior* unchanged; only the launcher position moves.
+- Garden graph *behavior* unchanged; only the launcher position moves. (One
+  consequence found in implementation review: relocating the launcher to the
+  bar's first child requires a 2-line defensive guard in `garden-stack.js`
+  `updatePathLog()` so the stack renderer does not prune persistent chrome —
+  this protects the launcher, it is not new stack behavior.)
 - Stack coordination for research/works.
 
 ## Dependency / sequencing
