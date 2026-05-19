@@ -1479,6 +1479,49 @@ git commit -m "docs(claude.md): register synced-poetry slice (shipped)"
 
 ## Task 10: Full CI-local + dev-server spot-check + branch finish
 
+> **Step 0 — Critical fix from the final holistic review (C1 + C2).** The
+> per-task reviews verified spec-fidelity but no task loaded a built page and
+> watched a reveal; the whole-branch review found the reveal is **inert** on
+> the primary path:
+> - **C1:** the parser wraps word/uniform lines as
+>   `<span class="poem-line" data-t> <span class="poem-word" data-t>…</span></span>`;
+>   §45 dims **both** `.poem-word` *and* `.poem-line[data-t]` to `opacity:.06`;
+>   JS adds `.is-visible` only to `.poem-word`. CSS opacity composites
+>   multiplicatively → a revealed word renders at `1 × .06`. Word-mode reveal
+>   (the fixture's path) never visibly happens.
+> - **C2:** JS `wordSel.length ? wordSel : lineSel` is all-or-nothing; a poem
+>   mixing word lines + a markdown line-mode line (the fixture's `*irure*`
+>   line, spec §4 ¶172–174) never tracks the markdown line → it never reveals.
+>
+> **Root cause:** spec §4's DOM puts `data-t` on the word-wrapper line while
+> spec §7's CSS dims `.poem-line[data-t]` — mutually inconsistent. The
+> word-wrapper line's `data-t` is redundant (timing is per-word there).
+>
+> **Coherent fix (parser + JS; CSS §45 unchanged):**
+> 1. `synced-text-parser.html`: the mid-marker word branch (line 82) and the
+>    plain uniform-words branch (line 96) emit the wrapper as
+>    `<span class="poem-line">%s</span>` — **drop `data-t` and the `$lineT`
+>    printf arg**. The inline-markdown branch (line 86) is **unchanged**
+>    (`<span class="poem-line" data-t="%g">` — line-mode IS line-timed).
+>    Net contract: *`data-t` on an element ⇒ that element is individually
+>    timed & dimmed*; word-wrapper lines are pure structure (opacity 1).
+> 2. `poem-synced.js` `setupOne`: replace the all-or-nothing ternary with the
+>    **union** of `.poem-word[data-t]` ∪ `.poem-line[data-t]` (now
+>    non-overlapping, since word-wrapper lines lost `data-t`). Markdown
+>    line-mode lines + words are all tracked → mixed poems reveal fully.
+> 3. `assets/css/main.css` §45: **no change** — `.poem-line[data-t]` now
+>    matches only markdown line-mode lines (correctly dimmed/revealed as a
+>    unit); word-wrapper `.poem-line` (no `data-t`) is undimmed so its
+>    revealed `.poem-word` children composite at full opacity.
+>
+> Spec deviation (necessary, documented): the spec §4 DOM example shows
+> `data-t` on the word-wrapper line — dropped here because §4-DOM + §7-CSS
+> taken literally yield a non-functional reveal. Task 4 Step 5's
+> `grep -o 'data-t="12.5"'` still passes (the uniform branch puts `$lineT`
+> on the *word* spans, line 93). Verify post-fix that built word spans reach
+> effective opacity 1 on reveal (DOM-structure + logic trace) and the
+> `*irure*` markdown line still carries `data-t="16"`.
+
 - [ ] **Step 1: Run the full CI-equivalent locally**
 
 Run: `cd /Stuff/a3madkour/Sync/Workspace/a3madkour.github.io/.worktrees/time-synced-poetry && tools/ci-local.sh 2>&1 | tail -40`
