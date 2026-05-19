@@ -4841,3 +4841,137 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   .library-cat-cards { grid-template-columns: 1fr; }
   .library-shelf-head { flex-wrap: wrap; }
 }
+
+/* ============================================================================
+   §45 Synced poetry runtime
+   Spec: docs/superpowers/specs/2026-05-13-time-synced-poetry-design.md §7.
+   Reveal opacity + flourish; JS-built player chrome. Reuses existing tokens.
+   ========================================================================== */
+
+.poem-synced { margin: 1.4rem 0 2rem; }
+
+.poem-stanza {
+  margin: 0 0 1em 0;
+  line-height: 1.85;
+  font-size: 1.05rem;
+  font-family: var(--font-body);
+}
+
+.poem-word,
+.poem-line[data-t] {
+  opacity: 0.06;
+  transition: opacity 600ms ease-out;
+}
+.poem-word.is-visible,
+.poem-line.is-visible { opacity: 1; }
+
+.poem-word.is-current {
+  animation: poem-current-flourish 600ms ease-out forwards;
+}
+@keyframes poem-current-flourish {
+  0%   { font-style: italic; opacity: 0.5; }
+  60%  { font-style: italic; opacity: 1; }
+  100% { font-style: normal; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .poem-word, .poem-line[data-t] { transition: none; }
+  .poem-word.is-current { animation: none; font-style: normal; opacity: 1; }
+}
+
+.poem-synced.is-show-all .poem-word,
+.poem-synced.is-show-all .poem-line[data-t] {
+  opacity: 1 !important;
+  transition: none;
+}
+
+.poem-player {
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.5rem 0.85rem;
+  background: var(--color-paper);
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 4px;
+  margin: 0.5rem 0 1.2rem;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+}
+
+.poem-player-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px;
+  background: transparent;
+  border: 1px solid var(--color-ink-soft);
+  color: var(--color-burgundy);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.poem-player-btn--primary {
+  background: var(--color-burgundy); color: white;
+  border-color: var(--color-burgundy);
+  width: 34px; height: 34px;
+}
+
+.poem-player-progress {
+  flex: 1; height: 4px;
+  background: rgba(138,58,58,0.12);
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+}
+.poem-player-progress-fill {
+  position: absolute; top: 0; left: 0; height: 100%;
+  background: var(--color-burgundy);
+  border-radius: 2px;
+}
+.poem-player-progress-thumb {
+  position: absolute; top: 50%;
+  width: 11px; height: 11px;
+  background: var(--color-burgundy);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.poem-player-time {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--color-ink-soft);
+  min-width: 70px; text-align: right;
+}
+
+.poem-player-show-all {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 4px 9px;
+  background: transparent;
+  border: 1px solid var(--color-ink-soft);
+  color: var(--color-ink-soft);
+  border-radius: 99px;
+  cursor: pointer;
+  font-size: 0.7rem;
+}
+.poem-player-show-all.is-active {
+  background: var(--color-burgundy); color: white;
+  border-color: var(--color-burgundy);
+}
+
+/* Reserved: the OPTIONAL in-audio-mode pill (spec §6.4 marks it "Optional").
+   poem-synced.js does not build a .poem-audio-pill element yet — the
+   audio-mode pill + its pulse animation are a documented deferral (see
+   CLAUDE.md deferred-features: "Audio-pill pulse animation"); the style
+   lives here so it round-trips when that JS lands. Distinct from
+   .works-audio-pill (the set_to_music cross-link from audio-pill.html). */
+.poem-audio-pill {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  margin-top: 0.4rem;
+  padding: 0.4rem 0.7rem;
+  background: rgba(138,58,58,0.06);
+  border-left: 2px solid var(--color-ink-soft);
+  border-radius: 0 3px 3px 0;
+  font-size: 0.7rem;
+  color: var(--color-ink-soft);
+  font-family: var(--font-mono);
+}
+
+@media (max-width: 480px) {
+  .poem-player { flex-wrap: wrap; }
+  .poem-player-progress { order: 99; width: 100%; }
+}
