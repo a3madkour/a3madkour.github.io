@@ -160,6 +160,22 @@ stays enforced as the surface count grows.
   panel still not covered) before merge.
 - Run `tools/ci-local.sh` before pushing (mirrors CI step-for-step).
 
+## Known limitation (recorded during implementation)
+
+The shared partial's `generic` breadcrumb is a **two-state model**: a crumb
+with a `url` renders as a link; a crumb without a `url` renders as the
+current page (`<span … aria-current="page">`). There is no third "plain,
+non-link, non-current" state. The only place this matters is the
+research-question theme crumb's *fallback* branch (when a question's
+`theme` does not resolve to a rendered theme page): it is given
+`url: /research/` so it stays a single-`aria-current` page with a link to
+the research index (slightly off-target label, but valid markup). The old
+inline breadcrumb rendered that fallback as plain non-link text. This is
+acceptable because `tools/check_research_links.py` (a CI gate) guarantees
+every question's `theme` resolves, so the fallback is unreachable in a
+green build. If a future caller needs a genuine plain non-current crumb,
+add a third state to `graph-launcher-bar.html` then — out of scope here.
+
 ## Out of scope
 
 - Graph rendering, node/edge semantics, physics, filter dimensions — unchanged.

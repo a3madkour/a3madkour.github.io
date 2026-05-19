@@ -1089,9 +1089,46 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ## Task 9: Full CI mirror + page-weight/LHCI verification + visual spot-check
 
-This task discharges the spec's "must verify, do not assume" risks (page-weight gate headroom; LHCI URLs) and the user's standing preference for a dev-server spot-check with an eyeball checklist before merge.
+This task discharges the spec's "must verify, do not assume" risks (page-weight gate headroom; LHCI URLs), retires dead CSS the slice orphaned, and the user's standing preference for a dev-server spot-check with an eyeball checklist before merge.
 
-**Files:** none (verification only)
+**Files:** `assets/css/main.css` (Step 0 dead-CSS removal); otherwise verification only.
+
+- [ ] **Step 0: Remove the orphaned `.research-breadcrumb` CSS (slice created the orphan)**
+
+Task 4 deleted the only `.research-breadcrumb` markup (both research single layouts now route the breadcrumb through the shared launcher bar). The CSS rules are now fully dead — confirm and remove:
+
+```bash
+grep -rn 'research-breadcrumb' layouts/ assets/ content/
+```
+Expected: matches ONLY in `assets/css/main.css` (the rule block + its `/* Breadcrumb … */` comment, ~lines 1858-1866). If any `layouts/`/`content/` match exists, STOP — the orphan assumption is wrong; report it.
+
+Delete the `.research-breadcrumb` rule block and its immediately-preceding comment line, e.g.:
+
+```css
+/* Breadcrumb … */
+.research-breadcrumb {
+  …
+}
+.research-breadcrumb a { color: var(--color-ink-soft); }
+.research-breadcrumb [aria-current="page"] { color: var(--color-ink); }
+```
+
+(Match the exact current text via `grep -n 'research-breadcrumb' assets/css/main.css`; delete only those rules + the one comment line that introduces them. Touch nothing else.)
+
+Then:
+```bash
+hugo --quiet --destination /tmp/pga-build
+python3 tools/check-contrast.py
+git add assets/css/main.css
+git commit -m "style(graph): remove orphaned .research-breadcrumb CSS
+
+Task 4 routed the research breadcrumb through the shared launcher bar
+and deleted the inline .research-breadcrumb navs; these rules are now
+dead. No remaining markup references them.
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
+```
+Expected: build clean; contrast gate green (the deleted rules used already-validated tokens; no checked pairing affected).
 
 - [ ] **Step 1: Run the full CI mirror**
 
