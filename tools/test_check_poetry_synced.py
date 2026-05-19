@@ -168,7 +168,7 @@ class CheckPoetrySyncedTest(unittest.TestCase):
         errs, warns = lint.lint_file(p)
         self.assertEqual(errs, [])
         self.assertTrue(any("untimed" in w.lower() for w in warns), warns)
-        rc, errors = lint.run(self.repo.root)
+        rc, _ = lint.run(self.repo.root)
         self.assertEqual(rc, 0)
 
     def test_marker_at_eol_no_following_word_warns(self) -> None:
@@ -179,6 +179,17 @@ class CheckPoetrySyncedTest(unittest.TestCase):
             any("end of line" in w.lower() or "no following word" in w.lower() for w in warns),
             warns,
         )
+
+    def test_midline_only_marker_line_is_not_untimed(self) -> None:
+        # A line with a mid-line marker but no leading marker is partially
+        # timed — it must NOT trip the "untimed line" warning.
+        p = self.repo.write(
+            "midonly",
+            poem("[00:01]First timed line\nplain words [00:03]then timed words\n"),
+        )
+        errs, warns = lint.lint_file(p)
+        self.assertEqual(errs, [])
+        self.assertEqual(warns, [])
 
     # --- runner ---
 

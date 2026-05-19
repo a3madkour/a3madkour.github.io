@@ -147,7 +147,7 @@ def lint_file(md: Path) -> tuple[list[str], list[str]]:
         content = LOOSE_RE.sub("", line).strip()
         matches = list(LOOSE_RE.finditer(line))
         if content:
-            if not LOOSE_RE.match(line.lstrip()):
+            if not LOOSE_RE.search(line):
                 untimed += 1
                 if not first_untimed:
                     first_untimed = content[:40]
