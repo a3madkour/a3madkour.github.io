@@ -714,6 +714,8 @@ main { flex-grow: 1; }
   padding-left: 1rem;   /* preserves the indent the > li > ul rule gave pre-wrap */
 }
 .toc-disclosure.is-instant { transition: none; }
+/* prefers-reduced-motion is handled globally by the §8 universal rule
+   (transition-duration: 0.01ms !important) — no local @media needed here. */
 
 @media (min-width: 1100px) {
   /* Fixed at the left viewport edge, not in the grid flow. The body's
