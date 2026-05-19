@@ -558,6 +558,7 @@ draft: false
 lines: 8
 collection: greenhouse-demos
 tags: [example, synced]
+summary: "Example synced poem — dummy filler exercising the timed-reveal runtime."
 audio_url: "https://example.com/example-reading.mp3"
 ---
 
@@ -611,6 +612,7 @@ git commit -m "fixture(poetry): example-poem-synced exercising synced markup"
 - Create: `layouts/partials/works/synced-text-parser.html`
 - Create: `layouts/partials/works/poem-synced.html`
 - Modify: `layouts/works-poetry/single.html:29-31`
+- Modify: `layouts/partials/head.html:9` (strip `[mm:ss]` from the description fallback — spec §4 "markers never appear in the rendered HTML"; `<meta name="description">` + `og:description` derive from `.Summary`, which is the raw body for summary-less poems)
 
 - [ ] **Step 1: Create the seconds helper (return partial)**
 
@@ -794,6 +796,24 @@ with:
 
 > Routing counts **real** markers as `total − escaped` so a poem containing only `\[mm:ss]` literals stays on the plain `.Content` path (RE2 has no lookbehind; subtraction is the robust equivalent — mirrors the linter's `_mask_escaped`).
 
+- [ ] **Step 4b: Keep markers out of the `<meta>` description fallback**
+
+Spec §4: *"Markers are consumed during parse and never appear in the rendered HTML."* `layouts/partials/head.html` derives `<meta name="description">` **and** `og:description` from `.Summary` when no explicit `description`/`summary` is set. For a summary-less synced poem, Hugo's auto-`.Summary` is the raw body — so the literal `[mm:ss]` markers leak into page metadata (SEO / social cards). The fixture now carries an explicit `summary:` (Task 3) which fixes the demonstrated case; this step adds a defensive strip so **any** synced poem (incl. future real ones lacking a summary) is covered.
+
+In `layouts/partials/head.html`, replace line 9:
+
+```go-html-template
+  {{ $description := or .Description .Summary site.Params.description }}
+```
+
+with:
+
+```go-html-template
+  {{ $description := replaceRE `\[\d{1,2}:\d{2}(?:\.\d{1,2})?\]` "" (or .Description .Summary site.Params.description "") }}
+```
+
+Lines 10 and 23 (the `<meta name="description">` and `og:description` emissions) are unchanged — they already consume `$description`. The trailing `""` default keeps `replaceRE`'s input a string when no description source is set (result is `""` → the existing `{{ with $description }}` guards still suppress empty tags). This is a strict no-op for every page whose description contains no `[mm:ss]` substring.
+
 - [ ] **Step 5: Build and assert the emitted DOM**
 
 Run:
@@ -836,7 +856,7 @@ echo "--- minified production build also succeeds ---"; rm -rf public && HUGO_EN
 
 Expected: the `hugo` runs print **no `ERROR`** / no `execute of template failed`; wrapper line shows `class="poem-synced" data-audio-src="https://example.com/example-reading.mp3" data-duration="16.5"`; `data-duration="16.5"`; the audio-src match; a non-zero `poem-word` count; `data-t="6"` and `data-t="7"` both present (mid-line markers consumed + timed correctly); `no-0005-leak` and `no-0006-leak` (real markers consumed, not rendered as text); a literal `[00:99]` (escaped marker preserved); `data-t="12.5"`; `<em>irure</em>`; `PLAIN_POEM_UNCHANGED`; and `MINIFY_BUILD_OK`.
 
-> Diagnose, don't mask: if `data-t="6"`/`"7"` is absent or a real marker leaks (`LEAK_*`), the per-token leading-marker logic in Step 2's mid-line branch is wrong — fix the parser. If `data-t="12.5"` is absent, inspect untimed-line inheritance (`$prevT + 0.5` and that `$maxT`/`$prevT` are not updated for untimed lines incorrectly). If `<em>irure</em>` is absent, check the inline-markdown branch (`RenderString` with `(dict "display" "inline")`). If a Hugo `ERROR`/template-execute failure mentions the new partials, the template syntax is wrong. Fix the parser, rebuild, re-assert — never weaken the asserts or the fixture to make them pass.
+> Diagnose, don't mask: the `LEAK_*` greps scan the **whole HTML file**, so they also catch `[mm:ss]` in the `<head>` `<meta>`/`og:description` (Hugo auto-`.Summary`) — that is what Step 4b + the fixture `summary:` resolve, not the parser. If `data-t="6"`/`"7"` is absent, the per-token leading-marker logic in Step 2's mid-line branch is wrong — fix the parser. If `LEAK_*` persists after Step 4b, confirm `head.html` line 9 was replaced exactly and the fixture has its `summary:`. If `data-t="12.5"` is absent, inspect untimed-line inheritance (`$prevT + 0.5` and that `$maxT`/`$prevT` are not updated for untimed lines incorrectly). If `<em>irure</em>` is absent, check the inline-markdown branch (`RenderString` with `(dict "display" "inline")`). If a Hugo `ERROR`/template-execute failure mentions the new partials, the template syntax is wrong. Fix the parser, rebuild, re-assert — never weaken the asserts or the fixture to make them pass.
 
 - [ ] **Step 6: Run the full pre-build linter sweep (no Hugo-side regressions)**
 
@@ -847,7 +867,7 @@ Expected: each prints OK (the new page carries the same poetry meta/cite scaffol
 
 ```bash
 cd /Stuff/a3madkour/Sync/Workspace/a3madkour.github.io/.worktrees/time-synced-poetry
-git add layouts/partials/works/synced-marker-seconds.html layouts/partials/works/synced-text-parser.html layouts/partials/works/poem-synced.html layouts/works-poetry/single.html
+git add layouts/partials/works/synced-marker-seconds.html layouts/partials/works/synced-text-parser.html layouts/partials/works/poem-synced.html layouts/works-poetry/single.html layouts/partials/head.html
 git commit -m "feat(poetry): Hugo-side [mm:ss] parser + synced DOM emission"
 ```
 
@@ -1461,7 +1481,7 @@ After merge + push: add `project_time_synced_poetry_slice.md` to memory (merge h
 - §1 scope / two modes / player UI / fade-in flourish → Tasks 4–6 (parser, JS, CSS).
 - §2 Hugo-side parse, DOM-first, mode by `data-audio-src` → Tasks 4, 5.
 - §3 marker grammar incl. all edge cases (untimed +0.5, escape, non-monotonic, audio fail) → parser Task 4 + JS Task 5 + linter Task 2. **§3's two "Linter warns" rows (untimed-line, trailing-marker) were added to Task 2's linter during execution (see the Task 2 amendment note) — initially missed in this plan; fixed.**
-- §4 auto-detection routing, partial signatures, per-line/per-word logic, build-time stripping → Task 4 (router counts real = total − escaped; `.RawContent` is already frontmatter-free, improving on the spec's "strip frontmatter" wording; per-token leading-marker handling so glued `[mm:ss]word` times the word per spec §3; `data-duration` = max **effective** span time — refinement of §4's literal "max [mm:ss]" so trailing untimed lines aren't stranded past duration, documented inline in Task 4 Step 5).
+- §4 auto-detection routing, partial signatures, per-line/per-word logic, build-time stripping → Task 4 (router counts real = total − escaped; `.RawContent` is already frontmatter-free, improving on the spec's "strip frontmatter" wording; per-token leading-marker handling so glued `[mm:ss]word` times the word per spec §3; `data-duration` = max **effective** span time — refinement of §4's literal "max [mm:ss]" so trailing untimed lines aren't stranded past duration, documented inline in Task 4 Step 5). §4's "markers never appear in the rendered HTML" is honored for the body (parser strips/round-trips) **and** for `<meta>`/`og:description` (Task 4 Step 4b strips `[mm:ss]` from the `head.html` description fallback + the fixture carries an explicit `summary:`) — gap surfaced by the Task 4 implementer's leak diagnosis, fixed in-slice.
 - §5 `audio_url` frontmatter (relative/absolute/absent) → Task 1 (fixture-linter accepts), Task 2 (validity), Task 5 (runtime resolves).
 - §6 JS runtime responsibilities 1–10 → Task 5 (`poem-synced.js` covers init, mode, JS-built player, play/pause, reveal+flourish, reset, seek drag, show-all, audio-error fallback).
 - §7 CSS §45 verbatim → Task 6.
