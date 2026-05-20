@@ -30,16 +30,18 @@ REFERENCE_TYPES = {"paper", "video", "article", "talk"}
 ALL_MEDIA_TYPES = MEDIA_TYPES | REFERENCE_TYPES
 
 # Fields permitted on each flavor (anything else is forbidden)
-CONCEPT_FIELDS = ALWAYS_REQUIRED | {"tags", "summary", "topic_map", "roam_refs", "year", "weight"}
+CONCEPT_FIELDS = ALWAYS_REQUIRED | {"tags", "summary", "topic_map", "roam_refs", "year", "weight", "source_stream"}
 MEDIA_FIELDS = ALWAYS_REQUIRED | {
     "media_type", "status", "creator",
     "tags", "summary", "topic_map", "roam_refs", "year",
     "original_url", "started", "finished", "spoiler_level",
+    "source_stream",
 }
 REFERENCE_FIELDS = ALWAYS_REQUIRED | {
     "media_type", "creator",
     "tags", "summary", "topic_map", "roam_refs", "year",
     "original_url",
+    "source_stream",
 }
 
 MEDIA_REQUIRED_EXTRA = {"media_type", "status", "creator"}
