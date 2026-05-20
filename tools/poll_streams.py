@@ -98,5 +98,12 @@ def twitch_live_state(token: str, client_id: str, user_login: str) -> dict:
     }
 
 
+def youtube_is_live(channel_id: str) -> bool:
+    """HEAD-probe youtube.com/channel/<id>/live. 200 or 3xx = live."""
+    url = YOUTUBE_LIVE_URL_TEMPLATE.format(channel_id=channel_id)
+    status = _http_head_no_follow(url)
+    return status == 200 or (300 <= status < 400)
+
+
 if __name__ == "__main__":
     sys.exit(0)  # placeholder; main() lands in Sub-task 34F

@@ -72,3 +72,26 @@ class TwitchLiveStateTests(unittest.TestCase):
         self.assertFalse(state["is_live"])
         self.assertEqual(state["title"], "")
         self.assertEqual(state["url"], "")
+
+
+class YouTubeLiveProbeTests(unittest.TestCase):
+    @patch("poll_streams._http_head_no_follow")
+    def test_youtube_live_200(self, mock_head):
+        mock_head.return_value = 200
+        self.assertTrue(ps.youtube_is_live("UC-abc"))
+
+    @patch("poll_streams._http_head_no_follow")
+    def test_youtube_live_302(self, mock_head):
+        # 302 redirect = currently live (YouTube redirects /channel/<id>/live to /watch?v=...)
+        mock_head.return_value = 302
+        self.assertTrue(ps.youtube_is_live("UC-abc"))
+
+    @patch("poll_streams._http_head_no_follow")
+    def test_youtube_not_live_404(self, mock_head):
+        mock_head.return_value = 404
+        self.assertFalse(ps.youtube_is_live("UC-abc"))
+
+    @patch("poll_streams._http_head_no_follow")
+    def test_youtube_not_live_other(self, mock_head):
+        mock_head.return_value = 500
+        self.assertFalse(ps.youtube_is_live("UC-abc"))
