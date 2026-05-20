@@ -161,5 +161,63 @@ def write_auto_stub(content_root: Path, title: str, started_at_iso: str) -> Path
     return path
 
 
+def write_live_yaml(path: Path, polled_at: str, twitch: dict, youtube: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    yaml = (
+        f"last_polled: {polled_at}\n"
+        "live:\n"
+        "  twitch:\n"
+        f"    is_live: {'true' if twitch['is_live'] else 'false'}\n"
+        f"    title: {json.dumps(twitch.get('title', ''))}\n"
+        f"    started_at: {json.dumps(twitch.get('started_at', ''))}\n"
+        f"    url: {json.dumps(twitch.get('url', ''))}\n"
+        "  youtube:\n"
+        f"    is_live: {'true' if youtube['is_live'] else 'false'}\n"
+        f"    video_id: {json.dumps(youtube.get('video_id', ''))}\n"
+        f"    title: {json.dumps(youtube.get('title', ''))}\n"
+        f"    started_at: {json.dumps(youtube.get('started_at', ''))}\n"
+        f"    url: {json.dumps(youtube.get('url', ''))}\n"
+    )
+    path.write_text(yaml)
+
+
+_BOOL_RE = re.compile(r"is_live:\s*(true|false)", re.IGNORECASE)
+_QUOTED_RE = re.compile(r'^\s*(\w+):\s*"([^"]*)"\s*$')
+
+
+def read_live_yaml(path: Path) -> dict:
+    """Best-effort stdlib YAML read. Returns
+    {twitch:{is_live,title,started_at,url}, youtube:{is_live,video_id,title,started_at,url}}."""
+    default = {
+        "twitch":  {"is_live": False, "title": "", "started_at": "", "url": ""},
+        "youtube": {"is_live": False, "video_id": "", "title": "", "started_at": "", "url": ""},
+    }
+    if not path.exists():
+        return default
+    text = path.read_text()
+    out = default
+    section = None
+    for raw in text.splitlines():
+        s = raw.strip()
+        if s == "twitch:":
+            section = "twitch"
+            continue
+        if s == "youtube:":
+            section = "youtube"
+            continue
+        if section is None:
+            continue
+        if s.startswith("is_live:"):
+            m = _BOOL_RE.search(s)
+            out[section]["is_live"] = bool(m and m.group(1).lower() == "true")
+            continue
+        m = _QUOTED_RE.match(raw)
+        if m:
+            k, v = m.group(1), m.group(2)
+            if k in out[section]:
+                out[section][k] = v
+    return out
+
+
 if __name__ == "__main__":
     sys.exit(0)  # placeholder; main() lands in Sub-task 34F

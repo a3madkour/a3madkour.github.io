@@ -147,3 +147,50 @@ class AutoStubTests(unittest.TestCase):
             slug_path,
             self.tmp / "content" / "streams" / "2026-05-19-x-y-z" / "index.md",
         )
+
+
+class LiveStateIOTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+
+    def test_write_live_yaml(self):
+        twitch = {"is_live": True, "title": "x", "started_at": "2026-04-10T19:00:00Z", "url": "https://twitch.tv/x"}
+        youtube = {"is_live": True, "video_id": "abc", "title": "x", "started_at": "2026-04-10T19:00:00Z", "url": "https://www.youtube.com/watch?v=abc"}
+        ps.write_live_yaml(self.tmp / "data" / "streams-live.yaml",
+                           polled_at="2026-04-10T19:00:30Z",
+                           twitch=twitch, youtube=youtube)
+        text = (self.tmp / "data" / "streams-live.yaml").read_text()
+        self.assertIn("last_polled: 2026-04-10T19:00:30Z", text)
+        self.assertIn("is_live: true", text)
+        self.assertIn('video_id: "abc"', text)
+
+    def test_read_prior_live_yaml(self):
+        d = self.tmp / "data"
+        d.mkdir()
+        (d / "streams-live.yaml").write_text(
+            "last_polled: 2026-04-10T18:55:00Z\n"
+            "live:\n"
+            "  twitch:\n"
+            "    is_live: true\n"
+            "    title: \"prior session\"\n"
+            "    started_at: \"2026-04-10T18:00:00Z\"\n"
+            "    url: \"https://twitch.tv/x\"\n"
+            "  youtube:\n"
+            "    is_live: false\n"
+            "    video_id: \"\"\n"
+            "    title: \"\"\n"
+            "    started_at: \"\"\n"
+            "    url: \"\"\n"
+        )
+        prior = ps.read_live_yaml(d / "streams-live.yaml")
+        self.assertTrue(prior["twitch"]["is_live"])
+        self.assertEqual(prior["twitch"]["title"], "prior session")
+        self.assertFalse(prior["youtube"]["is_live"])
+
+    def test_read_missing_returns_default_not_live(self):
+        prior = ps.read_live_yaml(self.tmp / "absent.yaml")
+        self.assertFalse(prior["twitch"]["is_live"])
+        self.assertFalse(prior["youtube"]["is_live"])
