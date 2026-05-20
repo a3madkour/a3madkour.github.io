@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""Streams live-state + schedule poller.
+"""Streams live-state poller.
 
 Cron-invoked by .github/workflows/streams-poll.yaml every 5 min.
 - Polls Twitch /helix/streams for live state (+ oauth dance).
 - HEAD-probes youtube.com/channel/<id>/live for YT live state (0 Data-API quota).
-- Once per hour: pulls Twitch /helix/schedule and writes streams-twitch-cache.yaml.
 - On live→not-live transition: writes an auto-stub at content/streams/<slug>/index.md.
+
+(Spec §5 step 4 — hourly Twitch /helix/schedule poll → data/streams-twitch-cache.yaml —
+is deferred to a follow-up; data/streams-schedule.yaml is user-authored and covers
+current UX needs.)
 
 Spec: docs/superpowers/specs/2026-05-13-streams-section-design.md §5.
 Stdlib only. Always exits 0 on transient API failures (preserves prior yaml).
@@ -33,6 +36,7 @@ class PollError(Exception):
 
 TWITCH_TOKEN_URL = "https://id.twitch.tv/oauth2/token"
 TWITCH_STREAMS_URL = "https://api.twitch.tv/helix/streams"
+# Reserved for the deferred hourly schedule-cache subtask (see docstring + plan).
 TWITCH_SCHEDULE_URL = "https://api.twitch.tv/helix/schedule"
 YOUTUBE_LIVE_URL_TEMPLATE = "https://www.youtube.com/channel/{channel_id}/live"
 
@@ -225,7 +229,7 @@ REQUIRED_ENV = ("TWITCH_CLIENT_ID", "TWITCH_CLIENT_SECRET", "TWITCH_USER_LOGIN",
 def main(repo_root: Path | None = None, env: dict | None = None, now_iso: str | None = None) -> int:
     repo_root = repo_root or Path(__file__).resolve().parent.parent
     env = env if env is not None else os.environ
-    now_iso = now_iso or dt.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+    now_iso = now_iso or dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     missing = [k for k in REQUIRED_ENV if not env.get(k)]
     if missing:

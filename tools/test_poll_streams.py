@@ -5,7 +5,6 @@ All network calls are mocked via unittest.mock.patch on urllib.request.urlopen.
 """
 from __future__ import annotations
 
-import io
 import json
 import shutil
 import sys
