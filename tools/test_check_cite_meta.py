@@ -107,6 +107,20 @@ class TestCiteMeta(unittest.TestCase):
     def test_citekey_re_rejects_underscore(self):
         self.assertNotRegex('madkour-2026-on_knowing_tools', CITEKEY_RE)
 
+    def test_is_citable_path_streams_item_yes(self):
+        self.assertTrue(is_citable_path('public/streams/2026-04-10-example-live-coding-stream/index.html'))
+
+    def test_is_citable_path_streams_index_no(self):
+        self.assertFalse(is_citable_path('public/streams/index.html'))
+
+    def test_is_citable_path_streams_slug_with_date_prefix(self):
+        # Streams slugs are <YYYY-MM-DD>-<title-slug>; ensure deep paths work.
+        self.assertTrue(is_citable_path('public/streams/2026-04-22-example-music-jam-stream/index.html'))
+
+    def test_is_citable_path_streams_non_index_html_no(self):
+        # Files other than index.html under /streams/ are not citable.
+        self.assertFalse(is_citable_path('public/streams/2026-04-10-x/somefile.html'))
+
 
 if __name__ == '__main__':
     unittest.main()
