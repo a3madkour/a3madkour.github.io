@@ -62,6 +62,15 @@ class TestBudgetFor(unittest.TestCase):
     def test_library_leaf_is_media_heavy(self):
         self.assertEqual(cpw.budget_for("/library/reading/"), 900_000)
 
+    def test_streams_item_tier(self):
+        self.assertEqual(cpw.budget_for("/streams/2026-04-10-example-live-coding-stream/"), 300_000)
+
+    def test_streams_index_at_streams_tier(self):
+        # BUDGETS_PREFIX cannot distinguish index from item; the section index
+        # inherits the /streams/ 300KB tier. Spec §13's 100KB index ideal is
+        # subsumed (the index is empty enough to land well under 300KB).
+        self.assertEqual(cpw.budget_for("/streams/"), 300_000)
+
 
 class TestExtractRefs(unittest.TestCase):
     def test_extracts_link_stylesheet(self):
