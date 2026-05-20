@@ -1,0 +1,44 @@
+name: streams poll
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'     # every 5 min (GitHub's minimum)
+  workflow_dispatch:           # manual trigger for bootstrap + ad-hoc testing
+
+permissions:
+  contents: write              # to commit polled data + auto-stubs
+
+concurrency:
+  group: streams-poll
+  cancel-in-progress: false    # let any in-flight run finish before starting the next
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Run poller unit tests (regression guard)
+        run: python3 -m unittest tools/test_poll_streams.py -v
+      - name: Poll streams
+        env:
+          TWITCH_CLIENT_ID:     ${{ secrets.TWITCH_CLIENT_ID }}
+          TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
+          YOUTUBE_API_KEY:      ${{ secrets.YOUTUBE_API_KEY }}
+          TWITCH_USER_LOGIN:    ${{ vars.TWITCH_USER_LOGIN }}
+          YOUTUBE_CHANNEL_ID:   ${{ vars.YOUTUBE_CHANNEL_ID }}
+        run: python3 tools/poll_streams.py
+      - name: Commit if changed
+        run: |
+          git config user.name  "streams-poll-bot"
+          git config user.email "noreply@github.com"
+          if git status --porcelain | grep -q .; then
+            git add data/streams-live.yaml data/streams-twitch-cache.yaml content/streams/
+            git commit -m "chore(streams): poll @ $(date -u +%FT%TZ)"
+            git pull --rebase origin master
+            git push origin master
+          fi
