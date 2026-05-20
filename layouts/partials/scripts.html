@@ -89,3 +89,12 @@
 {{- $poetry := resources.Get "js/entry-poetry.js" | js.Build $poetryOpts | fingerprint }}
 <script src="{{ $poetry.RelPermalink }}" integrity="{{ $poetry.Data.Integrity }}" defer></script>
 {{- end }}
+
+{{- /* Streams runtime: section index (filter chips) + per-stream pages (click-to-load YT).
+       streams.js self-guards on its DOM selectors so the load on either page type
+       no-ops cleanly when neither runtime applies. */ -}}
+{{- if eq .Section "streams" }}
+{{- $streamsOpts := dict "targetPath" "js/streams.js" "minify" true -}}
+{{- $streams := resources.Get "js/entry-streams.js" | js.Build $streamsOpts | fingerprint }}
+<script src="{{ $streams.RelPermalink }}" integrity="{{ $streams.Data.Integrity }}" defer></script>
+{{- end }}
