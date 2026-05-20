@@ -121,6 +121,14 @@ jobs:
         run: python3 tools/check_garden_history.py
       - name: Run garden history linter unit tests
         run: python3 -m unittest tools/test_check_garden_history.py -v
+      - name: Verify streams fixtures
+        run: python3 tools/check_streams_fixtures.py
+      - name: Run streams fixture linter unit tests
+        run: python3 -m unittest tools/test_check_streams_fixtures.py -v
+      - name: Verify streams links
+        run: python3 tools/check_streams_links.py
+      - name: Run streams links linter unit tests
+        run: python3 -m unittest tools/test_check_streams_links.py -v
       - name: Verify graph-chrome consistency
         run: python3 tools/check_graph_chrome.py
       - name: Build with Hugo
