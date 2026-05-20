@@ -1,0 +1,13 @@
+{{- /* Click-to-load YouTube embed. Input: dict with .video_id (string).
+       Renders a thumbnail + play button; assets/js/streams.js swaps in an
+       iframe on click. Privacy-enhanced mode (youtube-nocookie.com) is set
+       JS-side, not here. */ -}}
+{{- $video_id := .video_id -}}
+<div class="yt-embed" data-video-id="{{ $video_id }}">
+  <button class="yt-embed-play" type="button"
+          aria-label="Load and play YouTube video">
+    <img class="yt-embed-thumb" loading="lazy" alt=""
+         src="https://i.ytimg.com/vi/{{ $video_id }}/hqdefault.jpg">
+    <span class="yt-embed-play-icon" aria-hidden="true">▶</span>
+  </button>
+</div>
