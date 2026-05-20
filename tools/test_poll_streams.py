@@ -194,3 +194,88 @@ class LiveStateIOTests(unittest.TestCase):
         prior = ps.read_live_yaml(self.tmp / "absent.yaml")
         self.assertFalse(prior["twitch"]["is_live"])
         self.assertFalse(prior["youtube"]["is_live"])
+
+
+class MainOrchestratorTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        (self.tmp / "data").mkdir()
+        (self.tmp / "content").mkdir()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+
+    @patch("poll_streams.youtube_is_live")
+    @patch("poll_streams.twitch_live_state")
+    @patch("poll_streams.twitch_oauth")
+    def test_live_to_not_live_writes_stub(self, mock_oauth, mock_tw, mock_yt):
+        # Seed prior state: Twitch was live, with a title and started_at.
+        (self.tmp / "data" / "streams-live.yaml").write_text(
+            "last_polled: 2026-04-10T18:55:00Z\n"
+            "live:\n"
+            "  twitch:\n"
+            "    is_live: true\n"
+            '    title: "Example live coding stream"\n'
+            '    started_at: "2026-04-10T18:00:00Z"\n'
+            '    url: "https://twitch.tv/x"\n'
+            "  youtube:\n"
+            "    is_live: false\n"
+            '    video_id: ""\n'
+            '    title: ""\n'
+            '    started_at: ""\n'
+            '    url: ""\n'
+        )
+        mock_oauth.return_value = "tok"
+        mock_tw.return_value = {"is_live": False, "title": "", "started_at": "", "url": ""}
+        mock_yt.return_value = False
+        env = {
+            "TWITCH_CLIENT_ID": "cid",
+            "TWITCH_CLIENT_SECRET": "csec",
+            "TWITCH_USER_LOGIN": "x",
+            "YOUTUBE_CHANNEL_ID": "UC-y",
+            "YOUTUBE_API_KEY": "yk",  # unused but tolerated
+        }
+        rc = ps.main(repo_root=self.tmp, env=env, now_iso="2026-04-10T19:30:00Z")
+        self.assertEqual(rc, 0)
+        # A stub should have been created from the prior live state's title + started_at.
+        stub = self.tmp / "content" / "streams" / "2026-04-10-example-live-coding-stream" / "index.md"
+        self.assertTrue(stub.exists())
+        # live.yaml should now reflect not-live.
+        text = (self.tmp / "data" / "streams-live.yaml").read_text()
+        self.assertIn("is_live: false", text)
+
+    @patch("poll_streams.youtube_is_live")
+    @patch("poll_streams.twitch_live_state")
+    @patch("poll_streams.twitch_oauth")
+    def test_not_live_to_live_no_stub(self, mock_oauth, mock_tw, mock_yt):
+        # No prior live yaml → first poll, transition to live.
+        mock_oauth.return_value = "tok"
+        mock_tw.return_value = {"is_live": True, "title": "fresh", "started_at": "2026-04-10T20:00:00Z", "url": "https://twitch.tv/x"}
+        mock_yt.return_value = True
+        env = {
+            "TWITCH_CLIENT_ID": "cid", "TWITCH_CLIENT_SECRET": "csec",
+            "TWITCH_USER_LOGIN": "x", "YOUTUBE_CHANNEL_ID": "UC-y", "YOUTUBE_API_KEY": "yk",
+        }
+        rc = ps.main(repo_root=self.tmp, env=env, now_iso="2026-04-10T20:01:00Z")
+        self.assertEqual(rc, 0)
+        # No stubs created on go-live.
+        self.assertFalse((self.tmp / "content" / "streams").exists() and any((self.tmp / "content" / "streams").iterdir()))
+        text = (self.tmp / "data" / "streams-live.yaml").read_text()
+        self.assertIn("is_live: true", text)
+
+    @patch("poll_streams.youtube_is_live")
+    @patch("poll_streams.twitch_live_state", side_effect=Exception("transient!"))
+    @patch("poll_streams.twitch_oauth")
+    def test_transient_api_failure_exits_0(self, mock_oauth, mock_tw, mock_yt):
+        mock_oauth.return_value = "tok"
+        mock_yt.return_value = False
+        env = {
+            "TWITCH_CLIENT_ID": "cid", "TWITCH_CLIENT_SECRET": "csec",
+            "TWITCH_USER_LOGIN": "x", "YOUTUBE_CHANNEL_ID": "UC-y", "YOUTUBE_API_KEY": "yk",
+        }
+        rc = ps.main(repo_root=self.tmp, env=env, now_iso="2026-04-10T20:01:00Z")
+        self.assertEqual(rc, 0)
+
+    def test_missing_secret_exits_nonzero(self):
+        rc = ps.main(repo_root=self.tmp, env={}, now_iso="2026-04-10T20:01:00Z")
+        self.assertNotEqual(rc, 0)

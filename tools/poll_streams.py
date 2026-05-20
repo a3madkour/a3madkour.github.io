@@ -219,5 +219,62 @@ def read_live_yaml(path: Path) -> dict:
     return out
 
 
+REQUIRED_ENV = ("TWITCH_CLIENT_ID", "TWITCH_CLIENT_SECRET", "TWITCH_USER_LOGIN", "YOUTUBE_CHANNEL_ID")
+
+
+def main(repo_root: Path | None = None, env: dict | None = None, now_iso: str | None = None) -> int:
+    repo_root = repo_root or Path(__file__).resolve().parent.parent
+    env = env if env is not None else os.environ
+    now_iso = now_iso or dt.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    missing = [k for k in REQUIRED_ENV if not env.get(k)]
+    if missing:
+        print(f"poll_streams: missing required env: {missing}", file=sys.stderr)
+        return 2
+
+    live_yaml = repo_root / "data" / "streams-live.yaml"
+    prior = read_live_yaml(live_yaml)
+
+    # --- Twitch ---
+    twitch_state = {"is_live": False, "title": "", "started_at": "", "url": ""}
+    try:
+        token = twitch_oauth(env["TWITCH_CLIENT_ID"], env["TWITCH_CLIENT_SECRET"])
+        twitch_state = twitch_live_state(token, env["TWITCH_CLIENT_ID"], env["TWITCH_USER_LOGIN"])
+    except PollError as e:
+        print(f"poll_streams: twitch error (non-fatal): {e}", file=sys.stderr)
+        twitch_state = prior["twitch"]   # preserve prior state on auth blip
+    except Exception as e:  # noqa: BLE001 — transient HTTP, DNS, etc.
+        print(f"poll_streams: twitch transient: {e}", file=sys.stderr)
+        twitch_state = prior["twitch"]
+
+    # --- YouTube ---
+    yt_is_live = False
+    try:
+        yt_is_live = youtube_is_live(env["YOUTUBE_CHANNEL_ID"])
+    except Exception as e:  # noqa: BLE001
+        print(f"poll_streams: youtube transient: {e}", file=sys.stderr)
+        yt_is_live = prior["youtube"]["is_live"]
+    youtube_state = {
+        "is_live": yt_is_live,
+        "video_id": prior["youtube"]["video_id"] if yt_is_live else "",
+        "title": prior["youtube"]["title"] if yt_is_live else "",
+        "started_at": prior["youtube"]["started_at"] if yt_is_live else "",
+        "url": f"https://www.youtube.com/channel/{env['YOUTUBE_CHANNEL_ID']}/live" if yt_is_live else "",
+    }
+
+    # --- Transition: live → not-live on Twitch ⇒ auto-stub from prior state ---
+    if prior["twitch"]["is_live"] and not twitch_state["is_live"]:
+        title = prior["twitch"]["title"] or "Untitled stream"
+        started = prior["twitch"]["started_at"] or now_iso
+        try:
+            write_auto_stub(repo_root / "content", title, started)
+        except Exception as e:  # noqa: BLE001
+            print(f"poll_streams: stub write failed (non-fatal): {e}", file=sys.stderr)
+
+    write_live_yaml(live_yaml, polled_at=now_iso,
+                    twitch=twitch_state, youtube=youtube_state)
+    return 0
+
+
 if __name__ == "__main__":
-    sys.exit(0)  # placeholder; main() lands in Sub-task 34F
+    sys.exit(main())
