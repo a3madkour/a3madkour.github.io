@@ -1,0 +1,56 @@
+{{ define "main" }}
+<article class="page streams-single">
+  <span data-pagefind-meta="section:streams" hidden></span>
+  <span data-pagefind-meta="category:{{ .Params.category }}" hidden></span>
+  <span data-pagefind-meta="archive_status:{{ .Params.archive_status }}" hidden></span>
+  <span data-pagefind-filter="section:streams" hidden></span>
+
+  <header class="streams-single-header">
+    <p class="streams-single-meta">
+      <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Mon Jan 2, 2006" }}</time>
+      {{- with .Params.duration }} · <span>{{ . }}</span>{{- end }}
+      · <span class="streams-category-pill streams-category-pill--{{ .Params.category }}">{{ humanize .Params.category }}</span>
+    </p>
+    <h1>{{ .Title }}</h1>
+    {{- with .Params.summary -}}<p class="streams-single-summary">{{ . }}</p>{{- end -}}
+  </header>
+
+  {{- /* Cite CTA above the embed (citable when archived/removed; predicate gates upstream). */ -}}
+  {{- if in (slice "archived" "removed") .Params.archive_status -}}
+    <div class="cite-cta-zone streams-cite-zone">{{ partial "cite/button.html" . }}</div>
+  {{- end -}}
+
+  {{- /* Embed / placeholder area, per archive_status. */ -}}
+  {{- $arc := .Params.archive_status -}}
+  {{- if eq $arc "archived" -}}
+    {{- $vod := .Params.vod_url -}}
+    {{- $vid := "" -}}
+    {{- with findRE "(?:v=|youtu\\.be/|youtube\\.com/embed/)([A-Za-z0-9_-]{6,15})" $vod 1 -}}
+      {{- $m := index . 0 -}}
+      {{- $vid = replaceRE "^.*[/=]" "" $m -}}
+    {{- end -}}
+    {{- if $vid -}}
+      {{ partial "streams/embed.html" (dict "video_id" $vid) }}
+    {{- else -}}
+      <p class="streams-archive-missing">VOD URL set but video ID could not be parsed.</p>
+    {{- end -}}
+  {{- else if eq $arc "live" -}}
+    <p class="streams-archive-live">🔴 Currently live, watch on Twitch.</p>
+  {{- else if eq $arc "removed" -}}
+    <p class="streams-archive-removed">Archive intentionally removed.</p>
+  {{- end -}}
+
+  <section class="streams-single-notes">
+    {{ .Content }}
+  </section>
+
+  {{ partial "streams/cross-refs.html" . }}
+
+  {{- /* Cite scaffolding: emit unconditionally; the centralised predicate
+       (baseof/head/scripts) gates whether modal/meta/JS are loaded. */ -}}
+  {{- if in (slice "archived" "removed") .Params.archive_status -}}
+    {{ partial "cite/static-fallback.html" . }}
+    {{ partial "cite/data-blob.html" . }}
+  {{- end -}}
+</article>
+{{ end }}
