@@ -6,7 +6,7 @@
 {{- $args := . -}}
 {{- $limit := $args.limit | default 0 -}}
 {{- $heading := "" -}}
-{{- if hasKey $args "heading" -}}{{- $heading = $args.heading -}}
+{{- if isset $args "heading" -}}{{- $heading = $args.heading -}}
 {{- else -}}{{- $heading = "Upcoming streams" -}}{{- end -}}
 
 {{- $manualFile := index site.Data "streams-schedule" -}}
@@ -22,7 +22,7 @@
   {{- $d := .date -}}
   {{- $dateStr := "" -}}
   {{- if (reflect.IsMap $d) -}}{{- $dateStr = (time.AsTime $d).Format "2006-01-02" -}}
-  {{- else -}}{{- $dateStr = (printf "%v" $d) | substr 0 10 -}}{{- end -}}
+  {{- else -}}{{- $dateStr = substr (printf "%v" $d) 0 10 -}}{{- end -}}
   {{- $k := printf "%s|%s" $dateStr (lower .title) -}}
   {{- $manualKeys = merge $manualKeys (dict $k true) -}}
 {{- end -}}
@@ -32,7 +32,7 @@
   {{- $d := .date -}}
   {{- $dateStr := "" -}}
   {{- if (reflect.IsMap $d) -}}{{- $dateStr = (time.AsTime $d).Format "2006-01-02" -}}
-  {{- else -}}{{- $dateStr = (printf "%v" $d) | substr 0 10 -}}{{- end -}}
+  {{- else -}}{{- $dateStr = substr (printf "%v" $d) 0 10 -}}{{- end -}}
   {{- $k := printf "%s|%s" $dateStr (lower .title) -}}
   {{- if not (index $manualKeys $k) -}}
     {{- $merged = $merged | append . -}}
