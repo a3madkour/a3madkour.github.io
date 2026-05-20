@@ -5,7 +5,9 @@
        Hyphenated data filenames → use `index site.Data "..."`. */ -}}
 {{- $args := . -}}
 {{- $limit := $args.limit | default 0 -}}
-{{- $heading := $args.heading | default "Upcoming streams" -}}
+{{- $heading := "" -}}
+{{- if hasKey $args "heading" -}}{{- $heading = $args.heading -}}
+{{- else -}}{{- $heading = "Upcoming streams" -}}{{- end -}}
 
 {{- $manualFile := index site.Data "streams-schedule" -}}
 {{- $cacheFile  := index site.Data "streams-twitch-cache" -}}
@@ -53,8 +55,8 @@
 {{- if gt $limit 0 -}}{{- $sorted = first $limit $sorted -}}{{- end -}}
 
 {{- if $sorted -}}
-<section class="streams-upcoming" aria-labelledby="streams-upcoming-heading">
-  <h2 id="streams-upcoming-heading">{{ $heading }}</h2>
+<section class="streams-upcoming"{{ if $heading }} aria-labelledby="streams-upcoming-heading"{{ end }}>
+  {{- if $heading -}}<h2 id="streams-upcoming-heading">{{ $heading }}</h2>{{- end -}}
   <ul class="streams-upcoming-list">
     {{- range $sorted -}}
       {{- $cat := .category | default "" -}}
