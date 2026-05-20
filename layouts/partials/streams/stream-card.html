@@ -1,0 +1,34 @@
+{{- /* Archive entry card. Input: . is a stream page. Used on /streams/
+       list page; also reusable on the homepage if we ever surface
+       archive items there. */ -}}
+{{- $cat := .Params.category | default "" -}}
+{{- $arc := .Params.archive_status | default "archived" -}}
+<article class="stream-card"
+         data-category="{{ $cat }}"
+         data-archive-status="{{ $arc }}"
+         data-tags="{{ delimit (.Params.tags | default slice) " " }}"
+         data-year="{{ .Date.Year }}">
+  <header class="stream-card-header">
+    <a class="stream-card-title" href="{{ .RelPermalink }}">{{ .Title }}</a>
+    <p class="stream-card-meta">
+      <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2, 2006" }}</time>
+      {{- with .Params.duration }} · <span class="stream-card-duration">{{ . }}</span>{{- end -}}
+      · <span class="streams-category-pill streams-category-pill--{{ $cat }}">{{ humanize $cat }}</span>
+    </p>
+  </header>
+  {{- with .Params.summary -}}
+    <p class="stream-card-summary">{{ . }}</p>
+  {{- end -}}
+  {{- /* Output-count summary (essays + garden + research + works). */ -}}
+  {{- $counts := slice -}}
+  {{- with .Params.related_essays -}}{{- $counts = $counts | append (printf "%d essay%s" (len .) (cond (eq (len .) 1) "" "s")) -}}{{- end -}}
+  {{- with .Params.related_garden -}}{{- $counts = $counts | append (printf "%d note%s" (len .) (cond (eq (len .) 1) "" "s")) -}}{{- end -}}
+  {{- with .Params.related_research -}}{{- $counts = $counts | append (printf "%d research" (len .)) -}}{{- end -}}
+  {{- with .Params.related_works -}}{{- $counts = $counts | append (printf "%d work%s" (len .) (cond (eq (len .) 1) "" "s")) -}}{{- end -}}
+  {{- if $counts -}}
+    <p class="stream-card-output-counts">Produced: {{ delimit $counts ", " }}</p>
+  {{- end -}}
+  {{- if eq $arc "removed" -}}
+    <p class="stream-card-removed">Archive intentionally removed.</p>
+  {{- end -}}
+</article>
