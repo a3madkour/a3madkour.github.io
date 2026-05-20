@@ -29,7 +29,9 @@ img, svg { display: block; max-width: 100%; }
   --color-paper:    #fdfcf8;
   --color-burgundy: #6b1f2c;
   --color-steel:    #1e4060;
-  --color-green:    #2d5a3d;
+  --color-green:      #2d5a3d;
+  --color-green-mid:  #3a624a;
+  --color-green-soft: #4f7058;
   --color-warn:     #a05a1a;
   --color-violet:   #5d4a8a;
 
@@ -61,7 +63,9 @@ img, svg { display: block; max-width: 100%; }
   --color-paper:    #2a2a2a;
   --color-burgundy: #d65a6a;
   --color-steel:    #7eafd0;
-  --color-green:    #86c099;
+  --color-green:      #86c099;
+  --color-green-mid:  #9ecaab;
+  --color-green-soft: #b8d6c0;
   --color-warn:     #d4a060;
   --color-violet:   #b8a6e0;
 }
@@ -78,7 +82,9 @@ img, svg { display: block; max-width: 100%; }
     --color-paper:    #2a2a2a;
     --color-burgundy: #d65a6a;
     --color-steel:    #7eafd0;
-    --color-green:    #86c099;
+    --color-green:      #86c099;
+    --color-green-mid:  #9ecaab;
+    --color-green-soft: #b8d6c0;
     --color-warn:     #d4a060;
     --color-violet:   #b8a6e0;
   }
@@ -1018,8 +1024,8 @@ main { flex-grow: 1; }
   align-items: center;
   gap: 0.35rem;
 }
-.garden-note-header.stage-seedling .stage { color: var(--color-burgundy); }
-.garden-note-header.stage-budding  .stage { color: var(--color-steel); }
+.garden-note-header.stage-seedling  .stage { color: var(--color-green-soft); }
+.garden-note-header.stage-budding   .stage { color: var(--color-green-mid); }
 .garden-note-header.stage-evergreen .stage { color: var(--color-green); }
 .garden-note-header .stage-glyph { color: currentColor; }
 .garden-note-header .stage-label {
@@ -1080,8 +1086,8 @@ main { flex-grow: 1; }
   border-color: var(--color-burgundy);
   transform: translateY(-1px);
 }
-.garden-tile.stage-seedling { color: var(--color-burgundy); }
-.garden-tile.stage-budding  { color: var(--color-steel); }
+.garden-tile.stage-seedling  { color: var(--color-green-soft); }
+.garden-tile.stage-budding   { color: var(--color-green-mid); }
 .garden-tile.stage-evergreen { color: var(--color-green); }
 
 .garden-tile .tile-stage {

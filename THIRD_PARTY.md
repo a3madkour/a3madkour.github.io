@@ -22,6 +22,12 @@ Used files (under `assets/images/icons/`):
 - `search.svg` — Lucide `search`
 - `sun.svg` — Lucide `sun`
 
+Inlined in templates:
+
+- `layouts/partials/garden/stage-glyph.html` (seedling) — Lucide `sprout`
+- `layouts/partials/garden/stage-glyph.html` (budding) — Lucide `leafy-green`
+- `layouts/partials/garden/stage-glyph.html` (evergreen) — Lucide `trees`
+
 ## Fonts
 
 Google Fonts (Open Font License) — Petrona, Inter, JetBrains Mono. Loaded via CDN

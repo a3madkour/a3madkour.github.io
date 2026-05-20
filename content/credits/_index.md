@@ -10,7 +10,7 @@ This site bundles a small number of third-party assets. Full source + license de
 
 ## Icons
 
-[Lucide](https://lucide.dev) v1.16.0 — ISC License. Used for the 11 SVG icons across the site (medium glyphs, output-type indicators, header chrome).
+[Lucide](https://lucide.dev) v1.16.0 — ISC License. Used for 14 icons across the site: 11 file-based SVGs (medium glyphs, output-type indicators, header chrome) plus 3 inlined in the garden stage-glyph template (`sprout`, `leafy-green`, `trees`).
 
 ## Fonts
 
