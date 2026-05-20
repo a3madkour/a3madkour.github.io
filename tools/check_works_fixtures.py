@@ -24,6 +24,7 @@ GAME_OPTIONAL = {
     "tags", "summary", "hero", "embed_url", "source_url", "itch_url",
     "collaborators", "tech_stack", "length", "screenshots",
     "research_questions", "related_essays", "related_notes",
+    "source_stream",
 } | UMBRELLA_OPTIONAL
 GAME_FIELDS = GAME_REQUIRED | GAME_OPTIONAL
 GAME_STATUSES = {"playable", "in-progress", "archived"}
@@ -34,13 +35,14 @@ MUSIC_OPTIONAL = {
     "tags", "summary", "tagline", "cover", "duration",
     "tracks", "platform_embed", "audio_url", "lyrics_poem",
     "related_works", "related_essays", "made_with", "collaborators",
+    "source_stream",
 } | UMBRELLA_OPTIONAL
 MUSIC_FIELDS = MUSIC_REQUIRED | MUSIC_OPTIONAL
 MUSIC_FORMATS = {"album", "track", "experiment", "live"}
 PLATFORM_KINDS = {"bandcamp", "soundcloud", "youtube"}
 
 POEM_REQUIRED = {"title", "date", "lastmod", "draft", "lines"}
-POEM_OPTIONAL = {"tags", "collection", "set_to_music", "summary", "audio_url"} | UMBRELLA_OPTIONAL
+POEM_OPTIONAL = {"tags", "collection", "set_to_music", "summary", "audio_url", "source_stream"} | UMBRELLA_OPTIONAL
 POEM_FIELDS = POEM_REQUIRED | POEM_OPTIONAL
 
 
