@@ -34,6 +34,7 @@
       {{- with .Params.tech_stack }}<p class="works-game-tech">{{ delimit . " · " }}</p>{{- end }}
     </div>
   </header>
+  {{ partial "streams/from-stream.html" . }}
 
   <div class="cite-cta-zone works-cite-zone">{{ partial "cite/button.html" . }}</div>
 

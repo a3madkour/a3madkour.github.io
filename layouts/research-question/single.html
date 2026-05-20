@@ -86,6 +86,7 @@
   </header>
 
   <h1 class="question-statement">{{ .Title }}</h1>
+  {{ partial "streams/from-stream.html" . }}
 
   <div class="cite-cta-zone research-cite-zone">{{ partial "cite/button.html" . }}</div>
 

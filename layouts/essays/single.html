@@ -12,6 +12,7 @@
     <h1>{{ .Title }}</h1>
     {{ with .Params.summary }}<p class="lede">{{ . }}</p>{{ end }}
   </header>
+  {{ partial "streams/from-stream.html" . }}
 
   <div class="essay-layout">
     <div class="essay-toc-zone">
