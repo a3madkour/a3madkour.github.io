@@ -395,6 +395,16 @@ class FilterChipsLinterTest(unittest.TestCase):
         self.assertEqual(rc, 1)
         self.assertTrue(any("missing-tag" in e for e in errors), errors)
 
+    # --- streams section default path mapping ---
+
+    def test_streams_section_default_path(self) -> None:
+        # The default branch should map 'streams' → content/streams/ without
+        # needing a SECTION_PATH_OVERRIDES entry.
+        paths = lint._section_content_paths(self.repo.root, "streams")
+        self.assertEqual(len(paths), 1)
+        self.assertEqual(paths[0].name, "streams")
+        self.assertEqual(paths[0].parent.name, "content")
+
 
 if __name__ == "__main__":
     unittest.main()
