@@ -14,6 +14,7 @@
       (dict "id" "essays"    "label" "Essays")
       (dict "id" "research"  "label" "Research")
       (dict "id" "works"     "label" "Works")
+      (dict "id" "streams"   "label" "Streams")
     )) }}
   {{ partial "home/hero.html" . }}
   {{ partial "home/currently.html" . }}
@@ -45,6 +46,10 @@
   <section id="research" class="home-research-section">
     {{ partial "home/research-strip.html" . }}
     {{ partial "home/garden-strip.html" . }}
+  </section>
+
+  <section id="streams" class="home-streams-section">
+    {{ partial "home/streams-strip.html" . }}
   </section>
 
   {{ partial "home/studio-strip.html" . }}
