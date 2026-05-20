@@ -105,5 +105,61 @@ def youtube_is_live(channel_id: str) -> bool:
     return status == 200 or (300 <= status < 400)
 
 
+_SLUG_RE = re.compile(r"[^a-z0-9]+")
+
+
+def slugify(title: str) -> str:
+    s = title.lower().strip()
+    s = _SLUG_RE.sub("-", s)
+    return s.strip("-")
+
+
+def _date_prefix(started_at_iso: str) -> str:
+    """Return YYYY-MM-DD from an RFC3339 / ISO8601 timestamp."""
+    # Parse the date portion (first 10 chars) — robust enough for Twitch responses.
+    return started_at_iso[:10]
+
+
+def stub_path(content_root: Path, title: str, started_at_iso: str) -> Path:
+    slug = f"{_date_prefix(started_at_iso)}-{slugify(title)}"
+    return content_root / "streams" / slug / "index.md"
+
+
+def write_auto_stub(content_root: Path, title: str, started_at_iso: str) -> Path:
+    """Create content/streams/<YYYY-MM-DD>-<slug>/index.md if absent (idempotent).
+
+    Defaults: category=game-dev (user edits post-hoc), archive_status=archived,
+    draft=true, platforms=[twitch,youtube], empty vod_url + show notes."""
+    path = stub_path(content_root, title, started_at_iso)
+    if path.exists():
+        return path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    safe_title = title.replace('"', '\\"')
+    body = (
+        "---\n"
+        f'title: "{safe_title}"\n'
+        f"date: {started_at_iso}\n"
+        "duration: \"\"\n"
+        "platforms: [twitch, youtube]\n"
+        "vod_url: \"\"\n"
+        "twitch_archive_url: \"\"\n"
+        "archive_url: \"\"\n"
+        "archive_status: archived\n"
+        "category: game-dev\n"
+        "tags: []\n"
+        "summary: \"\"\n"
+        "related_essays: []\n"
+        "related_garden: []\n"
+        "related_research: []\n"
+        "related_works: []\n"
+        "draft: true\n"
+        "---\n"
+        "\n"
+        "Show notes — fill in.\n"
+    )
+    path.write_text(body)
+    return path
+
+
 if __name__ == "__main__":
     sys.exit(0)  # placeholder; main() lands in Sub-task 34F

@@ -95,3 +95,55 @@ class YouTubeLiveProbeTests(unittest.TestCase):
     def test_youtube_not_live_other(self, mock_head):
         mock_head.return_value = 500
         self.assertFalse(ps.youtube_is_live("UC-abc"))
+
+
+class AutoStubTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+
+    def test_creates_stub_when_absent(self):
+        ps.write_auto_stub(
+            content_root=self.tmp / "content",
+            title="Example live coding stream",
+            started_at_iso="2026-04-10T19:00:00Z",
+        )
+        path = self.tmp / "content" / "streams" / "2026-04-10-example-live-coding-stream" / "index.md"
+        self.assertTrue(path.exists())
+        text = path.read_text()
+        self.assertIn('title: "Example live coding stream"', text)
+        self.assertIn("archive_status: archived", text)
+        self.assertIn("draft: true", text)
+        self.assertIn("category: game-dev", text)
+        self.assertIn("platforms: [twitch, youtube]", text)
+        self.assertIn('date: 2026-04-10T19:00:00', text)
+
+    def test_idempotent_does_not_overwrite(self):
+        path = self.tmp / "content" / "streams" / "2026-04-10-already-here" / "index.md"
+        path.parent.mkdir(parents=True)
+        path.write_text("---\ntitle: \"Hand-edited\"\n---\nuser content\n")
+        ps.write_auto_stub(
+            content_root=self.tmp / "content",
+            title="already here",
+            started_at_iso="2026-04-10T19:00:00Z",
+        )
+        self.assertIn("user content", path.read_text())
+
+    def test_slugify_strips_punctuation_and_lowercases(self):
+        # Title with mixed case + punctuation + multiple spaces.
+        slug = ps.slugify("Game Dev: HEX grid (prototype)!")
+        # Expected: lowercase, ascii-only kebab.
+        self.assertEqual(slug, "game-dev-hex-grid-prototype")
+
+    def test_slug_path_uses_date_prefix(self):
+        slug_path = ps.stub_path(
+            content_root=self.tmp / "content",
+            title="X y z",
+            started_at_iso="2026-05-19T14:30:00Z",
+        )
+        self.assertEqual(
+            slug_path,
+            self.tmp / "content" / "streams" / "2026-05-19-x-y-z" / "index.md",
+        )
