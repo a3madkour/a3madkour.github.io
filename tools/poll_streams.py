@@ -77,5 +77,26 @@ def twitch_oauth(client_id: str, client_secret: str) -> str:
     return token
 
 
+def twitch_live_state(token: str, client_id: str, user_login: str) -> dict:
+    """Return {is_live, title, started_at, url} for a Twitch user."""
+    url = f"{TWITCH_STREAMS_URL}?{urllib.parse.urlencode({'user_login': user_login})}"
+    resp = _http_get(url, headers={
+        "Authorization": f"Bearer {token}",
+        "Client-Id": client_id,
+    })
+    with resp:
+        payload = json.loads(resp.read().decode("utf-8"))
+    data = payload.get("data") or []
+    if not data or data[0].get("type") != "live":
+        return {"is_live": False, "title": "", "started_at": "", "url": ""}
+    entry = data[0]
+    return {
+        "is_live": True,
+        "title": entry.get("title", ""),
+        "started_at": entry.get("started_at", ""),
+        "url": f"https://twitch.tv/{user_login}",
+    }
+
+
 if __name__ == "__main__":
     sys.exit(0)  # placeholder; main() lands in Sub-task 34F

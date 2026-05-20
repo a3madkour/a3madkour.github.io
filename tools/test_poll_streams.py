@@ -46,3 +46,29 @@ class TwitchOAuthTests(unittest.TestCase):
         mock_open.return_value = _mock_response(json.dumps({"error": "denied"}))
         with self.assertRaises(ps.PollError):
             ps.twitch_oauth("client-id", "client-secret")
+
+
+class TwitchLiveStateTests(unittest.TestCase):
+    @patch("poll_streams.urllib.request.urlopen")
+    def test_twitch_streams_live(self, mock_open):
+        mock_open.return_value = _mock_response(json.dumps({
+            "data": [{
+                "type": "live",
+                "title": "Example live stream",
+                "started_at": "2026-04-10T19:00:00Z",
+                "user_login": "a3madkour",
+            }],
+        }))
+        state = ps.twitch_live_state("tok-abc", "client-id", "a3madkour")
+        self.assertTrue(state["is_live"])
+        self.assertEqual(state["title"], "Example live stream")
+        self.assertEqual(state["started_at"], "2026-04-10T19:00:00Z")
+        self.assertEqual(state["url"], "https://twitch.tv/a3madkour")
+
+    @patch("poll_streams.urllib.request.urlopen")
+    def test_twitch_streams_not_live(self, mock_open):
+        mock_open.return_value = _mock_response(json.dumps({"data": []}))
+        state = ps.twitch_live_state("tok-abc", "client-id", "a3madkour")
+        self.assertFalse(state["is_live"])
+        self.assertEqual(state["title"], "")
+        self.assertEqual(state["url"], "")
