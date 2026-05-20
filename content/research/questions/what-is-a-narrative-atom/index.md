@@ -8,6 +8,7 @@ tags: [narrative]
 supporting_notes: [story-atoms]
 related_essays: [example-essay-two]
 weight: 20
+source_stream: 2026-04-10-example-live-coding-stream
 ---
 
 Example 5. Lorem ipsum dolor sit amet.

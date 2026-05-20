@@ -16,6 +16,7 @@ platform_embed: { kind: youtube, url: "https://youtube.com/watch?v=example" }
 made_with: [Guitar, "DI box", Ableton]
 collaborators: [Alice Example]
 tags: [example, live]
+source_stream: 2026-04-22-example-music-jam-stream
 ---
 
 Lorem ipsum dolor sit amet.

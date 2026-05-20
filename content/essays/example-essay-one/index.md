@@ -17,6 +17,7 @@ has_footnotes: true
 has_math: false
 has_widgets: false
 has_video_sync: false
+source_stream: 2026-04-22-example-music-jam-stream
 ---
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.

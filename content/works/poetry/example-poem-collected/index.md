@@ -7,6 +7,7 @@ lines: 8
 collection: greenhouse-demos
 tile_size: large
 tags: [example, collected]
+source_stream: 2026-04-22-example-music-jam-stream
 ---
 
 Lorem ipsum dolor sit amet,
