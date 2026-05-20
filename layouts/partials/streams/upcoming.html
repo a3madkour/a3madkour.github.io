@@ -1,0 +1,73 @@
+{{- /* Upcoming streams strip. Inputs: dict { limit: int (optional, default 0 = no cap),
+       heading: string (optional default "Upcoming streams") }.
+       Merge model: manual schedule wins over twitch-cache; dedup key =
+       date(YYYY-MM-DD) + lowercased title. Past entries (date < now) dropped.
+       Hyphenated data filenames → use `index site.Data "..."`. */ -}}
+{{- $args := . -}}
+{{- $limit := $args.limit | default 0 -}}
+{{- $heading := $args.heading | default "Upcoming streams" -}}
+
+{{- $manualFile := index site.Data "streams-schedule" -}}
+{{- $cacheFile  := index site.Data "streams-twitch-cache" -}}
+{{- $manual := slice -}}
+{{- with $manualFile -}}{{- $manual = .upcoming | default slice -}}{{- end -}}
+{{- $cache  := slice -}}
+{{- with $cacheFile -}}{{- $cache = .upcoming | default slice -}}{{- end -}}
+
+{{- /* Build the manual-key set: date(YYYY-MM-DD) + lower-title. */ -}}
+{{- $manualKeys := dict -}}
+{{- range $manual -}}
+  {{- $d := .date -}}
+  {{- $dateStr := "" -}}
+  {{- if (reflect.IsMap $d) -}}{{- $dateStr = (time.AsTime $d).Format "2006-01-02" -}}
+  {{- else -}}{{- $dateStr = (printf "%v" $d) | substr 0 10 -}}{{- end -}}
+  {{- $k := printf "%s|%s" $dateStr (lower .title) -}}
+  {{- $manualKeys = merge $manualKeys (dict $k true) -}}
+{{- end -}}
+
+{{- $merged := $manual -}}
+{{- range $cache -}}
+  {{- $d := .date -}}
+  {{- $dateStr := "" -}}
+  {{- if (reflect.IsMap $d) -}}{{- $dateStr = (time.AsTime $d).Format "2006-01-02" -}}
+  {{- else -}}{{- $dateStr = (printf "%v" $d) | substr 0 10 -}}{{- end -}}
+  {{- $k := printf "%s|%s" $dateStr (lower .title) -}}
+  {{- if not (index $manualKeys $k) -}}
+    {{- $merged = $merged | append . -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* Drop past entries + sort by date asc. */ -}}
+{{- $nowStr := now.Format "2006-01-02T15:04:05Z07:00" -}}
+{{- $future := slice -}}
+{{- range $merged -}}
+  {{- $dRaw := .date -}}
+  {{- $dt := "" -}}
+  {{- if (reflect.IsMap $dRaw) -}}{{- $dt = time.AsTime $dRaw -}}
+  {{- else -}}{{- $dt = time.AsTime (printf "%v" $dRaw) -}}{{- end -}}
+  {{- if not ($dt.Before now) -}}
+    {{- $future = $future | append (merge . (dict "_dt" $dt)) -}}
+  {{- end -}}
+{{- end -}}
+{{- $sorted := sort $future "_dt" "asc" -}}
+{{- if gt $limit 0 -}}{{- $sorted = first $limit $sorted -}}{{- end -}}
+
+{{- if $sorted -}}
+<section class="streams-upcoming" aria-labelledby="streams-upcoming-heading">
+  <h2 id="streams-upcoming-heading">{{ $heading }}</h2>
+  <ul class="streams-upcoming-list">
+    {{- range $sorted -}}
+      {{- $cat := .category | default "" -}}
+      <li class="streams-upcoming-item" data-category="{{ $cat }}">
+        <time datetime="{{ ._dt.Format "2006-01-02T15:04:05Z07:00" }}">{{ ._dt.Format "Mon Jan 2, 3:04 PM" }}</time>
+        <span class="streams-upcoming-title">{{ .title }}</span>
+        {{- with $cat }} <span class="streams-category-pill streams-category-pill--{{ . }}">{{ humanize . }}</span>{{- end -}}
+        {{- with .summary -}}<p class="streams-upcoming-summary">{{ . }}</p>{{- end -}}
+        {{- with .platforms -}}
+          <p class="streams-upcoming-platforms">on {{ delimit . " + " }}</p>
+        {{- end -}}
+      </li>
+    {{- end -}}
+  </ul>
+</section>
+{{- end -}}
