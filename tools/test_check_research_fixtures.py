@@ -129,6 +129,33 @@ nonsense: yes
 ---
 """
 
+THEME_WITH_SOURCE_STREAM = """\
+---
+title: "Memory and play"
+status: active
+tags: [memory, play]
+last_modified: 2026-05-11
+description: "Theme framing."
+weight: 10
+source_stream: 2026-04-22-example-music-jam-stream
+---
+
+Body.
+"""
+
+QUESTION_WITH_SOURCE_STREAM = """\
+---
+title: "How do readers form narrative?"
+theme: memory-and-play
+status: active
+last_modified: 2026-05-11
+description: "Question framing."
+source_stream: 2026-04-10-example-live-coding-stream
+---
+
+Body.
+"""
+
 
 def _write(parent: Path, name: str, body: str) -> None:
     d = parent / name
@@ -169,6 +196,10 @@ class LintThemeTests(unittest.TestCase):
         errs = lint.lint_theme(self.tmp / "memory-and-play")
         self.assertTrue(any("weight must be an integer" in e for e in errs))
 
+    def test_theme_accepts_source_stream(self):
+        _write(self.tmp, "with-stream-theme", THEME_WITH_SOURCE_STREAM)
+        self.assertEqual([], lint.lint_theme(self.tmp / "with-stream-theme"))
+
 
 class LintQuestionTests(unittest.TestCase):
     def setUp(self):
@@ -200,6 +231,10 @@ class LintQuestionTests(unittest.TestCase):
         _write(self.tmp, "q-slug", QUESTION_UNKNOWN_FIELD)
         errs = lint.lint_question(self.tmp / "q-slug")
         self.assertTrue(any("unknown field 'nonsense'" in e for e in errs))
+
+    def test_question_accepts_source_stream(self):
+        _write(self.tmp, "with-stream-q", QUESTION_WITH_SOURCE_STREAM)
+        self.assertEqual([], lint.lint_question(self.tmp / "with-stream-q"))
 
 
 class ValidateUniqueThemeWeightsTests(unittest.TestCase):
