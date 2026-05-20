@@ -1,0 +1,15 @@
+# Action-authored. Rewritten on every poll (~5 min cadence).
+# When this file is missing entirely, the live-pill partial emits nothing.
+last_polled: 2026-05-19T00:00:00Z
+live:
+  twitch:
+    is_live: false
+    title: ""
+    started_at: ""
+    url: ""
+  youtube:
+    is_live: false
+    video_id: ""
+    title: ""
+    started_at: ""
+    url: ""

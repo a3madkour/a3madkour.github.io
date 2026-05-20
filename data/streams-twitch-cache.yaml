@@ -1,0 +1,3 @@
+# Auto-populated by tools/poll_streams.py hourly from Twitch /helix/schedule.
+# Same schema as streams-schedule.yaml. Manual schedule wins on date+title key.
+upcoming: []
