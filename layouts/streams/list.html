@@ -1,0 +1,61 @@
+{{ define "main" }}
+<article class="page streams-index">
+  <span data-pagefind-meta="section:streams" hidden></span>
+  <span data-pagefind-filter="section:streams" hidden></span>
+  <header class="page-header">
+    <h1>{{ .Title }}</h1>
+    {{ with .Description }}<p class="page-description">{{ . }}</p>{{ end }}
+  </header>
+
+  {{ .Content }}
+
+  {{- /* Upcoming strip (no limit on the section index — show everything future). */ -}}
+  {{ partial "streams/upcoming.html" (dict "heading" "Upcoming") }}
+
+  {{- /* Filter chips on archive. */ -}}
+  {{ $items := .Pages.ByDate.Reverse }}
+
+  {{- $cats := slice -}}
+  {{- $years := slice -}}
+  {{- $tagCounts := dict -}}
+  {{- range $items -}}
+    {{- $c := .Params.category -}}
+    {{- if and $c (not (in $cats $c)) -}}{{- $cats = $cats | append $c -}}{{- end -}}
+    {{- $y := printf "%d" .Date.Year -}}
+    {{- if not (in $years $y) -}}{{- $years = $years | append $y -}}{{- end -}}
+    {{- range .Params.tags -}}
+      {{- $cur := index $tagCounts . | default 0 -}}
+      {{- $tagCounts = merge $tagCounts (dict . (add $cur 1)) -}}
+    {{- end -}}
+  {{- end -}}
+
+  {{- /* Tags ranked by count desc, alphabetical for ties. */ -}}
+  {{- $tagPairs := slice -}}
+  {{- range $name, $count := $tagCounts -}}
+    {{- $tagPairs = $tagPairs | append (dict "name" $name "count" $count) -}}
+  {{- end -}}
+  {{- $tags := slice -}}
+  {{- range (sort (sort $tagPairs "name" "asc") "count" "desc") -}}
+    {{- $tags = $tags | append .name -}}
+  {{- end -}}
+
+  {{- $dims := slice -}}
+  {{- if ge (len $cats) 2 -}}
+    {{- $dims = $dims | append (dict "key" "category" "label" "Category" "values" $cats) -}}
+  {{- end -}}
+  {{- if ge (len $years) 2 -}}
+    {{- $dims = $dims | append (dict "key" "year" "label" "Year" "values" $years) -}}
+  {{- end -}}
+  {{- if ge (len $tags) 2 -}}
+    {{- $dims = $dims | append (dict "key" "tag" "label" "Tag" "values" $tags) -}}
+  {{- end -}}
+
+  {{ partial "filter-chips.html" (dict "dimensions" $dims "section" "streams") }}
+
+  <section class="streams-archive-list" aria-label="Archived streams">
+    {{- range $items -}}
+      {{- partial "streams/stream-card.html" . -}}
+    {{- end -}}
+  </section>
+</article>
+{{ end }}

@@ -1,0 +1,51 @@
+{{- /* Bidirectional related-outputs list, rendered on /streams/<slug>/.
+       Input: . is the stream page. Resolves each slug via site.GetPage
+       (linter check_streams_links guarantees they all resolve). */ -}}
+{{- $page := . -}}
+{{- $groups := slice
+    (dict "label" "Related essays"   "field" "related_essays"   "base" "/essays/")
+    (dict "label" "Related notes"    "field" "related_garden"   "base" "/garden/")
+    (dict "label" "Related research" "field" "related_research" "base" "")
+    (dict "label" "Related works"    "field" "related_works"    "base" "")
+-}}
+
+{{- $anyShown := false -}}
+{{- range $groups -}}
+  {{- $refs := index $page.Params .field | default slice -}}
+  {{- if $refs -}}{{- $anyShown = true -}}{{- end -}}
+{{- end -}}
+
+{{- if $anyShown -}}
+<section class="streams-cross-refs" aria-labelledby="streams-cross-refs-heading">
+  <h2 id="streams-cross-refs-heading">From this stream</h2>
+  {{- range $groups -}}
+    {{- $refs := index $page.Params .field | default slice -}}
+    {{- if $refs -}}
+      <div class="streams-cross-refs-group">
+        <h3>{{ .label }}</h3>
+        <ul>
+          {{- $base := .base -}}
+          {{- $field := .field -}}
+          {{- range $refs -}}
+            {{- $slug := . -}}
+            {{- $pg := "" -}}
+            {{- if eq $field "related_research" -}}
+              {{- $pg = site.GetPage (printf "/research/questions/%s/" $slug) -}}
+              {{- if not $pg -}}{{- $pg = site.GetPage (printf "/research/themes/%s/" $slug) -}}{{- end -}}
+            {{- else if eq $field "related_works" -}}
+              {{- $pg = site.GetPage (printf "/works/games/%s/" $slug) -}}
+              {{- if not $pg -}}{{- $pg = site.GetPage (printf "/works/music/%s/" $slug) -}}{{- end -}}
+              {{- if not $pg -}}{{- $pg = site.GetPage (printf "/works/poetry/%s/" $slug) -}}{{- end -}}
+            {{- else -}}
+              {{- $pg = site.GetPage (printf "%s%s/" $base $slug) -}}
+            {{- end -}}
+            {{- with $pg -}}
+              <li><a href="{{ .RelPermalink }}">{{ .Title }}</a></li>
+            {{- end -}}
+          {{- end -}}
+        </ul>
+      </div>
+    {{- end -}}
+  {{- end -}}
+</section>
+{{- end -}}

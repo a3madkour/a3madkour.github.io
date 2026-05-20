@@ -1,0 +1,11 @@
+{{- /* Homepage "Upcoming streams" strip. Slot mirrors the other strip
+       partials (home/research-strip.html etc.) — own header + body block.
+       Wraps the shared streams/upcoming.html (limit 2 entries to stay
+       above-the-fold). No → arrows per memory feedback_no_arrow_prefix_on_links. */ -}}
+<div class="home-streams-block">
+  <header class="home-strip-header">
+    <h2>Upcoming streams</h2>
+    <a class="home-strip-all" href="{{ "/streams/" | relURL }}">All streams</a>
+  </header>
+  {{ partial "streams/upcoming.html" (dict "limit" 2 "heading" "") }}
+</div>

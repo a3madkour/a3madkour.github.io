@@ -16,6 +16,7 @@
   <div class="garden-stack-columns">
     <article class="garden-column is-active reading-column garden-note" data-slug="{{ path.Base .File.Dir }}">
       {{ partial "garden/note-header.html" . }}
+      {{ partial "streams/from-stream.html" . }}
 
       <h1 class="garden-note-title" tabindex="-1">{{ .Title }}</h1>
 

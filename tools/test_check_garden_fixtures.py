@@ -293,6 +293,61 @@ class GardenLinterTest(unittest.TestCase):
         self.assertEqual(rc, 1)
         self.assertTrue(any("original_url" in e for e in errors))
 
+    # --- source_stream (streams-section back-edge) acceptance ---
+
+    def test_source_stream_accepted_on_concept_note(self) -> None:
+        body = """\
+---
+title: "Example concept note"
+draft: false
+last_modified: 2026-05-19
+growth_stage: budding
+source_stream: 2026-04-10-example-live-coding-stream
+---
+
+Body.
+"""
+        self.repo.write_note("with-source-stream", body)
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 0, msg=f"unexpected: {errors}")
+
+    def test_source_stream_accepted_on_media_note(self) -> None:
+        body = """\
+---
+title: "Example media note"
+draft: false
+last_modified: 2026-05-19
+growth_stage: budding
+media_type: book
+status: reading
+creator: "Author X"
+source_stream: 2026-04-10-example-live-coding-stream
+---
+
+Body.
+"""
+        self.repo.write_note("with-source-stream-media", body)
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 0, msg=f"unexpected: {errors}")
+
+    def test_source_stream_accepted_on_reference_note(self) -> None:
+        body = """\
+---
+title: "Example reference note"
+draft: false
+last_modified: 2026-05-19
+growth_stage: evergreen
+media_type: paper
+creator: "Author X"
+source_stream: 2026-04-10-example-live-coding-stream
+---
+
+Body.
+"""
+        self.repo.write_note("with-source-stream-ref", body)
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 0, msg=f"unexpected: {errors}")
+
 
 if __name__ == "__main__":
     unittest.main()

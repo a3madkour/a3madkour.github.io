@@ -288,6 +288,32 @@ Body.
         errs = lint.lint_file(p)
         self.assertTrue(any("tile_size='huge'" in e for e in errs), errs)
 
+    # --- source_stream (streams-section back-edge) ---
+
+    def test_game_accepts_source_stream(self):
+        body = GAME_VALID.replace(
+            "year: 2026\n",
+            "year: 2026\nsource_stream: 2026-04-10-example-live-coding-stream\n",
+        )
+        p = self._write("games", "with-source-stream", body)
+        self.assertEqual(lint.lint_file(p), [])
+
+    def test_music_accepts_source_stream(self):
+        body = MUSIC_VALID.replace(
+            "year: 2026\n",
+            "year: 2026\nsource_stream: 2026-04-22-example-music-jam-stream\n",
+        )
+        p = self._write("music", "with-source-stream", body)
+        self.assertEqual(lint.lint_file(p), [])
+
+    def test_poem_accepts_source_stream(self):
+        body = POEM_VALID.replace(
+            "lines: 14\n",
+            "lines: 14\nsource_stream: 2026-04-22-example-music-jam-stream\n",
+        )
+        p = self._write("poetry", "with-source-stream", body)
+        self.assertEqual(lint.lint_file(p), [])
+
     # --- runner ---
 
     def test_runner_walks_all_three_sub_sections(self):

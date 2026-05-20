@@ -139,6 +139,16 @@ class CheckFixturesTest(unittest.TestCase):
         self.assertEqual(rc, 1)
         self.assertTrue(any("missing-key" in e for e in errors))
 
+    def test_source_stream_accepted_on_essay(self) -> None:
+        body = VALID_FRONTMATTER.replace(
+            "has_video_sync: false\n",
+            "has_video_sync: false\nsource_stream: 2026-04-10-example-live-coding-stream\n",
+        )
+        self.repo.write_essay("with-source-stream", body, hero=True)
+        self.repo.write_citations(VALID_CITATIONS)
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 0, msg=f"unexpected: {errors}")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -59,6 +59,12 @@ class TestSectionFromPath(unittest.TestCase):
     def test_credits(self):
         self.assertEqual(section_from_path("/credits/"), "credits")
 
+    def test_section_from_streams_path(self):
+        self.assertEqual(section_from_path("/streams/some-slug/"), "streams")
+
+    def test_section_from_streams_index(self):
+        self.assertEqual(section_from_path("/streams/"), "streams")
+
 
 class TestParseMeta(unittest.TestCase):
     def test_extracts_section_key_single_element(self):

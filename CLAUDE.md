@@ -11,7 +11,7 @@ Personal website for Abdelrahman Madkour, built as a Hugo static site with hand-
 - `hugo server --buildDrafts` — dev server with drafts visible.
 - `hugo --minify` — production build to `public/`. **Do not run with a dev server alive**; it poisons the dev-server CSS via a MIME mismatch.
 - `python3 tools/check-contrast.py` — WCAG 2.1 contrast verifier (CI gate).
-- Twenty-one linter pairs under `tools/check_*.py` + `tools/test_check_*.py` (CI runs each linter then its unit-test sibling): essay fixtures, essay TOC depth, garden fixtures, garden links, filter-chips config, research fixtures, research links, citations, works fixtures, works links, synced poetry, library fixtures, library links, library covers, library shelves, icon attribution, RSS XSL, garden history, pagefind metadata, cite metadata, page weights. `tools/check_smoke.py` and `tools/check_graph_chrome.py` are sibling-less linters (no paired test file — spec §3.1: logic is too thin to warrant pairing).
+- Twenty-three linter pairs under `tools/check_*.py` + `tools/test_check_*.py` (CI runs each linter then its unit-test sibling): essay fixtures, essay TOC depth, garden fixtures, garden links, filter-chips config, research fixtures, research links, citations, works fixtures, works links, synced poetry, library fixtures, library links, library covers, library shelves, icon attribution, RSS XSL, garden history, streams fixtures, streams links, pagefind metadata, cite metadata, page weights. `tools/check_smoke.py` and `tools/check_graph_chrome.py` are sibling-less linters (no paired test file — spec §3.1: logic is too thin to warrant pairing).
 
 No npm. Python tooling is stdlib-only. Hugo **extended** (≥ 0.148.0) is required — `.github/workflows/hugo.yaml` pins `HUGO_VERSION=0.148.0`.
 
@@ -19,7 +19,7 @@ No npm. Python tooling is stdlib-only. Hugo **extended** (≥ 0.148.0) is requir
 
 ### CSS pipeline — hand-rolled, processed by Hugo
 
-`assets/css/main.css` is a single hand-rolled stylesheet, organized into numbered sections §1–§45 (see the file's top-of-file index for the list; §32–§36 are reserved for past works-section additions that landed without numbered headers; §38–§40 cover the homepage hero, Currently widget, and homepage strips; §41 covers the cross-template page sidebar; §42 covers the search modal; §43 covers citation export; §44 covers the library umbrella redesign — hero + themed shelves + bottom catalogue; §45 covers the synced-poetry runtime (reveal opacity/flourish + JS-built player chrome)). Consumed by `layouts/partials/head.html` via `resources.Get` + (production) `minify | fingerprint` with SRI integrity.
+`assets/css/main.css` is a single hand-rolled stylesheet, organized into numbered sections §1–§46 (see the file's top-of-file index for the list; §32–§36 are reserved for past works-section additions that landed without numbered headers; §38–§40 cover the homepage hero, Currently widget, and homepage strips; §41 covers the cross-template page sidebar; §42 covers the search modal; §43 covers citation export; §44 covers the library umbrella redesign — hero + themed shelves + bottom catalogue; §45 covers the synced-poetry runtime (reveal opacity/flourish + JS-built player chrome); §46 covers the streams section — header live-pill, click-to-load YouTube embed, archive grid, upcoming strip, cross-section from-stream attribution, category pill palette). Consumed by `layouts/partials/head.html` via `resources.Get` + (production) `minify | fingerprint` with SRI integrity.
 
 - **Tokens** are CSS custom properties on `:root` (light) and `:root[data-theme="dark"]` (dark). System dark via `@media (prefers-color-scheme: dark) :root:not([data-theme])`. The `[data-theme="dark"]` block and the media-query block carry **duplicate values** — both must be updated together when the palette changes.
 - **WCAG contrast**: `tools/check-contrast.py` parses the `:root` blocks and verifies four pairings (ink/stone AAA, ink-soft/stone AA, burgundy/stone AA, steel/stone AA) in both modes. Failure blocks deploy. Tokens `--color-green` (evergreen / finished pill), `--color-warn` (queued pill), and `--color-paper` (floating panel surface — search modal; light `#fdfcf8`, dark `#2a2a2a`; semantically distinct from `--color-tile` which is the grid-item surface) ride along but aren't checked.
@@ -27,7 +27,7 @@ No npm. Python tooling is stdlib-only. Hugo **extended** (≥ 0.148.0) is requir
 
 ### JS pipeline — multi-entry bundling
 
-`layouts/partials/scripts.html` runs Hugo's `js.Build` (esbuild) ten times — minified + fingerprinted, classic-script with SRI:
+`layouts/partials/scripts.html` runs Hugo's `js.Build` (esbuild) eleven times — minified + fingerprinted, classic-script with SRI:
 
 | Entry | Output | Loaded on | Notes |
 |---|---|---|---|
@@ -41,6 +41,7 @@ No npm. Python tooling is stdlib-only. Hugo **extended** (≥ 0.148.0) is requir
 | `js/entry-search.js` | `search.<hash>.js` (~4 KB) | every page | search modal open/close logic; lazy-loads `/pagefind/pagefind.js` on first open |
 | `js/entry-cite.js` | `cite.<hash>.js` (~2.5 KB) | `.Section in {essays, garden, research, works}` AND `.Kind == "page"` | `cite.js` — citation modal runtime (parse #cite-data blob, open `<dialog>`, tab/copy/download, Half B inline copy) |
 | `js/entry-poetry.js` | `poetry.<hash>.js` (~4 KB) | `.Section == "works"` AND `.Kind == "page"` AND `.Type == "works-poetry"` | `poem-synced.js` — synced-reveal runtime; JS-built player |
+| `js/entry-streams.js` | `streams.<hash>.js` (~1 KB) | `.Section == "streams"` | `streams.js` — click-to-load YouTube embed + filter-chip setup on the /streams/ section index |
 
 **Why multi-entry, not `splitting: true`?** esbuild requires `outdir` for code splitting, but Hugo's `js.Build` is `outfile`-only. `splitting: true` on a single entry silently inlines dynamic imports rather than emitting chunks. Confirmed with a minimal repro. `filter-chips.js` is duplicated into essay/garden/works bundles (~8 KB).
 
@@ -76,6 +77,7 @@ Three-state cycle: **system → light → dark → system**.
 | Research question | `research` | `subtype:question`, `status` |
 | Works (game/music/poem) | `works` | `medium` |
 | Library leaves | `library` | `medium`, `status` (leaf name: reading\|listening\|playing\|watching) |
+| Streams | `streams` | `category`, `archive_status` |
 | About / Home / Blog (legacy) | section name only | — |
 
 **Indexing controls**: `<main data-pagefind-body>` in `baseof.html` scopes the indexed body. `data-pagefind-ignore` on `.spoiler-body` (in `spoiler` shortcode) excludes spoiler content from the index.
@@ -86,7 +88,7 @@ Three-state cycle: **system → light → dark → system**.
 - **Layouts** under `layouts/`: base templates in `_default/`; per-section `{list,single}.html` plus `rss.xml` for essays + garden and standalone `graph.html` pages for garden + research + works. Works splits into `works/`, `works-games/`, `works-music/`, `works-poetry/`. Research splits into `research/`, `research-theme/`, `research-question/` with type discrimination via `cascade: { type: research-theme|research-question }` on `content/research/{themes,questions}/_index.md` (bare section URLs hidden via `build: render: never`). `baseof.html` is a thin semantic wrapper; per-section layouts override `{{ block "main" }}`.
 - **Partials** under `layouts/partials/`: site chrome (`head`, `header`, `footer`, `scripts`); essays (`essay-card{,-featured}`, `essay-meta`, `essay-toc`, `essay-references`, `essay-series-nav`); shared `filter-chips.html`, `page-sidebar.html` (cross-template rotated-labels rail + mobile dots strip), `search-modal.html` (included once in `baseof.html`); `home/` subfolder (`hero`, `currently`, `research-strip`, `garden-strip`, `studio-strip` — homepage v3 sections); `garden/` subfolder (`note-header`, `stage-glyph`, `note-tile`, `topic-section`, `relative-date`, `path-log`, `links-section`, `graph-{data,script,panel}`); `research/` subfolder (`status-pill`, `output-item`, `theme-card`, `backlinks-data`, `graph-{data,script,panel}`); `works/` subfolder (`tile`, `glyph-sprite`, `game-card`, `music-row`, `poem-row`, `status-pill`, `audio-pill`, `audio-link`, `connections`, `graph-{data,data-inner,script,panel}`, `synced-marker-seconds`, `synced-text-parser`, `poem-synced`).
 - **Shortcodes** under `layouts/shortcodes/`: `cite` (looks up `site.Data.citations.citations[key]`, errors if missing), `sidenote` (auto-numbered marker + aside via page scratch), `figure` (semantic, supports `class="wide"`), `spoiler` (`<details>`-based, no JS). Deferred-feature stubs: `math`, `video-sync`, `widget`, `lyrics` — each emits a `data-pending` container so fixtures exercise the shape.
-- **Top nav** (locked): Essays / Garden / Research / Works / Library / About. Active item gets `aria-current="page"` via `hasPrefix` match.
+- **Top nav** (locked): Essays / Garden / Research / Works / Library / Streams / About. Active item gets `aria-current="page"` via `hasPrefix` match. (Streams added 2026-05-19; was previously 6 items.)
 
 ### Frontmatter contracts
 
@@ -107,6 +109,8 @@ Three-state cycle: **system → light → dark → system**.
 
 **Citations**: `data/citations.yaml` is the canonical citation store (fixture-shaped — ox-hugo will produce it later). `tools/check_citations.py` validates shape and resolves `notes_ref` against the garden tree.
 
+**Streams** (`content/streams/<YYYY-MM-DD>-<slug>/index.md`) — enforced by `tools/check_streams_fixtures.py`. Required: `title, date, platforms, category, archive_status, draft`. Optional: `duration, vod_url, twitch_archive_url, archive_url, tags, summary, related_essays, related_garden, related_research, related_works`. `platforms` ⊆ `{twitch, youtube}`. `category` ∈ `{game-dev, research, coding, creative}`. `archive_status` ∈ `{live, archived, removed, private}`. Cross-val: `archive_status == archived` ⇒ `vod_url` non-empty. Bidirectional symmetry `related_* ↔ source_stream` enforced by `tools/check_streams_links.py` (the 23rd linter pair). Live state + schedule cache: `data/streams-live.yaml` / `data/streams-schedule.yaml` / `data/streams-twitch-cache.yaml` — shape-validated by the same fixtures linter.
+
 ### Bento variable-tile grid (essays index + homepage strip)
 
 Cards in `layouts/partials/essay-card.html` carry `data-tile-size` and `data-span` attributes resolved per priority:
@@ -122,6 +126,7 @@ CSS reads `data-span` and applies `grid-column / grid-row: span N`.
 - **Suppression**: dimensions with <2 distinct values don't render.
 - **Tag dim is two-tier**: primary chips inline; secondary chips inside a native `<details>` disclosure with a search input. Primary set from `data/filter-chips.yaml` `<section>.primary_tags` (manual, ordered) or top-K by note count (default K=10, override per section via `primary_top_k`). `tools/check_filter_chips_config.py` validates curated tags against the live taxonomy and includes section-path overrides for `content/works/<sub>/`.
 - **Read the data file via `index site.Data "filter-chips"`** — Hugo exposes hyphenated filenames literally, not dot syntax.
+- Same gotcha for `data/streams-*.yaml`: `site.Data.streams-live` etc. would silently break. Read via `index site.Data "streams-live"` / `"streams-schedule"` / `"streams-twitch-cache"`.
 
 **Active-state model**: per-dimension AND across dimensions. Multi-select within tag dim only (mutually-exclusive dims stay single-active). Clicking an active tag chip deselects it; "All" clears the tag selection. Disclosure summary surfaces active secondary tags when collapsed.
 
@@ -149,7 +154,7 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 
 ### Deployment
 
-`.github/workflows/hugo.yaml` builds with Hugo extended and deploys `public/` to GitHub Pages on pushes to `master`. CI step order: pre-build linters (contrast + 21 linter pairs + 1 sibling-less = 44 steps) → `hugo --minify` → pagefind metadata linter unit tests → verify pagefind metadata on built pages → cite metadata linter unit tests → verify cite metadata on built pages → install Pagefind 1.5.2 binary → build Pagefind index into `public/pagefind/` → smoke test → page-weight linter + unit tests → Lighthouse CI desktop (2 steps: `lighthouserc.json`) → Lighthouse CI mobile (`lighthouserc.mobile.json`) → upload artifact → deploy. Total: 55 named steps. Any failure blocks deploy. `public/pagefind/` is gitignored and CI-regenerated each run. Two separate LHCI config files (`lighthouserc.json` for desktop, `lighthouserc.mobile.json` for mobile) — simpler than an env-override approach.
+`.github/workflows/hugo.yaml` builds with Hugo extended and deploys `public/` to GitHub Pages on pushes to `master`. CI step order: pre-build linters (contrast + 23 linter pairs + 1 sibling-less = 48 steps) → `hugo --minify` → pagefind metadata linter unit tests → verify pagefind metadata on built pages → cite metadata linter unit tests → verify cite metadata on built pages → install Pagefind 1.5.2 binary → build Pagefind index into `public/pagefind/` → smoke test → page-weight linter + unit tests → Lighthouse CI desktop (2 steps: `lighthouserc.json`) → Lighthouse CI mobile (`lighthouserc.mobile.json`) → upload artifact → deploy. Total: 59 named steps. (A separate cron workflow `.github/workflows/streams-poll.yaml` runs every 5 minutes — outside this build/deploy pipeline.) Any failure blocks deploy. `public/pagefind/` is gitignored and CI-regenerated each run. Two separate LHCI config files (`lighthouserc.json` for desktop, `lighthouserc.mobile.json` for mobile) — simpler than an env-override approach.
 
 ## Reference docs
 
@@ -163,7 +168,7 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 
 ## Project status (as of 2026-05-18)
 
-**Shipped**: Phases 0–8 (modulo interactive QA walkthrough) plus Citation export + Library redesign + Graph-view chrome-consistency + Persistent-graph-access + TOC collapsible subsections + Time-synced poetry polish slices. Per-slice merge details live in memory under `project_*.md` (one entry per shipped slice). Most recent: Time-synced poetry merged 2026-05-19 — `[mm:ss]`-marker → synced-reveal poetry runtime (Hugo-side parser, JS player audio/animation modes, §9 cite note, CSS §45), new `check_poetry_synced` linter pair (21st) + `example-poem-synced` fixture.
+**Shipped**: Phases 0–8 (modulo interactive QA walkthrough) plus Citation export + Library redesign + Graph-view chrome-consistency + Persistent-graph-access + TOC collapsible subsections + Time-synced poetry + Streams section slices. Per-slice merge details live in memory under `project_*.md` (one entry per shipped slice). Most recent: Time-synced poetry merged 2026-05-19 — `[mm:ss]`-marker → synced-reveal poetry runtime (Hugo-side parser, JS player audio/animation modes, §9 cite note, CSS §45), new `check_poetry_synced` linter pair (21st) + `example-poem-synced` fixture.
 
 **Not started, in phase order:**
 
@@ -175,7 +180,6 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 
 | Feature | Phase fit | Notes |
 |---|---|---|
-| Streams section | Independent (β parallel with Phase 3 or γ after) | New 7th top-level `/streams/`; cron GitHub Action polls Twitch + YouTube. Bidirectional cross-refs (2 new linter pairs). |
 | Multi-target export | **Phase 3 Slice 3** | One Emacs command publishes literate org → Hugo essay + PDF + Word. Hard dep on Phase 3 Slices 1+2. |
 | Org → synced-poetry export | **Phase 3** (rides Essay/poetry publish) | elisp/ox-hugo emits the shipped `[mm:ss]` body-marker + `audio_url` contract; output must pass `check_poetry_synced` + `check_works_fixtures`. No new runtime. Stub spec `2026-05-19-org-synced-poetry-export.md`; brainstorm the org authoring affordance when scheduled. |
 

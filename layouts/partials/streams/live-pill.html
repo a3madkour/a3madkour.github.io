@@ -1,0 +1,21 @@
+{{- /* Header live indicator. Reads data/streams-live.yaml and emits a pulsing
+       pill linking to whichever platform reports is_live=true (Twitch wins
+       when both are live, since the live audience watches there).
+
+       When data/streams-live.yaml is missing entirely (e.g. before the cron
+       Action has ever run), `index site.Data "streams-live"` returns nil
+       and we emit nothing — never a template error. */ -}}
+{{- $live := index site.Data "streams-live" -}}
+{{- with $live -}}
+  {{- $tw := .live.twitch -}}
+  {{- $yt := .live.youtube -}}
+  {{- if or $tw.is_live $yt.is_live -}}
+    {{- $url := cond $tw.is_live $tw.url $yt.url -}}
+    {{- $platform := cond $tw.is_live "Twitch" "YouTube" -}}
+    <a class="header-live-pill" href="{{ $url }}" rel="noopener"
+       aria-label="Currently live — watch on {{ $platform }}">
+      <span class="header-live-pill-dot" aria-hidden="true"></span>
+      <span class="header-live-pill-label">LIVE</span>
+    </a>
+  {{- end -}}
+{{- end -}}

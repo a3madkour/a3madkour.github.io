@@ -68,8 +68,11 @@
 {{- /* Citation export: modal runtime on citable single pages + library leaves
        (each library row has its own cite-data blob; the modal serves them
        all via cite.js's scope-aware lookup). */ -}}
-{{- $citable_sections := slice "essays" "garden" "research" "works" -}}
+{{- $citable_sections := slice "essays" "garden" "research" "works" "streams" -}}
 {{- $isCitablePage := and (in $citable_sections .Section) (eq .Kind "page") -}}
+{{- if and $isCitablePage (eq .Section "streams") -}}
+  {{- $isCitablePage = in (slice "archived" "removed") .Params.archive_status -}}
+{{- end -}}
 {{- $isLibraryList := and (eq .Section "library") (ne .RelPermalink "/library/") -}}
 {{- if or $isCitablePage $isLibraryList }}
 {{- $citeOpts := dict "targetPath" "js/cite.js" "minify" true -}}
@@ -85,4 +88,13 @@
 {{- $poetryOpts := dict "targetPath" "js/poetry.js" "minify" true -}}
 {{- $poetry := resources.Get "js/entry-poetry.js" | js.Build $poetryOpts | fingerprint }}
 <script src="{{ $poetry.RelPermalink }}" integrity="{{ $poetry.Data.Integrity }}" defer></script>
+{{- end }}
+
+{{- /* Streams runtime: section index (filter chips) + per-stream pages (click-to-load YT).
+       streams.js self-guards on its DOM selectors so the load on either page type
+       no-ops cleanly when neither runtime applies. */ -}}
+{{- if eq .Section "streams" }}
+{{- $streamsOpts := dict "targetPath" "js/streams.js" "minify" true -}}
+{{- $streams := resources.Get "js/entry-streams.js" | js.Build $streamsOpts | fingerprint }}
+<script src="{{ $streams.RelPermalink }}" integrity="{{ $streams.Data.Integrity }}" defer></script>
 {{- end }}

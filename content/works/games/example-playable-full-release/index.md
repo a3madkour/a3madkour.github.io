@@ -21,6 +21,7 @@ screenshots: [screen-1.svg, screen-2.svg, screen-3.svg]
 research_questions: [/research/questions/what-is-a-narrative-atom/]
 related_essays: [/essays/example-essay-one/]
 related_notes: [/garden/story-atoms/]
+source_stream: 2026-04-10-example-live-coding-stream
 ---
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.

@@ -38,6 +38,7 @@
 {{- $type := "misc" -}}
 {{- if eq .Section "essays" -}}{{- $type = "article" -}}
 {{- else if eq .Section "research" -}}{{- $type = "online" -}}
+{{- else if eq .Section "streams" -}}{{- $type = "misc" -}}
 {{- end -}}
 
 {{- /* Note: stage flag for non-evergreen garden notes. */ -}}
@@ -53,6 +54,17 @@
 {{- /* Synced poetry with a recorded reading — flag the audio performance. */ -}}
 {{- if and (eq .Section "works") (eq .Type "works-poetry") .Params.audio_url -}}
   {{- $note = "With audio reading." -}}
+{{- end -}}
+
+{{- /* Streams: per-archive status note. */ -}}
+{{- if eq .Section "streams" -}}
+  {{- $arc := .Params.archive_status | default "archived" -}}
+  {{- $startDate := .Date.Format "2006-01-02" -}}
+  {{- if eq $arc "removed" -}}
+    {{- $note = printf "Live stream broadcast, %s, archive intentionally removed" $startDate -}}
+  {{- else -}}
+    {{- $note = printf "Live stream broadcast, %s, archived on YouTube" $startDate -}}
+  {{- end -}}
 {{- end -}}
 
 {{- /* Dates as YYYY-MM-DD for meta tags. */ -}}

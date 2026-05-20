@@ -8,6 +8,30 @@ A new 7th top-level section `/streams/` that houses the user's live broadcasting
 
 ---
 
+## 0. Reconciliation at scheduling (2026-05-19)
+
+This spec was filed 2026-05-13 in a design batch. Six slices shipped before it was scheduled. The architecture (§2, "Approach A") is unchanged and stands as brainstorm-approved; the items below **override** any conflicting wording in later sections. The implementation plan is built against this section + the corrected spec.
+
+**Decisions confirmed with the user (2026-05-19):**
+
+1. **Nav** — add a 7th top-nav item **before About** (`Essays · Garden · Research · Works · Library · Streams · About`). CLAUDE.md's "Top nav (locked)" note is updated to 7 items as part of this slice.
+2. **RSS** — **no streams RSS feed.** Since this spec was written, RSS was deliberately scoped to essays-only (`hugo.yaml` sets `home/section/taxonomy/term: [HTML]`; the header hardcodes the essays feed; works + library intentionally have none). **§11's RSS subsection is SUPERSEDED** — streams are discoverable via the section index, homepage strip, and Pagefind. No `layouts/streams/rss.xml`; no RSS-XSL linter touch.
+3. **Verification split** — the agent sandbox cannot run Hugo, GitHub Actions, or the live Twitch/YouTube APIs. Agent scope: `tools/poll_streams.py` written test-first against mocked HTTP (stdlib only), all linters + unit tests, dummy fixtures, templates, CSS, JS. User scope (post-merge): Hugo build + visual spot-check on dev server; Twitch dev-app + YouTube API-key + repo secrets/vars bootstrap, then `workflow_dispatch` to verify the live cron path. (Analogous to the synced-poetry audio-QA deferral.)
+
+**Staleness corrected (mechanical — applied inline where it matters, noted here otherwise):**
+
+| Spec wording | Corrected to |
+|---|---|
+| CSS "§44 streams" (§7, §6 file layout) | **§46** (current max is §45 synced-poetry; §44 is the library redesign) |
+| "16th / 17th linter pair" (§9); CI "42 → 46" (§12) | **22nd + 23rd** pairs (21 pairs today); CI **55 → ~60** named steps |
+| New JS bundle implies ~9th entry (§8) | **11th** `js.Build` entry (10 today incl. works-umbrella + poetry); same minify+fingerprint+SRI pattern |
+| `site.Data.streams-live` / `site.Data.streams-schedule.upcoming` dot syntax (§3, §6) | **`index site.Data "streams-live"`** etc. — hyphenated data filenames are not dot-addressable in Hugo (corrected inline below) |
+| §10 `partials/cite/normalize-page.html` | No such file; cite is split into `normalize-ref.html` / `normalize-library-item.html` / `data-blob.html` / `meta-tags.html` / `fmt-bibtex.html` — plan targets the real partials + the real citable predicate |
+| §16 "hard dependency: citation export must ship first" | **SATISFIED** — citation export merged 2026-05-14 (`4b2a75e`). Unblocked. |
+| §15 "stream-aware page sidebar … n/a" | Page-sidebar shipped since; plan confirms `/streams/<slug>/` opts out of the cross-template rail consistently |
+
+---
+
 ## 1. Scope
 
 **Categories streamed** (all four — streams span the site's full content surface):
@@ -90,8 +114,8 @@ Rewritten on every poll. Hugo reads it once per build. If file missing, partials
 ### Schedule merge logic (Hugo build-time)
 
 ```hugo
-{{- $manual := site.Data.streams-schedule.upcoming | default slice -}}
-{{- $cache  := site.Data.streams-twitch-cache.upcoming | default slice -}}
+{{- $manual := (index site.Data "streams-schedule").upcoming | default slice -}}
+{{- $cache  := (index site.Data "streams-twitch-cache").upcoming | default slice -}}
 {{- /* Manual wins. Match key = date (date-only) + lowercased title.
        Cache entries with a matching key are dropped. */ -}}
 {{- $manual_keys := dict -}}
@@ -299,7 +323,7 @@ layouts/works-poetry/single.html
 ### `live-pill.html`
 
 ```hugo
-{{- $live := site.Data.streams-live -}}
+{{- $live := index site.Data "streams-live" -}}
 {{- $tw := $live.live.twitch -}}
 {{- $yt := $live.live.youtube -}}
 {{- if or $tw.is_live $yt.is_live -}}
@@ -484,9 +508,9 @@ Each linter's unit-test sibling gets one new test asserting `source_stream: "...
 
 Existing `tools/check_pagefind_meta.py` (13th linter) extends to know `streams` is a valid section value.
 
-### RSS
+### RSS — SUPERSEDED (see §0, decision 2)
 
-`layouts/streams/rss.xml` mirrors essays/garden patterns. Per-stream `<item>` includes title, date, summary, `<link>` to the site page (NOT the VOD URL — the site page is canonical).
+~~`layouts/streams/rss.xml` mirrors essays/garden patterns.~~ **No streams RSS.** RSS is essays-only site-wide (`hugo.yaml` `outputs:` + header hardcodes the essays feed; works + library have none by the same decision). Streams are discoverable via the `/streams/` index, the homepage upcoming strip, and Pagefind. No `rss.xml`, no RSS-XSL linter touch.
 
 ### Filter chips on `/streams/`
 
@@ -570,7 +594,7 @@ Existing fixtures round-trip without changes.
 - 7 cross-section template touches for `source_stream` attribution.
 - CSS §44 + tiny JS bundle.
 
-**Hard dependency:** Feature 1 (citation export) must ship before this slice, since this spec extends Feature 1's citable predicate + adds `streams` to the cite-meta linter's CITABLE_PREFIXES.
+**Hard dependency:** Feature 1 (citation export) must ship before this slice, since this spec extends Feature 1's citable predicate + adds `streams` to the cite-meta linter's CITABLE_PREFIXES. — **SATISFIED**: citation export merged 2026-05-14 (`4b2a75e`). No longer a blocker.
 
 **Slot options:**
 - **β (parallel with Phase 3)** — recommended if the user wants to stream sooner. Phase 3 is independent infrastructure (org-mode pipeline); this is independent infrastructure (streaming pipeline). They can develop in parallel.

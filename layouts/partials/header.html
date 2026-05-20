@@ -8,11 +8,13 @@
         (dict "url" "/research/" "label" "Research")
         (dict "url" "/works/"   "label" "Works")
         (dict "url" "/library/" "label" "Library")
+        (dict "url" "/streams/" "label" "Streams")
         (dict "url" "/about/"   "label" "About")
     }}
       <a href="{{ .url | relURL }}"
          {{ if hasPrefix $current .url }}aria-current="page"{{ end }}>{{ .label }}</a>
     {{ end }}
+    {{ partial "streams/live-pill.html" . }}
     <a class="icon-button rss-link"
        href="{{ "/essays/index.xml" | relURL }}"
        aria-label="Essays RSS feed"

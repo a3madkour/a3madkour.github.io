@@ -36,6 +36,7 @@ BUDGETS_PREFIX = [
                                      # hotlinks for LHCI third-party-cookies fix
 
     ("/essays/",         200_000),   # essay pages — accumulated CSS growth (sidenotes, citations, Bento, §43)
+    ("/streams/",        300_000),   # streams archive pages — YT thumbnail (lazy) + cite blob + chrome
     ("/about/",          150_000),   # thin page; site-wide CSS bundle dominates
     ("/credits/",        150_000),   # thin page; site-wide CSS bundle dominates
     ("/blog/",           150_000),   # legacy thin page; site-wide CSS bundle dominates

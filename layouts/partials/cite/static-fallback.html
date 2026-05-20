@@ -23,6 +23,8 @@
   {{- else if eq .Type "works-music" -}}{{- $label = "Cite this release" -}}
   {{- else if eq .Type "works-poetry" -}}{{- $label = "Cite this poem" -}}
   {{- end -}}
+{{- else if eq .Section "streams" -}}
+  {{- $label = "Cite this stream" -}}
 {{- end -}}
 
 {{- $self := partial "cite/normalize-page.html" . -}}

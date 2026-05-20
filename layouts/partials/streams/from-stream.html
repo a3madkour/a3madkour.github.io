@@ -1,0 +1,14 @@
+{{- /* Render the "From the stream: ..." attribution block on any page that
+       carries source_stream: <slug>. Resolves via site.GetPage; emits
+       nothing when source_stream is absent or the stream page doesn't
+       exist (check_streams_links would have caught the latter in CI).
+       Input: . is the host page. */ -}}
+{{- with .Params.source_stream -}}
+  {{- $stream := site.GetPage (printf "/streams/%s/" .) -}}
+  {{- with $stream -}}
+    {{- $iso := .Date.Format "2006-01-02" -}}
+    <p class="from-stream">
+      From the stream: <a href="{{ .RelPermalink }}"><time datetime="{{ $iso }}">{{ $iso }}</time> — {{ .Title }}</a>
+    </p>
+  {{- end -}}
+{{- end -}}

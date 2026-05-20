@@ -1,0 +1,19 @@
+# User-authored upcoming streams. The cron Action never modifies this file.
+# Schema: per-entry { title, date (RFC3339), duration_estimate (min),
+#                     platforms ([twitch|youtube]+), category, summary?, tags? }
+# Sorted by date asc. Past entries (date < now) are filtered out at render.
+upcoming:
+  - title: "Example upcoming game-dev session"
+    date: 2027-01-15T19:00:00-04:00
+    duration_estimate: 120
+    platforms: [twitch, youtube]
+    category: game-dev
+    summary: "Lorem ipsum example summary for a scheduled stream."
+    tags: [example, prototype]
+  - title: "Example upcoming research reading"
+    date: 2027-02-03T20:00:00-04:00
+    duration_estimate: 90
+    platforms: [twitch, youtube]
+    category: research
+    summary: "Lorem ipsum example summary for a research stream."
+    tags: [example]

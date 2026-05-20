@@ -41,6 +41,7 @@ CITABLE_PREFIXES = (
     'public/works/games/',
     'public/works/music/',
     'public/works/poetry/',
+    'public/streams/',
 )
 
 NON_CITABLE_EXACT = {
@@ -62,6 +63,7 @@ NON_CITABLE_EXACT = {
     'public/works/games/index.html',
     'public/works/music/index.html',
     'public/works/poetry/index.html',
+    'public/streams/index.html',
 }
 
 

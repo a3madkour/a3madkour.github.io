@@ -47,3 +47,7 @@ library-playing:
 library-watching:
   primary_tags: [drama, sci-fi]
   primary_top_k: 10
+
+streams:
+  primary_tags: [example, prototype, lyric]
+  primary_top_k: 10
