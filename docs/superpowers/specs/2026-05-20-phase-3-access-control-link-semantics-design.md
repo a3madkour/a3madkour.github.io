@@ -1,7 +1,7 @@
 # Phase 3 sub-project A: access control + link semantics — design
 
 **Date:** 2026-05-20
-**Status:** brainstormed; awaiting plan
+**Status:** brainstormed; A.1.0 + A.1.a shipped; A.1.b designed (see `2026-05-20-phase-3-a1-b-link-rewriter-design.md`); A.1.b plan pending
 **Phase fit:** Phase 3, sub-project **A** (foundational; precedes B–F). See `memory/project_phase_3_decomposition.md` for the 6-sub-project decomposition.
 **Parent spec:** `docs/superpowers/specs/2026-05-03-personal-site-design.md` §14 (Phase 3).
 **Session policy:** no commits — author reviews + pushes manually.
@@ -116,7 +116,7 @@ Each rewrite returns a list of WARNs alongside its output. The publish driver ag
 | `[[id:UUID][text]]` | private / removed / unknown ID | `text` (inert prose) | **WARN** |
 | `[[file:foo.org][text]]` | target has `:ID:` | Resolve to id-link; recurse rules above | — |
 | `[[file:foo.org][text]]` | target lacks `:ID:` | `text` (inert prose) | **WARN** |
-| `[[id:UUID::*Section][text]]` | target live, heading exists | `<a href="/<section>/<slug>/#section-slug">text</a>` | — |
+| `[[id:UUID::*Section][text]]` | target live, heading exists | `<a href="/<section>/<slug>/#<goldmark-slug>">text</a>` — anchor slug computed by Hugo Goldmark's `github` autolink-headings algorithm (preserve unicode letters/numbers; lowercase; whitespace → hyphen; strip non-letter/non-number/non-`-`/non-`_`). Ref: `goldmark/extension/auto_heading_id.go`. | — |
 | `[[id:UUID::*Section][text]]` | target private | `text` (inert; anchor lost) | **WARN** |
 | `[[id:UUID::*Section][text]]` | target live, heading inside `:noexport:` | A.1: treated as link-to-published-file (anchor pointless but page works). A.2: detected + treated as inert. | A.1: silent. A.2: WARN. |
 | `[[supports:UUID][text]]` and other custom typed links | per target state | Same as id-link rules; **plus** `class="link-supports"` (or `link-contradicts`, etc.). Class always emitted regardless of target state — drives CSS styling + A.2 typed-backlinks. | per id-link rules |
@@ -129,6 +129,7 @@ Each rewrite returns a list of WARNs alongside its output. The publish driver ag
 | Auto-remediation fails (permission denied, collision with different content) | — | Render `(missing asset: random.png)` inert marker | **ERROR** in `--strict`; WARN otherwise |
 | `[[file:bar.pdf]]` (non-image, non-org, in canonical root) | other asset | Same as image rule — copied to bundle, link rewrites to relative path | — |
 | `[[id:UUID][text]]` where UUID is unknown to org-roam | unknown | `text` (inert prose) | **WARN** ("unknown ID") |
+| `[[./assets/...]]`, abs paths to canonical root, etc. (asset-shaped) | — | **A.1.b**: returns `:pending-asset` sentinel + WARN ("asset rewriting deferred to A.1.c"); link text passes through unchanged. **A.1.c** upgrades to real handling (rows above). | A.1.b: WARN. A.1.c: per asset-row rules. |
 
 ### Custom typed-link CSS class emission
 
@@ -219,6 +220,9 @@ notes:
       - url: /garden/bayesian-stats/
         replaced_at: 2026-04-12T13:24:00Z
         reason: title_change   # title_change | slug_override | section_change | removed
+        # `slug_override` is emitted when the caller passes `:had-slug-override-p t`
+        # to `record-publish` (caller reads the source file's `#+HUGO_SLUG:` keyword).
+        # `title_change` covers the case where the slug shifted because the title shifted.
     state: live   # live | draft | removed
   - id: 12340000-0000-0000-0000-000000000000
     current_url: null
@@ -266,18 +270,20 @@ Surface (sketch — exact function names refined at plan time):
   ; → 'garden | 'essays | ... | nil
 
 ;; Link rewriting — called inline by B's per-section publishers
-(a3madkour-pub/rewrite-link org-link source-note-id build-mode)
+(a3madkour-pub/rewrite-link org-link source-note-id)
   ; → (:html "<a ...>text</a>" :warnings (...))
   ;  | (:inert "text" :warnings (...))
-  ;  | (:asset relative-or-shared-path :warnings (...))
+  ;  | (:asset relative-or-shared-path :warnings (...))             ; A.1.c
+  ;  | (:pending-asset original-link-text :warnings (...))          ; A.1.b stub for asset-shaped links
 
 ;; Asset handling
 (a3madkour-pub/asset-validate-and-copy org-file bundle-dest-dir)
   ; → (:copied (file ...) :warnings (...) :errors (...))
 
 ;; URL history
-(a3madkour-pub/record-publish id new-url state)
+(a3madkour-pub/record-publish id new-url state &key had-slug-override-p)
   ; → updates `data/url-history.yaml`
+  ; :had-slug-override-p t when source file has `#+HUGO_SLUG:` (drives slug_override reason)
 
 (a3madkour-pub/aliases-for id)
   ; → ("/garden/old/" "/garden/older/")
@@ -312,6 +318,15 @@ Surface (sketch — exact function names refined at plan time):
 | **Per-stage manual verification** | After each commit/stage of A.1, author runs the publish on a representative seeded org corpus + spot-checks the diff. | Plan doc enumerates explicit verification checkpoints per stage: seed corpus location, command to run, expected diff highlights. Author signals OK before the plan advances. |
 
 **Manual-verification cadence:** every stage in the implementation plan gets a labeled checkpoint. The plan doesn't advance until the author runs the checkpoint and confirms.
+
+### Snapshot-at-publish-start semantics (introduced in A.1.b)
+
+A publish run takes two snapshots at start:
+
+1. **Metadata cache** — per-publish-run hash table (`a3madkour-pub--metadata-cache`) keyed by absolute file path. `note-metadata` and the 4 public accessors (`published-p`/`note-section`/`note-slug`/`note-url`) hit the cache after first read. Reset explicitly at publish start.
+2. **org-roam DB sync** — `(org-roam-db-sync)` invoked at publish start. Guarantees ID resolution sees current on-disk state.
+
+**Consequence:** edits to org files made *during* a publish run are NOT picked up. Author re-runs publish to see changes. This is acceptable for both shell-invoked (`a3-pub.sh`) and interactive-emacs (`M-x`) publish — the library does not assume one context over the other. Documented in each affected accessor's docstring.
 
 ## 12 — A.1 vs. A.2 scope split
 
