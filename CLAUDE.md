@@ -172,20 +172,26 @@ Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 
 
 **Not started, in phase order:**
 
-- **About Now widget** — Phase 3-blocked (needs elisp pipeline).
-- **Phase 3 — org-mode pipeline**: elisp + ox-hugo wires real content into the fixture-shaped data files. **Two separate publishing commands** required (spec §14 Phase 3): Garden/Library/Research publish (frequent, idempotent — "living" surfaces) and Essay publish (per-post, deliberate — hero/figures/sidenotes/citations rolled in). The Essay/poetry publish must additionally emit the **synced-poetry markup contract** (`[mm:ss]` body markers + optional `audio_url`) for the runtime shipped 2026-05-19 — stub `docs/superpowers/specs/2026-05-19-org-synced-poetry-export.md`.
+- **Phase 3 — org-mode pipeline**: decomposed 2026-05-20 into **6 independently-spec'd sub-projects** (each gets its own spec → plan → ship cycle):
+  - **A. Access control + link semantics** — *first; foundational.* Which org notes get published, how `[[id:UUID]]` + `[[file:...]]` org-roam links rewrite to web URLs on export, what happens when a linked-to note isn't published. Drives the "is this published?" oracle every other sub-project queries. **Currently in brainstorm.**
+  - **B. Per-content-type publish + templates** — the publisher itself (elisp/ox-hugo). Per-destination templates: garden / essay / library / research / works. Carries the **two-publish-commands** rule (frequent/idempotent garden+library+research vs. per-post/deliberate essays), the **library-tags-round-trip** rule, and the Essay/poetry publish **synced-poetry contract** (`[mm:ss]`+`audio_url`, stub `docs/superpowers/specs/2026-05-19-org-synced-poetry-export.md`).
+  - **F. Citation pipeline + bibliography integration** — `[cite:@key]` parser, `library.bib` lookup via citar, `data/citations.yaml` emission, site `{{< cite >}}` shortcode integration, cite-key validation. Split out of C at A's brainstorm (2026-05-20) because the scope was large enough to warrant its own design cycle.
+  - **C. Pre-publish validators** — Python `check_*` pattern. Math-rendering lint (KaTeX/MathJax compatibility, balanced delimiters, macro availability). Citation validation was moved to F.
+  - **D. Unified semantic markup** — definitions / theorems / proofs / sidenotes / figures / math in one source vocabulary that renders to Hugo + PDF + Word. **Subsumes** the prior Multi-target export spec (`docs/superpowers/specs/2026-05-13-multi-target-export-design.md`) — revisit inside D.
+  - **E. Explorable explainable workflow** — per-page interactive widgets + per-page JS bundle convention. Was deferred ("own future spec"); now in this batch.
+- **About Now widget** — depends on sub-project B (essay/about publish).
 - **Phase 8 follow-up: interactive QA walkthrough.** Static-findable issues resolved (commit `7ac2539`). Remaining items in `docs/superpowers/qa-checklists/2026-05-13-phase-8-final-qa.md` need a human at keyboard / screen-reader / DevTools deficiency emulation / mobile device (§1.1–1.5, §1.7–1.9, §2, §3, §4 at breakpoints 360/414/768/960/1220, §5).
 
 **Designed but not yet implemented** (pick up via `superpowers:executing-plans` when scheduled):
 
-| Feature | Phase fit | Notes |
+| Feature | Sub-project fit | Notes |
 |---|---|---|
-| Multi-target export | **Phase 3 Slice 3** | One Emacs command publishes literate org → Hugo essay + PDF + Word. Hard dep on Phase 3 Slices 1+2. |
-| Org → synced-poetry export | **Phase 3** (rides Essay/poetry publish) | elisp/ox-hugo emits the shipped `[mm:ss]` body-marker + `audio_url` contract; output must pass `check_poetry_synced` + `check_works_fixtures`. No new runtime. Stub spec `2026-05-19-org-synced-poetry-export.md`; brainstorm the org authoring affordance when scheduled. |
+| Multi-target export | Folds into Phase 3 sub-project **D** | Existing spec `2026-05-13-multi-target-export-design.md` will be revisited inside D. |
+| Org → synced-poetry export | Phase 3 sub-project **B** (rides Essay/poetry publish) | elisp/ox-hugo emits the shipped `[mm:ss]`+`audio_url` contract; output must pass `check_poetry_synced` + `check_works_fixtures`. Stub spec `2026-05-19-org-synced-poetry-export.md`. |
 
-Recommended sequencing: **Phase 3 Slice 1 — garden publish (next)** → Phase 3 Slice 2 (essay publish) → Multi-target export → Streams section. Time-synced poetry shipped 2026-05-19.
+Recommended sequencing: **Phase 3 sub-project A (in brainstorm 2026-05-20)** → B → F → C → D → E. Each sub-project is its own spec + plan + ship cycle; don't fuse them. F slots after B because the citation export pipeline needs B's per-content-type template hooks. Time-synced poetry shipped 2026-05-19; Streams shipped 2026-05-20.
 
-To pick up a slice: read this file + parent spec §14, then `superpowers:brainstorming` → `superpowers:writing-plans` (no queued slice has a drafted plan yet). Confirm with the user whether the slice depends on the elisp pipeline (only Multi-target export does).
+To pick up a sub-project: read this file + parent spec §14 + `memory/project_phase_3_decomposition.md`, then `superpowers:brainstorming` → `superpowers:writing-plans`.
 
 ### Deferred features (fixtures exercise the shape; stubs carry `data-pending` for future swap-in)
 
