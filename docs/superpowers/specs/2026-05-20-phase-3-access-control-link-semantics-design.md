@@ -116,10 +116,10 @@ Each rewrite returns a list of WARNs alongside its output. The publish driver ag
 | `[[id:UUID][text]]` | private / removed / unknown ID | `text` (inert prose) | **WARN** |
 | `[[file:foo.org][text]]` | target has `:ID:` | Resolve to id-link; recurse rules above | — |
 | `[[file:foo.org][text]]` | target lacks `:ID:` | `text` (inert prose) | **WARN** |
-| `[[id:UUID::*Section][text]]` | target live, heading exists | `<a href="/<section>/<slug>/#<goldmark-slug>">text</a>` — anchor slug computed by Hugo Goldmark's `github` autolink-headings algorithm (preserve unicode letters/numbers; lowercase; whitespace → hyphen; strip non-letter/non-number/non-`-`/non-`_`). Ref: `goldmark/extension/auto_heading_id.go`. | — |
+| `[[id:UUID::*Section][text]]` | target live, heading exists | `<a href="/<section>/<slug>/#<hugo-slug>">text</a>` — anchor slug computed by Hugo's `sanitizeAnchorNameWithHook` (registered via Goldmark `html.WithIDRenderer(...)`, source-of-truth: `gohugoio/hugo markup/goldmark/autoid.go` — **not** bare Goldmark `parser.IDs.Generate` / `auto_heading_id.go`; the two algorithms differ). Algorithm: (1) trim leading/trailing whitespace; (2) for each rune — keep `IsLetter`/`IsDigit`/`'_'` (lowercased; `IsDigit` = strictly `Nd`, so `Nl`/`No` like `Ⅳ`/`½` drop), keep `' '` and `'-'` (both append as `'-'`, no collapse), drop everything else; (3) if buffer empty, fall back to `"heading"`. Unicode letters preserved (`café` → `café`). | — |
 | `[[id:UUID::*Section][text]]` | target private | `text` (inert; anchor lost) | **WARN** |
 | `[[id:UUID::*Section][text]]` | target live, heading inside `:noexport:` | A.1: treated as link-to-published-file (anchor pointless but page works). A.2: detected + treated as inert. | A.1: silent. A.2: WARN. |
-| `[[supports:UUID][text]]` and other custom typed links | per target state | Same as id-link rules; **plus** `class="link-supports"` (or `link-contradicts`, etc.). Class always emitted regardless of target state — drives CSS styling + A.2 typed-backlinks. | per id-link rules |
+| `[[supports:UUID][text]]` and other custom typed links | per target state | Same as id-link rules; **plus** `class="link-supports"` (or `link-contradicts`, etc.) on the `<a>` element when the rewrite produces one (`:html` variant). When the rewrite is inert prose (`:text` variant — target private/unknown), there is no anchor to attach a class to. Drives CSS styling + A.2 typed-backlinks. | per id-link rules |
 | `[[https://…][text]]` / `[[http://…][text]]` | external | `<a href="https://…">text</a>` unchanged | — |
 | `[[mailto:…]]`, `[[tel:…]]` | external | Pass through unchanged | — |
 | Other URL schemes (`ftp:`, `git:`, etc.) — anything that isn't `id:`/`file:`/recognized custom type | external | Pass through unchanged | — |
@@ -135,9 +135,14 @@ Each rewrite returns a list of WARNs alongside its output. The publish driver ag
 
 For any link whose org form is `[[<type>:UUID][text]]` where `<type>` matches a configured custom link type (`supports`, `contradicts`, `extends`, `example-of`, `causes`):
 
-- The `<a>` element gets `class="link-<type>"` (e.g., `class="link-supports"`).
-- Class is emitted *regardless of target state* — even for inert links (so CSS styling is consistent if A.2's typed-backlinks panel decides to surface inert links differently).
+- The `<a>` element gets `class="link-<type>"` (e.g., `class="link-supports"`) **on `:html` rewrite variants only** — i.e., when the rewriter produces an actual `<a>` element. When the link is inert prose (`:text` variant — target private/unknown), there is no anchor element to attach a class to, so no class is emitted. A.2's typed-backlinks panel surfaces inert-typed links via its own data path, not via CSS classes on rewritten link text.
 - CSS rules for these classes are out of scope for A; B's per-section templates / the existing CSS bundle can use them.
+
+### HTML escaping contract
+
+All interpolated values in `:html` rewrite outputs — the URL/href, the display text, and (A.1.c) asset `src`/`alt` attributes — pass through a single emit-time helper `a3madkour-pub--html-escape` defined in `a3madkour-publish-rewrite.el`. The helper escapes the five HTML-sensitive characters: `&` `<` `>` `"` `'` (covering both element-body and double-quoted attribute contexts).
+
+Decision rationale: trusted-author content keeps the practical XSS risk at zero, but a single chokepoint makes the contract auditable in one function and removes the per-caller "did I remember to escape?" burden. Display text from `[[id:UUID][literal text]]` brackets can legitimately contain `<`/`>`/`&` (math, code prose), so unescaped emit would already break rendering for honest authors. Resolved 2026-05-23 as a carry-forward from A.1.b Task 13 review. A.1.c retrofits the three A.1.b `:html` emit points (`a3madkour-publish-rewrite.el` lines ~176 / ~237 / ~275) through the helper alongside the new asset emits, with regression tests for each.
 
 ### Custom typed-link backlinks data (A.2)
 
