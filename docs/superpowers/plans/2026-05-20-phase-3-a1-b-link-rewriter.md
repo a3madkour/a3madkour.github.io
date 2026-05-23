@@ -954,15 +954,18 @@ Expected: `Ran 64 tests, 64 results as expected, 0 unexpected`.
 - Modify: `~/dotfiles/emacs-configs/custom/lisp/a3madkour-publish-rewrite.el`
 - Modify: `~/dotfiles/emacs-configs/custom/lisp/a3madkour-publish-rewrite-test.el`
 
-Reference: Hugo uses Goldmark's `auto_heading_id` (github style):
+Reference: Hugo uses its **own** `github`-style ID generator at `gohugoio/hugo` `markup/goldmark/autoid.go` (function `sanitizeAnchorNameWithHook`), NOT Goldmark's bare `parser.IDs.Generate` — the two algorithms differ. Hugo registers its generator via Goldmark's `AddOption(html.WithIDRenderer(...))` hook. Hugo's algorithm:
 
-1. For each rune in heading text:
-   - Keep if `unicode.IsLetter` OR `unicode.IsNumber` OR `' '` OR `'-'` OR `'_'`.
+1. **Trim leading/trailing whitespace.**
+2. For each rune in the trimmed text:
+   - Keep if `unicode.IsLetter(r)` OR `unicode.IsDigit(r)` OR `r == '_'`. Lowercase and append.
+   - Keep `' '` and `'-'` — both append as `'-'`.
    - Drop everything else.
-2. Lowercase the result.
-3. Replace every `' '` with `'-'`.
+3. **If the resulting buffer is empty, fall back to `"heading"`** (only fires for Heading kind; not the parent-spec's concern).
 
-(No explicit collapse-multiple-hyphens; consecutive spaces produce consecutive hyphens. No leading-or-trailing trim. Unicode letters/numbers preserved — `café` stays `café`.)
+(Consecutive spaces produce consecutive hyphens — no collapse. `unicode.IsDigit` is **strictly `Nd`** — `Nl` (Roman numerals like `Ⅳ`) and `No` (`½`, `²`) are dropped. Unicode letters preserved — `café` stays `café`.)
+
+**In-flight correction (2026-05-23 session):** The original plan text here cited Goldmark's `auto_heading_id` and omitted the trim + heading-fallback + Nd-only details. Task 12's code reviewer caught the divergence against real Hugo (the algorithm above replaces the buggy original). Tests + function updated; 4 additional tests added (`anchor-punctuation-only-fallback`, `anchor-hyphens-preserved`, `anchor-drops-letter-numbers`, `anchor-uppercase-underscore`). Test-count target adjusted: 75 → **79** at end of Task 12.
 
 - [ ] **Step 1: Write the failing tests (gotcha suite)**
 
