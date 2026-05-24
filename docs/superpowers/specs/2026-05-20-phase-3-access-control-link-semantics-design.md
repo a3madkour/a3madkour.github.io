@@ -224,10 +224,12 @@ notes:
     history:
       - url: /garden/bayesian-stats/
         replaced_at: 2026-04-12T13:24:00Z
-        reason: title_change   # title_change | slug_override | section_change | removed
+        reason: title_change   # title_change | slug_override | section_change | removed | republished
         # `slug_override` is emitted when the caller passes `:had-slug-override-p t`
         # to `record-publish` (caller reads the source file's `#+HUGO_SLUG:` keyword).
         # `title_change` covers the case where the slug shifted because the title shifted.
+        # `republished` is emitted when a note transitions from state: removed back to
+        # state: live (added in A.1.d).
     state: live   # live | draft | removed
   - id: 12340000-0000-0000-0000-000000000000
     current_url: null
@@ -243,6 +245,9 @@ On each publish:
 - For each currently-published note: if `current_url` differs from last published URL, append a history entry and update `current_url`.
 - For each removed note: set `state: removed`, `current_url: null`, append a `reason: removed` history entry.
 - For new notes: insert with empty `history`.
+- For each previously-removed note that re-enters the published-set: flip
+  `state: live`, append a history entry with `reason: republished`, and
+  re-merge aliases from prior history on render.
 
 On render: each live/draft note's frontmatter gets `aliases: [<all-prior-urls-from-history>]` merged with manual `#+HUGO_ALIASES:`.
 

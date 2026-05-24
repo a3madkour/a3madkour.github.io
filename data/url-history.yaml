@@ -1,11 +1,13 @@
 # URL-history manifest for the org→Hugo publish pipeline.
-# Managed by a3madkour-publish-history.el (sub-project A.1.a).
+# Managed by a3madkour-publish-history.el (sub-project A.1.a),
+# extended by a3madkour-publish-unpublish.el (sub-project A.1.d).
 # See docs/superpowers/specs/2026-05-20-phase-3-access-control-link-semantics-design.md §8.
 #
 # Schema (per-note entry):
 #   id:           org-roam :ID: (UUID v4)
 #   current_url:  /<section>/<slug>/  (or null if state=removed)
 #   history:      list of {url, replaced_at, reason} entries; oldest-first
+#     reason ∈ {title_change, slug_override, section_change, removed, republished}
 #   state:        live | draft | removed
 #
 # DO NOT edit by hand — re-publish will rewrite.
