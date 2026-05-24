@@ -129,6 +129,10 @@ jobs:
         run: python3 tools/check_streams_links.py
       - name: Run streams links linter unit tests
         run: python3 -m unittest tools/test_check_streams_links.py -v
+      - name: Verify org-asset references
+        run: python3 tools/check_org_assets.py
+      - name: Run org-assets linter unit tests
+        run: python3 -m unittest tools/test_check_org_assets.py -v
       - name: Verify graph-chrome consistency
         run: python3 tools/check_graph_chrome.py
       - name: Build with Hugo
