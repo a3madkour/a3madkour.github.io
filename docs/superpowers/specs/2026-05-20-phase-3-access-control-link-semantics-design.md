@@ -245,9 +245,10 @@ On each publish:
 - For each currently-published note: if `current_url` differs from last published URL, append a history entry and update `current_url`.
 - For each removed note: set `state: removed`, `current_url: null`, append a `reason: removed` history entry.
 - For new notes: insert with empty `history`.
-- For each previously-removed note that re-enters the published-set: flip
-  `state: live`, append a history entry with `reason: republished`, and
-  re-merge aliases from prior history on render.
+- For each previously-removed note that re-enters the published-set as `live`: flip
+  `state: live`, append a history entry with `reason: republished`.
+  - Removed → `draft` does NOT emit `republished` — it's a state change only (the
+    note hasn't actually republished yet from a live-site perspective).
 
 On render: each live/draft note's frontmatter gets `aliases: [<all-prior-urls-from-history>]` merged with manual `#+HUGO_ALIASES:`.
 
