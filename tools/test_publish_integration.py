@@ -71,6 +71,7 @@ def _emacs_eval(forms: list[str], cwd: Path) -> subprocess.CompletedProcess[str]
         "-l", "a3madkour-publish-id.el",
         "-l", "a3madkour-publish-rewrite.el",
         "-l", "a3madkour-publish-assets.el",
+        "-l", "a3madkour-publish-unpublish.el",
     ]
     for form in forms:
         args.extend(["--eval", form])
@@ -207,6 +208,251 @@ class TestAssetHandling(unittest.TestCase):
             combined,
             f"Expected 'does not exist' warning.\nstdout: {result.stdout}\nstderr: {result.stderr}",
         )
+
+    @unittest.skipIf(_MISSING_PREREQS, _SKIP_REASON)
+    def test_unpublish_removed_note(self):
+        """Publish two notes, unpublish one, re-run finish-publish; assert
+        bundle deleted + manifest entry state=removed."""
+        with tempfile.TemporaryDirectory(prefix="a3-pub-integ-") as workdir:
+            workdir = Path(workdir)
+            notes = workdir / "notes"
+            content = workdir / "content"
+            data = workdir / "data"
+            notes.mkdir()
+            (content / "garden" / "keep").mkdir(parents=True)
+            (content / "garden" / "gone").mkdir(parents=True)
+            (content / "garden" / "keep" / "index.md").write_text("# keep\n")
+            (content / "garden" / "gone" / "index.md").write_text("# gone\n")
+            data.mkdir()
+            manifest_path = data / "url-history.yaml"
+            # Seed manifest with both notes live.
+            manifest_path.write_text(
+                "notes:\n"
+                "  - id: keep-id-1\n"
+                "    current_url: /garden/keep/\n"
+                "    history: []\n"
+                "    state: live\n"
+                "  - id: gone-id-1\n"
+                "    current_url: /garden/gone/\n"
+                "    history: []\n"
+                "    state: live\n"
+            )
+            # Source corpus: only "keep" has HUGO_PUBLISH; "gone" doesn't.
+            (notes / "keep.org").write_text(
+                ":PROPERTIES:\n:ID: keep-id-1\n:END:\n"
+                "#+TITLE: Keep\n#+HUGO_PUBLISH: t\n#+HUGO_SECTION: garden\n"
+                "body\n"
+            )
+            (notes / "gone.org").write_text(
+                ":PROPERTIES:\n:ID: gone-id-1\n:END:\n"
+                "#+TITLE: Gone\n"  # No HUGO_PUBLISH — note unpublished.
+                "body\n"
+            )
+            forms = [
+                f'(setq a3madkour-pub/org-notes-dir "{notes}")',
+                f'(setq a3madkour-pub-site-content-dir "{content}/")',
+                # Stub org-roam-db-sync (no real db) + override manifest-path.
+                f'(cl-letf (((symbol-function (quote org-roam-db-sync)) (lambda () nil))'
+                f'          ((symbol-function (quote a3madkour-pub-history--manifest-path))'
+                f'           (lambda () "{manifest_path}")))'
+                f'  (a3madkour-pub/begin-publish)'
+                f'  (princ (format "%S\\n" (a3madkour-pub/finish-publish))))',
+            ]
+            proc = _emacs_eval(forms, cwd=workdir)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+            # Bundle for "gone" deleted.
+            self.assertFalse((content / "garden" / "gone").exists())
+            # Bundle for "keep" remains.
+            self.assertTrue((content / "garden" / "keep").exists())
+            # Manifest mutated: gone-id-1 state == removed.
+            updated = manifest_path.read_text()
+            self.assertIn("gone-id-1", updated)
+            self.assertIn("state: removed", updated)
+            self.assertIn("reason: removed", updated)
+
+    @unittest.skipIf(_MISSING_PREREQS, _SKIP_REASON)
+    def test_slug_shift_renames_assets(self):
+        """Publish note with /garden/foo/ + asset → change HUGO_SLUG to foo-v2;
+        finish-publish renames asset dir + rewrites .org source link."""
+        with tempfile.TemporaryDirectory(prefix="a3-pub-integ-") as workdir:
+            workdir = Path(workdir)
+            notes = workdir / "notes"
+            asset_root = workdir / "asset-root"
+            content = workdir / "content"
+            data = workdir / "data"
+            notes.mkdir()
+            data.mkdir()
+            (asset_root / "page" / "foo").mkdir(parents=True)
+            (asset_root / "page" / "foo" / "x.png").write_bytes(b"PNGDATA")
+            (content / "garden" / "foo").mkdir(parents=True)
+            (content / "garden" / "foo" / "index.md").write_text("# foo\n")
+            manifest_path = data / "url-history.yaml"
+            manifest_path.write_text(
+                "notes:\n"
+                "  - id: shift-id-1\n"
+                "    current_url: /garden/foo/\n"
+                "    history: []\n"
+                "    state: live\n"
+            )
+            # Source has HUGO_SLUG: foo-v2 → new URL = /garden/foo-v2/.
+            (notes / "note.org").write_text(
+                ":PROPERTIES:\n:ID: shift-id-1\n:END:\n"
+                "#+TITLE: Foo\n#+HUGO_PUBLISH: t\n"
+                "#+HUGO_SECTION: garden\n#+HUGO_SLUG: foo-v2\n"
+                "See [[./assets/page/foo/x.png][x]]\n"
+            )
+            forms = [
+                f'(setq a3madkour-pub/org-notes-dir "{notes}")',
+                f'(setq a3madkour-pub-canonical-asset-root "{asset_root}")',
+                f'(setq a3madkour-pub-site-content-dir "{content}/")',
+                # Stub org-roam-db-sync + override manifest-path + stub vc-backend
+                # (so the asset-rename helper uses rename-file, not git mv).
+                #
+                # Standalone-mode flow: empty accumulator → finish-publish walks
+                # org-notes-dir, parses note.org, derives new URL from
+                # `#+HUGO_SLUG: foo-v2`, compares against manifest's /garden/foo/
+                # → slug-shift detected → Step B renames asset + rewrites source.
+                #
+                # Then simulate B's per-note record-publish call (with
+                # :had-slug-override-p t) to write the `slug_override` history
+                # event to the manifest. In real B-coupled mode B would call
+                # this BEFORE finish-publish, but doing so here would mutate
+                # current_url ahead of the diff and defeat slug-shift detection
+                # (the standalone walk reads source-derived URLs, not manifest).
+                f'(cl-letf (((symbol-function (quote org-roam-db-sync)) (lambda () nil))'
+                f'          ((symbol-function (quote a3madkour-pub-history--manifest-path))'
+                f'           (lambda () "{manifest_path}"))'
+                f'          ((symbol-function (quote vc-backend)) (lambda (_) nil)))'
+                f'  (a3madkour-pub/begin-publish)'
+                f'  (princ (format "%S\\n" (a3madkour-pub/finish-publish)))'
+                f'  (a3madkour-pub-history/record-publish "shift-id-1" "/garden/foo-v2/" (quote live) :had-slug-override-p t))',
+            ]
+            proc = _emacs_eval(forms, cwd=workdir)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+            # Asset dir renamed: old gone, new exists.
+            self.assertFalse((asset_root / "page" / "foo").exists())
+            self.assertTrue((asset_root / "page" / "foo-v2" / "x.png").exists())
+            # Source link rewritten in .org file.
+            rewritten = (notes / "note.org").read_text()
+            self.assertIn("./assets/page/foo-v2/x.png", rewritten)
+            self.assertNotIn("./assets/page/foo/x.png", rewritten)
+            # Manifest: slug_override event recorded.
+            updated = manifest_path.read_text()
+            self.assertIn("slug_override", updated)
+
+    @unittest.skipIf(_MISSING_PREREQS, _SKIP_REASON)
+    def test_republish_after_removal(self):
+        """Publish → unpublish → republish → history shows {removed, republished}
+        events; current_url restored; aliases include the prior URL."""
+        with tempfile.TemporaryDirectory(prefix="a3-pub-integ-") as workdir:
+            workdir = Path(workdir)
+            notes = workdir / "notes"
+            content = workdir / "content"
+            data = workdir / "data"
+            notes.mkdir()
+            data.mkdir()
+            manifest_path = data / "url-history.yaml"
+            # Seed manifest: already in `state: removed' with one history entry.
+            manifest_path.write_text(
+                "notes:\n"
+                "  - id: rep-id-1\n"
+                "    current_url: null\n"
+                "    history:\n"
+                "      - url: /garden/old-name/\n"
+                "        replaced_at: '2026-05-22T10:00:00Z'\n"
+                "        reason: removed\n"
+                "    state: removed\n"
+            )
+            # Source: now published again at /garden/new-name/.
+            (notes / "note.org").write_text(
+                ":PROPERTIES:\n:ID: rep-id-1\n:END:\n"
+                "#+TITLE: New name\n#+HUGO_PUBLISH: t\n#+HUGO_SECTION: garden\n"
+                "body\n"
+            )
+            forms = [
+                f'(setq a3madkour-pub/org-notes-dir "{notes}")',
+                f'(setq a3madkour-pub-site-content-dir "{content}/")',
+                f'(cl-letf (((symbol-function (quote org-roam-db-sync)) (lambda () nil))'
+                f'          ((symbol-function (quote a3madkour-pub-history--manifest-path))'
+                f'           (lambda () "{manifest_path}")))'
+                f'  (a3madkour-pub/begin-publish)'
+                # Simulate B's per-note record-publish call — flips state, appends republished event.
+                f'  (a3madkour-pub-history/record-publish "rep-id-1" "/garden/new-name/" (quote live))'
+                f'  (princ (format "%S\\n" (a3madkour-pub/finish-publish)))'
+                # Print aliases for verification.
+                f'  (princ (format "aliases: %S\\n" (a3madkour-pub-history/aliases-for "rep-id-1"))))',
+            ]
+            proc = _emacs_eval(forms, cwd=workdir)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+            updated = manifest_path.read_text()
+            # State flipped back to live.
+            self.assertIn("state: live", updated)
+            # Current URL updated (yaml emits quoted strings).
+            self.assertIn('current_url: "/garden/new-name/"', updated)
+            # Both events present.
+            self.assertIn("reason: removed", updated)      # original
+            self.assertIn("reason: republished", updated)  # new
+            # Prior URL surfaces via aliases-for.
+            self.assertIn("/garden/old-name/", proc.stdout)
+
+    @unittest.skipIf(_MISSING_PREREQS, _SKIP_REASON)
+    def test_link_into_removed_target_warns(self):
+        """Publish two notes A → B; unpublish B; finish-publish emits a WARN
+        in :orphan-warnings naming A's outgoing link into B."""
+        with tempfile.TemporaryDirectory(prefix="a3-pub-integ-") as workdir:
+            workdir = Path(workdir)
+            notes = workdir / "notes"
+            content = workdir / "content"
+            data = workdir / "data"
+            notes.mkdir()
+            data.mkdir()
+            (content / "garden" / "src").mkdir(parents=True)
+            (content / "garden" / "tgt").mkdir(parents=True)
+            (content / "garden" / "src" / "index.md").write_text("# src\n")
+            (content / "garden" / "tgt" / "index.md").write_text("# tgt\n")
+            manifest_path = data / "url-history.yaml"
+            manifest_path.write_text(
+                "notes:\n"
+                "  - id: src-id-1\n"
+                "    current_url: /garden/src/\n"
+                "    history: []\n"
+                "    state: live\n"
+                "  - id: tgt-id-1\n"
+                "    current_url: /garden/tgt/\n"
+                "    history: []\n"
+                "    state: live\n"
+            )
+            # Source A links to B via [[id:tgt-id-1]]; B is no longer HUGO_PUBLISH.
+            (notes / "src.org").write_text(
+                ":PROPERTIES:\n:ID: src-id-1\n:END:\n"
+                "#+TITLE: Source\n#+HUGO_PUBLISH: t\n#+HUGO_SECTION: garden\n"
+                "See [[id:tgt-id-1][gone target]]\n"
+            )
+            (notes / "tgt.org").write_text(
+                ":PROPERTIES:\n:ID: tgt-id-1\n:END:\n"
+                "#+TITLE: Target\n"  # No HUGO_PUBLISH → tgt-id-1 will be classified :removed.
+                "body\n"
+            )
+            forms = [
+                f'(setq a3madkour-pub/org-notes-dir "{notes}")',
+                f'(setq a3madkour-pub-site-content-dir "{content}/")',
+                # Stub org-roam-db-sync + manifest-path + org-roam-id-find (point at the .org files).
+                f'(cl-letf (((symbol-function (quote org-roam-db-sync)) (lambda () nil))'
+                f'          ((symbol-function (quote a3madkour-pub-history--manifest-path))'
+                f'           (lambda () "{manifest_path}"))'
+                f'          ((symbol-function (quote org-roam-id-find))'
+                f'           (lambda (id &optional _)'
+                f'             (cond ((equal id "src-id-1") (cons "{notes}/src.org" 1))'
+                f'                   ((equal id "tgt-id-1") (cons "{notes}/tgt.org" 1))))))'
+                f'  (a3madkour-pub/begin-publish)'
+                f'  (princ (format "%S\\n" (a3madkour-pub/finish-publish))))',
+            ]
+            proc = _emacs_eval(forms, cwd=workdir)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+            # WARN in stdout: should mention both src-id-1 (outgoing) and tgt-id-1 (target).
+            self.assertIn("src-id-1", proc.stdout)
+            self.assertIn("tgt-id-1", proc.stdout)
+            self.assertIn("republish recommended", proc.stdout)
 
 
 if __name__ == "__main__":
