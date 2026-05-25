@@ -76,3 +76,4 @@
 - [Works graph panel needs glyph-sprite](reference_works_graph_panel_needs_glyph_sprite.md) — any layout rendering works/graph-panel.html must also include works/glyph-sprite.html or node icons silently break
 - [Hugo CSS `var({{.x}})` → ZgotmplZ](reference_hugo_css_var_zgotmplz.md) — Go html/template sanitizes an interpolated CSS custom-property name to `var(ZgotmplZ)` (colorless, no build error); use `data-*` attr + static CSS, or `printf|safeCSS`; JS-set styles unaffected
 - [Hugo `int` parses 0-padded strings as octal](reference_hugo_int_octal_gotcha.md) — `int "08"`/`"09"` → "invalid syntax" (base-0 strconv → octal); cast `int (float $s)` for zero-padded mm:ss/date/id fields
+- [Avoid snarky tone in audits and reviews](feedback_tone.md) — keep code-review tone measured and constructive; drop asides, rhetorical flourishes, "if I had to fix one thing tonight" closers
