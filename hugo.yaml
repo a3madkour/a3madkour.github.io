@@ -23,6 +23,13 @@ outputs:
   term: [HTML]
 
 markup:
+    goldmark:
+        renderer:
+            # B.1.1: ox-hugo emits `@@html:<a>...</a>@@` snippets for rewritten
+            # org-roam links; without unsafe:true Goldmark strips the anchors
+            # and shows `<!-- raw HTML omitted -->` in their place.  All site
+            # content is author-controlled (no user submissions), so unsafe is fine.
+            unsafe: true
     highlight:
         style: dracula
     tableOfContents:
