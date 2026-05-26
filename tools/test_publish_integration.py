@@ -527,7 +527,9 @@ def _publish_living_impl(
     site_data_dir: Path,
     id_stubs: "dict[str, Path] | None",
 ) -> "subprocess.CompletedProcess[str]":
-    """Shared implementation for _publish_living and _publish_living_with_id_stubs."""
+    """Shared implementation; runs emacs --batch with the bootstrap incantation
+    + a cl-letf form that stubs org-roam-db-sync (and, when id_stubs is provided,
+    org-roam-id-find).  See `_publish_living` for the full bootstrap contract."""
     # Build the load-path expansion form — mirrors run-tests.sh line 32.
     expand_load_path = (
         "(dolist (dir (directory-files "
@@ -550,7 +552,7 @@ def _publish_living_impl(
 
     # Build the cl-letf stub form.  Base: stub org-roam-db-sync only.
     # Extended: also stub org-roam-id-find when id_stubs is provided.
-    if id_stubs:
+    if id_stubs is not None:
         # Build a cond form: ((equal id "UUID") (cons "FILE" 1)) per entry.
         cond_clauses = " ".join(
             f'((equal id "{uid}") (cons "{fpath}" 1))'
