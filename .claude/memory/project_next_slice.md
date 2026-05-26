@@ -1,57 +1,40 @@
 ---
 name: next-slice
-description: "Session-start pointer — next slice is Phase 3 B.1 (garden handler). B.0 (shared publisher infrastructure) staged 2026-05-25 in dotfiles; 239 ert tests passing. Site CLAUDE.md status pushed as `5ded581`. Architectural decisions settled in B parent spec; B.1 likely plan-only (no new brainstorm needed) unless garden growth_stage derivation surfaces surprises."
-metadata: 
+description: "Session-start pointer — next slice is Phase 3 B.2 (library handler). B.1 (garden handler) code-complete 2026-05-25; 259 ert tests + 13 Python integration fixtures green. Task 17 (real-corpus handover) gated on author annotating ~/org/notes/ with HUGO_PUBLISH + HUGO_SECTION keywords. B.2 spec already covered in B parent spec §8."
+metadata:
   node_type: memory
   type: project
-  originSessionId: 240f0465-31c7-4fcc-86e7-eaa6fa0a2727
 ---
 
-**Next slice = Phase 3 sub-project B.1 — garden handler.** B.0 (shared infra) shipped 2026-05-25; see [[b0-complete]].
+**Next slice = Phase 3 sub-project B.2 — library handler.** B.1 (garden) code-complete 2026-05-25; see [[b1-complete]].
 
-Per design spec §12 slice ordering: A → B.0 → **B.1 (next)** → B.2 (library) → B.3 (research) → B.4 (essays) → B.5 (works) → B.6 (streams) → B.7 (about) → F (citations) → C (math validators) → D (unified markup) → E (explorables).
+Per design spec §12 slice ordering: A → B.0 → B.1 → **B.2 (next)** → B.3 (research) → B.4 (essays) → B.5 (works) → B.6 (streams) → B.7 (about) → F (citations) → C (math validators) → D (unified markup) → E (explorables).
 
-## What B.1 must do
+## Two paths into the next session
 
-- Create `a3madkour-publish-garden.el` + sibling test in `~/dotfiles/emacs-configs/custom/lisp/`.
-- Register `(garden . a3madkour-pub-garden/publish-garden-file)` in `a3madkour-pub-living--handlers` (currently empty in B.0).
-- Fill in `a3madkour-pub-frontmatter/normalize`'s garden branch (currently pass-through in B.0) with:
-  - `growth_stage` derivation (`:PROGRESS:` → seedling/budding/evergreen, `#+HUGO_GROWTH_STAGE:` override).
-  - `flavor` inference from `media_type` (concept / media / reference per spec §7).
-  - `topic_map` pass-through.
-- Wire link-rewriter + asset-copy into the garden handler:
-  - Call `a3madkour-pub-rewrite/rewrite-links-in-string` on the post-export body.
-  - Call `a3madkour-pub-assets/asset-validate-and-copy` for the bundle dest dir.
-  - Call `a3madkour-pub-history/record-publish` after writing `content/garden/<slug>/index.md`.
-- Replace `a3madkour-pub-export/export-file`'s skeleton stub with the real ox-hugo invocation (capture buffer + extract frontmatter).
-- Add 3-4 new integration fixtures under `tools/test_publish_integration.py` (publish-once, idempotency, slug-shift, removed-note).
-- First slice to emit real Hugo content; transition garden fixtures per design spec §11 (fixtures → real garden notes).
+**Option 1: Address B.1.x follow-ups first**, then B.2. The three known issues per [[b1-complete]] "Known issues":
+1. Link rewriting is stubbed — pre-export buffer rewrite OR `org-link-set-parameters` hooks (architectural call).
+2. `last_modified` uses file mtime; spec wants git-mtime-of-HEAD.
+3. B parent spec §7 needs a one-line correction (drop "flavor is emitted").
 
-## B.0 known issues to fix in B.1
+**Option 2: Skip directly to B.2** (library handler). The follow-ups can ride along with B.2 or land as a separate B.1.1 slice. Library is the structural outlier per spec §8 — per-medium YAML rows (not per-page Hugo bundles), parsed from top-level org headings in 4 files (`library-reading.org`, `library-listening.org`, `library-playing.org`, `library-watching.org`). YAML emission replaces the existing `data/<medium>.yaml` files from scratch (no merge); library tags round-trip from per-heading `:tags:` into per-row YAML.
 
-Per [[b0-complete]] "Known issues":
+**Option 3: User-driven Task 17 spot-check.** Author annotates `~/org/notes/` with `#+HUGO_PUBLISH: t` + `#+HUGO_SECTION: garden`, runs `a3-pub.sh --publish-living`, eyeballs `/garden/` in `hugo server`. This may surface real link-rewriting issues that inform Option 1's architectural choice.
 
-1. **`SITE_DATA_DIR` default path is wrong on this machine.** Both `--publish-living` and `--publish-deliberate` intercepts in `a3-pub.sh` default to `$HOME/Workspace/a3madkour.github.io/data/` (matches defcustom docstring example) but this machine's real repo is at `/Stuff/a3madkour/Sync/Workspace/a3madkour.github.io/`. Smoke tests passed only because B.0 emits nothing; B.1's real garden publish will silently write to the wrong dir or no-op on missing manifest. Fix: either (a) detect via `git rev-parse --show-toplevel` from `$PWD`, (b) use this machine's absolute path as default, or (c) require `A3_PUB_SITE_DATA_DIR` env var.
-
-2. **Pre-existing `--check-orphans` lacks SITE_DATA_DIR pattern.** Back-port the workaround Task 11/12 added, OR factor out a shared helper.
-
-## Carry-forwards from A.1.d / B.0 still open
-
-- A.1 carry-forward #3 (shared-asset conflict resolution): own design pass needed.
-- A.2 items: typed-backlinks (#1), `:noexport:` subtree (#2), `--gc-shared` flag (#4), `--strict` flag.
-- `a3-pub.sh --check-orphans` site-data-dir gap (per #2 above).
-- B.0 stub-literal extraction: `'((notes . []))` duplicated as `read-manifest` stub in ~4 test bodies; quality reviewer suggested extracting `defconst a3madkour-pub-test--empty-manifest` if B.1+ adds more callers.
+Recommended sequencing: Option 3 → Option 1 → Option 2. The spot-check informs the link-rewriting fix; the fix sets the pattern B.2-B.7 will mirror; then library starts cleanly.
 
 ## How to start the next session
 
-1. **Verify author committed B.0 dotfiles work**: per [[b0-complete]] "Dotfiles state", 11 files staged + 4 unstaged (Tasks 0-3 work the user unstaged mid-session). All 15 files need to land in one or more local dotfiles commits before B.1 starts.
-2. **B.1 may need its own brainstorm** if growth_stage derivation rules need clarification (currently spec §7 prose). Otherwise jump straight to `superpowers:writing-plans`.
-3. Reading list: CLAUDE.md + B parent design spec §7 (frontmatter mapping) + §9 (per-section specifics) + [[b0-complete]] (B.0 carry-forwards) + [[phase-3-decomposition]].
+1. Read CLAUDE.md status pointer + [[b1-complete]] + B parent spec §8 (library specifics).
+2. Decide path (1/2/3 above) with the author.
+3. If Option 2: jump straight to `superpowers:writing-plans` for B.2 — sub-project B's parent spec covers it, no new brainstorm needed unless §8 surfaces ambiguity.
+4. If Option 1: probably needs a small spec (or just a focused brainstorm) because the link-rewriting architecture has two genuinely different paths.
 
-## Agent-environment notes (carry-forward)
+## Agent-environment notes (carry-forward from [[b1-complete]])
 
-- **Hugo IS runnable** (`hugo --minify`, `hugo server --buildDrafts`).
-- **org-roam IS loadable** via straight in `a3-pub.sh`. B.0's Task 0 gates `org-roam-db-sync` on `org-roam-directory` existing, so batch contexts don't crash.
-- **emacs IS on PATH** for the agent. Integration tests work.
+- **Hugo + emacs + ox-hugo + yaml** all loadable in batch context via `a3-pub.sh` or `run-tests.sh`.
+- **org-roam IS loadable** via straight.
+- **`yaml` package now bootstrapped via `(straight-use-package 'yaml)`** in both wrapper script and test runner — was the B.0 packaging gap caught by B.1 Task 1 smoke tests.
 - **`org-roam-directory` defaults to `~/org-roam/`** (doesn't exist on this machine); user's notes at `~/org/notes/`.
-- **Site repo at `/Stuff/a3madkour/Sync/Workspace/a3madkour.github.io/`** (not `$HOME/Workspace/...` as the defcustom docstring suggests).
+- **Site repo at `/Users/a3madkour/Sync/Workspace/a3madkour.github.io/`** (resolved via `git rev-parse` cascade in `a3-pub.sh`).
+- **`note-section` returns string, dispatch keys by symbol** — `walk-section` bridges via `symbol-name`. B.2's library section may want the same pattern (multiple library-* sections in one handler module).
