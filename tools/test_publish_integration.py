@@ -501,6 +501,33 @@ def _publish_living(
     wrapper's bootstrap (acceptable for integration-test purposes; the cost is
     tight coupling to the bootstrap incantation, which changes rarely).
     """
+    return _publish_living_impl(notes_dir, site_data_dir, id_stubs=None)
+
+
+def _publish_living_with_id_stubs(
+    notes_dir: Path, site_data_dir: Path, id_stubs: "dict[str, Path]"
+) -> "subprocess.CompletedProcess[str]":
+    """Like _publish_living but also stubs org-roam-id-find.
+
+    ID_STUBS maps UUID strings to absolute .org file paths.  The stub
+    returns ``(cons FILE 1)`` for known IDs (matching the real org-roam
+    return shape), and nil for unknown ones — exercising the :inert path
+    for private/unpublished targets.
+
+    Needed for cross-link tests (B.1.1): rewrite-buffer-links calls
+    a3madkour-pub--id-to-file → org-roam-id-find to resolve each
+    ``[[id:UUID]]``.  Without the stub, the org-roam SQLite DB has no
+    entries for tmp-dir files and every link resolves to nil (:inert).
+    """
+    return _publish_living_impl(notes_dir, site_data_dir, id_stubs=id_stubs)
+
+
+def _publish_living_impl(
+    notes_dir: Path,
+    site_data_dir: Path,
+    id_stubs: "dict[str, Path] | None",
+) -> "subprocess.CompletedProcess[str]":
+    """Shared implementation for _publish_living and _publish_living_with_id_stubs."""
     # Build the load-path expansion form — mirrors run-tests.sh line 32.
     expand_load_path = (
         "(dolist (dir (directory-files "
@@ -520,6 +547,26 @@ def _publish_living(
     # so these two must be consistent.
     site_root = site_data_dir.parent
     content_dir = str(site_root / "content") + "/"
+
+    # Build the cl-letf stub form.  Base: stub org-roam-db-sync only.
+    # Extended: also stub org-roam-id-find when id_stubs is provided.
+    if id_stubs:
+        # Build a cond form: ((equal id "UUID") (cons "FILE" 1)) per entry.
+        cond_clauses = " ".join(
+            f'((equal id "{uid}") (cons "{fpath}" 1))'
+            for uid, fpath in id_stubs.items()
+        )
+        letf_form = (
+            "(cl-letf (((symbol-function 'org-roam-db-sync) (lambda () nil))"
+            "          ((symbol-function 'org-roam-id-find)"
+            f"           (lambda (id &optional _) (cond {cond_clauses} (t nil)))))"
+            "  (a3-publish-living))"
+        )
+    else:
+        letf_form = (
+            "(cl-letf (((symbol-function 'org-roam-db-sync) (lambda () nil)))"
+            "  (a3-publish-living))"
+        )
 
     return subprocess.run(
         [
@@ -544,11 +591,8 @@ def _publish_living(
             "--eval", f'(setq a3madkour-pub/org-notes-dir "{notes_dir}/")',
             # Also set the content-dir used by finish-publish's unpublish sweep.
             "--eval", f'(setq a3madkour-pub-site-content-dir "{content_dir}")',
-            # Stub org-roam-db-sync so no real DB is needed in the tmp workspace.
-            "--eval", (
-                "(cl-letf (((symbol-function 'org-roam-db-sync) (lambda () nil)))"
-                "  (a3-publish-living))"
-            ),
+            # Stub org-roam-db-sync (and optionally org-roam-id-find).
+            "--eval", letf_form,
             "--eval", "(kill-emacs 0)",
         ],
         capture_output=True,
@@ -883,6 +927,96 @@ class TestGardenPublishLiving(unittest.TestCase):
             [],
             f"check_garden_links rejected B-emitted note:\n"
             + "\n".join(f"  {e}" for e in errors2),
+        )
+
+    # ------------------------------------------------------------------
+    # Task 17 (B.1.1): test_garden_publish_with_cross_link
+    # ------------------------------------------------------------------
+
+    def test_garden_publish_with_cross_link(self) -> None:
+        """B.1.1 regression: source note links to (a) a published target and
+        (b) a private/unknown UUID.
+
+        Asserts the emitted source bundle:
+        - contains an HTML anchor pointing at /garden/<target-slug>/
+        - contains the inert plain text for the unpublished link
+        - does NOT contain any ``{{< relref`` shortcode (the round-2 bug)
+        - does NOT contain any raw `[[id:` bracket form (the pre-export rewrite
+          really happened — ox-hugo's input was the rewritten temp file)
+
+        Naming convention: `a-target.org` is alphabetically first so
+        publish-living processes it before `b-source.org`; by the time the
+        source is processed, the target is already in the manifest and
+        rewrite-link resolves to `:html` (not `:inert`).
+        """
+        target_id = "44444444-5555-6666-7777-888888888888"
+        source_id = "99999999-aaaa-bbbb-cccc-dddddddddddd"
+        unknown_id = "00000000-0000-0000-0000-000000000000"
+
+        target_src = self.notes_dir / "a-target.org"
+        source_src = self.notes_dir / "b-source.org"
+
+        _write_garden_source(target_src, target_id, "Cross Target",
+                             self.site_root)
+        # Source body with two id-links: one to the published target, one
+        # to an unknown UUID (exercises the :inert path).
+        source_src.write_text(
+            ":PROPERTIES:\n"
+            f":ID: {source_id}\n"
+            ":END:\n"
+            "#+title: Cross Source\n"
+            "#+HUGO_PUBLISH: t\n"
+            "#+HUGO_SECTION: garden\n"
+            f"#+HUGO_BASE_DIR: {self.site_root}/\n"
+            "* Overview\n"
+            f"Links to [[id:{target_id}][the target]] and to "
+            f"[[id:{unknown_id}][a private one]] in one line.\n",
+            encoding="utf-8",
+        )
+
+        # Stub org-roam-id-find so rewrite-buffer-links can resolve the target
+        # UUID to its .org file path (the real org-roam DB is not populated
+        # for files in a tmp directory).  Only the target and source IDs need
+        # entries; unknown_id intentionally absent → :inert path exercised.
+        id_stubs = {
+            target_id: target_src,
+            source_id: source_src,
+        }
+        proc = _publish_living_with_id_stubs(
+            self.notes_dir, self._site_data_dir, id_stubs
+        )
+        self.assertEqual(
+            proc.returncode, 0,
+            msg=(
+                "publish-living exited non-zero.\n"
+                f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}"
+            ),
+        )
+
+        source_index = (
+            self.site_root / "content" / "garden" / "cross-source" / "index.md"
+        )
+        self.assertTrue(
+            source_index.exists(),
+            f"source bundle not created.\nstdout:\n{proc.stdout}\nstderr:\n{proc.stderr}",
+        )
+
+        body = source_index.read_text(encoding="utf-8")
+        self.assertIn(
+            '<a href="/garden/cross-target/">the target</a>', body,
+            f"resolved cross-link missing from emitted markdown.\nbody:\n{body}",
+        )
+        self.assertIn(
+            "a private one", body,
+            f"inert text for unpublished link missing.\nbody:\n{body}",
+        )
+        self.assertNotIn(
+            "{{< relref", body,
+            f"`{{{{< relref' shortcode survived — pre-export rewrite did not run.\nbody:\n{body}",
+        )
+        self.assertNotIn(
+            "[[id:", body,
+            f"raw `[[id:` form survived — bracket-link regex missed a case.\nbody:\n{body}",
         )
 
 
