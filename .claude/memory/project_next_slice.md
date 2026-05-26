@@ -1,40 +1,72 @@
 ---
 name: next-slice
-description: "Session-start pointer — next slice is Phase 3 B.2 (library handler). B.1 (garden handler) code-complete 2026-05-25; 259 ert tests + 13 Python integration fixtures green. Task 17 (real-corpus handover) gated on author annotating ~/org/notes/ with HUGO_PUBLISH + HUGO_SECTION keywords. B.2 spec already covered in B parent spec §8."
+description: "Session-start pointer — next slice is B.1.1 (pre-export id-link rewriter), then B.2 (library). B.1 shipped 2026-05-25 with 261 ert + 13 integration tests; round-2 spot-check on a linked note proved Hugo can't resolve ox-hugo's relref shortcodes against B-emitted bundles, so link rewriting MUST land before any further linked-note publishing. Architectural call made: pre-export buffer rewrite via new helper `rewrite-buffer-links` that scans + applies A.1's existing `rewrite-link`."
 metadata:
   node_type: memory
   type: project
 ---
 
-**Next slice = Phase 3 sub-project B.2 — library handler.** B.1 (garden) code-complete 2026-05-25; see [[b1-complete]].
+**Next slice = B.1.1 — pre-export id-link rewriter.** B.1 shipped 2026-05-25; see [[b1-complete]]. Then B.2 (library).
 
-Per design spec §12 slice ordering: A → B.0 → B.1 → **B.2 (next)** → B.3 (research) → B.4 (essays) → B.5 (works) → B.6 (streams) → B.7 (about) → F (citations) → C (math validators) → D (unified markup) → E (explorables).
+Per design spec §12 slice ordering: A → B.0 → B.1 → **B.1.1 (next, NEW)** → B.2 (library) → B.3 (research) → B.4 (essays) → B.5 (works) → B.6 (streams) → B.7 (about) → F (citations) → C (math validators) → D (unified markup) → E (explorables).
 
-## Two paths into the next session
+## Why B.1.1 is now required
 
-**Option 1: Address B.1.x follow-ups first**, then B.2. The three known issues per [[b1-complete]] "Known issues":
-1. Link rewriting is stubbed — pre-export buffer rewrite OR `org-link-set-parameters` hooks (architectural call).
-2. `last_modified` uses file mtime; spec wants git-mtime-of-HEAD.
-3. B parent spec §7 needs a one-line correction (drop "flavor is emitted").
+Round-2 spot-check (2026-05-25, documented in [[b1-complete]] "round 2") annotated `maximum_a_posteriori.org` — which has 3 id-links — and ran publish-living. Hugo errored with 3× `REF_NOT_FOUND`. Root cause per [[ox-hugo-id-links-become-relref]]: ox-hugo translates `[[id:UUID][text]]` to `[text]({{< relref "<underscore_filename>.md" >}})` regardless of whether the target is published, AND the underscore-filename form never matches B-emitted hyphen-slug bundle paths.
 
-**Option 2: Skip directly to B.2** (library handler). The follow-ups can ride along with B.2 or land as a separate B.1.1 slice. Library is the structural outlier per spec §8 — per-medium YAML rows (not per-page Hugo bundles), parsed from top-level org headings in 4 files (`library-reading.org`, `library-listening.org`, `library-playing.org`, `library-watching.org`). YAML emission replaces the existing `data/<medium>.yaml` files from scratch (no merge); library tags round-trip from per-heading `:tags:` into per-row YAML.
+Without B.1.1, every published note that links to another note breaks the Hugo build. We can't publish anything past the 3 link-less notes already shipped (bayesian/bias/cellular).
 
-**Option 3: User-driven Task 17 spot-check.** Author annotates `~/org/notes/` with `#+HUGO_PUBLISH: t` + `#+HUGO_SECTION: garden`, runs `a3-pub.sh --publish-living`, eyeballs `/garden/` in `hugo server`. This may surface real link-rewriting issues that inform Option 1's architectural choice.
+## What B.1.1 must do
 
-Recommended sequencing: Option 3 → Option 1 → Option 2. The spot-check informs the link-rewriting fix; the fix sets the pattern B.2-B.7 will mirror; then library starts cleanly.
+**Architectural call already made:** pre-export buffer rewrite. Two alternatives (post-export string substitution; `org-link-set-parameters` hook) were considered and rejected — pre-export reuses A.1's existing `rewrite-link` exactly as designed.
 
-## How to start the next session
+Concrete tasks (estimated 5-7 tasks for the slice):
 
-1. Read CLAUDE.md status pointer + [[b1-complete]] + B parent spec §8 (library specifics).
-2. Decide path (1/2/3 above) with the author.
-3. If Option 2: jump straight to `superpowers:writing-plans` for B.2 — sub-project B's parent spec covers it, no new brainstorm needed unless §8 surfaces ambiguity.
-4. If Option 1: probably needs a small spec (or just a focused brainstorm) because the link-rewriting architecture has two genuinely different paths.
+1. New helper `a3madkour-pub-rewrite/rewrite-buffer-links (source-note-id)` in `a3madkour-publish-rewrite.el`. Scans current buffer for `[[link]]` patterns via regex (`\\[\\[\\(?:[^][]\\|\\[[^]]*\\]\\)+\\]\\]`); for each match, calls `a3madkour-pub/rewrite-link` and substitutes with `:html` (resolved) or `:inert` (unresolved). Returns accumulated warnings.
+
+2. Wire into garden handler: between `note-metadata` and `export-file`, copy source to a tmp `.org` file, apply `rewrite-buffer-links` in a temp buffer, write the rewritten content to the tmp file, hand the tmp file to `export-file`. (`export-file`'s contract is unchanged.) The tmp file dance preserves source integrity.
+
+3. ert tests:
+   - resolved id-link → markdown contains `<a href="/garden/<slug>/">text</a>` (HTML anchor, not relref shortcode).
+   - unresolved id-link → markdown contains just `text` (inert; no broken anchor).
+   - multiple links in one line (the MAP case: 3 links on one line) all rewrite correctly.
+   - the `*Org Hugo Export*` buffer must not contain `{{< relref` afterward.
+
+4. Python integration fixture: extend `tools/test_publish_integration.py` with a "garden publish with cross-link" fixture — publish a note that links to another published note + a third unpublished one. Assert: hugo --minify exits 0 on the resulting bundles; resolved link renders to `/garden/<slug>/`; unresolved link renders as inert text.
+
+5. Re-run round-2 spot-check (annotate `maximum_a_posteriori.org` again) and confirm `hugo --minify` is clean.
+
+6. While you're in there: also file a small follow-up for `finish-publish`'s no-retry behavior on failed `delete-bundle` (see [[publish-living-fixture-sweep]] secondary finding). At minimum WARN loudly; ideally reset the manifest entry so a retry can succeed.
+
+## State of the world at session start
+
+**Site repo (`/Users/a3madkour/Sync/Workspace/a3madkour.github.io/`):**
+- master is **4 commits ahead of origin/master** (last: `2d87feb` link-rewriting findings memo, before that `703bcdd` first real B-emitted content). NOT pushed.
+- `content/garden/{bayesian-statistics,bias-vs-variance,cellular-automata-are-visual-rule-based-systems}/` — 3 B-emitted bundles, committed.
+- `data/url-history.yaml` — 3 live entries.
+- Working tree clean.
+
+**Dotfiles (`~/dotfiles/`):**
+- main is **16 commits ahead of origin/main** (last: `0825853` site-content-dir derivation fix). NOT pushed.
+- 261 ert tests passing.
+
+**Personal notes (`~/org/notes/`):**
+- 3 annotated with `#+HUGO_PUBLISH: t` + `#+HUGO_SECTION: garden`: `bayesian_statistics.org`, `bias_vs_variance.org`, `cellular_automata_are_visual_rule_based_systems.org`. NOT git-tracked.
+- `maximum_a_posteriori.org` was annotated in round-2 spot-check then rolled back (restored from `/tmp/b1-spotcheck-backup-203015/`). Backup dir survives until tmp cleanup.
+- All other notes (54 of 57) unannotated.
+
+## Recommended session start
+
+1. Read CLAUDE.md + [[b1-complete]] (round 2 section) + [[ox-hugo-id-links-become-relref]].
+2. Confirm the architectural call (pre-export buffer rewrite) still holds — quick re-read of A.1's `rewrite-link` API in `a3madkour-publish-rewrite.el:269` to refresh.
+3. Jump to `superpowers:writing-plans` for B.1.1. Plan is small enough (5-7 tasks) that brainstorming is overkill — the architectural call is already locked in.
+4. After B.1.1 ships, decide: push the 20 unpushed commits + Task 17 round-2 publish? Or continue to B.2 first?
 
 ## Agent-environment notes (carry-forward from [[b1-complete]])
 
 - **Hugo + emacs + ox-hugo + yaml** all loadable in batch context via `a3-pub.sh` or `run-tests.sh`.
-- **org-roam IS loadable** via straight.
-- **`yaml` package now bootstrapped via `(straight-use-package 'yaml)`** in both wrapper script and test runner — was the B.0 packaging gap caught by B.1 Task 1 smoke tests.
+- **`(straight-use-package 'yaml)`** is required in all batch contexts (was a B.0 packaging gap caught + fixed in B.1).
 - **`org-roam-directory` defaults to `~/org-roam/`** (doesn't exist on this machine); user's notes at `~/org/notes/`.
-- **Site repo at `/Users/a3madkour/Sync/Workspace/a3madkour.github.io/`** (resolved via `git rev-parse` cascade in `a3-pub.sh`).
-- **`note-section` returns string, dispatch keys by symbol** — `walk-section` bridges via `symbol-name`. B.2's library section may want the same pattern (multiple library-* sections in one handler module).
+- **Site repo at `/Users/a3madkour/Sync/Workspace/a3madkour.github.io/`** (resolved via `git rev-parse --show-toplevel` cascade in `a3-pub.sh`).
+- **`note-section` returns string, dispatch keys by symbol** — `walk-section` bridges via `symbol-name`.
+- **`a3madkour-pub-site-content-dir` defcustom defaults to nil**; derived from `site-data-dir` via `--site-content-dir-effective`. Don't add machine-specific defaults to similar defcustoms — derive via cascade or env.
