@@ -80,9 +80,42 @@ Author annotated 3 small notes (`bayesian_statistics`, `bias_vs_variance`, `cell
 
 One bug surfaced + fixed in same slice (dotfiles `8583feb`): ox-hugo emits `#+HUGO_LASTMOD:` as `lastmod:` (its own key), but the linter only accepts `last_modified:`. The normalizer now renames `lastmod` → `last_modified` with ISO-datetime truncation. 3-case regression test pins it.
 
+## Spot-check round 2: link rewriting exercised (2026-05-25)
+
+Annotated `maximum_a_posteriori.org` which has TWO id-links:
+- `[[id:09049cd8-...][Bayesian Statistics]]` — target is annotated/published.
+- `[[id:32a9dc40-...][Inference Queries]]` (twice) — target exists at `inference_queries.org` but is NOT annotated.
+
+ox-hugo translates BOTH forms identically: `[text]({{< relref "<filename>.md" >}})`. So Hugo sees:
+- `[Bayesian Statistics]({{< relref "bayesian_statistics.md" >}})`
+- `[Inference Queries]({{< relref "inference_queries.md" >}})`
+
+`hugo --minify` errors with 3× `REF_NOT_FOUND` (one per link):
+```
+ERROR [en] REF_NOT_FOUND: Ref "bayesian_statistics.md":
+  "/.../content/garden/maximum-a-posteriori-map/index.md:12:66": page not found
+```
+
+Two reasons Hugo can't resolve the relref:
+1. ox-hugo uses **underscore filenames** (`bayesian_statistics.md`) but B-emits **hyphen slugs** (`bayesian-statistics`). The Hugo bundle path is `content/garden/bayesian-statistics/index.md`, not `content/<anywhere>/bayesian_statistics.md`.
+2. Even if the filename matched, unpublished targets (`inference_queries`) have no Hugo content at all.
+
+Concrete fix paths for B.1.x:
+- **Pre-export buffer rewrite** (preferred): copy source to a tmp buffer/file, scan for `[[id:UUID]]` patterns, apply `a3madkour-pub/rewrite-link` to each (it returns `:html` for resolved, `:inert` for unresolved). Hand the rewritten content to ox-hugo. ox-hugo passes inline HTML through markdown untouched.
+- **Post-export string substitution**: scan markdown for `{{< relref "X.md" >}}`, resolve X to a note ID via org-roam, substitute with `/garden/<slug>/` or plaintext.
+- **`org-link-set-parameters` hook**: register a custom `:export` function for `id:` and `file:` schemes that calls A.1's rewriter directly. Avoids the relref shortcode entirely.
+
+Recommended: pre-export buffer rewrite. Reuses A.1's `rewrite-link` exactly as designed. Needs a small new helper (`rewrite-buffer-links`) that scans + applies.
+
+## Spot-check round 2: ALSO surfaced a `site-content-dir` defcustom bug
+
+`a3madkour-pub-site-content-dir` (A.1.d defcustom) defaulted to a hardcoded `~/Stuff/a3madkour/Sync/Workspace/a3madkour.github.io/content/` — the OTHER machine's path. The wrapper plumbs `site-data-dir` but never sets `site-content-dir`, so `unpublish-delete-bundle` silently failed to delete the orphan bundle when MAP was rolled back. Fixed in dotfiles `0825853` — defcustom default is now nil; a new `--site-content-dir-effective` helper derives content/ as the sibling of data/.
+
+**Secondary finding**: `finish-publish`'s Step A does NOT retry a failed delete-bundle. If the path computation is wrong (as the site-content-dir bug caused), the manifest correctly marks `state: removed` but the actual on-disk bundle stays. Subsequent publish-living runs see "manifest already says removed → no diff to act on" and the orphan persists. Worth documenting as an A.1.d gap: failed delete-bundle should at least WARN loudly, ideally reattempt OR reset manifest state for retry.
+
 ## Known issues / B.1.x follow-ups
 
-1. **Link rewriting stub** (per Architectural Decision 1). Spot-check didn't exercise this because the 3 candidates lack internal links. First annotated note with `[[id:UUID]]` references will surface what ox-hugo's default translation looks like.
+1. **Link rewriting** (per Architectural Decision 1 + round-2 findings above). The architectural call is now made: **pre-export buffer rewrite via a new `rewrite-buffer-links` helper**. Land this as B.1.1 before any further user spot-checks against linked notes.
 
 2. **`last_modified` falls back to file mtime when no `#+HUGO_LASTMOD:` exists.** Spec §7 + §12 open-Q-5 want git-mtime-of-HEAD-touching-file. File mtime is unstable across `touch` or editor saves with no content change. Follow-up should switch to `(shell-command-to-string "git log -1 --format=%cI -- <file>")` + Date parse.
 
