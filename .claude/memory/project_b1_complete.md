@@ -1,6 +1,6 @@
 ---
 name: b1-complete
-description: "B.1 garden handler — code-complete 2026-05-25. 259 ert tests (+20 from B.0's 239 baseline) + 13 Python integration fixtures (was 8) all green. Pipeline emits real content/garden/<slug>/index.md from org sources via a3-pub.sh --publish-living. Task 17 (real-corpus handover) gated on author annotating ~/org/notes/ with HUGO_PUBLISH + HUGO_SECTION keywords. Next slice = B.2 library handler."
+description: "B.1 garden handler — shipped 2026-05-25. 260 ert tests (+21 from B.0's 239 baseline) + 13 Python integration fixtures (was 8) all green. Pipeline emits real content/garden/<slug>/index.md from org sources via a3-pub.sh --publish-living. Task 17 spot-check shipped: 3 real notes annotated + bundles emitted + committed locally. lastmod-rename bug surfaced and fixed in same slice. Next slice = B.2 library handler."
 metadata:
   node_type: memory
   type: project
@@ -52,8 +52,9 @@ In dotfiles repo:
 - `6b1a834` register garden handler in living--handlers + fix dispatch symbol/string bug
 - `21cc568` garden frontmatter hygiene (strip flavor/author + add last_modified)
 - `a7e1100` finish-publish Step B deletes orphan content bundle on slug shift
+- `8583feb` rename ox-hugo's `lastmod` → `last_modified` (Task 17 spot-check finding)
 
-14 dotfiles commits total. Site repo has 1 commit (`6561504`) for the integration fixtures + pending commits for the plan file, CLAUDE.md update, and this memory snapshot.
+15 dotfiles commits total. Site repo has 3 commits: `6561504` integration fixtures + `2186366` plan/status/memory docs + a third with the Task 17 spot-check content (3 B-emitted bundles + manifest update + this memory update). Site commits are local only — not pushed pending author review.
 
 ## Architectural decisions worth recording
 
@@ -67,13 +68,27 @@ In dotfiles repo:
 
 5. **`note-section` returns a string, dispatch keys by symbol.** B.0 had a latent `(eq 'garden "garden")` bug that would never match. Fixed in `walk-section` via `symbol-name` conversion (preserves the symbol-keyed alist registration pattern).
 
-## Known issues / B.1.x follow-ups (must address before Task 17 fully ships)
+## Spot-check (Task 17) findings
 
-1. **Link rewriting stub** (per Architectural Decision 1). The first real-corpus garden note with `[[id:UUID]]` internal links will show ox-hugo's default translation, which probably points at the wrong URL. Surface via spot-check, then ship the right fix.
+Author annotated 3 small notes (`bayesian_statistics`, `bias_vs_variance`, `cellular_automata_are_visual_rule_based_systems`) with `#+HUGO_PUBLISH: t` + `#+HUGO_SECTION: garden` and ran `a3-pub.sh --publish-living` against the real site repo. Outcomes:
 
-2. **`last_modified` is file mtime, not git mtime.** Spec §7 + §12 open-Q-5 want git-mtime-of-HEAD-touching-file. File mtime is unstable across `touch` or editor saves with no content change. Acceptable for first-cut but needs replacing for true idempotency. Follow-up task should switch to `(shell-command-to-string "git log -1 --format=%cI -- <file>")` + Date parse.
+- All 3 bundles emitted cleanly under `content/garden/*/index.md`.
+- Both garden linters (`check_garden_fixtures.py` + `check_garden_links.py`) accepted B-emitted output (after the `lastmod` rename fix landed mid-spot-check).
+- `hugo --minify` built 118 pages clean (+3 from baseline).
+- Existing fixture bundles (`emergence-vs-design`, `invisible-cities`, etc.) were NOT swept — `finish-publish`'s orphan sweep operates on the manifest, not on disk-vs-source diff. Safer than the spec's "sync" wording suggests; author manually removes fixtures when ready.
+- None of the 3 annotated notes have internal `[[id:UUID]]` links, so the deferred link-rewriting question was NOT exercised. Stays as B.1.x follow-up #1.
+
+One bug surfaced + fixed in same slice (dotfiles `8583feb`): ox-hugo emits `#+HUGO_LASTMOD:` as `lastmod:` (its own key), but the linter only accepts `last_modified:`. The normalizer now renames `lastmod` → `last_modified` with ISO-datetime truncation. 3-case regression test pins it.
+
+## Known issues / B.1.x follow-ups
+
+1. **Link rewriting stub** (per Architectural Decision 1). Spot-check didn't exercise this because the 3 candidates lack internal links. First annotated note with `[[id:UUID]]` references will surface what ox-hugo's default translation looks like.
+
+2. **`last_modified` falls back to file mtime when no `#+HUGO_LASTMOD:` exists.** Spec §7 + §12 open-Q-5 want git-mtime-of-HEAD-touching-file. File mtime is unstable across `touch` or editor saves with no content change. Follow-up should switch to `(shell-command-to-string "git log -1 --format=%cI -- <file>")` + Date parse.
 
 3. **B design spec correction.** Drop the "flavor is emitted" sentence in §7.
+
+4. **No fixture-sweep on first real run** (behavior, not a bug). Authors who want to remove fixture bundles need to do it manually before/after the first publish-living. Documenting this in CLAUDE.md or the spec is worth a small follow-up.
 
 ## Next slice: B.2 (library handler)
 
