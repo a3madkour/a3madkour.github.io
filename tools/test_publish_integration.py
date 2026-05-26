@@ -23,6 +23,8 @@ Implementation notes
 """
 from __future__ import annotations
 
+import importlib.util
+import os
 import shutil
 import subprocess
 import tempfile
@@ -453,6 +455,435 @@ class TestAssetHandling(unittest.TestCase):
             self.assertIn("src-id-1", proc.stdout)
             self.assertIn("tgt-id-1", proc.stdout)
             self.assertIn("republish recommended", proc.stdout)
+
+
+def _import_linter(name: str):
+    """Import a tools/<name>.py module by absolute path (no package install needed)."""
+    path = Path(__file__).resolve().parent / f"{name}.py"
+    spec = importlib.util.spec_from_file_location(name, path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _write_garden_source(path: Path, note_id: str, title: str, site_dir: Path) -> None:
+    """Write a minimal garden source .org file to PATH.
+
+    Uses the same property-drawer + keyword layout the ert unit tests use
+    (see a3madkour-publish-garden-test.el).  #+HUGO_BASE_DIR is required by
+    ox-hugo so it knows where to write the export (even though our caller
+    overrides the output path via site-data-dir).
+    """
+    path.write_text(
+        ":PROPERTIES:\n"
+        f":ID: {note_id}\n"
+        ":END:\n"
+        f"#+title: {title}\n"
+        "#+HUGO_PUBLISH: t\n"
+        "#+HUGO_SECTION: garden\n"
+        f"#+HUGO_BASE_DIR: {site_dir}/\n"
+        "* Overview\n"
+        "Body text for integration test.\n",
+        encoding="utf-8",
+    )
+
+
+def _publish_living(
+    notes_dir: Path, site_data_dir: Path
+) -> "subprocess.CompletedProcess[str]":
+    """Run the full publish-living pipeline against tmp notes + site dirs.
+
+    Mirrors the bootstrap incantation in run-tests.sh + a3-pub.sh --publish-living,
+    but accepts arbitrary notes_dir + site_data_dir so each test can use its own
+    isolated tmp corpus.
+
+    a3-pub.sh does not expose a --notes-dir flag, so this helper duplicates the
+    wrapper's bootstrap (acceptable for integration-test purposes; the cost is
+    tight coupling to the bootstrap incantation, which changes rarely).
+    """
+    # Build the load-path expansion form — mirrors run-tests.sh line 32.
+    expand_load_path = (
+        "(dolist (dir (directory-files "
+        '(expand-file-name "straight/build/" user-emacs-directory) '
+        "t \"^[^.]\")) "
+        "(when (file-directory-p dir) (add-to-list 'load-path dir)))"
+    )
+
+    env = os.environ.copy()
+    env["A3_PUB_SITE_DATA_DIR"] = str(site_data_dir) + "/"
+
+    # Derive the content dir from site_data_dir's parent (site root) + "content/".
+    # a3madkour-pub-site-content-dir is used by finish-publish's Step A
+    # (unpublish sweep) to delete stale bundles; it must point into the same
+    # tmp site tree as site-data-dir.  The garden handler itself derives the
+    # bundle path from site-data-dir (via a3madkour-pub-garden--site-root),
+    # so these two must be consistent.
+    site_root = site_data_dir.parent
+    content_dir = str(site_root / "content") + "/"
+
+    return subprocess.run(
+        [
+            "emacs", "--batch",
+            "--eval", f'(setq user-emacs-directory "{DOTFILES_CUSTOM}/")',
+            "--eval", "(setq straight-base-dir user-emacs-directory)",
+            "-l", str(STRAIGHT_BOOTSTRAP),
+            "--eval", "(straight-use-package 'org-roam)",
+            "--eval", "(straight-use-package 'yaml)",
+            "--eval", expand_load_path,
+            "-L", str(DOTFILES_LISP),
+            "-l", "a3madkour-publish",
+            "-l", "a3madkour-publish-rewrite",
+            "-l", "a3madkour-publish-assets",
+            "-l", "a3madkour-publish-unpublish",
+            "-l", "a3madkour-publish-export",
+            "-l", "a3madkour-publish-frontmatter",
+            "-l", "a3madkour-publish-living",
+            "-l", "a3madkour-publish-deliberate",
+            "-l", "a3madkour-publish-garden",
+            "--eval", f'(setq a3madkour-pub/site-data-dir "{site_data_dir}/")',
+            "--eval", f'(setq a3madkour-pub/org-notes-dir "{notes_dir}/")',
+            # Also set the content-dir used by finish-publish's unpublish sweep.
+            "--eval", f'(setq a3madkour-pub-site-content-dir "{content_dir}")',
+            # Stub org-roam-db-sync so no real DB is needed in the tmp workspace.
+            "--eval", (
+                "(cl-letf (((symbol-function 'org-roam-db-sync) (lambda () nil)))"
+                "  (a3-publish-living))"
+            ),
+            "--eval", "(kill-emacs 0)",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env=env,
+    )
+
+
+@unittest.skipIf(_MISSING_PREREQS, _SKIP_REASON)
+class TestGardenPublishLiving(unittest.TestCase):
+    """B.1 integration fixtures (Tasks 12-16): pin garden publish-living behavior.
+
+    Each test seeds a tmp notes + site directory, drives emacs --batch with the
+    full publish module stack loaded (mirroring a3-pub.sh's bootstrap incantation),
+    and asserts on the resulting content/ + data/url-history.yaml output.
+
+    emacs --batch with straight.el bootstrap takes 5-10 s per invocation; tests
+    that call _publish_living twice may run 15-20 s each.  Total for the class:
+    ~60 s.  Don't optimize — this is the correct price of full-stack coverage.
+    """
+
+    # ------------------------------------------------------------------
+    # setUp / tearDown
+    # ------------------------------------------------------------------
+
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp(prefix="b1-garden-"))
+        self.notes_dir = self.tmp / "notes"
+        self.site_root = self.tmp / "site"
+        self.notes_dir.mkdir(parents=True)
+        (self.site_root / "data").mkdir(parents=True)
+        (self.site_root / "content" / "garden").mkdir(parents=True)
+        # Seed a valid empty manifest so the publish pipeline finds the file.
+        (self.site_root / "data" / "url-history.yaml").write_text(
+            "notes: []\n", encoding="utf-8"
+        )
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    # ------------------------------------------------------------------
+    # Helper
+    # ------------------------------------------------------------------
+
+    @property
+    def _site_data_dir(self) -> Path:
+        return self.site_root / "data"
+
+    # ------------------------------------------------------------------
+    # Task 12: test_garden_publish_once
+    # ------------------------------------------------------------------
+
+    def test_garden_publish_once(self) -> None:
+        """Fixture 1 (Task 12): one source → bundle written + manifest updated.
+
+        Asserts:
+        - exit code 0
+        - content/garden/integration-note/index.md exists
+        - index.md contains title: and growth_stage:
+        - data/url-history.yaml exists and is non-empty
+        """
+        note_id = "11111111-2222-3333-4444-555555555555"
+        src = self.notes_dir / "integration-note.org"
+        _write_garden_source(src, note_id, "Integration Note", self.site_root)
+
+        proc = _publish_living(self.notes_dir, self._site_data_dir)
+        self.assertEqual(
+            proc.returncode, 0,
+            msg=f"publish-living exited non-zero.\nstdout:\n{proc.stdout}\nstderr:\n{proc.stderr}",
+        )
+
+        index_md = self.site_root / "content" / "garden" / "integration-note" / "index.md"
+        self.assertTrue(
+            index_md.exists(),
+            f"content/garden/integration-note/index.md not created.\n"
+            f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}",
+        )
+
+        content = index_md.read_text(encoding="utf-8")
+        self.assertIn("title:", content, "Missing title: in emitted frontmatter")
+        self.assertIn("growth_stage:", content, "Missing growth_stage: in emitted frontmatter")
+
+        history = self._site_data_dir / "url-history.yaml"
+        self.assertTrue(history.exists(), "data/url-history.yaml not created")
+        self.assertGreater(
+            history.stat().st_size, 0, "data/url-history.yaml is empty"
+        )
+
+    # ------------------------------------------------------------------
+    # Task 13: test_garden_publish_idempotent
+    # ------------------------------------------------------------------
+
+    def test_garden_publish_idempotent(self) -> None:
+        """Fixture 2 (Task 13): second run produces zero diff (mtime preserved).
+
+        Asserts:
+        - both runs exit 0
+        - index.md mtime is identical across runs (write-if-different worked)
+        - url-history.yaml content identical across runs
+        """
+        note_id = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+        src = self.notes_dir / "idem-note.org"
+        _write_garden_source(src, note_id, "Idempotent Note", self.site_root)
+
+        proc1 = _publish_living(self.notes_dir, self._site_data_dir)
+        self.assertEqual(
+            proc1.returncode, 0,
+            msg=f"First publish-living run failed.\nstdout:\n{proc1.stdout}\nstderr:\n{proc1.stderr}",
+        )
+
+        # Slug is derived from the title "Idempotent Note" → "idempotent-note",
+        # not from the filename "idem-note.org".
+        index_md = self.site_root / "content" / "garden" / "idempotent-note" / "index.md"
+        self.assertTrue(index_md.exists(), "index.md not created by first run")
+        mtime_after_run1 = os.stat(index_md).st_mtime_ns
+        history_after_run1 = (self._site_data_dir / "url-history.yaml").read_text(
+            encoding="utf-8"
+        )
+
+        proc2 = _publish_living(self.notes_dir, self._site_data_dir)
+        self.assertEqual(
+            proc2.returncode, 0,
+            msg=f"Second publish-living run failed.\nstdout:\n{proc2.stdout}\nstderr:\n{proc2.stderr}",
+        )
+
+        mtime_after_run2 = os.stat(index_md).st_mtime_ns
+        self.assertEqual(
+            mtime_after_run1,
+            mtime_after_run2,
+            "index.md was rewritten on second run — write-if-different is broken",
+        )
+
+        history_after_run2 = (self._site_data_dir / "url-history.yaml").read_text(
+            encoding="utf-8"
+        )
+        self.assertEqual(
+            history_after_run1,
+            history_after_run2,
+            "url-history.yaml changed on second run — idempotency broken",
+        )
+
+    # ------------------------------------------------------------------
+    # Task 14: test_garden_slug_shift
+    # ------------------------------------------------------------------
+
+    def test_garden_slug_shift(self) -> None:
+        """Fixture 3 (Task 14): title change → old bundle removed, new bundle at new
+        slug, alias recorded in url-history.yaml.
+
+        Asserts:
+        - After publish 1: content/garden/original-slug/index.md exists
+        - After publish 2: content/garden/new-slug/index.md exists
+        - After publish 2: content/garden/original-slug/ is removed
+        - url-history.yaml contains both slug strings
+
+        NOTE — KNOWN GAP (B.1 follow-on): finish-publish Step B renames the
+        asset dir (~/org/notes/assets/page/<old>/ → <new>/) but does NOT
+        remove the old Hugo content bundle at content/garden/<old-slug>/.
+        The old bundle stays on disk until the next full site rebuild or a
+        manual cleanup.  This test will fail until a clean-up step is added
+        to finish-publish (or the garden handler) for slug-shifted notes.
+
+        Specific fix: in finish-publish Step B (or as a Step B.5), after
+        renaming the asset dir, call
+          (a3madkour-pub--unpublish-delete-bundle section old-slug)
+        for each slug-shifted note.
+        """
+        note_id = "bbbbbbbb-cccc-dddd-eeee-ffffffffffff"
+        src = self.notes_dir / "shifting-note.org"
+        _write_garden_source(src, note_id, "Original Slug", self.site_root)
+
+        proc1 = _publish_living(self.notes_dir, self._site_data_dir)
+        self.assertEqual(
+            proc1.returncode, 0,
+            msg=f"First publish-living run failed.\nstdout:\n{proc1.stdout}\nstderr:\n{proc1.stderr}",
+        )
+
+        original_bundle = self.site_root / "content" / "garden" / "original-slug"
+        self.assertTrue(
+            original_bundle.exists(),
+            f"content/garden/original-slug/ not created.\n"
+            f"stdout:\n{proc1.stdout}\nstderr:\n{proc1.stderr}",
+        )
+
+        # Mutate the title so the slug changes; org file name stays the same.
+        _write_garden_source(src, note_id, "New Slug", self.site_root)
+
+        proc2 = _publish_living(self.notes_dir, self._site_data_dir)
+        self.assertEqual(
+            proc2.returncode, 0,
+            msg=f"Second publish-living run failed.\nstdout:\n{proc2.stdout}\nstderr:\n{proc2.stderr}",
+        )
+
+        new_bundle = self.site_root / "content" / "garden" / "new-slug"
+        self.assertTrue(
+            new_bundle.exists(),
+            f"content/garden/new-slug/ not created after slug shift.\n"
+            f"stdout:\n{proc2.stdout}\nstderr:\n{proc2.stderr}",
+        )
+        self.assertFalse(
+            original_bundle.exists(),
+            "content/garden/original-slug/ should have been removed after slug shift",
+        )
+
+        history_text = (self._site_data_dir / "url-history.yaml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(
+            "original-slug",
+            history_text,
+            "url-history.yaml should contain 'original-slug' (as prior alias)",
+        )
+        self.assertIn(
+            "new-slug",
+            history_text,
+            "url-history.yaml should contain 'new-slug' (as current url)",
+        )
+
+    # ------------------------------------------------------------------
+    # Task 15: test_garden_removed_note_unpublish
+    # ------------------------------------------------------------------
+
+    def test_garden_removed_note_unpublish(self) -> None:
+        """Fixture 4 (Task 15): source deleted → bundle removed, manifest state=removed.
+
+        Asserts:
+        - After publish 1: content/garden/<slug>/ exists
+        - After publish 2 (source gone): content/garden/<slug>/ is removed
+        - url-history.yaml records state: removed for the note's id
+        """
+        note_id = "cccccccc-dddd-eeee-ffff-000000000001"
+        src = self.notes_dir / "vanishing-note.org"
+        _write_garden_source(src, note_id, "Vanishing Note", self.site_root)
+
+        proc1 = _publish_living(self.notes_dir, self._site_data_dir)
+        self.assertEqual(
+            proc1.returncode, 0,
+            msg=f"First publish-living run failed.\nstdout:\n{proc1.stdout}\nstderr:\n{proc1.stderr}",
+        )
+
+        bundle = self.site_root / "content" / "garden" / "vanishing-note"
+        self.assertTrue(
+            bundle.exists(),
+            f"content/garden/vanishing-note/ not created.\n"
+            f"stdout:\n{proc1.stdout}\nstderr:\n{proc1.stderr}",
+        )
+
+        # Delete the source — simulates note being taken private (no HUGO_PUBLISH).
+        src.unlink()
+
+        proc2 = _publish_living(self.notes_dir, self._site_data_dir)
+        self.assertEqual(
+            proc2.returncode, 0,
+            msg=f"Second publish-living run (no source) failed.\nstdout:\n{proc2.stdout}\nstderr:\n{proc2.stderr}",
+        )
+
+        self.assertFalse(
+            bundle.exists(),
+            "content/garden/vanishing-note/ should have been removed after source was deleted",
+        )
+
+        history_text = (self._site_data_dir / "url-history.yaml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(
+            note_id,
+            history_text,
+            "url-history.yaml should still contain the removed note's id",
+        )
+        self.assertIn(
+            "state: removed",
+            history_text,
+            "url-history.yaml should record state: removed for the vanished note",
+        )
+
+    # ------------------------------------------------------------------
+    # Task 16: test_garden_emits_lint_clean_output
+    # ------------------------------------------------------------------
+
+    def test_garden_emits_lint_clean_output(self) -> None:
+        """Fixture 5 (Task 16): B-emitted notes pass check_garden_fixtures.py +
+        check_garden_links.py via in-process invocation.
+
+        NOTE — KNOWN GAPS (B.1 follow-on): the garden normalizer currently emits
+        a `flavor:` key that is NOT in check_garden_fixtures.py's CONCEPT_FIELDS
+        allowed set, and does NOT emit `draft:` or `last_modified:` (both
+        ALWAYS_REQUIRED by the linter).  If this test fails, the root cause is
+        the elisp normalizer, not the linter — do not relax the linter.
+
+        Specific elisp gaps to address in a follow-on:
+          - `flavor:` should NOT be written to the Hugo bundle (it is a
+            search-index hint only, used by Pagefind; the linter rightly rejects
+            it as a forbidden key).
+          - `draft:` should default to `false` in the normalizer output.
+          - `last_modified:` should be derived from the source file's git-mtime
+            (or file mtime fallback) and emitted in YYYY-MM-DD form.
+        """
+        note_id = "dddddddd-eeee-ffff-0000-111111111111"
+        src = self.notes_dir / "lint-clean-note.org"
+        _write_garden_source(src, note_id, "Lint Clean Note", self.site_root)
+
+        proc = _publish_living(self.notes_dir, self._site_data_dir)
+        self.assertEqual(
+            proc.returncode, 0,
+            msg=f"publish-living exited non-zero.\nstdout:\n{proc.stdout}\nstderr:\n{proc.stderr}",
+        )
+
+        index_md = self.site_root / "content" / "garden" / "lint-clean-note" / "index.md"
+        self.assertTrue(
+            index_md.exists(),
+            f"content/garden/lint-clean-note/index.md not created.\n"
+            f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}",
+        )
+
+        # Import linters via absolute path (no sys.path games).
+        gf = _import_linter("check_garden_fixtures")
+        gl = _import_linter("check_garden_links")
+
+        rc1, errors1 = gf.run(self.site_root)
+        self.assertEqual(
+            rc1,
+            0,
+            f"check_garden_fixtures rejected B-emitted note:\n"
+            + "\n".join(f"  {e}" for e in errors1),
+        )
+
+        garden_dir = self.site_root / "content" / "garden"
+        errors2, warnings2 = gl.lint_garden_links(garden_dir)
+        self.assertEqual(
+            errors2,
+            [],
+            f"check_garden_links rejected B-emitted note:\n"
+            + "\n".join(f"  {e}" for e in errors2),
+        )
 
 
 if __name__ == "__main__":
