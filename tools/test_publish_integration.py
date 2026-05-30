@@ -459,10 +459,19 @@ class TestAssetHandling(unittest.TestCase):
 
 
 def _import_linter(name: str):
-    """Import a tools/<name>.py module by absolute path (no package install needed)."""
+    """Import a tools/<name>.py module by absolute path (no package install needed).
+
+    Registers the loaded module in ``sys.modules`` before executing it so that
+    decorators like ``@dataclass`` — which look up ``cls.__module__`` via
+    ``sys.modules`` during class construction — can resolve the module.  Without
+    this, ``importlib.util.exec_module`` on a file that defines a dataclass
+    raises ``AttributeError: 'NoneType' object has no attribute '__dict__'``.
+    """
+    import sys as _sys
     path = Path(__file__).resolve().parent / f"{name}.py"
     spec = importlib.util.spec_from_file_location(name, path)
     mod = importlib.util.module_from_spec(spec)
+    _sys.modules[name] = mod
     spec.loader.exec_module(mod)
     return mod
 
@@ -1183,6 +1192,117 @@ class TestLibraryPublishLiving(unittest.TestCase):
         content2 = (self._site_data_dir / "reading.yaml").read_text()
         self.assertNotIn("slug: item-one", content2)
         self.assertIn("slug: item-two", content2)
+
+    def test_library_emits_lint_clean_output(self) -> None:
+        """B-emitted yaml passes check_library_fixtures + _links + _covers.
+
+        Seeds one minimal but linter-clean item per library leaf, runs
+        publish-living against the tmp site dir, and invokes each of the
+        three library linters against site_root.  This is the CI-gate
+        guarantee from spec §11 / parent §11: anything the publisher
+        emits must pass the site-side linters that gate CI.
+
+        check_library_fixtures + check_library_links expose a
+        `run(repo_root)` entry point — call them directly with the tmp
+        site_root.  check_library_covers only exposes `main(argv=None)`
+        and reads module-level REPO_ROOT/DATA_DIR/COVERS_DIR/AUDIT_LOG
+        constants (plus the imported fetch_library_covers.DATA_DIR), so
+        we monkey-patch those constants at the tmp site root before
+        invoking main().  AUDIT_LOG is pointed at a non-existent path so
+        load_audit_log() returns {} (we don't seed audit entries).
+        """
+        # Seed minimal but linter-clean items across all 4 media.
+        # status='finished' triggers the `finished:` date requirement →
+        # use 'queued'/'listening'/'playing'/'finished'+date as appropriate.
+        _write_library_source(
+            self.notes_dir / "library-reading.org", "library/reading",
+            [{"title": "Item", "creator": "x", "year": "2024",
+              "status": "queued", "last_modified": "2025-01-01"}],
+        )
+        _write_library_source(
+            self.notes_dir / "library-listening.org", "library/listening",
+            [{"title": "Album", "creator": "y", "year": "2024",
+              "status": "listening", "last_modified": "2025-01-01"}],
+        )
+        _write_library_source(
+            self.notes_dir / "library-playing.org", "library/playing",
+            [{"title": "Game", "creator": "z", "year": "2024",
+              "status": "playing", "last_modified": "2025-01-01"}],
+        )
+        _write_library_source(
+            self.notes_dir / "library-watching.org", "library/watching",
+            [{"title": "Film", "creator": "w", "year": "2024",
+              "status": "finished", "finished": "2024-12-01",
+              "last_modified": "2025-01-01"}],
+        )
+        # Library linters also expect data/library-shelves.yaml to exist
+        # in the live tree (hand-authored; not touched by publisher).
+        # The 3 linters under test don't actually parse it, but seed for
+        # symmetry with the live repo shape.
+        (self._site_data_dir / "library-shelves.yaml").write_text(
+            "shelves: []\n"
+        )
+        proc = _publish_living(self.notes_dir, self._site_data_dir)
+        self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+
+        # --- check_library_fixtures: run(repo_root) → (rc, errs, warns)
+        lf = _import_linter("check_library_fixtures")
+        rc_f, errs_f, _warns_f = lf.run(self.site_root)
+        self.assertEqual(
+            rc_f, 0,
+            f"check_library_fixtures rejected B-emitted yaml:\n"
+            + "\n".join(f"  {e}" for e in errs_f),
+        )
+
+        # --- check_library_links: run(repo_root) → (rc, errs)
+        ll = _import_linter("check_library_links")
+        rc_l, errs_l = ll.run(self.site_root)
+        self.assertEqual(
+            rc_l, 0,
+            f"check_library_links rejected B-emitted yaml:\n"
+            + "\n".join(f"  {e}" for e in errs_l),
+        )
+
+        # --- check_library_covers: only exposes main(argv) reading
+        # module-level constants.  Monkey-patch REPO_ROOT/DATA_DIR/
+        # COVERS_DIR/AUDIT_LOG on both check_library_covers and the
+        # fetch_library_covers helper it imports.
+        lc = _import_linter("check_library_covers")
+        fc = _import_linter("fetch_library_covers")
+        # Stash originals so concurrent runs/other tests aren't disturbed
+        # (the modules are loaded by absolute path under spec-based
+        # names; if a later test in this process re-imports, it'll get
+        # a fresh module — but be defensive anyway).
+        orig = {
+            "lc_repo": lc.REPO_ROOT,
+            "lc_data": lc.DATA_DIR,
+            "lc_covers": lc.COVERS_DIR,
+            "lc_audit": lc.AUDIT_LOG,
+            "fc_repo": fc.REPO_ROOT,
+            "fc_data": fc.DATA_DIR,
+            "fc_covers": fc.COVERS_DIR,
+        }
+        try:
+            lc.REPO_ROOT = self.site_root
+            lc.DATA_DIR = self._site_data_dir
+            lc.COVERS_DIR = self.site_root / "static" / "library" / "covers"
+            lc.AUDIT_LOG = self.site_root / "tools" / ".cover-cache.json"
+            fc.REPO_ROOT = self.site_root
+            fc.DATA_DIR = self._site_data_dir
+            fc.COVERS_DIR = self.site_root / "static" / "library" / "covers"
+            rc_c = lc.main([])
+        finally:
+            lc.REPO_ROOT = orig["lc_repo"]
+            lc.DATA_DIR = orig["lc_data"]
+            lc.COVERS_DIR = orig["lc_covers"]
+            lc.AUDIT_LOG = orig["lc_audit"]
+            fc.REPO_ROOT = orig["fc_repo"]
+            fc.DATA_DIR = orig["fc_data"]
+            fc.COVERS_DIR = orig["fc_covers"]
+        self.assertEqual(
+            rc_c, 0,
+            "check_library_covers.main() returned non-zero against B-emitted yaml",
+        )
 
 
 if __name__ == "__main__":
