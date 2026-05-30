@@ -28,6 +28,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -1109,6 +1110,26 @@ class TestLibraryPublishLiving(unittest.TestCase):
                 (self._site_data_dir / fname).exists(),
                 msg=f"{fname} not emitted",
             )
+
+    def test_library_publish_idempotent(self) -> None:
+        """Second publish-living run on unchanged source → zero diff."""
+        _write_library_source(
+            self.notes_dir / "library-reading.org", "library/reading",
+            [{"title": "Item", "creator": "x", "year": "2024",
+              "status": "queued", "last_modified": "2025-01-01"}],
+        )
+        proc1 = _publish_living(self.notes_dir, self._site_data_dir)
+        self.assertEqual(proc1.returncode, 0, msg=proc1.stderr)
+        yaml_path = self._site_data_dir / "reading.yaml"
+        content1 = yaml_path.read_bytes()
+        mtime1 = yaml_path.stat().st_mtime_ns
+        time.sleep(1.1)
+        proc2 = _publish_living(self.notes_dir, self._site_data_dir)
+        self.assertEqual(proc2.returncode, 0, msg=proc2.stderr)
+        content2 = yaml_path.read_bytes()
+        mtime2 = yaml_path.stat().st_mtime_ns
+        self.assertEqual(content1, content2)
+        self.assertEqual(mtime1, mtime2, msg="file rewritten on idempotent run")
 
 
 if __name__ == "__main__":
