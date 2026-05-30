@@ -1157,6 +1157,33 @@ class TestLibraryPublishLiving(unittest.TestCase):
         self.assertNotIn("slug: pride\n", content2)
         self.assertIn("slug: pride-and-prejudice", content2)
 
+    def test_library_removed_item_unpublish(self) -> None:
+        """Deleting a heading from source → row disappears on next publish."""
+        src = self.notes_dir / "library-reading.org"
+        _write_library_source(
+            src, "library/reading",
+            [
+                {"title": "Item One", "creator": "x", "year": "2024",
+                 "status": "queued", "last_modified": "2025-01-01"},
+                {"title": "Item Two", "creator": "y", "year": "2024",
+                 "status": "queued", "last_modified": "2025-01-01"},
+            ],
+        )
+        _publish_living(self.notes_dir, self._site_data_dir)
+        content1 = (self._site_data_dir / "reading.yaml").read_text()
+        self.assertIn("slug: item-one", content1)
+        self.assertIn("slug: item-two", content1)
+        # Remove Item One.
+        _write_library_source(
+            src, "library/reading",
+            [{"title": "Item Two", "creator": "y", "year": "2024",
+              "status": "queued", "last_modified": "2025-01-01"}],
+        )
+        _publish_living(self.notes_dir, self._site_data_dir)
+        content2 = (self._site_data_dir / "reading.yaml").read_text()
+        self.assertNotIn("slug: item-one", content2)
+        self.assertIn("slug: item-two", content2)
+
 
 if __name__ == "__main__":
     unittest.main()
