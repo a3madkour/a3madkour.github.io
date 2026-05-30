@@ -1,52 +1,67 @@
 ---
 name: next-slice
-description: "Session-start pointer — next slice is B.2 (library handler). B.1.1 shipped 2026-05-26: pre-export id-link rewriter + Hugo unsafe:true config + round-3 spot-check (MAP) verified hugo --minify clean and rendered HTML correct. Per spec §12 sequencing: B.2 → B.3 (research) → B.4 (essays) → B.5 (works) → B.6 (streams) → B.7 (about) → F (citations) → C (math validators) → D (unified markup) → E (explorables)."
-metadata: 
+description: "Session-start pointer — next slice is B.3 (research handler). B.2 shipped 2026-05-29/30: per-medium YAML row publisher + retroactive --git-mtime-of-file + --filter-editorial-tags helpers (closed B.1.x #2 + #6) + dispatch alist refactor to string-keyed slash-form section paths. 309 ert + 19 Python integration tests. Per spec §12 sequencing: B.3 → B.4 (essays) → B.5 (works) → B.6 (streams) → B.7 (about) → F (citations) → C (math validators) → D (unified markup) → E (explorables)."
+metadata:
   node_type: memory
   type: project
-  originSessionId: 1e3eb273-5835-4b22-88ad-5642b85830f5
 ---
 
-**Next slice = B.2 — library handler.** B.1.1 shipped 2026-05-26; see [[b1-complete]] (round-3 subsection added).
+**Next slice = B.3 — research handler.** B.2 shipped 2026-05-29/30; see [[b2-complete]].
 
-Per design spec §12 slice ordering: A → B.0 → B.1 → B.1.1 → **B.2 (next)** → B.3 → B.4 → B.5 → B.6 → B.7 → F → C → D → E.
+Per design spec §12 slice ordering: A → B.0 → B.1 → B.1.1 → B.2 → **B.3 (next)** → B.4 → B.5 → B.6 → B.7 → F → C → D → E.
 
-## Why B.2 is structurally different from B.1
+## What B.3 must do
 
-B.1 emits one Hugo bundle per garden note (`content/garden/<slug>/index.md`). B.2 (library) emits **per-medium YAML rows** appended to `data/<medium>.yaml` (one of `library-reading.yaml` / `library-listening.yaml` / `library-playing.yaml` / `library-watching.yaml`) — not per-page Hugo bundles. The source is 4 top-level org files in `~/org/notes/` (or similar) with one heading per library item.
+Research has **two cascade types** sharing one section path tree: `research/themes` and `research/questions`. Each is a per-page Hugo bundle (`content/research/{themes,questions}/<slug>/index.md`), like garden — not like library's YAML rows. So B.3 reuses much of B.1's shape (ox-hugo invocation, bundle emit, link rewriter, asset copier), and registers **two handlers in the dispatch alist pointing at the same `publish-research-file`** (same pattern B.2 used for the 4 library mediums).
 
-See parent spec `docs/superpowers/specs/2026-05-24-phase-3-b-per-content-type-publisher-design.md` §8 for the full pipeline shape.
+Required frontmatter contracts (see CLAUDE.md "Research"):
+- **theme** (cascade `type: research-theme`): theme-specific fields including `weight` (deterministic graph palette — `validate_unique_theme_weights()` in the linter).
+- **question** (cascade `type: research-question`): question-specific fields including `theme` parent reference + `parent_question` (optional) + `supporting_notes` (list of garden slugs).
 
-Special considerations carried forward from B.1.1:
-- **Hugo `unsafe: true` is now site-wide** ([[goldmark-unsafe-for-ox-hugo-html]]). Any future handler that emits `@@html:` snippets via `rewrite-buffer-links` benefits automatically.
-- **`finish-publish`'s no-retry on `delete-bundle` 'failed**: still open ([[b1-complete]] round-2 secondary finding). B.2 may or may not encounter this depending on whether library items map to deletable bundles. Currently library emits YAML rows, not bundles, so the `delete-bundle` path isn't exercised — but watch for analogous "stale row in YAML" cleanup gaps in B.2's analogue.
-- **Library tags must round-trip** ([[phase-3-library-tag-shelves]]): library-publish must emit org tags as `tags: [...]` in `data/<medium>.yaml`; shelves stay hand-authored in `data/library-shelves.yaml`.
-- **Two publish commands** ([[phase-3-two-publish-commands]]): library is in the "frequent + idempotent" set alongside garden + research. B.2's handler registers into `publish-living`'s walker (like B.1's garden handler), not into a deliberate per-post command.
+Cross-linking validators (in `tools/check_research_links.py`):
+- `garden_topic_ref` → must resolve to a garden bundle.
+- `theme` → must resolve to a theme bundle.
+- `parent_question` → must resolve to a question bundle.
+- `supporting_notes` → each must resolve to a garden bundle.
+- `related_essays` → each must resolve to an essay bundle.
+
+## Special considerations carried forward
+
+- **Slash-form section paths are canonical** ([[b2-complete]] Architectural Decision 1): register `"research/themes"` and `"research/questions"` as two separate alist entries pointing at the same handler function.
+- **Hugo `unsafe: true` is sitewide** ([[goldmark-unsafe-for-ox-hugo-html]]): research bodies will exercise the `@@html:` flow if they contain id-links (likely — research notes cite garden notes a lot).
+- **Garden's normalizer is already cleaner**: `--filter-editorial-tags` + `--git-mtime-of-file` shipped in B.2. B.3's research normalizer should use both from the start.
+- **Two publish commands** ([[phase-3-two-publish-commands]]): research is in the "frequent + idempotent" set with garden + library. Register in `publish-living`'s walker, not a deliberate per-post command.
+- **`finish-publish`'s no-retry on `delete-bundle` 'failed**: still open. Research will exercise this path (themes + questions are deletable bundles). Worth fixing in or alongside B.3 rather than carrying the gap further.
 
 ## State of the world at session start
 
 **Site repo (`/Users/a3madkour/Sync/Workspace/a3madkour.github.io/`):**
-- master is **8 commits ahead of origin/master**: `82d42a4..7e6702d`. NOT pushed.
-- New content: `content/garden/maximum-a-posteriori-map/` (3rd real B-emitted bundle + first cross-linked).
-- `data/url-history.yaml` — 4 live entries.
-- `hugo.yaml` — `markup.goldmark.renderer.unsafe: true` added.
-- 14 Python integration fixtures passing (was 13 pre-B.1.1).
-- Working tree clean.
+- master is **at origin/master**: `master = 6e5a746`. All B.2 work pushed (last push `4fe4870..6e5a746`).
+- Real B-emitted garden bundles: 4 (`bayesian-statistics`, `bias-vs-variance`, `cellular-automata-are-visual-rule-based-systems`, `maximum-a-posteriori-map`).
+- `data/{reading,listening,playing,watching}.yaml` — still fixture rows (B.2 Task 17 spot-check not yet performed).
+- `hugo.yaml` — `markup.goldmark.renderer.unsafe: true` (from B.1.1) + Hugo 0.162.1 pin + `_index.md` homepage.
+- 19 Python integration fixtures passing.
+- Working tree clean (modulo `node_modules/`, pre-existing untracked).
 
 **Dotfiles (`~/dotfiles/`):**
-- main is **22 commits ahead of origin/main**: last 6 of those are B.1.1 (`9ab1ea6..8b40026`). NOT pushed.
-- 271 ert tests passing.
+- main is at `23fc5d7`; pushed.
+- 309 ert tests passing.
 
 **Personal notes (`~/org/notes/`):**
-- 4 annotated with `#+HUGO_PUBLISH: t` + `#+HUGO_SECTION: garden`: `bayesian_statistics`, `bias_vs_variance`, `cellular_automata_are_visual_rule_based_systems`, `maximum_a_posteriori` (the last newly added in B.1.1 round-3). NOT git-tracked.
+- 4 garden notes annotated with `#+HUGO_PUBLISH: t` + `#+HUGO_SECTION: garden`.
+- **No `library-*.org` annotations yet** — B.2 Task 17 still pending.
+- **No research notes annotated yet** — B.3 spot-check will need a few.
 
 ## Recommended session start
 
-1. Read site CLAUDE.md + [[b1-complete]] (round-3 subsection) + [[phase-3-decomposition]].
-2. Read parent B spec §8 (library pipeline shape).
-3. `superpowers:brainstorming` for B.2 — even though the pattern is established by B.1, the per-medium YAML structure is novel enough to warrant a design pass before writing the plan.
+1. Read site CLAUDE.md + [[b2-complete]] + [[b1-complete]] (for the per-bundle handler precedent) + [[phase-3-decomposition]].
+2. Read parent B spec `docs/superpowers/specs/2026-05-24-phase-3-b-per-content-type-publisher-design.md` §9 (research pipeline shape).
+3. `superpowers:brainstorming` for B.3 — the themes/questions split + cross-linking surface (theme ↔ question + supporting_notes + related_essays) is novel enough to warrant a design pass before writing the plan.
 4. Then `superpowers:writing-plans` for the implementation.
 
-## Push decision (carry-forward)
+## Pending non-B.3 follow-ups
 
-22 unpushed dotfiles commits + 8 unpushed site commits accumulated across A.1.d / B.0 / B.1 / B.1.1. The author may want to push before B.2 starts (signals public progress; CI runs against the actual deployed state) or batch the push with B.2's ship. Either is fine; no urgency.
+If the author wants to pause B and clean up first:
+- **B.2 Task 17 real-corpus spot-check**: seed real `~/org/notes/library-*.org` annotations and run publish-living against the real site. Same shape as B.1's Task 17 (which produced the 4 garden bundles).
+- **B.2.x follow-ups** (from [[b2-complete]] Known issues): `check_library_covers.run(root)` API gap, `--render-scalar` fallback `%S` hardening, `:group` defcustom rename, works sidebar overflow (pre-existing spec §13 item).
+- **Open B.1.x #5**: `finish-publish` no-retry on `delete-bundle` 'failed. Worth fixing before B.3 starts since research will heavily exercise the delete-bundle path.
