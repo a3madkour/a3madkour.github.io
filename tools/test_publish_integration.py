@@ -1131,6 +1131,32 @@ class TestLibraryPublishLiving(unittest.TestCase):
         self.assertEqual(content1, content2)
         self.assertEqual(mtime1, mtime2, msg="file rewritten on idempotent run")
 
+    def test_library_slug_shift(self) -> None:
+        """Changing :SLUG: drawer → old slug row gone, new slug row present."""
+        src = self.notes_dir / "library-reading.org"
+        _write_library_source(
+            src, "library/reading",
+            [{"title": "Pride and Prejudice", "slug": "pride",
+              "creator": "Jane Austen", "year": "1813",
+              "status": "finished", "finished": "2024-12-15",
+              "last_modified": "2024-12-16"}],
+        )
+        _publish_living(self.notes_dir, self._site_data_dir)
+        content1 = (self._site_data_dir / "reading.yaml").read_text()
+        self.assertIn("slug: pride", content1)
+        # Bump the slug.
+        _write_library_source(
+            src, "library/reading",
+            [{"title": "Pride and Prejudice", "slug": "pride-and-prejudice",
+              "creator": "Jane Austen", "year": "1813",
+              "status": "finished", "finished": "2024-12-15",
+              "last_modified": "2024-12-16"}],
+        )
+        _publish_living(self.notes_dir, self._site_data_dir)
+        content2 = (self._site_data_dir / "reading.yaml").read_text()
+        self.assertNotIn("slug: pride\n", content2)
+        self.assertIn("slug: pride-and-prejudice", content2)
+
 
 if __name__ == "__main__":
     unittest.main()
