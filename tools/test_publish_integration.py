@@ -488,6 +488,34 @@ def _write_garden_source(path: Path, note_id: str, title: str, site_dir: Path) -
     )
 
 
+def _write_library_source(
+    path: Path, section: str, items: list[dict[str, str]]
+) -> None:
+    """Write a library .org file at PATH with the given SECTION + ITEMS.
+
+    Each item is a dict with keys: title, creator, year, status,
+    media_type (optional), tags (optional list), last_modified (optional),
+    and any extra drawer properties (uppercase keys go into :PROPERTIES:).
+    """
+    lines = [
+        "#+HUGO_PUBLISH: t",
+        f"#+HUGO_SECTION: {section}",
+        "",
+    ]
+    for item in items:
+        tags = item.get("tags", [])
+        tag_str = ":" + ":".join(tags) + ":" if tags else ""
+        lines.append(f"* {item['title']} {tag_str}".rstrip())
+        lines.append(":PROPERTIES:")
+        for key, val in item.items():
+            if key in {"title", "tags"}:
+                continue
+            lines.append(f":{key.upper()}: {val}")
+        lines.append(":END:")
+        lines.append("")
+    path.write_text("\n".join(lines))
+
+
 def _publish_living(
     notes_dir: Path, site_data_dir: Path
 ) -> "subprocess.CompletedProcess[str]":
@@ -589,6 +617,7 @@ def _publish_living_impl(
             "-l", "a3madkour-publish-living",
             "-l", "a3madkour-publish-deliberate",
             "-l", "a3madkour-publish-garden",
+            "-l", "a3madkour-publish-library",
             "--eval", f'(setq a3madkour-pub/site-data-dir "{site_data_dir}/")',
             "--eval", f'(setq a3madkour-pub/org-notes-dir "{notes_dir}/")',
             # Also set the content-dir used by finish-publish's unpublish sweep.
@@ -1020,6 +1049,66 @@ class TestGardenPublishLiving(unittest.TestCase):
             "[[id:", body,
             f"raw `[[id:` form survived — bracket-link regex missed a case.\nbody:\n{body}",
         )
+
+
+@unittest.skipIf(_MISSING_PREREQS, _SKIP_REASON)
+class TestLibraryPublishLiving(unittest.TestCase):
+    """Integration fixtures for B.2's library handler.
+
+    Each test seeds 1 or more library-<medium>.org source files in a tmp
+    notes dir, then runs a3-pub.sh --publish-living against a tmp site
+    dir, asserting the expected data/<medium>.yaml shape.
+    """
+
+    def setUp(self) -> None:
+        self.notes_dir = Path(tempfile.mkdtemp(prefix="a3-pub-libnotes-"))
+        self.site_root = Path(tempfile.mkdtemp(prefix="a3-pub-libsite-"))
+        (self.site_root / "data").mkdir()
+        (self.site_root / "static" / "library" / "covers").mkdir(parents=True)
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.notes_dir, ignore_errors=True)
+        shutil.rmtree(self.site_root, ignore_errors=True)
+
+    @property
+    def _site_data_dir(self) -> Path:
+        return self.site_root / "data"
+
+    def test_library_publish_once(self) -> None:
+        """Single-item publish across all 4 library sections."""
+        _write_library_source(
+            self.notes_dir / "library-reading.org", "library/reading",
+            [{"title": "Pride and Prejudice", "creator": "Jane Austen",
+              "year": "1813", "status": "finished",
+              "finished": "2024-12-15", "last_modified": "2024-12-16",
+              "tags": ["classics"]}],
+        )
+        _write_library_source(
+            self.notes_dir / "library-listening.org", "library/listening",
+            [{"title": "Koyaanisqatsi", "creator": "Philip Glass",
+              "year": "1983", "status": "listening",
+              "last_modified": "2026-05-01", "tags": ["soundtrack"]}],
+        )
+        _write_library_source(
+            self.notes_dir / "library-playing.org", "library/playing",
+            [{"title": "Outer Wilds", "creator": "Mobius",
+              "year": "2019", "status": "playing",
+              "last_modified": "2026-05-01", "tags": ["puzzle"]}],
+        )
+        _write_library_source(
+            self.notes_dir / "library-watching.org", "library/watching",
+            [{"title": "Severance S2", "creator": "Apple TV+",
+              "year": "2025", "status": "finished", "media_type": "series",
+              "last_modified": "2026-04-01", "tags": ["drama"]}],
+        )
+        proc = _publish_living(self.notes_dir, self._site_data_dir)
+        self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+        for fname in ("reading.yaml", "listening.yaml",
+                      "playing.yaml", "watching.yaml"):
+            self.assertTrue(
+                (self._site_data_dir / fname).exists(),
+                msg=f"{fname} not emitted",
+            )
 
 
 if __name__ == "__main__":
