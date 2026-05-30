@@ -150,7 +150,9 @@ Shared module: `assets/js/filter-chips.js`. Each page entry calls `setupFilterCh
 
 ### Typography
 
-Three Google Fonts in a single `<link>`: **Petrona** (body, italic + upright at 400/600/700), **Inter** (UI labels), **JetBrains Mono** (code). Display = swap. Token names: `--font-body`, `--font-ui`, `--font-mono`.
+Three **self-hosted** fonts loaded via `@font-face` in `assets/css/main.css` §3: **Petrona** (body, italic + upright at 400/600/700), **Inter** (UI labels, 400/500/600), **JetBrains Mono** (code, 400). Display = swap. Token names: `--font-body`, `--font-ui`, `--font-mono`.
+
+woff2 files live in `static/fonts/` (latin + latin-ext subsets only; browsers download per-subset based on unicode-range matching). 16 woff2 files total, ~595 KB on disk; over-the-wire downloads are subset-gated by the browser so a Latin-only page typically pulls 4–6 files. **Don't reintroduce the `fonts.googleapis.com` `<link>`** — CI's TTFB to it caused LHCI desktop perf to flake below 0.9 (see [[reference_lhci_google_fonts_flakiness]] / commit history near 2026-05-30).
 
 ### Deployment
 
