@@ -1,9 +1,10 @@
 ---
 name: b1-complete
 description: "B.1 garden handler — shipped 2026-05-25. 260 ert tests (+21 from B.0's 239 baseline) + 13 Python integration fixtures (was 8) all green. Pipeline emits real content/garden/<slug>/index.md from org sources via a3-pub.sh --publish-living. Task 17 spot-check shipped: 3 real notes annotated + bundles emitted + committed locally. lastmod-rename bug surfaced and fixed in same slice. Next slice = B.2 library handler."
-metadata:
+metadata: 
   node_type: memory
   type: project
+  originSessionId: 1e3eb273-5835-4b22-88ad-5642b85830f5
 ---
 
 **Shipped (code-complete 2026-05-25):** B.1 — garden per-content-type publisher per `docs/superpowers/plans/2026-05-25-phase-3-b-1-garden-handler.md`. Subagent-driven execution; controller absorbed two unplanned blockers (yaml-package + dispatch-symbol bugs) discovered during smoke tests.
@@ -113,25 +114,47 @@ Recommended: pre-export buffer rewrite. Reuses A.1's `rewrite-link` exactly as d
 
 **Secondary finding**: `finish-publish`'s Step A does NOT retry a failed delete-bundle. If the path computation is wrong (as the site-content-dir bug caused), the manifest correctly marks `state: removed` but the actual on-disk bundle stays. Subsequent publish-living runs see "manifest already says removed → no diff to act on" and the orphan persists. Worth documenting as an A.1.d gap: failed delete-bundle should at least WARN loudly, ideally reattempt OR reset manifest state for retry.
 
-## Known issues / B.1.x follow-ups
+## B.1.1 (id-link rewriter) — shipped 2026-05-26
 
-1. **Link rewriting** (per Architectural Decision 1 + round-2 findings above). The architectural call is now made: **pre-export buffer rewrite via a new `rewrite-buffer-links` helper**. Land this as B.1.1 before any further user spot-checks against linked notes.
+Subagent-driven, 8 tasks shipped across 10 commits (6 dotfiles, 4 site). Pre-export buffer rewriter via new `a3madkour-pub-rewrite/rewrite-buffer-links` helper substitutes `[[id:UUID]]` / `[[file:...]]` / `[[<type>:UUID]]` org bracket-link forms with the resolved HTML (wrapped in `@@html:...@@` org export snippets) or inert plain text — before ox-hugo sees the source. Plus visibility-only upgrade to `--unpublish-delete-bundle` (returns `'failed` + loud `message` on caught errors).
 
-2. **`last_modified` falls back to file mtime when no `#+HUGO_LASTMOD:` exists.** Spec §7 + §12 open-Q-5 want git-mtime-of-HEAD-touching-file. File mtime is unstable across `touch` or editor saves with no content change. Follow-up should switch to `(shell-command-to-string "git log -1 --format=%cI -- <file>")` + Date parse.
+**Test counts at slice end:** 271 ert (was 260 at B.1 end; +11 net = 7 buffer-links unit + 1 file-link unit + 1 garden end-to-end + 1 delete-bundle WARN + 1 pre-existing delete-bundle test rewritten). 14 Python integration fixtures (was 13).
+
+**Key architectural finding:** ox-hugo's `[[id:UUID]]` recognition operates at the org parser level. Naive substitution of bare `<a href=...>` HTML into the org buffer would be paragraph-text-escaped by ox-hugo on export. The fix is to wrap in `@@html:...@@` — org's "HTML export snippet" syntax — which ox-hugo passes verbatim to the markdown body. Hugo's Goldmark then renders it as raw HTML ONLY if `markup.goldmark.renderer.unsafe: true` is set ([[goldmark-unsafe-for-ox-hugo-html]]).
+
+**Round-3 spot-check (Task 6, 2026-05-26):** annotated `~/org/notes/maximum_a_posteriori.org` (3 id-links: 2 to published `bayesian_statistics`, 1 to unpublished `inference_queries`). Ran `a3-pub.sh --publish-living`:
+- Single WARN emitted as expected: `link target id:32a9dc40-... is private or unknown` (inference queries → inert path).
+- Bundle emitted at `content/garden/maximum-a-posteriori-map/` (slug includes the "(MAP)" parenthetical — verified hyphen-slug correct).
+- Emitted markdown contained `<a href="/garden/bayesian-statistics/">Bayesian Statistics</a>` (x2) and inert text `Inference Queries`.
+- `hugo --minify` exited 0 with 119 pages (+1 from baseline). **But also emitted `WARN  Raw HTML omitted while rendering ...maximum-a-posteriori-map`** — Goldmark default `unsafe: false` stripped the anchors silently in rendered HTML, replacing them with `<!-- raw HTML omitted -->` comments. The in-batch tests (ert + Python integration) had not caught this because they only check the markdown body, never invoke Hugo.
+- **Fix:** added `markup.goldmark.renderer.unsafe: true` to `hugo.yaml`. Rebuilt — all 119 pages clean, zero "raw HTML omitted" markers across `public/`, anchors render correctly in `<div class="garden-note-body">`. Both garden linters (`check_garden_fixtures.py` + `check_garden_links.py`) pass.
+- Site commits: `00afc37` (hugo config fix) + `7e6702d` (MAP bundle + manifest update).
+
+## Lessons logged
+
+- [[goldmark-unsafe-for-ox-hugo-html]] — new reference memo capturing the silent-anchor-stripping gotcha so future B handlers (B.2-B.7) aren't surprised. Same fix covers all of them site-wide.
+
+## Known issues / B.1.x follow-ups (still open)
+
+1. ~~Link rewriting~~ (closed by B.1.1).
+
+2. **`last_modified` falls back to file mtime when no `#+HUGO_LASTMOD:` exists.** Spec §7 + §12 open-Q-5 want git-mtime-of-HEAD-touching-file. File mtime is unstable across `touch` or editor saves with no content change. Follow-up should switch to `(shell-command-to-string "git log -1 --format=%cI -- <file>")` + Date parse. (Observable now in MAP's bundle: shows `last_modified: 2026-05-25` from mtime, not the org `:LAST_MODIFIED: [2026-04-06 Mon]` property.)
 
 3. **B design spec correction.** Drop the "flavor is emitted" sentence in §7.
 
-4. **No fixture-sweep on first real run** (behavior, not a bug). Authors who want to remove fixture bundles need to do it manually before/after the first publish-living. Documenting this in CLAUDE.md or the spec is worth a small follow-up.
+4. **No fixture-sweep on first real run** (behavior, not a bug).
+
+5. **`finish-publish` advances past `delete-bundle` `'failed`** ([[b1-complete]] round-2 secondary finding, still open after B.1.1 Task 7's visibility-only upgrade). Manifest gets marked `removed` even when the disk delete actually failed. Worth fixing before any handler that emits deletable bundles encounters real-world permission errors.
+
+6. **`tags: ["Bayesian", "TODO"]` includes TODO** (observable in MAP's bundle). The org `#+filetags: :Bayesian:TODO:` rounds-trip TODO into Hugo tags. TODO is an editorial marker, not a content tag — should be filtered in the frontmatter normalizer. Small B.2.x-or-later follow-up.
 
 ## Next slice: B.2 (library handler)
 
-Per design spec §12 slice ordering: B.1 → **B.2 (library)**. Library is the structural outlier — per-medium YAML rows (not per-page Hugo bundles), parsed from top-level org headings in 4 source files (`library-reading.org`, `library-listening.org`, `library-playing.org`, `library-watching.org`). See B parent spec §8 for the full pipeline.
+Per design spec §12 slice ordering: B.1.1 → **B.2 (library)**. Library is the structural outlier — per-medium YAML rows (not per-page Hugo bundles), parsed from top-level org headings in 4 source files (`library-reading.org`, `library-listening.org`, `library-playing.org`, `library-watching.org`). See B parent spec §8 for the full pipeline. See [[next-slice]] for the recommended session start.
 
 ## How to start the next session
 
-1. **First, address B.1.x follow-ups** (link rewriting + git-mtime), then start B.2.
-2. **OR proceed with B.2** if the author wants to validate B.1 by getting more sections live first; the follow-ups can land after the slice ships.
-3. **OR pause B and tackle the user-driven Task 17 first**: author annotates `~/org/notes/` with `#+HUGO_PUBLISH: t` + `#+HUGO_SECTION: garden`, runs `a3-pub.sh --publish-living`, eyeballs result.
+Read site CLAUDE.md + this file (round-3 subsection) + [[next-slice]] + parent B spec §8. Then `superpowers:brainstorming` for B.2 — the per-medium YAML shape is novel enough to warrant a design pass before writing the plan.
 
 ## Cross-references
 
