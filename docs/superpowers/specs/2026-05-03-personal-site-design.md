@@ -885,7 +885,7 @@ The user runs the org export locally; commits the resulting content + data; GitH
 
 | Layer | Choice |
 |---|---|
-| Static-site generator | **Hugo extended** (≥0.148) |
+| Static-site generator | **Hugo extended** (≥0.162.1) |
 | CSS | **Hand-rolled CSS** in a single `assets/css/main.css`, with CSS custom properties for theming. Hugo's `resources.Get` + `minify` + `fingerprint` pipeline. |
 | JS bundler | Hugo's built-in `js.Build` (esbuild internally — no native addons needed) |
 | JS framework | **None** — vanilla JS |
@@ -1245,6 +1245,8 @@ These are observations from the brainstorm session. Continuation sessions should
 - **Search "did you mean" / typo correction** — Pagefind has a flag for it; default to enabling once content exists.
 - **Pagefind-based filters in the search modal** — start with section filters; add tag, status, growth-stage filters once index is rich enough to need them.
 - **Inline-spoiler markup convention** — TBD; suggested `~text~` org macro or custom export block. Block-level spoilers (`#+begin_spoiler`) are spec'd.
+- **WCAG-AAA contrast linter coverage for non-HTML sources** — `tools/check-contrast.py` currently parses `assets/css/main.css` tokens against the 9 declared pairings. It does NOT inspect raw HTML appearing inside Markdown bodies (`.md` files passing through `markup.goldmark.renderer.unsafe: true`), shortcode-emitted markup, or per-page inline styles. As authors begin embedding richer raw HTML directly in `.md` content (homepage hero post-Hugo-0.162 rename, future explorables, `@@html:` org export snippets from the B-publisher), uncovered color references could ship without contrast verification. Goal: extend the linter to (a) extract `style="…"` / `class="…"` references from rendered HTML under `public/`, (b) resolve any color tokens referenced (CSS custom property or literal hex/rgb), (c) verify ratios against the same 9-pairing policy. Run as a post-build CI step against the actual rendered output, not the source. Defer until the first real raw-HTML-with-color landing lands in `.md` content.
+- **Works page sidebar labels overflow viewport height** — the cross-template page-sidebar rail (CSS §41, `partials/page-sidebar.html`) rotates labels 90° via `writing-mode: vertical-rl`, so label height = viewport height available is bounded by `100vh − 1.25rem margins`. On `/works/` the section labels (Games / Music / Poetry / etc.) are longer than the rail can fit at desktop breakpoints (≥1220 px), causing text to overflow off-screen and become illegible. The `font-size: clamp(0.9rem, 0.7rem + 0.35vw, 1.2rem)` ceiling is too generous for the works umbrella's label set. Two fix paths: (a) cut the upper clamp bound to ~1rem AND shrink letter-spacing on the works template specifically; (b) shorten the labels themselves to single words (e.g. `Games` instead of `Works — Games`). Spotted during B.2 spot-check 2026-05-30; affects only the works umbrella + per-medium sub-indexes (which inherit the same rail). Other section sidebars (essays, garden, research, library, streams) are within bounds.
 
 ---
 

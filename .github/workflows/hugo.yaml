@@ -32,7 +32,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      HUGO_VERSION: 0.148.0
+      HUGO_VERSION: 0.162.1
       PAGEFIND_VERSION: 1.5.2
     steps:
       - name: Install Hugo CLI
