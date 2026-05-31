@@ -628,6 +628,7 @@ def _publish_living_impl(
             "-l", "a3madkour-publish-deliberate",
             "-l", "a3madkour-publish-garden",
             "-l", "a3madkour-publish-library",
+            "-l", "a3madkour-publish-research",
             "--eval", f'(setq a3madkour-pub/site-data-dir "{site_data_dir}/")',
             "--eval", f'(setq a3madkour-pub/org-notes-dir "{notes_dir}/")',
             # Also set the content-dir used by finish-publish's unpublish sweep.
