@@ -526,6 +526,53 @@ def _write_library_source(
     path.write_text("\n".join(lines))
 
 
+def _write_research_source(
+    path: Path,
+    cascade_type: str,
+    title: str,
+    fm: dict[str, str],
+    site_dir: Path,
+    body: str = "Body paragraph for integration test.\n",
+    outputs: list[dict[str, str]] | None = None,
+) -> None:
+    """Write a research .org file at PATH.
+
+    cascade_type is 'research/themes' or 'research/questions'
+    (slash-form, matching a3madkour-pub/sections in the elisp).
+    fm is a dict of additional HUGO_CUSTOM_FRONT_MATTER fields
+    (status, weight, theme, etc.).  outputs (questions only) renders
+    an org table under * Outputs.
+    """
+    lines = [
+        ":PROPERTIES:",
+        f":ID: {fm.get('id', '11111111-2222-3333-4444-555555555555')}",
+        f":LAST_MODIFIED: {fm.get('last_modified', '2026-05-30')}",
+        ":END:",
+        f"#+title: {title}",
+        "#+HUGO_PUBLISH: t",
+        f"#+HUGO_SECTION: {cascade_type}",
+        f"#+HUGO_BASE_DIR: {site_dir}/",
+        f"#+HUGO_DESCRIPTION: {fm.get('description', 'Test description.')}",
+    ]
+    for key in ("status", "weight", "theme", "parent_question",
+                "garden_topic_ref", "supporting_notes", "related_essays",
+                "source_stream", "started", "summary"):
+        if key in fm:
+            lines.append(f"#+HUGO_CUSTOM_FRONT_MATTER: :{key} {fm[key]}")
+    if "tags" in fm:
+        lines.append(f"#+filetags: :{':'.join(fm['tags'])}:")
+    lines.append("")
+    lines.append(body)
+    if outputs:
+        lines.append("")
+        lines.append("* Outputs")
+        lines.append("| kind  | title  | url  | year |")
+        lines.append("|-------+--------+------+------|")
+        for o in outputs:
+            lines.append(f"| {o['kind']:<5s} | {o['title']} | {o['url']} | {o['year']} |")
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
 def _publish_living(
     notes_dir: Path, site_data_dir: Path
 ) -> "subprocess.CompletedProcess[str]":
@@ -1304,6 +1351,64 @@ class TestLibraryPublishLiving(unittest.TestCase):
             rc_c, 0,
             "check_library_covers.main() returned non-zero against B-emitted yaml",
         )
+
+
+@unittest.skipIf(_MISSING_PREREQS, _SKIP_REASON)
+class TestResearchPublishLiving(unittest.TestCase):
+    """B.3 integration fixtures: pin research publish-living behavior.
+
+    Each test seeds one or more research-{themes,questions}-<slug>.org
+    source files in a tmp notes dir, runs publish-living against a tmp
+    site dir, asserts on the resulting content/research/{themes,
+    questions}/ bundles.
+    """
+
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp(prefix="b3-research-"))
+        self.notes_dir = self.tmp / "notes"
+        self.site_root = self.tmp / "site"
+        self.notes_dir.mkdir(parents=True)
+        (self.site_root / "data").mkdir(parents=True)
+        (self.site_root / "content" / "research" / "themes").mkdir(parents=True)
+        (self.site_root / "content" / "research" / "questions").mkdir(parents=True)
+        (self.site_root / "data" / "url-history.yaml").write_text(
+            "notes: []\n", encoding="utf-8"
+        )
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    @property
+    def _site_data_dir(self) -> Path:
+        return self.site_root / "data"
+
+    def test_research_theme_publish_once(self) -> None:
+        """Single theme emits a clean bundle under content/research/themes/."""
+        src = self.notes_dir / "research-themes-example-theme.org"
+        _write_research_source(
+            src, "research/themes", "Example theme",
+            {
+                "status": "active",
+                "weight": "10",
+                "garden_topic_ref": "memory-in-play",
+                "summary": "An umbrella theme.",
+                "tags": ["research", "memory"],
+            },
+            self.site_root,
+        )
+        proc = _publish_living(self.notes_dir, self._site_data_dir)
+        self.assertEqual(
+            proc.returncode, 0,
+            msg=f"publish-living exited non-zero.\nstdout:\n{proc.stdout}\nstderr:\n{proc.stderr}",
+        )
+        out = self.site_root / "content" / "research" / "themes" / "example-theme" / "index.md"
+        self.assertTrue(out.exists(),
+                        f"bundle not created.\nstderr:\n{proc.stderr}")
+        content = out.read_text(encoding="utf-8")
+        self.assertIn('title: "Example theme"', content)
+        self.assertIn('status: "active"', content)
+        self.assertIn("description:", content)
+        self.assertIn("weight: 10", content)
 
 
 if __name__ == "__main__":
