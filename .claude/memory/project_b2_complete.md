@@ -80,13 +80,11 @@ All pushed to origin/master (last push: `4fe4870..6e5a746`). Dotfiles at `23fc5d
 
 ## Spot-check status (Task 17)
 
-**Not yet performed.** No real `~/org/notes/library-*.org` annotations exist; in-batch integration fixtures cover the publisher behavior, but the round-3 equivalent of B.1's real-corpus seeding is still pending. To execute:
+**Stub spot-check complete 2026-05-31** — site commits `1569d8d` (artifacts) + `218b2e8` (memory follow-ups), pushed to origin. Pipeline verified end-to-end against 8 "Example N" stub entries (2 per medium, varied statuses + media_types). All site linters green; CI green; LHCI-local skipped per documented chromium-not-on-PATH block.
 
-1. Author one or more entries per medium in `~/org/notes/library-reading.org` / `library-listening.org` / `library-playing.org` / `library-watching.org`, each with `#+HUGO_PUBLISH: t` + `#+HUGO_SECTION: library/<medium>` (slash form per Architectural Decision 1).
-2. Each top-level heading = one library row. Drawer properties drive the YAML fields (see spec §5 property mapping).
-3. Run `~/dotfiles/emacs-configs/custom/lisp/a3-pub.sh --publish-living`.
-4. Inspect emitted `data/<medium>.yaml` for shape correctness; run `tools/check_library_fixtures.py` + `_links.py` + `_covers.py`.
-5. Commit B-emitted YAML, push.
+**Real-content spot-check still pending.** User will author real `~/org/notes/library-*.org` entries when authoring friction is acceptable (B.2.x follow-up #7 — asset auto-extraction — would help). At that point: replace stubs in-place, re-run `a3-pub.sh --publish-living`, re-run `check_library_fixtures.py` + `_links.py` + `_covers.py`, and almost-certainly re-curate `data/library-shelves.yaml` + `data/filter-chips.yaml` + `tools/check_smoke.py` (per follow-up #11 coupling).
+
+Findings logged into follow-ups #7–#12 during this run.
 
 ## Known issues / B.2.x follow-ups (logged, not blocking)
 
