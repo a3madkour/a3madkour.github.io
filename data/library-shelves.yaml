@@ -1,13 +1,21 @@
 # Library curation — hand-edited. Each shelf is either tag-driven (tag: …)
 # or a hand-curated slug list (items: [...]). hero: optionally pins a featured
 # item; absent or unresolvable → fall back to max-last_modified across all media.
+#
+# NOTE: currently referencing stub slugs from B.2 spot-check (Example * entries).
+# Re-curate when the org-side library content gets real entries.
 
-hero: invisible-cities
+hero: example-book-one
+
+# NOTE: music (listening) tiles render at 1:1 aspect; books/games/films/series
+# render at 140:190 (portrait). Shelves are kept medium-homogeneous (or
+# portrait-homogeneous) so tiles align cleanly. Mixing square+portrait in one
+# row is a known visual bug — see B.2.x follow-up #12 in project_b2_complete.
 
 shelves:
   - title: "Recently finished"
     intro: "Things I closed the cover on this season."
-    tag: classic
+    tag: fiction
 
   - title: "On the listening bench"
     intro: "Albums in heavy rotation."
@@ -16,24 +24,16 @@ shelves:
   - title: "Field of game design"
     intro: "Games and books that shaped how I think about play."
     items:
-      - outer-wilds
-      - hades
-      - celeste
-      - invisible-cities
+      - example-game-one
+      - example-game-two
+      - example-book-one
 
   - title: "Long example"
     intro: "Used to exercise the long-shelf detail-page pattern."
     items:
-      - invisible-cities
-      - lorem-ipsum-ii
-      - lorem-ipsum-iii
-      - lorem-ipsum-iv
-      - lorem-ipsum-v
-      - wizard-of-oz
-      - pride-and-prejudice
-      - outer-wilds
-      - hades
-      - celeste
-      - lorem-game-ii
-      - lorem-game-iii
-      - severance-s2
+      - example-book-one
+      - example-book-two
+      - example-game-one
+      - example-game-two
+      - example-film-one
+      - example-series-two

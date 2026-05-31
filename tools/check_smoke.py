@@ -21,7 +21,6 @@ URLS = [
     "/works/",
     "/about/",
     "/library/",
-    "/library/shelves/long-example/",
     "/credits/",
 ]
 

@@ -33,19 +33,19 @@ works:
   primary_top_k: 10
 
 library-reading:
-  primary_tags: [fiction, non-fiction]
+  primary_tags: [fiction, nonfiction]
   primary_top_k: 10
 
 library-listening:
-  primary_tags: [ambient, jazz]
+  primary_tags: [ambient]
   primary_top_k: 10
 
 library-playing:
-  primary_tags: [puzzle, indie]
+  primary_tags: [puzzle]
   primary_top_k: 10
 
 library-watching:
-  primary_tags: [drama, sci-fi]
+  primary_tags: [drama, scifi]
   primary_top_k: 10
 
 streams:
