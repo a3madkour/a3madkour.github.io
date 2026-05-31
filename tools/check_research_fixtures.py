@@ -20,12 +20,12 @@ STATUSES = {"active", "dormant", "answered"}
 OUTPUT_KINDS = {"paper", "talk", "code"}
 
 THEME_REQUIRED = {"title", "status", "tags", "last_modified", "description", "weight"}
-THEME_OPTIONAL = {"garden_topic_ref", "summary", "source_stream"}
+THEME_OPTIONAL = {"author", "draft", "garden_topic_ref", "summary", "source_stream"}
 THEME_FORBIDDEN = {"parent_question", "theme"}
 
 QUESTION_REQUIRED = {"title", "theme", "status", "last_modified", "description"}
 QUESTION_OPTIONAL = {
-    "parent_question", "started", "tags",
+    "author", "draft", "parent_question", "started", "tags",
     "supporting_notes", "related_essays", "outputs", "weight",
     "source_stream",
 }
