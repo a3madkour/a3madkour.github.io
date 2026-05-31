@@ -1,67 +1,78 @@
 ---
 name: next-slice
-description: "Session-start pointer — next slice is B.3 (research handler). B.2 shipped 2026-05-29/30: per-medium YAML row publisher + retroactive --git-mtime-of-file + --filter-editorial-tags helpers (closed B.1.x #2 + #6) + dispatch alist refactor to string-keyed slash-form section paths. 309 ert + 19 Python integration tests. Per spec §12 sequencing: B.3 → B.4 (essays) → B.5 (works) → B.6 (streams) → B.7 (about) → F (citations) → C (math validators) → D (unified markup) → E (explorables)."
-metadata:
+description: "Session-start pointer — next slice is B.4 (essays handler). B.3 shipped 2026-05-31: per-page Hugo bundles for both research cascade types (themes + questions sharing one handler); 6 stub bundles emitted from ~/org/notes/research-{themes,questions}-example-*.org replacing 9 hand-authored fixtures; closes B.1.x #10 (fs-mtime cascade). 353 ert + 26 Python integration tests. Per spec §12 sequencing: B.4 → B.5 (works) → B.6 (streams) → B.7 (about) → F → C → D → E."
+metadata: 
   node_type: memory
   type: project
+  originSessionId: c1b06244-57c3-4b45-89d3-e1e2df8781c2
 ---
 
-**Next slice = B.3 — research handler.** B.2 shipped 2026-05-29/30; see [[b2-complete]].
+**Next slice = B.4 — essays handler.** B.3 shipped 2026-05-31; see [[b3-complete]].
 
-Per design spec §12 slice ordering: A → B.0 → B.1 → B.1.1 → B.2 → **B.3 (next)** → B.4 → B.5 → B.6 → B.7 → F → C → D → E.
+Per design spec §12 slice ordering: A → B.0 → B.1 → B.1.1 → B.2 → B.3 → **B.4 (next)** → B.5 → B.6 → B.7 → F → C → D → E.
 
-## What B.3 must do
+## What B.4 must do
 
-Research has **two cascade types** sharing one section path tree: `research/themes` and `research/questions`. Each is a per-page Hugo bundle (`content/research/{themes,questions}/<slug>/index.md`), like garden — not like library's YAML rows. So B.3 reuses much of B.1's shape (ox-hugo invocation, bundle emit, link rewriter, asset copier), and registers **two handlers in the dispatch alist pointing at the same `publish-research-file`** (same pattern B.2 used for the 4 library mediums).
+Essays are per-page Hugo bundles (`content/essays/<slug>/index.md`), like garden + research. So B.4 reuses the bundle pipeline shape (ox-hugo invoke, frontmatter normalize, link-rewrite, asset-copy, write-if-different, record-publish).
 
-Required frontmatter contracts (see CLAUDE.md "Research"):
-- **theme** (cascade `type: research-theme`): theme-specific fields including `weight` (deterministic graph palette — `validate_unique_theme_weights()` in the linter).
-- **question** (cascade `type: research-question`): question-specific fields including `theme` parent reference + `parent_question` (optional) + `supporting_notes` (list of garden slugs).
+Essays are the FIRST `publish-deliberate` slice (essays are per-post, deliberate; not the frequent+idempotent living set). Some new infrastructure:
+- `a3-publish-deliberate <file>` command (already scaffolded in B.0) gets its first real handler.
+- The "two publish commands" rule ([[phase-3-two-publish-commands]]) requires essays to be invoked manually per-post.
 
-Cross-linking validators (in `tools/check_research_links.py`):
-- `garden_topic_ref` → must resolve to a garden bundle.
-- `theme` → must resolve to a theme bundle.
-- `parent_question` → must resolve to a question bundle.
-- `supporting_notes` → each must resolve to a garden bundle.
-- `related_essays` → each must resolve to an essay bundle.
+Required frontmatter contract (see CLAUDE.md "Essays"): `title, date, lastmod, draft, summary, tags, series, series_order, toc, has_sidenotes, has_citations, has_footnotes, has_math, has_widgets, has_video_sync`. Optional: `tile_size, featured, hero`.
+
+The novel piece is **`has_*` boolean detection** — scan the post-export markdown body for shortcode patterns and set the frontmatter flag automatically:
+- `has_sidenotes` ← `{{< sidenote >}}` present
+- `has_citations` ← `{{< cite >}}` present
+- `has_footnotes` ← `[^...]` footnote refs present
+- `has_math` ← `\(...\)` or `\[...\]` math delimiters
+- `has_widgets` ← `{{< widget >}}` present
+- `has_video_sync` ← `{{< video-sync >}}` present
+
+Author can override per-essay via explicit `#+HUGO_HAS_<X>:` keyword.
 
 ## Special considerations carried forward
 
-- **Slash-form section paths are canonical** ([[b2-complete]] Architectural Decision 1): register `"research/themes"` and `"research/questions"` as two separate alist entries pointing at the same handler function.
-- **Hugo `unsafe: true` is sitewide** ([[goldmark-unsafe-for-ox-hugo-html]]): research bodies will exercise the `@@html:` flow if they contain id-links (likely — research notes cite garden notes a lot).
-- **Garden's normalizer is already cleaner**: `--filter-editorial-tags` + `--git-mtime-of-file` shipped in B.2. B.3's research normalizer should use both from the start.
-- **Two publish commands** ([[phase-3-two-publish-commands]]): research is in the "frequent + idempotent" set with garden + library. Register in `publish-living`'s walker, not a deliberate per-post command.
-- **`finish-publish`'s no-retry on `delete-bundle` 'failed**: still open. Research will exercise this path (themes + questions are deletable bundles). Worth fixing in or alongside B.3 rather than carrying the gap further.
+- **Slash-form section paths** — essays is single-level (`"essays"`), so this convention doesn't add new wrinkles. Dispatch key = section symbol = "essays".
+- **`#+HUGO_SECTION:` source value** — single-level, so `essays` (no slash). Matches garden's pattern.
+- **last_modified cascade** ([[b3-complete]] #1) — wire essays normalizer into the shared `--last-modified-cascade`.
+- **`--rewrite-to-tmp-file` duplication** ([[b3-complete]] follow-up #2): essays would be the third copy. Extract to a shared module BEFORE B.4 lands or accept the third copy as the breaking point.
+- **`--inject-description` not needed** — essays use ox-hugo native `#+HUGO_SUMMARY: → summary:` (not `description:`). But the `has_*` detection IS a new injection-style pattern.
+- **`hero` / `featured` / `tile_size` pass-through** — Hugo template-side display hints; B emits as-authored.
+- **Series infrastructure** (`series` + `series_order` int) — pass-through, no validation in B.
 
 ## State of the world at session start
 
 **Site repo (`/Users/a3madkour/Sync/Workspace/a3madkour.github.io/`):**
-- master is **at origin/master**: `master = 6e5a746`. All B.2 work pushed (last push `4fe4870..6e5a746`).
-- Real B-emitted garden bundles: 4 (`bayesian-statistics`, `bias-vs-variance`, `cellular-automata-are-visual-rule-based-systems`, `maximum-a-posteriori-map`).
-- `data/{reading,listening,playing,watching}.yaml` — still fixture rows (B.2 Task 17 spot-check not yet performed).
-- `hugo.yaml` — `markup.goldmark.renderer.unsafe: true` (from B.1.1) + Hugo 0.162.1 pin + `_index.md` homepage.
-- 19 Python integration fixtures passing.
-- Working tree clean (modulo `node_modules/`, pre-existing untracked).
+- master = `bba6066` (per the user's push decision; may not be at origin yet).
+- 6 B-emitted research bundles (`example-theme-{one,two}`, `example-question-{one,two,three,four}`) + 4 B-emitted garden bundles.
+- `data/{reading,listening,playing,watching}.yaml` still B-emitted stubs (B.2 Task 17 spot-check; real corpus pending).
+- 26 Python integration fixtures passing.
 
 **Dotfiles (`~/dotfiles/`):**
-- main is at `23fc5d7`; pushed.
-- 309 ert tests passing.
+- main = `71fabe3`.
+- 353 ert tests passing.
 
 **Personal notes (`~/org/notes/`):**
-- 4 garden notes annotated with `#+HUGO_PUBLISH: t` + `#+HUGO_SECTION: garden`.
-- **No `library-*.org` annotations yet** — B.2 Task 17 still pending.
-- **No research notes annotated yet** — B.3 spot-check will need a few.
+- 4 garden notes + 4 library stub files + 6 research stub files annotated.
+- No essay notes annotated yet — B.4 spot-check will seed a few.
 
 ## Recommended session start
 
-1. Read site CLAUDE.md + [[b2-complete]] + [[b1-complete]] (for the per-bundle handler precedent) + [[phase-3-decomposition]].
-2. Read parent B spec `docs/superpowers/specs/2026-05-24-phase-3-b-per-content-type-publisher-design.md` §9 (research pipeline shape).
-3. `superpowers:brainstorming` for B.3 — the themes/questions split + cross-linking surface (theme ↔ question + supporting_notes + related_essays) is novel enough to warrant a design pass before writing the plan.
+1. Read site CLAUDE.md (essay frontmatter contract section) + [[b3-complete]] + [[b2-complete]] (for the per-medium pattern, even though essays are per-page) + [[phase-3-decomposition]].
+2. Read parent B spec `docs/superpowers/specs/2026-05-24-phase-3-b-per-content-type-publisher-design.md` §7 essay-specific subsection + §11 transition (essays fixtures get replaced in B.4).
+3. `superpowers:brainstorming` for B.4 — open design questions: `has_*` detection on post-export markdown vs. raw source scanning; whether to extract `--rewrite-to-tmp-file` to shared module now; publish-deliberate UI/CLI shape.
 4. Then `superpowers:writing-plans` for the implementation.
 
-## Pending non-B.3 follow-ups
+## Pending non-B.4 follow-ups
 
-If the author wants to pause B and clean up first:
-- **B.2 Task 17 real-corpus spot-check**: seed real `~/org/notes/library-*.org` annotations and run publish-living against the real site. Same shape as B.1's Task 17 (which produced the 4 garden bundles).
-- **B.2.x follow-ups** (from [[b2-complete]] Known issues): `check_library_covers.run(root)` API gap, `--render-scalar` fallback `%S` hardening, `:group` defcustom rename, works sidebar overflow (pre-existing spec §13 item).
-- **Open B.1.x #5**: `finish-publish` no-retry on `delete-bundle` 'failed. Worth fixing before B.3 starts since research will heavily exercise the delete-bundle path.
+Logged in [[b3-complete]] §"Known issues / B.3.x follow-ups":
+- `--coerce-year` `_file` arg unused
+- `--rewrite-to-tmp-file` extract to shared module (becomes acute when B.4 adds third copy)
+- Library's `last_modified` cascade upgrade
+- `--render-yaml-value` cell-plain-text assumption docstring
+- Dotfiles ergonomics for outputs table (#13 from B.3 spec)
+- B.2 Task 17 real-corpus spot-check (pending real library authoring)
+- B.3 Task 17 real-corpus spot-check (pending real research authoring)
+
+If author wants to pause B and clean up before B.4: B.3.x follow-ups #2 (extract `--rewrite-to-tmp-file`) is the highest-leverage one before adding a third copy.
