@@ -526,9 +526,16 @@ def _write_library_source(
     path.write_text("\n".join(lines))
 
 
+def _escape_org_table_cell(val) -> str:
+    """Escape | in cell values per org table convention."""
+    if isinstance(val, str):
+        return val.replace("|", "\\vert{}")
+    return str(val)
+
+
 def _write_research_source(
     path: Path,
-    cascade_type: str,
+    section_path: str,
     title: str,
     fm: dict[str, str],
     site_dir: Path,
@@ -537,7 +544,7 @@ def _write_research_source(
 ) -> None:
     """Write a research .org file at PATH.
 
-    cascade_type is 'research/themes' or 'research/questions'
+    section_path is 'research/themes' or 'research/questions'
     (slash-form, matching a3madkour-pub/sections in the elisp).
     fm is a dict of additional HUGO_CUSTOM_FRONT_MATTER fields
     (status, weight, theme, etc.).  outputs (questions only) renders
@@ -550,7 +557,7 @@ def _write_research_source(
         ":END:",
         f"#+title: {title}",
         "#+HUGO_PUBLISH: t",
-        f"#+HUGO_SECTION: {cascade_type}",
+        f"#+HUGO_SECTION: {section_path}",
         f"#+HUGO_BASE_DIR: {site_dir}/",
         f"#+HUGO_DESCRIPTION: {fm.get('description', 'Test description.')}",
     ]
@@ -569,7 +576,11 @@ def _write_research_source(
         lines.append("| kind  | title  | url  | year |")
         lines.append("|-------+--------+------+------|")
         for o in outputs:
-            lines.append(f"| {o['kind']:<5s} | {o['title']} | {o['url']} | {o['year']} |")
+            kind = _escape_org_table_cell(o["kind"])
+            title_cell = _escape_org_table_cell(o["title"])
+            url_cell = _escape_org_table_cell(o["url"])
+            year_cell = _escape_org_table_cell(o["year"])
+            lines.append(f"| {kind:<5s} | {title_cell} | {url_cell} | {year_cell} |")
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
@@ -1409,6 +1420,50 @@ class TestResearchPublishLiving(unittest.TestCase):
         self.assertIn('status: "active"', content)
         self.assertIn("description:", content)
         self.assertIn("weight: 10", content)
+
+    def test_research_question_publish_once(self) -> None:
+        """Single question with outputs table emits clean bundle."""
+        src = self.notes_dir / "research-questions-narrative-atom.org"
+        _write_research_source(
+            src, "research/questions", "What is a narrative atom?",
+            {
+                "id": "22222222-aaaa-bbbb-cccc-dddddddddddd",
+                "theme": "procedural-narrative",
+                "status": "active",
+                "supporting_notes": "story-atoms",
+                "related_essays": "example-essay-two",
+                "weight": "20",
+                "tags": ["narrative"],
+            },
+            self.site_root,
+            outputs=[
+                {"kind": "paper", "title": "Save States as Edits",
+                 "url": "https://example.com/paper", "year": 2024},
+                {"kind": "code", "title": "save-replay-tool",
+                 "url": "https://github.com/example/x", "year": 2024},
+            ],
+        )
+        proc = _publish_living(self.notes_dir, self._site_data_dir)
+        self.assertEqual(
+            proc.returncode, 0,
+            msg=f"publish-living exited non-zero.\nstderr:\n{proc.stderr}",
+        )
+        out = (self.site_root / "content" / "research" / "questions"
+               / "what-is-a-narrative-atom" / "index.md")
+        self.assertTrue(out.exists())
+        content = out.read_text(encoding="utf-8")
+        self.assertIn("title:", content)
+        self.assertIn("narrative atom", content)
+        self.assertIn("theme:", content)
+        self.assertIn("procedural-narrative", content)
+        self.assertIn("supporting_notes:", content)
+        self.assertIn("story-atoms", content)
+        self.assertIn("outputs:", content)
+        self.assertIn("kind: paper", content)
+        self.assertIn("year: 2024", content)
+        # Outputs heading + table stripped from body.
+        self.assertNotIn("## Outputs", content)
+        self.assertNotIn("| kind", content)
 
 
 if __name__ == "__main__":
