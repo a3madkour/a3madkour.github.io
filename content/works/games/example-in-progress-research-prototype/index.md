@@ -8,7 +8,7 @@ game_kind: research-prototype
 tagline: "Example Two — lorem ipsum."
 year: 2026
 hero: hero.svg
-research_questions: [/research/questions/what-is-a-narrative-atom/, /research/questions/what-counts-as-story-recall/]
+research_questions: [/research/questions/example-question-one/, /research/questions/example-question-two/]
 tags: [example, prototype]
 ---
 

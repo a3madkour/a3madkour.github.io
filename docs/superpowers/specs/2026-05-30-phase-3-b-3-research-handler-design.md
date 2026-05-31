@@ -13,7 +13,7 @@ Implement the research publisher. Research is the first per-page Hugo bundle han
 
 Research is the third living section to ship. By the end of B.3:
 
-- `~/org/notes/research-themes-<slug>.org` + `~/org/notes/research-questions-<slug>.org` files annotated with `#+HUGO_PUBLISH: t` + `#+HUGO_SECTION: research-themes` / `research-questions` publish end-to-end via `a3-pub.sh --publish-living`.
+- `~/org/notes/research-themes-<slug>.org` + `~/org/notes/research-questions-<slug>.org` files annotated with `#+HUGO_PUBLISH: t` + `#+HUGO_SECTION: research/themes` / `research/questions` publish end-to-end via `a3-pub.sh --publish-living`.
 - `content/research/{themes,questions}/<slug>/index.md` bundles regenerated deterministically; the existing 9 research fixtures are replaced by stub B-emitted bundles in the Task 10 spot-check.
 - Both research linters (`check_research_fixtures.py` + `check_research_links.py`) accept B-emitted output.
 - Idempotent re-run produces zero file diffs.
@@ -75,7 +75,7 @@ Per-file required org keywords:
 ```org
 #+title: <title>
 #+HUGO_PUBLISH: t
-#+HUGO_SECTION: research-themes        ; or research-questions
+#+HUGO_SECTION: research/themes        ; or research/questions
 #+HUGO_DESCRIPTION: <one-sentence description>
 #+HUGO_STATUS: active                  ; active | dormant | answered
 #+filetags: :tag1:tag2:
@@ -97,7 +97,7 @@ Slug derivation: B.2's `--title-to-slug` produces the same slug whether the titl
 | `summary` | `#+HUGO_SUMMARY:` | ox-hugo native; themes carry both `description` + `summary` as distinct fields |
 | `source_stream` | `#+HUGO_SOURCE_STREAM:` | closes parent-B §7 doc gap |
 
-### Theme-only (when `HUGO_SECTION = research-themes`)
+### Theme-only (when `HUGO_SECTION = research/themes`)
 
 | Field | Source | Notes |
 |---|---|---|
@@ -107,7 +107,7 @@ Slug derivation: B.2's `--title-to-slug` produces the same slug whether the titl
 
 Forbidden on themes per linter (`THEME_FORBIDDEN`): `parent_question`, `theme`. B's normalizer drops these silently if author erroneously sets them.
 
-### Question-only (when `HUGO_SECTION = research-questions`)
+### Question-only (when `HUGO_SECTION = research/questions`)
 
 | Field | Source | Notes |
 |---|---|---|
@@ -222,22 +222,28 @@ Plus one fs-mtime regression fixture (under whichever Test class fits, possibly 
 - ert: ~339 total (309 baseline + ~30 new across research handler, outputs-table parser, subtree-stripper, research-frontmatter normalizer, fs-mtime helper).
 - Python integration: ~25 total (19 baseline + ~5-6 new TestResearchPublishLiving fixtures + ~1 fs-mtime regression).
 
-## 10 — Stub spot-check (Task 10)
+## 10 — Stub spot-check (Task 17)
 
-Mirrors B.2's stub spot-check pattern. Out-of-scope is real-corpus authoring (that's B.3.x).
+**Status: COMPLETE** (2026-05-31). Mirrors B.2's stub spot-check pattern. Out-of-scope is real-corpus authoring (that's B.3.x).
 
 1. Hand-write ~6 stub `.org` files in `~/org/notes/`:
-   - `research-themes-example-one.org` (full frontmatter, no garden_topic_ref)
-   - `research-themes-example-two.org` (with garden_topic_ref pointing at a published garden note)
-   - `research-questions-example-one.org` (active, with supporting_notes + related_essays + outputs table)
-   - `research-questions-example-two.org` (dormant, supporting_notes only, no outputs)
-   - `research-questions-example-three.org` (answered, with parent_question pointing at example-one, full outputs table)
-   - `research-questions-example-four.org` (sub-question of example-three; chains parent_question)
-2. Each gets `#+HUGO_PUBLISH: t` + `#+HUGO_SECTION:` + `#+HUGO_DESCRIPTION:` + minimal "Example N. Lorem ipsum…" body.
-3. Run `a3-pub.sh --publish-living`. Expected: 6 new bundles emitted; 9 existing fixtures unpublished via finish-publish's Step A.
+   - `research-themes-example-theme-one.org` (full frontmatter, `garden_topic_ref: procedural-narrative`)
+   - `research-themes-example-theme-two.org` (dormant, no garden_topic_ref)
+   - `research-questions-example-question-one.org` (active, with supporting_notes + outputs table)
+   - `research-questions-example-question-two.org` (dormant, supporting_notes only, no outputs)
+   - `research-questions-example-question-three.org` (answered, full outputs table, no parent_question)
+   - `research-questions-example-question-four.org` (sub-question of example-question-three; chains parent_question within same theme)
+2. Each gets `#+HUGO_PUBLISH: t` + `#+HUGO_SECTION: research/themes` or `research/questions` + `#+HUGO_DESCRIPTION:` + minimal "Example N. Lorem ipsum…" body.
+3. Run `a3-pub.sh --publish-living`. Expected: 6 new bundles emitted; 9 existing fixtures removed via finish-publish's Step A.
 4. Verify: `tools/ci-local.sh` green (both research linters + Hugo build + smoke + page-weight).
 5. Inspect 1-2 emitted bundles by hand — frontmatter ordering, outputs table parsed correctly, body cleanly stripped of `* Outputs`.
 6. Commit the swap: bundles + manifest update + this spec + plan.
+
+**Spot-check findings logged:**
+- `#+HUGO_SECTION:` value is slash-form (`research/themes`, `research/questions`), not dash-form — spec §4 updated.
+- `garden_topic_ref` must point to a garden note with `topic_map:` (linter validates this); `bayesian-statistics` lacks it, swapped to `procedural-narrative`.
+- `parent_question` must point to a question in the **same theme** (linter validates cross-theme chains); question-three's `parent_question` removed (both chains now intra-theme).
+- Works fixture cross-refs (`research_questions`) and streams fixture `related_research` updated to new B-emitted slugs.
 
 Stubs stay in place as the bootstrap corpus. Real-content authoring (B.3.x) replaces them later.
 
@@ -246,7 +252,7 @@ Stubs stay in place as the bootstrap corpus. Real-content authoring (B.3.x) repl
 ### Closed by B.3
 
 - **B.1.x #10** — fs-mtime fallback. Via Task 1's `--filesystem-mtime-of-file` helper + cascade extension. Both garden + research pick it up.
-- **Parent B spec §3 wording** — section keyword form. Flip `research-theme` → `research-themes` and `research-question` → `research-questions` (one-word edit, batched into B.3's plan).
+- **Parent B spec §3 wording** — section keyword form. Corrected to `#+HUGO_SECTION: research/themes` / `research/questions` (slash-form, matching dispatch-alist keys); parent B spec §3 updated. Note: `'research-themes` / `'research-questions` are internal elisp symbols for dispatch; the org keyword uses slash-form.
 - **Parent B spec §7 gaps** — `source_stream` field documented for research; `#+HUGO_DESCRIPTION:` keyword documented; `* Outputs` table contract documented (this spec § 5–6 supersedes the parent's research mapping).
 - **Parent B spec §12 open Q #5** — idempotency vs lastmod git-mtime. Cascade source-overrides → auto-derivation order makes both override paths cheap.
 

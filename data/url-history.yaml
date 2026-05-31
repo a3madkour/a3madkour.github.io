@@ -1,17 +1,41 @@
 notes: 
-- state: live
+- current_url: "/garden/bayesian-statistics/"
+  history: []
+  state: live
   id: 09049cd8-ba99-435d-a8f2-9c0cbf9322a4
-  current_url: "/garden/bayesian-statistics/"
+- id: 0a07e759-74ec-44e1-903d-514ba068870f
+  current_url: "/garden/bias-vs-variance/"
+  history: []
+  state: live
+- state: live
+  id: e191ccb8-0b1b-4d61-b0cf-e7eb26e866a6
+  current_url: "/garden/cellular-automata-are-visual-rule-based-systems/"
   history: []
 - history: []
   state: live
-  id: 0a07e759-74ec-44e1-903d-514ba068870f
-  current_url: "/garden/bias-vs-variance/"
-- current_url: "/garden/cellular-automata-are-visual-rule-based-systems/"
+  id: 235402ca-0637-455a-b66c-fb23067b0874
+  current_url: "/garden/maximum-a-posteriori-map/"
+- current_url: "/research/questions/example-question-four/"
   history: []
   state: live
-  id: e191ccb8-0b1b-4d61-b0cf-e7eb26e866a6
-- id: 235402ca-0637-455a-b66c-fb23067b0874
-  current_url: "/garden/maximum-a-posteriori-map/"
+  id: 20000004-0000-0000-0000-000000000004
+- id: 20000001-0000-0000-0000-000000000001
+  current_url: "/research/questions/example-question-one/"
+  history: []
+  state: live
+- state: live
+  id: 20000003-0000-0000-0000-000000000003
+  current_url: "/research/questions/example-question-three/"
+  history: []
+- history: []
+  state: live
+  id: 20000002-0000-0000-0000-000000000002
+  current_url: "/research/questions/example-question-two/"
+- current_url: "/research/themes/example-theme-one/"
+  history: []
+  state: live
+  id: 10000001-0000-0000-0000-000000000001
+- id: 10000002-0000-0000-0000-000000000002
+  current_url: "/research/themes/example-theme-two/"
   history: []
   state: live

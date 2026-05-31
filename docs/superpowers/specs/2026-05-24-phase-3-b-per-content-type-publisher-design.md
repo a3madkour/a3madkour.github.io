@@ -32,7 +32,7 @@ B is the first downstream consumer of sub-project A's elisp library. Its design 
 |---|---|---|
 | garden | One `.org` per note, anywhere under `~/org/notes/` | `#+HUGO_SECTION: garden` |
 | essays | One `.org` per essay | `#+HUGO_SECTION: essays` |
-| research | One `.org` per theme OR question | `#+HUGO_SECTION: research-theme` or `research-question` |
+| research | One `.org` per theme OR question | `#+HUGO_SECTION: research/themes` or `research/questions` |
 | works | One `.org` per game / album / track / poem | `#+HUGO_SECTION: works-games` / `works-music` / `works-poetry` |
 | streams | One `.org` per stream item | `#+HUGO_SECTION: streams` |
 | about | One `.org` for the about page | `#+HUGO_SECTION: about` |
@@ -78,7 +78,7 @@ New elisp modules under `~/dotfiles/emacs-configs/custom/lisp/` (each with a `-t
 | `a3madkour-publish-works.el` | Works sub-dispatcher (games / music / poetry). Routes by `HUGO_SECTION`. Owns synced-poetry markup emission (per [[phase-3-org-synced-poetry-export]]) for poetry. |
 | `a3madkour-publish-streams.el` | Streams handler. Cross-ref symmetry validation (`related_*` ↔ `source_stream`). |
 | `a3madkour-publish-about.el` | About static-page handler. Smallest module. |
-| `a3madkour-publish-living.el` | `(a3-publish-living)` top-level. Walks living source set (any file whose `HUGO_SECTION` ∈ {`garden`, `library-*`, `research-theme`, `research-question`}), invokes per-section handler, runs full begin/finish lifecycle. |
+| `a3madkour-publish-living.el` | `(a3-publish-living)` top-level. Walks living source set (any file whose `HUGO_SECTION` ∈ {`garden`, `library-*`, `research/themes`, `research/questions`}), invokes per-section handler, runs full begin/finish lifecycle. |
 | `a3madkour-publish-deliberate.el` | `(a3-publish-deliberate file-or-id)` top-level. Resolves arg → file path → reads HUGO_SECTION → dispatches to per-section handler. Wraps single-file invocation in begin/finish lifecycle. |
 
 `a3-pub.sh` extended with `--publish-living` and `--publish-deliberate <path>` flag intercepts (matching the existing `--check-orphans` precedent). All new modules `-l`'d in `a3-pub.sh` for both flag paths (per [[plan-wrapper-script-updates]]).
@@ -107,9 +107,11 @@ ox-hugo gives B several mappings for free (`#+title` → `title`, `#+date` → `
 |---|---|
 | `title` | `#+title` |
 | `draft` | `#+HUGO_DRAFT: t` → true; default false |
-| `lastmod` / `last_modified` | git-mtime-of-last-commit-touching-file (or `#+HUGO_LASTMOD:` override); see §12 open issue 5 |
+| `lastmod` / `last_modified` | `:LAST_MODIFIED:` drawer → `#+HUGO_LASTMOD:` → git-mtime-of-last-commit-touching-file → filesystem mtime (B.3) → today; see §12 open issue 5 |
 | `tags` | `#+filetags` (split on `:`) |
 | `summary` | `#+HUGO_SUMMARY:` |
+| `description` | `#+HUGO_DESCRIPTION:` (custom keyword; one-sentence lede; distinct from `summary`) |
+| `source_stream` | `#+HUGO_SOURCE_STREAM:` (optional; slug of linked stream item; enables bidirectional cross-ref via `check_streams_links.py`) |
 
 ### Garden-specific
 
@@ -135,11 +137,11 @@ Flavor (concept / media / reference) is inferred from `media_type`: missing → 
 
 ### Research themes
 
-`garden_topic_ref` (slug), `status` (per-keyword).
+`description` (from `#+HUGO_DESCRIPTION:`), `garden_topic_ref` (slug), `status`, `weight` (per-keyword). See B.3 spec §5 for full mapping.
 
 ### Research questions
 
-`parent_question`, `theme`, `supporting_notes`, `related_essays`, `status` (per-keyword; lists are space-delimited slug lists).
+`description` (from `#+HUGO_DESCRIPTION:`), `parent_question`, `theme`, `supporting_notes`, `related_essays`, `status`, `weight`, `started` (per-keyword; lists are space-delimited slug lists). `outputs:` list derived from `* Outputs` org table — see B.3 spec §6 for the parse contract. The `* Outputs` subtree is stripped from the body before ox-hugo runs.
 
 ### Works games
 
@@ -239,7 +241,7 @@ Handler invokes export → frontmatter normalize → A's link-rewriter (rewrites
 
 ### Research
 
-Two sub-discriminators inside one handler module — `research-theme` vs `research-question`. Cross-ref keywords (`theme:`, `parent_question:`, `garden_topic_ref:`, `supporting_notes:`, `related_essays:`) are space-delimited slug lists in `#+HUGO_*:` keywords. The handler validates each slug resolves to a published target (via A's `published-p`) and emits a WARN for broken refs (does not fail the publish — matches A's WARN-don't-fail discipline).
+Two sub-discriminators inside one handler module — `research/themes` vs `research/questions` (internal elisp dispatch symbols `'research-themes` / `'research-questions`). Cross-ref keywords (`theme:`, `parent_question:`, `garden_topic_ref:`, `supporting_notes:`, `related_essays:`) are space-delimited slug lists in `#+HUGO_*:` keywords. The handler validates each slug resolves to a published target (via A's `published-p`) and emits a WARN for broken refs (does not fail the publish — matches A's WARN-don't-fail discipline). Questions with a `* Outputs` org table get the table parsed into a `outputs:` list-of-dicts; the subtree is stripped from the exported body so it does not render as visible content. See B.3 spec (`docs/superpowers/specs/2026-05-30-phase-3-b-3-research-handler-design.md`) §5–6 for the full mapping and parse contract.
 
 ### Essays
 

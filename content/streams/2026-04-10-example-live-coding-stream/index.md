@@ -12,7 +12,7 @@ tags: [example, prototype]
 summary: "Lorem ipsum dolor sit amet — example live coding session."
 related_essays: []
 related_garden: [story-atoms]
-related_research: [what-is-a-narrative-atom]
+related_research: []
 related_works: [example-playable-full-release]
 draft: false
 ---
