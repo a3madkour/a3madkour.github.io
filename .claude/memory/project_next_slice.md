@@ -1,78 +1,69 @@
 ---
 name: next-slice
-description: "Session-start pointer — next slice is B.4 (essays handler). B.3 shipped 2026-05-31: per-page Hugo bundles for both research cascade types (themes + questions sharing one handler); 6 stub bundles emitted from ~/org/notes/research-{themes,questions}-example-*.org replacing 9 hand-authored fixtures; closes B.1.x #10 (fs-mtime cascade). 353 ert + 26 Python integration tests. Per spec §12 sequencing: B.4 → B.5 (works) → B.6 (streams) → B.7 (about) → F → C → D → E."
-metadata: 
+description: "Session-start pointer — next slice is Phase 3 sub-project C (pre-publish validators). F shipped 2026-06-01 end-to-end with Task 18 spot-check passing on real corpus (notes_ref auto-detect now produces 'Related note' links next to bib refs). Per spec sequencing: A → B → F → **C** → D → E."
+metadata:
   node_type: memory
   type: project
-  originSessionId: c1b06244-57c3-4b45-89d3-e1e2df8781c2
 ---
 
-**Next slice = B.4 — essays handler.** B.3 shipped 2026-05-31; see [[b3-complete]].
+**Next slice = Phase 3 sub-project C — pre-publish validators.** F shipped 2026-06-01; see [[f-complete]].
 
-Per design spec §12 slice ordering: A → B.0 → B.1 → B.1.1 → B.2 → B.3 → **B.4 (next)** → B.5 → B.6 → B.7 → F → C → D → E.
+Per the parent decomposition ([[phase-3-decomposition]]) + CLAUDE.md sequencing: A → B → F → **C (next)** → D → E.
 
-## What B.4 must do
+## What C is
 
-Essays are per-page Hugo bundles (`content/essays/<slug>/index.md`), like garden + research. So B.4 reuses the bundle pipeline shape (ox-hugo invoke, frontmatter normalize, link-rewrite, asset-copy, write-if-different, record-publish).
+From CLAUDE.md "C. Pre-publish validators":
 
-Essays are the FIRST `publish-deliberate` slice (essays are per-post, deliberate; not the frequent+idempotent living set). Some new infrastructure:
-- `a3-publish-deliberate <file>` command (already scaffolded in B.0) gets its first real handler.
-- The "two publish commands" rule ([[phase-3-two-publish-commands]]) requires essays to be invoked manually per-post.
+> Python `check_*` pattern.  Math-rendering lint (KaTeX/MathJax compatibility, balanced delimiters, macro availability).  Citation validation was moved to F.
 
-Required frontmatter contract (see CLAUDE.md "Essays"): `title, date, lastmod, draft, summary, tags, series, series_order, toc, has_sidenotes, has_citations, has_footnotes, has_math, has_widgets, has_video_sync`. Optional: `tile_size, featured, hero`.
+So C is the **math validator**, paralleling the existing site-side `check_*` Python linters (essay-fixtures, garden-links, etc.). New pair: `tools/check_math.py` + `tools/test_check_math.py`.
 
-The novel piece is **`has_*` boolean detection** — scan the post-export markdown body for shortcode patterns and set the frontmatter flag automatically:
-- `has_sidenotes` ← `{{< sidenote >}}` present
-- `has_citations` ← `{{< cite >}}` present
-- `has_footnotes` ← `[^...]` footnote refs present
-- `has_math` ← `\(...\)` or `\[...\]` math delimiters
-- `has_widgets` ← `{{< widget >}}` present
-- `has_video_sync` ← `{{< video-sync >}}` present
+Scope candidates (to confirm in C's brainstorm):
+- Balanced `\(...\)`, `\[...\]`, `$...$`, `$$...$$` delimiters across all `has_math: true` essay bodies.
+- KaTeX-supported macro vocabulary (or MathJax, depending on which the site bundles — currently neither is shipped; math is a deferred feature exercised by essay fixture #2's `has_math` flag).
+- LaTeX-specific commands that won't render in the chosen JS engine.
+- Inline vs display math context sanity.
 
-Author can override per-essay via explicit `#+HUGO_HAS_<X>:` keyword.
+## Pre-C prep
 
-## Special considerations carried forward
+Per [[design-batch-no-plan-until-implement]] — design batch only; spec C first, plan when implementation slot opens.
 
-- **Slash-form section paths** — essays is single-level (`"essays"`), so this convention doesn't add new wrinkles. Dispatch key = section symbol = "essays".
-- **`#+HUGO_SECTION:` source value** — single-level, so `essays` (no slash). Matches garden's pattern.
-- **last_modified cascade** ([[b3-complete]] #1) — wire essays normalizer into the shared `--last-modified-cascade`.
-- **`--rewrite-to-tmp-file` duplication** ([[b3-complete]] follow-up #2): essays would be the third copy. Extract to a shared module BEFORE B.4 lands or accept the third copy as the breaking point.
-- **`--inject-description` not needed** — essays use ox-hugo native `#+HUGO_SUMMARY: → summary:` (not `description:`). But the `has_*` detection IS a new injection-style pattern.
-- **`hero` / `featured` / `tile_size` pass-through** — Hugo template-side display hints; B emits as-authored.
-- **Series infrastructure** (`series` + `series_order` int) — pass-through, no validation in B.
+Required reads when C kicks off:
+1. CLAUDE.md "Phase 3" section + the deferred features table (math is on it).
+2. [[phase-3-decomposition]] for the 6-sub-project frame.
+3. The 24 existing `tools/check_*.py` linter pairs as the Python style precedent (look at `check_citations.py` for the closest analog since math is also a content-shape check).
+4. F spec + plan for how the citation linter pair was scoped (F kept the existing schema, just loosened a regex — C builds a new linter from scratch).
 
 ## State of the world at session start
 
-**Site repo (`/Users/a3madkour/Sync/Workspace/a3madkour.github.io/`):**
-- master = `bba6066` (per the user's push decision; may not be at origin yet).
-- 6 B-emitted research bundles (`example-theme-{one,two}`, `example-question-{one,two,three,four}`) + 4 B-emitted garden bundles.
-- `data/{reading,listening,playing,watching}.yaml` still B-emitted stubs (B.2 Task 17 spot-check; real corpus pending).
-- 26 Python integration fixtures passing.
+**Site (`~/Sync/Workspace/a3madkour.github.io/`):**
+- master = post-F merge (`--no-ff` of `worktree-f-citation-pipeline`). Pre-existing unpushed commits from before F (spec/plan/LHCI stub) + 4 F commits + the merge. Push pending — author held it for the next session.
+- Worktree at `.claude/worktrees/f-citation-pipeline` still exists; clean up when push happens.
+- `data/citations.yaml` now contains the 3 fixture entries + the author's first real cite (`meiRWoMRetrievalaugmentedWorld2026`) — proof F works end-to-end.
+- New garden bundle `content/garden/mei-r-wom-2026/` from the spot-check (a ref-note promoted to garden via `#+HUGO_PUBLISH: t` + `#+HUGO_SECTION: garden`).
+- 478 ert + 36 integration tests passing.
 
 **Dotfiles (`~/dotfiles/`):**
-- main = `71fabe3`.
-- 353 ert tests passing.
+- main = `116950b` (Task 18 follow-ups). Unpushed.
+- 5 pre-existing dirty tracked files (`.gitignore`, `.zshrc`, `bookmarks`, `early-init.el`, `init.el`) — author's in-progress local work, NEVER commit them.
 
-**Personal notes (`~/org/notes/`):**
-- 4 garden notes + 4 library stub files + 6 research stub files annotated.
-- No essay notes annotated yet — B.4 spot-check will seed a few.
+**Personal notes (`~/org/`):**
+- `org/essays/example-one.org` carries the author's first `[cite:@meiRWoMRetrievalaugmentedWorld2026]` — kept for the spot-check.
+- `org/notes/ref-notes/meiRWoMRetrievalaugmentedWorld2026.org` was promoted to garden via flags; if you decide to roll back the spot-check, edit the flags back out (or leave it — it's working content now).
+
+## Pending follow-ups (NOT C-scope)
+
+Logged in [[f-complete]]:
+- **B.4 orphan-sweep over-deletion** — `--publish-deliberate` of one essay deletes other essay bundles. NOT an F issue; file under B.4.x.
+- F.2 — style-override / prefix-suffix org-cite syntax.
+- F.3 — `#+print_bibliography:` positional rendering.
+- F.x — title quality on ref-notes promoted to garden (full bibliographic header makes a clunky tile title).
+- F.x — promote `TestSyncPurges` + `TestHugoRendersCitedEssay` from `@unittest.skip` to runnable (needs roam-indexed fixture harness OR a self-contained live-tree workspace).
+- Performance regression test against 15.6k-entry library.bib if publish slowdown surfaces.
 
 ## Recommended session start
 
-1. Read site CLAUDE.md (essay frontmatter contract section) + [[b3-complete]] + [[b2-complete]] (for the per-medium pattern, even though essays are per-page) + [[phase-3-decomposition]].
-2. Read parent B spec `docs/superpowers/specs/2026-05-24-phase-3-b-per-content-type-publisher-design.md` §7 essay-specific subsection + §11 transition (essays fixtures get replaced in B.4).
-3. `superpowers:brainstorming` for B.4 — open design questions: `has_*` detection on post-export markdown vs. raw source scanning; whether to extract `--rewrite-to-tmp-file` to shared module now; publish-deliberate UI/CLI shape.
-4. Then `superpowers:writing-plans` for the implementation.
-
-## Pending non-B.4 follow-ups
-
-Logged in [[b3-complete]] §"Known issues / B.3.x follow-ups":
-- `--coerce-year` `_file` arg unused
-- `--rewrite-to-tmp-file` extract to shared module (becomes acute when B.4 adds third copy)
-- Library's `last_modified` cascade upgrade
-- `--render-yaml-value` cell-plain-text assumption docstring
-- Dotfiles ergonomics for outputs table (#13 from B.3 spec)
-- B.2 Task 17 real-corpus spot-check (pending real library authoring)
-- B.3 Task 17 real-corpus spot-check (pending real research authoring)
-
-If author wants to pause B and clean up before B.4: B.3.x follow-ups #2 (extract `--rewrite-to-tmp-file`) is the highest-leverage one before adding a third copy.
+1. Author pushes the queued site + dotfiles commits (held from F's session).
+2. Read CLAUDE.md + [[phase-3-decomposition]] + this file.
+3. `superpowers:brainstorming` for C — open design questions: which math engine (KaTeX vs MathJax, both deferred); whether to validate against a vocabulary list or just delimiter balance; whether per-essay `has_math: true` triggers the check.
+4. Spec C, queue the plan, ship.
