@@ -1749,6 +1749,31 @@ class TestEssaysPublishDeliberate(unittest.TestCase):
         self.assertEqual(first_mtime, os.path.getmtime(bundle),
                          "second publish bumped mtime — write-if-different broke")
 
+    def test_essay_slug_shift(self) -> None:
+        """B.4 Task 13: title change → finish-publish Step B (deliberate-scoped)
+        renames asset dir + rewrites referring source links + deletes old bundle."""
+        src = self._seed_essay("example-one", "Lorem ipsum body.")
+        first = self._run_publish_deliberate(src)
+        self.assertEqual(first.returncode, 0, first.stderr)
+        old_bundle = os.path.join(self.site_root, "content", "essays",
+                                  "example-one", "index.md")
+        self.assertTrue(os.path.exists(old_bundle))
+        # Edit the source: change the title (changes the slug).
+        with open(src) as f:
+            content = f.read()
+        new_content = content.replace("#+title: Example One",
+                                      "#+title: Example One Renamed")
+        with open(src, "w") as f:
+            f.write(new_content)
+        second = self._run_publish_deliberate(src)
+        self.assertEqual(second.returncode, 0, second.stderr)
+        new_bundle = os.path.join(self.site_root, "content", "essays",
+                                  "example-one-renamed", "index.md")
+        self.assertTrue(os.path.exists(new_bundle),
+                        f"new bundle missing: {new_bundle}")
+        self.assertFalse(os.path.exists(old_bundle),
+                         f"old bundle still exists: {old_bundle}")
+
 
 if __name__ == "__main__":
     unittest.main()
