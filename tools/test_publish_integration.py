@@ -1938,5 +1938,128 @@ class TestCitationRoundtrip(unittest.TestCase):
         self.assertIn('venue: "Example Press"', text)
 
 
+@unittest.skip("manual; see F Task 18 spot-check — fixtures aren't roam-indexed")
+class TestSyncPurges(unittest.TestCase):
+    """F Task 17: pre-seeded data/citations.yaml with stale keys → after
+    a3-sync-citations against a corpus citing only one key → yaml has
+    exactly that one key.
+
+    SKIPPED in automation: requires fixture sources to be roam-indexed
+    (manifest lacks `source_file` field; published-source-files falls back
+    to org-roam-id-find which doesn't know about fixture .org paths).
+    Author runs this as part of F Task 18 spot-check."""
+
+    FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures" / "citations"
+    FIXTURE_BIB = FIXTURE_DIR / "library.bib"
+
+    def setUp(self) -> None:
+        self.site_root = tempfile.mkdtemp(prefix="a3-pub-cite-sync-")
+        for sub in ("content/essays", "data"):
+            os.makedirs(os.path.join(self.site_root, sub), exist_ok=True)
+        # Seed yaml with stale keys.
+        with open(os.path.join(self.site_root, "data", "citations.yaml"), "w") as f:
+            f.write(
+                'citations:\n'
+                '  staleKey-1:\n'
+                '    authors: ["X, Y"]\n'
+                '    year: 2010\n'
+                '    title: "Stale"\n'
+                '    venue: "V"\n'
+                '  staleKey-2:\n'
+                '    authors: ["A, B"]\n'
+                '    year: 2011\n'
+                '    title: "Stale Two"\n'
+                '    venue: "V"\n'
+            )
+        # Seed manifest pointing at example-cite-two only (assumes
+        # `source_file` field — see class docstring re: skip).
+        with open(os.path.join(self.site_root, "data", "url-history.yaml"), "w") as f:
+            f.write(
+                "manifest_version: 1\n"
+                "notes:\n"
+                "  - id: essay-cite-two-uuid-placeholder\n"
+                "    current_url: /essays/example-cite-two/\n"
+                "    state: live\n"
+                "    aliases: []\n"
+                f"    source_file: {self.FIXTURE_DIR / 'example-cite-two.org'}\n"
+            )
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.site_root, ignore_errors=True)
+
+    def test_sync_drops_uncited_keys(self) -> None:
+        env = os.environ.copy()
+        env["A3_PUB_SITE_DATA_DIR"] = os.path.join(self.site_root, "data")
+        env["A3_PUB_BIB_PATH"] = str(self.FIXTURE_BIB)
+        wrapper = os.path.expanduser(
+            "~/dotfiles/emacs-configs/custom/lisp/a3-pub.sh")
+        result = subprocess.run(
+            [wrapper, "--sync-citations"],
+            env=env, capture_output=True, text=True, timeout=60)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        with open(os.path.join(self.site_root, "data", "citations.yaml")) as f:
+            text = f.read()
+        self.assertIn("  utLaboreEtDolore2022:", text)
+        self.assertNotIn("  staleKey-1:", text)
+        self.assertNotIn("  staleKey-2:", text)
+
+
+@unittest.skip("manual; see F Task 18 spot-check — mutates live site tree")
+class TestHugoRendersCitedEssay(unittest.TestCase):
+    """F Task 17b: after publishing a cited essay, `hugo --minify` builds
+    successfully and produces a /essays/example-cite-one/ page whose HTML
+    contains a <cite> anchor pointing at #ref-loremIpsumDolorSit2020.
+
+    SKIPPED in automation: mutates the live site tree's data/citations.yaml
+    and creates a content bundle.  Author runs this as part of F Task 18
+    spot-check."""
+
+    FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures" / "citations"
+    FIXTURE_BIB = FIXTURE_DIR / "library.bib"
+
+    def setUp(self) -> None:
+        # Run inside the real site repo so Hugo has all layouts/partials.
+        self.site_root = "/Users/a3madkour/Sync/Workspace/a3madkour.github.io"
+        # Snapshot existing yaml + essays we may mutate.
+        self.yaml_backup = (
+            Path(self.site_root) / "data" / "citations.yaml"
+        ).read_text()
+
+    def tearDown(self) -> None:
+        # Restore yaml.
+        (Path(self.site_root) / "data" / "citations.yaml").write_text(self.yaml_backup)
+        # Remove the test-cite essay bundle if we created it.
+        bundle = Path(self.site_root) / "content" / "essays" / "example-cite-one"
+        if bundle.exists():
+            shutil.rmtree(bundle, ignore_errors=True)
+
+    def test_hugo_builds_and_cite_anchor_renders(self) -> None:
+        env = os.environ.copy()
+        env["A3_PUB_BIB_PATH"] = str(self.FIXTURE_BIB)
+        wrapper = os.path.expanduser(
+            "~/dotfiles/emacs-configs/custom/lisp/a3-pub.sh")
+        # Publish the cited fixture into the live site tree.
+        publish = subprocess.run(
+            [wrapper, "--publish-deliberate",
+             str(self.FIXTURE_DIR / "example-cite-one.org")],
+            env=env, cwd=self.site_root,
+            capture_output=True, text=True, timeout=60)
+        self.assertEqual(publish.returncode, 0, publish.stderr)
+
+        # Build hugo.
+        build = subprocess.run(
+            ["hugo", "--minify"],
+            cwd=self.site_root, capture_output=True, text=True, timeout=120)
+        self.assertEqual(build.returncode, 0, build.stderr)
+
+        out_html = Path(self.site_root) / "public" / "essays" / "example-cite-one" / "index.html"
+        self.assertTrue(out_html.exists(), f"{out_html} not generated")
+        html = out_html.read_text()
+        self.assertIn('href="#ref-loremIpsumDolorSit2020"', html,
+                      "cite shortcode anchor not rendered")
+        self.assertIn('id="ref-loremIpsumDolorSit2020"', html,
+                      "essay-references partial did not render the entry id")
+
+
 if __name__ == "__main__":
     unittest.main()
