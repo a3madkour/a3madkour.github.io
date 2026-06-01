@@ -1727,6 +1727,28 @@ class TestEssaysPublishDeliberate(unittest.TestCase):
             manifest_text = f.read()
         self.assertIn("/essays/example-one/", manifest_text)
 
+    def test_essay_publish_idempotent(self) -> None:
+        """B.4 Task 12: second publish on unchanged source → zero file diff."""
+        src = self._seed_essay("example-one", "Lorem ipsum body.")
+        first = self._run_publish_deliberate(src)
+        self.assertEqual(first.returncode, 0, first.stderr)
+        bundle = os.path.join(self.site_root, "content", "essays",
+                              "example-one", "index.md")
+        with open(bundle) as f:
+            first_content = f.read()
+        first_mtime = os.path.getmtime(bundle)
+        # Sleep briefly so mtime would tick if a write happened.
+        import time
+        time.sleep(1.1)
+        second = self._run_publish_deliberate(src)
+        self.assertEqual(second.returncode, 0, second.stderr)
+        with open(bundle) as f:
+            second_content = f.read()
+        self.assertEqual(first_content, second_content,
+                         "second publish produced a different file")
+        self.assertEqual(first_mtime, os.path.getmtime(bundle),
+                         "second publish bumped mtime — write-if-different broke")
+
 
 if __name__ == "__main__":
     unittest.main()
