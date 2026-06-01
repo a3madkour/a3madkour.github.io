@@ -1,0 +1,12 @@
+:PROPERTIES:
+:ID:       essay-cite-two-uuid-placeholder
+:END:
+#+title: Example cite-two
+#+date: 2026-06-01
+#+filetags: :example-tag:
+#+HUGO_PUBLISH: t
+#+HUGO_SECTION: essays
+#+HUGO_SUMMARY: Narrow case.
+
+* Section one
+Just [cite:@utLaboreEtDolore2022].

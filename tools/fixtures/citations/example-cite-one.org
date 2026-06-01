@@ -1,0 +1,15 @@
+:PROPERTIES:
+:ID:       essay-cite-one-uuid-placeholder
+:END:
+#+title: Example cite-one
+#+date: 2026-06-01
+#+filetags: :example-tag:
+#+HUGO_PUBLISH: t
+#+HUGO_SECTION: essays
+#+HUGO_SUMMARY: Lorem ipsum cite roundtrip.
+
+* Section one — example heading
+
+Lorem ipsum [cite:@loremIpsumDolorSit2020] and also [cite:@dummyKey2024].
+
+Multi-cite case: [cite:@loremIpsumDolorSit2020;@consecteturAdipiscingElit2018].

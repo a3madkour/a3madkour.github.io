@@ -1871,5 +1871,72 @@ class TestEssaysPublishDeliberate(unittest.TestCase):
                          f"stderr: {linter.stderr}")
 
 
+@unittest.skipIf(_MISSING_PREREQS, _SKIP_REASON)
+class TestCitationRoundtrip(unittest.TestCase):
+    """F Task 16: 2 stub essays citing 4 keys → data/citations.yaml carries
+    exactly those 4 keys with the schema mapping intact."""
+
+    FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures" / "citations"
+    FIXTURE_BIB = FIXTURE_DIR / "library.bib"
+
+    def setUp(self) -> None:
+        self.tmp_root = tempfile.mkdtemp(prefix="a3-pub-cite-roundtrip-")
+        self.essays_dir = os.path.join(self.tmp_root, "org", "essays")
+        os.makedirs(self.essays_dir, exist_ok=True)
+        self.site_root = os.path.join(self.tmp_root, "site")
+        os.makedirs(os.path.join(self.site_root, "data"), exist_ok=True)
+        os.makedirs(os.path.join(self.site_root, "content", "essays"),
+                    exist_ok=True)
+        # Seed empty manifest.
+        with open(os.path.join(self.site_root, "data", "url-history.yaml"),
+                  "w") as f:
+            f.write("manifest_version: 1\nnotes: []\n")
+        # Copy the 2 fixture essays into a writable essays dir; org-roam
+        # requires source files to have a stable path with :ID:.
+        for src_name in ("example-cite-one.org", "example-cite-two.org"):
+            src_path = os.path.join(self.essays_dir, src_name)
+            shutil.copy(self.FIXTURE_DIR / src_name, src_path)
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.tmp_root, ignore_errors=True)
+
+    def _run_publish_deliberate(self, path: str) -> subprocess.CompletedProcess:
+        env = os.environ.copy()
+        env["A3_PUB_SITE_DATA_DIR"] = os.path.join(self.site_root, "data")
+        env["A3_PUB_BIB_PATH"] = str(self.FIXTURE_BIB)
+        wrapper = os.path.expanduser(
+            "~/dotfiles/emacs-configs/custom/lisp/a3-pub.sh")
+        return subprocess.run(
+            [wrapper, "--publish-deliberate", path],
+            env=env, capture_output=True, text=True, timeout=120)
+
+    def test_two_essays_yield_four_citations(self) -> None:
+        """Publish two cite-bearing essays; assert the merged yaml has all 4 keys."""
+        for src_name in ("example-cite-one.org", "example-cite-two.org"):
+            src = os.path.join(self.essays_dir, src_name)
+            result = self._run_publish_deliberate(src)
+            self.assertEqual(result.returncode, 0,
+                             f"{src_name} failed:\nstderr: {result.stderr}\n"
+                             f"stdout: {result.stdout}")
+
+        yaml_path = os.path.join(self.site_root, "data", "citations.yaml")
+        self.assertTrue(os.path.exists(yaml_path),
+                        "citations.yaml was not emitted")
+        with open(yaml_path) as f:
+            text = f.read()
+
+        for key in ("loremIpsumDolorSit2020", "consecteturAdipiscingElit2018",
+                    "utLaboreEtDolore2022", "dummyKey2024"):
+            self.assertIn(f"  {key}:", text, f"missing key {key}")
+
+        # Schema mapping spot-checks (per spec §5):
+        # - venue chosen from journaltitle for @article
+        self.assertIn('venue: "Journal of Examples"', text)
+        # - type enum
+        self.assertIn('type: "article"', text)
+        # - publisher fallback path for @book
+        self.assertIn('venue: "Example Press"', text)
+
+
 if __name__ == "__main__":
     unittest.main()

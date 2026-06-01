@@ -1,0 +1,10 @@
+:PROPERTIES:
+:ID:       dummy-key-2024-uuid
+:END:
+#+title: Dummy Key 2024 — example ref-note
+#+filetags: :example-ref:
+#+HUGO_PUBLISH: t
+#+HUGO_SECTION: garden
+#+HUGO_GROWTH_STAGE: seedling
+
+A note about the cited paper.
