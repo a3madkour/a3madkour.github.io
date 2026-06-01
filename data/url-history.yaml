@@ -39,3 +39,19 @@ notes:
   current_url: "/research/themes/example-theme-two/"
   history: []
   state: live
+- state: live
+  id: essay-one-uuid-placeholder
+  current_url: "/essays/example-one/"
+  history: []
+- history: []
+  state: live
+  id: essay-four-uuid-placeholder
+  current_url: "/essays/example-four/"
+- current_url: "/essays/example-two/"
+  history: []
+  state: live
+  id: essay-two-uuid-placeholder
+- id: essay-three-uuid-placeholder
+  current_url: "/essays/example-three/"
+  history: []
+  state: live

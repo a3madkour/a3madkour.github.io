@@ -10,7 +10,7 @@ archive_status: removed
 category: creative
 tags: [example, lyric]
 summary: "Lorem ipsum — example music jam; archive intentionally removed for the fixture."
-related_essays: [example-essay-one]
+related_essays: [example-one]
 related_garden: []
 related_research: []
 related_works: [example-live-session, example-poem-collected]
