@@ -328,5 +328,48 @@ citations:
         self.assertTrue(any("made_up_key" in e for e in errors))
 
 
+class TestKeyRegexLoosenedForBBT(unittest.TestCase):
+    """F Task 1: KEY_RE must accept BBT-style camelCase keys like
+    abelaConstructiveApproachGeneration2015 while still rejecting underscores
+    and leading hyphens."""
+
+    def setUp(self):
+        self._tmp = Path(tempfile.mkdtemp())
+        (self._tmp / "data").mkdir()
+        (self._tmp / "content" / "garden").mkdir(parents=True)
+
+    def tearDown(self):
+        shutil.rmtree(self._tmp)
+
+    def _write_yaml(self, key: str) -> Path:
+        path = self._tmp / "data" / "citations.yaml"
+        path.write_text(
+            "citations:\n"
+            f"  {key}:\n"
+            '    authors: ["Lastname, F."]\n'
+            "    year: 2020\n"
+            '    title: "T"\n'
+            '    venue: "V"\n'
+        )
+        return path
+
+    def test_camel_case_bbt_key_accepted(self) -> None:
+        p = self._write_yaml("abelaConstructiveApproachGeneration2015")
+        errors = lint.lint_citations(p, self._tmp / "content" / "garden")
+        self.assertEqual(errors, [], f"camelCase key wrongly rejected: {errors}")
+
+    def test_underscore_key_rejected(self) -> None:
+        p = self._write_yaml("bad_underscore_key")
+        errors = lint.lint_citations(p, self._tmp / "content" / "garden")
+        self.assertTrue(any("must match" in e for e in errors),
+                        f"underscore key wrongly accepted: {errors}")
+
+    def test_leading_hyphen_key_rejected(self) -> None:
+        p = self._write_yaml("-leading-hyphen")
+        errors = lint.lint_citations(p, self._tmp / "content" / "garden")
+        self.assertTrue(any("must match" in e for e in errors),
+                        f"leading-hyphen key wrongly accepted: {errors}")
+
+
 if __name__ == "__main__":
     unittest.main()
