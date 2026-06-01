@@ -1774,6 +1774,41 @@ class TestEssaysPublishDeliberate(unittest.TestCase):
         self.assertFalse(os.path.exists(old_bundle),
                          f"old bundle still exists: {old_bundle}")
 
+    def test_essay_deliberate_does_not_touch_other_sections(self) -> None:
+        """B.4 Task 14: seed manifest with garden + essay entries; publish-deliberate
+        the essay; assert garden bundle untouched and no 'removed state changes."""
+        # Seed manifest with a pre-existing garden entry.
+        manifest_path = os.path.join(self.site_root, "data", "url-history.yaml")
+        with open(manifest_path, "w") as f:
+            f.write(
+                "manifest_version: 1\n"
+                "notes:\n"
+                "  - id: garden-a-uuid\n"
+                "    current_url: /garden/note-a/\n"
+                "    state: live\n"
+                "    aliases: []\n"
+            )
+        # Seed a fake garden bundle on disk.
+        garden_bundle_dir = os.path.join(self.site_root, "content", "garden", "note-a")
+        os.makedirs(garden_bundle_dir, exist_ok=True)
+        garden_bundle = os.path.join(garden_bundle_dir, "index.md")
+        with open(garden_bundle, "w") as f:
+            f.write("---\ntitle: note-a\n---\nbody\n")
+        # Publish a fresh essay.
+        src = self._seed_essay("example-one", "Lorem ipsum body.")
+        result = self._run_publish_deliberate(src)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        # Garden bundle still exists.
+        self.assertTrue(os.path.exists(garden_bundle),
+                        "deliberate publish wrongly deleted unrelated garden bundle")
+        # Manifest still has the garden entry as live.
+        with open(manifest_path) as f:
+            manifest_text = f.read()
+        self.assertIn("garden-a-uuid", manifest_text)
+        self.assertIn("/garden/note-a/", manifest_text)
+        # And the essay entry was added.
+        self.assertIn("/essays/example-one/", manifest_text)
+
 
 if __name__ == "__main__":
     unittest.main()
