@@ -6,7 +6,7 @@ Validates `data/citations.yaml` shape and cross-references. Stdlib only.
   in [1500, current_year + 2]), title (non-empty), venue (non-empty).
 - Optional: url (must be http/https), notes_ref (must resolve to a
   non-draft `content/garden/<slug>/index.md`).
-- Citation keys must be lowercase kebab-case (`^[a-z0-9-]+$`).
+- Citation keys must match `^[A-Za-z0-9][A-Za-z0-9-]*$` (BBT camelCase accepted).
 - Unknown fields on any entry are errors.
 
 Exits 0 on all-pass, 1 on any violation.
@@ -31,7 +31,7 @@ ALLOWED_FIELDS = {
     "doi", "publisher", "volume", "issue", "pages", "isbn", "type",
 }
 REQUIRED_FIELDS = {"authors", "year", "title", "venue"}
-KEY_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+KEY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]*$")
 ENTRY_HEADER_RE = re.compile(r"^  ([^:\s]+):\s*$")
 FIELD_RE = re.compile(r"^    ([a-zA-Z_]+):\s*(.*)$")
 
@@ -115,7 +115,7 @@ def lint_citations(citations_yaml: Path, garden_dir: Path) -> list[str]:
         prefix = f"citations.{key}"
 
         if not KEY_RE.match(key):
-            errors.append(f"{prefix}: key must match ^[a-z0-9][a-z0-9-]*$ (got {key!r})")
+            errors.append(f"{prefix}: key must match ^[A-Za-z0-9][A-Za-z0-9-]*$ (got {key!r})")
             # continue validating fields anyway — surface as many errors as possible
 
         unknown = set(entry.keys()) - ALLOWED_FIELDS
