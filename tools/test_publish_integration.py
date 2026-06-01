@@ -1809,6 +1809,67 @@ class TestEssaysPublishDeliberate(unittest.TestCase):
         # And the essay entry was added.
         self.assertIn("/essays/example-one/", manifest_text)
 
+    def test_essay_has_flags_scan_detects_each_shortcode(self) -> None:
+        """B.4 Task 15a: each has_* shortcode pattern flips its frontmatter flag true."""
+        patterns = [
+            ("sidenotes",  "{{< sidenote >}}n{{< /sidenote >}}", "has_sidenotes"),
+            ("citations",  "{{< cite \"k\" >}}",                  "has_citations"),
+            ("footnotes",  "lorem[^1] ipsum\n\n[^1]: note",       "has_footnotes"),
+            ("math",       "{{< math >}}\\alpha{{< /math >}}",    "has_math"),
+            ("widgets",    "{{< widget src=\"x\" >}}",            "has_widgets"),
+            ("video-sync", "{{< video-sync src=\"x.mp4\" >}}",    "has_video_sync"),
+        ]
+        for slug, body, flag in patterns:
+            with self.subTest(flag=flag):
+                src = self._seed_essay(f"example-{slug}", body)
+                result = self._run_publish_deliberate(src)
+                self.assertEqual(result.returncode, 0,
+                                 f"{slug}: {result.stderr}")
+                bundle = os.path.join(self.site_root, "content", "essays",
+                                      f"example-{slug}", "index.md")
+                with open(bundle) as f:
+                    content = f.read()
+                self.assertIn(f"{flag}: true", content,
+                              f"expected {flag}: true for {slug}\n{content}")
+
+    def test_essay_has_keyword_override_wins(self) -> None:
+        """B.4 Task 15b: #+HUGO_HAS_SIDENOTES: nil beats positive body scan."""
+        src = self._seed_essay(
+            "example-override",
+            "{{< sidenote >}}n{{< /sidenote >}}",
+            extra_keywords="#+HUGO_HAS_SIDENOTES: nil\n")
+        result = self._run_publish_deliberate(src)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        bundle = os.path.join(self.site_root, "content", "essays",
+                              "example-override", "index.md")
+        with open(bundle) as f:
+            content = f.read()
+        self.assertIn("has_sidenotes: false", content)
+
+    def test_essay_yaml_passes_site_linter(self) -> None:
+        """B.4 Task 15c: B-emitted bundle passes tools/check_fixtures.py."""
+        src = self._seed_essay("example-linter",
+                               "Lorem ipsum.",
+                               extra_keywords="#+HUGO_SUMMARY: S\n")
+        result = self._run_publish_deliberate(src)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        # check_fixtures.py derives repo_root as Path(__file__).parent.parent.
+        # Copy the script into site_root/tools/ so that __file__ resolves inside
+        # site_root, making parent.parent == site_root (not the real repo).
+        import shutil as _shutil
+        site_root_path = Path(self.site_root)
+        tools_src = Path(__file__).resolve().parent
+        tools_dst = site_root_path / "tools"
+        tools_dst.mkdir(exist_ok=True)
+        _shutil.copy2(tools_src / "check_fixtures.py", tools_dst / "check_fixtures.py")
+        linter = subprocess.run(
+            ["python3", "tools/check_fixtures.py"],
+            cwd=self.site_root,
+            capture_output=True, text=True, timeout=30)
+        self.assertEqual(linter.returncode, 0,
+                         f"linter failed:\nstdout: {linter.stdout}\n"
+                         f"stderr: {linter.stderr}")
+
 
 if __name__ == "__main__":
     unittest.main()
