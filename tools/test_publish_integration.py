@@ -1658,5 +1658,75 @@ class TestResearchPublishLiving(unittest.TestCase):
             )
 
 
+@unittest.skipIf(_MISSING_PREREQS, _SKIP_REASON)
+class TestEssaysPublishDeliberate(unittest.TestCase):
+    """B.4 integration tests: publish-deliberate for essays."""
+
+    def setUp(self) -> None:
+        self.tmp_root = tempfile.mkdtemp(prefix="a3-pub-essays-int-")
+        self.essays_dir = os.path.join(self.tmp_root, "org", "essays")
+        os.makedirs(self.essays_dir, exist_ok=True)
+        self.site_root = os.path.join(self.tmp_root, "site")
+        os.makedirs(os.path.join(self.site_root, "data"), exist_ok=True)
+        os.makedirs(os.path.join(self.site_root, "content", "essays"), exist_ok=True)
+        # Seed empty manifest so begin-publish reads cleanly.
+        with open(os.path.join(self.site_root, "data", "url-history.yaml"), "w") as f:
+            f.write("manifest_version: 1\nnotes: []\n")
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.tmp_root, ignore_errors=True)
+
+    def _seed_essay(self, slug: str, body: str, extra_keywords: str = "") -> str:
+        path = os.path.join(self.essays_dir, f"{slug}.org")
+        content = (
+            ":PROPERTIES:\n"
+            f":ID:       {slug}-uuid\n"
+            ":END:\n"
+            f"#+title: {slug.replace('-', ' ').title()}\n"
+            "#+date: 2026-04-12\n"
+            "#+HUGO_PUBLISH: t\n"
+            "#+HUGO_SECTION: essays\n"
+            f"{extra_keywords}"
+            "\n"
+            f"{body}\n"
+        )
+        with open(path, "w") as f:
+            f.write(content)
+        return path
+
+    def _run_publish_deliberate(self, path: str) -> subprocess.CompletedProcess:
+        env = os.environ.copy()
+        env["A3_PUB_SITE_DATA_DIR"] = os.path.join(self.site_root, "data")
+        wrapper = os.path.expanduser(
+            "~/dotfiles/emacs-configs/custom/lisp/a3-pub.sh")
+        return subprocess.run(
+            [wrapper, "--publish-deliberate", path],
+            env=env, capture_output=True, text=True, timeout=120)
+
+    def test_essay_publish_once(self) -> None:
+        """B.4 Task 11: one source → bundle written + manifest updated."""
+        src = self._seed_essay("example-one", "Lorem ipsum body.")
+        result = self._run_publish_deliberate(src)
+        self.assertEqual(result.returncode, 0,
+                         f"stderr: {result.stderr}\nstdout: {result.stdout}")
+        bundle = os.path.join(self.site_root, "content", "essays", "example-one",
+                              "index.md")
+        self.assertTrue(os.path.exists(bundle), f"bundle missing: {bundle}")
+        with open(bundle) as f:
+            content = f.read()
+        for required in ("title:", "date:", "lastmod:", "draft:",
+                         "series:", "series_order:", "toc:",
+                         "has_sidenotes:", "has_citations:",
+                         "has_footnotes:", "has_math:",
+                         "has_widgets:", "has_video_sync:"):
+            self.assertIn(required, content,
+                          f"required key missing: {required}")
+        self.assertIn("Lorem ipsum body.", content)
+        # Manifest entry exists.
+        with open(os.path.join(self.site_root, "data", "url-history.yaml")) as f:
+            manifest_text = f.read()
+        self.assertIn("/essays/example-one/", manifest_text)
+
+
 if __name__ == "__main__":
     unittest.main()
