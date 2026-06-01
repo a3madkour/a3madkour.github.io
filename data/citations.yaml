@@ -1,5 +1,3 @@
-# Fixture citations for essay layout development. Replaced by ox-hugo export
-# in Phase 3 — same shape, real bib data.
 citations:
   example-source-1:
     authors: ["Lastname, F.", "Othername, G."]
@@ -22,3 +20,13 @@ citations:
     venue: "Annual Review of Examples"
     url: "https://example.invalid/3"
     notes_ref: ""
+  meiRWoMRetrievalaugmentedWorld2026:
+    authors: ["Mei, Kai", "Guo, Jiang", "Chang, Shuaichen", "Dong, Mingwen", "Lee, Dongkyu", "Niu, Xing", "Jiang, Jiarong"]
+    year: 2026
+    title: "R-WoM: Retrieval-augmented World Model For Computer-use Agents"
+    venue: "arXiv (cs.CL)"
+    url: "http://arxiv.org/abs/2510.11892"
+    doi: "10.48550/arXiv.2510.11892"
+    type: "online"
+    notes_ref: "mei-r-wom-2026"
+

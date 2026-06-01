@@ -39,10 +39,22 @@ notes:
   current_url: "/research/themes/example-theme-two/"
   history: []
   state: live
-- state: live
-  id: essay-one-uuid-placeholder
+- id: essay-one-uuid-placeholder
   current_url: "/essays/example-one/"
-  history: []
+  history: 
+  - replaced_at: "2026-06-01T19:24:54Z"
+    reason: removed
+    url: "/essays/example-one/"
+  - url: null
+    replaced_at: "2026-06-01T22:18:53Z"
+    reason: republished
+  - replaced_at: "2026-06-01T23:15:04Z"
+    reason: removed
+    url: "/essays/example-one/"
+  - url: null
+    replaced_at: "2026-06-01T23:15:19Z"
+    reason: republished
+  state: live
 - history: []
   state: live
   id: essay-four-uuid-placeholder
@@ -55,3 +67,7 @@ notes:
   current_url: "/essays/example-three/"
   history: []
   state: live
+- history: []
+  state: live
+  id: E2C28B89-4E71-4E7C-B220-BCE051F1BD53
+  current_url: "/garden/mei-r-wom-2026/"

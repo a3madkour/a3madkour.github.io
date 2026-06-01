@@ -9,7 +9,7 @@ has_sidenotes: true
 has_video_sync: true
 has_widgets: true
 hero: "hero.svg"
-lastmod: 2026-05-31
+lastmod: 2026-06-01
 series: "example-series"
 series_order: 1
 source_stream: "2026-04-22-example-music-jam-stream"
@@ -45,6 +45,7 @@ Lorem ipsum.
 -  Deep subsection one.a.i.A — example
 
     Deep heading; stresses TOC scrollspy collapse.
+    Try this on for size {{< cite "meiRWoMRetrievalaugmentedWorld2026" >}}
 
 
 ## Section two — example heading {#section-two-example-heading}
