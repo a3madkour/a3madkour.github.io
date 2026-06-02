@@ -81,6 +81,10 @@ jobs:
         run: python3 tools/check_citations.py
       - name: Run citation linter unit tests
         run: python3 -m unittest tools/test_check_citations.py -v
+      - name: Verify math frontmatter coupling
+        run: python3 tools/check_math.py
+      - name: Run math linter unit tests
+        run: python3 -m unittest tools/test_check_math.py -v
       - name: Verify works fixtures
         run: python3 tools/check_works_fixtures.py
       - name: Run works fixture linter unit tests

@@ -42,6 +42,9 @@ python3 -m unittest tools/test_check_research_links.py -v 2>&1 | tail -3
 python3 tools/check_citations.py
 python3 -m unittest tools/test_check_citations.py -v 2>&1 | tail -3
 
+python3 tools/check_math.py
+python3 -m unittest tools/test_check_math.py -v 2>&1 | tail -3
+
 python3 tools/check_works_fixtures.py
 python3 -m unittest tools/test_check_works_fixtures.py -v 2>&1 | tail -3
 
