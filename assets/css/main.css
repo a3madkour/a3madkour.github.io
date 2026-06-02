@@ -5372,3 +5372,86 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   border-radius: 0 3px 3px 0;
 }
 .from-stream a { color: inherit; }
+
+/* §47 Semantic blocks (AMS-style) — D.1
+   Three tiers: strong (theorem family + definition), soft (remark / example /
+   note / claim / conjecture / axiom), chrome-less (proof).
+   Uses only existing color tokens — no new contrast pairings added.
+*/
+
+.block-strong,
+.block-soft,
+.block-proof {
+  margin-block: 1.25rem;
+}
+
+.block-strong > .block-body,
+.block-soft > .block-body,
+.block-proof > .block-body {
+  margin-top: 0.4rem;
+}
+
+.block-strong > .block-body > *:first-child,
+.block-soft > .block-body > *:first-child,
+.block-proof > .block-body > *:first-child {
+  margin-top: 0;
+}
+
+.block-strong > .block-body > *:last-child,
+.block-soft > .block-body > *:last-child,
+.block-proof > .block-body > *:last-child {
+  margin-bottom: 0;
+}
+
+.block-strong {
+  padding-left: 1rem;
+  border-left: 3px solid var(--color-burgundy);
+}
+
+.block-soft {
+  padding-left: 1rem;
+  border-left: 2px solid var(--color-stone);
+}
+
+.block-proof {
+  /* No border; italic body conveys the kind. */
+}
+
+.block-header {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.block-proof > .block-header {
+  font-weight: 400; /* italic via the inline <em> wrapper inside the template */
+}
+
+.block-title {
+  color: var(--color-ink-soft);
+  font-weight: 400;
+}
+
+.block-proof > .block-body {
+  font-style: italic;
+}
+
+.proof-tombstone {
+  margin-left: 0.4em;
+  font-style: normal; /* keep ∎ upright even though body is italic */
+}
+
+/* Deep-link affordance: anchored blocks (id attr present) get the same
+   hover # affordance as headings in §11. The selector mirrors the heading
+   pattern: a sibling-of nothing trick, so we use direct id presence.
+*/
+.block-strong[id]:hover::after,
+.block-soft[id]:hover::after,
+.block-proof[id]:hover::after {
+  content: " #";
+  color: var(--color-ink-soft);
+  font-weight: 400;
+  margin-left: 0.4em;
+}
