@@ -1,68 +1,83 @@
 ---
 name: next-slice
-description: "Session-start pointer — next slice is Phase 3 sub-project D (unified semantic markup: def / thm / figure / sidenotes / math in one source vocabulary rendering to Hugo + PDF + Word). C shipped 2026-06-01 (math validator, integration slice; see [[c-complete]]). Per spec sequencing: A → B → F → C → **D** → E."
-metadata: 
+description: "Session-start pointer — next slice is Phase 3 sub-project D.2 (multi-target export: one org source → Hugo + PDF + Word). D.1 shipped 2026-06-01 (semantic blocks; see [[d1-complete]]). D.2 picks up the existing spec at `docs/superpowers/specs/2026-05-13-multi-target-export-design.md` (446 lines, designed but not implemented) and wires ox-latex + pandoc to emit the D.1 vocabulary into PDF + Word. Per spec sequencing: A → B → F → C → D.1 → **D.2** → E."
+metadata:
   node_type: memory
   type: project
-  originSessionId: 29127c6c-92db-4a63-8841-a53b487a6d52
 ---
 
-**Next slice = Phase 3 sub-project D — unified semantic markup.** C shipped 2026-06-01; see [[c-complete]].
+**Next slice = Phase 3 sub-project D.2 — multi-target export.** D.1 shipped 2026-06-01; see [[d1-complete]].
 
-Per the parent decomposition ([[phase-3-decomposition]]) + CLAUDE.md sequencing: A → B → F → C → **D (next)** → E.
+Per the parent decomposition ([[phase-3-decomposition]]) + CLAUDE.md sequencing + the brainstorm split during D: A → B → F → C → D.1 → **D.2 (next)** → E.
 
-## What D is
+## What D.2 is
 
-From CLAUDE.md "D. Unified semantic markup":
+D.1 shipped the **authoring vocabulary** (12 AMS-style block kinds rendered to Hugo only). D.2 picks up the existing **multi-target export pipeline** spec at `docs/superpowers/specs/2026-05-13-multi-target-export-design.md` (446 lines, designed but not implemented) and wires the rendering targets:
 
-> Definitions / theorems / proofs / sidenotes / figures / math in one source vocabulary that renders to Hugo + PDF + Word. **Subsumes** the prior Multi-target export spec (`docs/superpowers/specs/2026-05-13-multi-target-export-design.md`) — revisit inside D.
+1. **Hugo essay** — already shipped (D.1 + existing essay infrastructure).
+2. **PDF technical report** — via ox-latex + pdflatex/xelatex + biber.
+3. **Word document** — via pandoc + a `tools/templates/reference.docx` style reference.
 
-So D is the **largest** of the remaining sub-projects. It:
+Three artifacts from one org source. Opt-in via `#+multi_export: t` keyword. Per-target visibility tags (`:NOEXPORT_PDF:`, `:NOEXPORT_WEB:`, `:NOEXPORT_WORD:`). The D.1 vocabulary (theorem / lemma / etc.) must render correctly to all three targets — Hugo ✓ (D.1 shipped), PDF (new), Word (new).
 
-1. Defines a single source vocabulary for semantic blocks — `definition`, `theorem`, `proof`, `figure`, `sidenote`, plus math (which K just validated).
-2. Renders that vocabulary to **three** targets: Hugo (web), PDF (LaTeX), Word (docx). Multi-target export folds into this.
-3. Likely subsumes the existing fragmented stub-shortcodes (`sidenote`, `figure`, `spoiler`) that already exist on the Hugo side, AND the deferred ones (`widget`, `lyrics`, `video-sync`).
-4. Has the biggest unresolved-design surface of any remaining slice. Brainstorm will be substantial.
+## Pre-D.2 prep
 
-## Pre-D prep
+Per [[design-batch-no-plan-until-implement]] — when D.2's slot opens, brainstorm fresh; the existing 446-line spec needs revisiting since it predates D.1. Specifically:
 
-Per [[design-batch-no-plan-until-implement]] — when D's slot opens, brainstorm fresh; don't try to draft the plan from this stub. Required reads:
+- The existing spec doesn't mention the D.1 vocabulary (definitions, theorems, proofs). D.2's brainstorm needs to add: how does ox-latex translate `#+begin_theorem` into a real LaTeX theorem environment (`\begin{theorem}`)? How does pandoc translate it into Word styles?
+- The existing spec lays out the orchestrator architecture (one Emacs command runs all 3 backends). That part stands as-is.
+
+Required reads when D.2 kicks off:
 
 1. CLAUDE.md "Phase 3" section + the deferred features table.
 2. [[phase-3-decomposition]] for the 6-sub-project frame.
-3. The existing multi-target export spec: `docs/superpowers/specs/2026-05-13-multi-target-export-design.md` (will be revisited inside D).
-4. The existing shortcode stubs in `layouts/shortcodes/` — `sidenote.html`, `figure.html`, `spoiler.html` are real; `widget.html`, `lyrics.html`, `video-sync.html` are deferred-feature placeholders (per CLAUDE.md "Deferred features" table).
-5. [[c-complete]] for what math validation looks like post-C.
-6. [[time-synced-poetry-slice]] + [[citation-export-slice]] for prior multi-target-ish work (poetry has audio+animation modes; citations have BibTeX/APA/Chicago/MLA/RIS exports).
+3. The existing multi-target spec `docs/superpowers/specs/2026-05-13-multi-target-export-design.md`.
+4. [[d1-complete]] for the D.1 shortcodes' output shape — D.2 needs to mirror this.
+5. [[time-synced-poetry-slice]] (synced-poetry has audio+animation modes) and [[citation-export-slice]] (BibTeX/APA/Chicago/MLA/RIS exports) as prior multi-target-ish patterns.
 
 ## State of the world at session start
 
 **Site (`~/Sync/Workspace/a3madkour.github.io/`):**
-- master = post-C local tip `8808c74`. Pre-existing unpushed F commits (`9d333c4`, `930bcec`, `e3b9c6a`) + new C commits (`07ff27e`, `3448b13`, `0639291`, `9a4e4e3`, `bd70977`, `0ae3c73`, `5e0284b`, `8808c74`). **Not pushed** — held for author review of the C slice.
-- Worktree `.claude/worktrees/f-citation-pipeline` still exists; clean to remove after push.
-- 480 ert + 36 integration + 7 new check_math sibling tests passing.
+- master = local tip post-D.1 (`a2f32f7` for CLAUDE.md + earlier D.1 commits + the `c6dcbde` §11-comment fix-up). **Not pushed** — held for author review.
+- Worktree directory empty (no worktrees needed for D.1).
+- 481 ert tests + 7 site check_math tests passing.
 
 **Dotfiles (`~/dotfiles/`):**
-- main = `0284026` (C T9 wire). 5 local C commits (`81fae4d`, `89092f8`, `8049844`, `7b2db57`, `0284026`). **Not pushed**.
+- main = `a6336f3` (D.1 T6 ox-hugo config). **Not pushed**.
 - 5 pre-existing dirty tracked files (`.gitignore`, `.zshrc`, `bookmarks`, `early-init.el`, `init.el`) — author's in-progress local work, NEVER commit them.
-- `org-math-lint` venv at `~/org/notes/tools/org-math-lint/.venv/` is **broken** on this host (cross-platform mismatch); recreate before exercising the math gate. See [[reference-org-math-lint-venv-platform]].
+- `org-math-lint` venv at `~/org/notes/tools/org-math-lint/.venv/` still broken (cross-platform mismatch). Pre-existing issue from C; recreate if math validation gate is needed. See [[reference-org-math-lint-venv-platform]].
 
 **Personal notes (`~/org/`):**
 - Unchanged since end of F.
 
-## Pending follow-ups (NOT D-scope)
+## Pending follow-ups (NOT D.2-scope)
+
+Logged in [[d1-complete]]:
+- Cross-reference auto-formatting (`{{< ref-block >}}`).
+- Section-prefixed numbering.
+- Custom block kinds beyond the 12.
+- Per-essay numbering reset point.
+- Generalize `[id]:hover::after` deep-link affordance.
+- Goldmark LaTeX-delimiter strategy (for when KaTeX ships).
 
 Logged in [[c-complete]]:
-- **org-math-lint venv recreation** on this host (5-line shell incantation).
-- **Helper exit-code conflation** in `a3-pub.sh` — distinguish "broken install" from "validation failure" via an `import org_math_lint` probe.
-- **Interactive `M-x a3-publish-*` paths uncovered** by the math gate.
-- **Garden / research / library math** not validated by `check_math.py` (essays-only V1).
+- org-math-lint venv recreation on this host.
+- Helper exit-code conflation (broken-install vs validation-failure) in a3-pub.sh.
+- Interactive `M-x a3-publish-*` paths uncovered by math gate.
+- Garden/research/library math not validated.
 
-Plus from [[f-complete]]: B.4 orphan-sweep over-deletion; F.2/F.3 cite-syntax extensions; F.x ref-note title quality.
+Logged in [[f-complete]]:
+- B.4 orphan-sweep over-deletion.
+- F.2/F.3 cite-syntax extensions.
+- F.x ref-note title quality.
 
 ## Recommended session start
 
-1. Author pushes the queued site + dotfiles commits (10 local C commits held from this session).
-2. Read CLAUDE.md + [[phase-3-decomposition]] + this file + [[c-complete]].
-3. Decide whether D is in scope now or defer (D is large; E may be smaller).
-4. If D: `superpowers:brainstorming`. Open questions: source vocabulary syntax (org `:custom-id:` blocks? `#+begin_definition`?); render-target architecture (one renderer per target? one IR?); how `definition` / `theorem` / `proof` interact with the existing org-mode export and ox-hugo.
+1. Author pushes the queued site + dotfiles commits (D.1 commits held from this session).
+2. Read CLAUDE.md + [[phase-3-decomposition]] + this file + [[d1-complete]] + the existing multi-target spec.
+3. Decide D.2 scope: full pickup of existing spec OR smaller carve-out (e.g., PDF target only, Word deferred).
+4. `superpowers:brainstorming`. Open design questions:
+   - Does the existing 446-line spec need revisiting in light of D.1's vocabulary, or just minor additions?
+   - LaTeX target: which class file? `madkour-paper` per existing spec, OR pull from real essay frontmatter?
+   - Word target: how to define `reference.docx` styles for the 12 block kinds?
+   - Test surface: an integration test that publishes example-five to all 3 targets and validates each artifact?
