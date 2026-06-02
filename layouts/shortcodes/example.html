@@ -1,0 +1,12 @@
+{{- /* AMS-style block: example. Own counter; soft tier. */ -}}
+{{- $page := .Page -}}
+{{- $n := add (int ($page.Scratch.Get "example-counter" | default 0)) 1 -}}
+{{- $page.Scratch.Set "example-counter" $n -}}
+{{- $title := .Get "title" -}}
+{{- $id := .Get "id" -}}
+<div class="block-example block-soft"{{ with $id }} id="{{ . }}"{{ end }}>
+  <h4 class="block-header">
+    Example {{ $n }}{{ with $title }} (<span class="block-title">{{ . }}</span>){{ end }}.
+  </h4>
+  <div class="block-body">{{ .Inner | markdownify }}</div>
+</div>

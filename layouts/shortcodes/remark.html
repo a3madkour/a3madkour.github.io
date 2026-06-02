@@ -1,0 +1,12 @@
+{{- /* AMS-style block: remark. Own counter; soft tier. */ -}}
+{{- $page := .Page -}}
+{{- $n := add (int ($page.Scratch.Get "remark-counter" | default 0)) 1 -}}
+{{- $page.Scratch.Set "remark-counter" $n -}}
+{{- $title := .Get "title" -}}
+{{- $id := .Get "id" -}}
+<div class="block-remark block-soft"{{ with $id }} id="{{ . }}"{{ end }}>
+  <h4 class="block-header">
+    Remark {{ $n }}{{ with $title }} (<span class="block-title">{{ . }}</span>){{ end }}.
+  </h4>
+  <div class="block-body">{{ .Inner | markdownify }}</div>
+</div>

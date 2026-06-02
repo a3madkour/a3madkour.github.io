@@ -1,0 +1,12 @@
+{{- /* AMS-style block: definition. Own counter; strong tier. */ -}}
+{{- $page := .Page -}}
+{{- $n := add (int ($page.Scratch.Get "definition-counter" | default 0)) 1 -}}
+{{- $page.Scratch.Set "definition-counter" $n -}}
+{{- $title := .Get "title" -}}
+{{- $id := .Get "id" -}}
+<div class="block-definition block-strong"{{ with $id }} id="{{ . }}"{{ end }}>
+  <h4 class="block-header">
+    Definition {{ $n }}{{ with $title }} (<span class="block-title">{{ . }}</span>){{ end }}.
+  </h4>
+  <div class="block-body">{{ .Inner | markdownify }}</div>
+</div>

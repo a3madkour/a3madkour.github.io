@@ -1,0 +1,12 @@
+{{- /* AMS-style block: claim. Own counter; soft tier. */ -}}
+{{- $page := .Page -}}
+{{- $n := add (int ($page.Scratch.Get "claim-counter" | default 0)) 1 -}}
+{{- $page.Scratch.Set "claim-counter" $n -}}
+{{- $title := .Get "title" -}}
+{{- $id := .Get "id" -}}
+<div class="block-claim block-soft"{{ with $id }} id="{{ . }}"{{ end }}>
+  <h4 class="block-header">
+    Claim {{ $n }}{{ with $title }} (<span class="block-title">{{ . }}</span>){{ end }}.
+  </h4>
+  <div class="block-body">{{ .Inner | markdownify }}</div>
+</div>

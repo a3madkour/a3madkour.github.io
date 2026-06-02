@@ -1,0 +1,9 @@
+{{- /* AMS-style block: proof. No counter. Optional :of <name> denotes target theorem.
+       Auto-appends ∎ tombstone via .proof-tombstone span. */ -}}
+{{- $page := .Page -}}
+{{- $of := .Get "of" -}}
+{{- $id := .Get "id" -}}
+<div class="block-proof"{{ with $id }} id="{{ . }}"{{ end }}>
+  <h4 class="block-header"><em>Proof{{ with $of }} of <span class="block-title">{{ . }}</span>{{ end }}.</em></h4>
+  <div class="block-body">{{ .Inner | markdownify }}<span class="proof-tombstone" aria-hidden="true"> ∎</span></div>
+</div>

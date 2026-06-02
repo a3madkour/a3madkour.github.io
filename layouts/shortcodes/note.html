@@ -1,0 +1,12 @@
+{{- /* AMS-style block: note. Own counter; soft tier. */ -}}
+{{- $page := .Page -}}
+{{- $n := add (int ($page.Scratch.Get "note-counter" | default 0)) 1 -}}
+{{- $page.Scratch.Set "note-counter" $n -}}
+{{- $title := .Get "title" -}}
+{{- $id := .Get "id" -}}
+<div class="block-note block-soft"{{ with $id }} id="{{ . }}"{{ end }}>
+  <h4 class="block-header">
+    Note {{ $n }}{{ with $title }} (<span class="block-title">{{ . }}</span>){{ end }}.
+  </h4>
+  <div class="block-body">{{ .Inner | markdownify }}</div>
+</div>

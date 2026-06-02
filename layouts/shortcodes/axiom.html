@@ -1,0 +1,12 @@
+{{- /* AMS-style block: axiom. Own counter; soft tier. */ -}}
+{{- $page := .Page -}}
+{{- $n := add (int ($page.Scratch.Get "axiom-counter" | default 0)) 1 -}}
+{{- $page.Scratch.Set "axiom-counter" $n -}}
+{{- $title := .Get "title" -}}
+{{- $id := .Get "id" -}}
+<div class="block-axiom block-soft"{{ with $id }} id="{{ . }}"{{ end }}>
+  <h4 class="block-header">
+    Axiom {{ $n }}{{ with $title }} (<span class="block-title">{{ . }}</span>){{ end }}.
+  </h4>
+  <div class="block-body">{{ .Inner | markdownify }}</div>
+</div>
