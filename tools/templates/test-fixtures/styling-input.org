@@ -1,0 +1,16 @@
+#+title: Styling smoke
+
+#+attr_html: :class theorem :data-title "Intermediate Value"
+#+begin_theorem
+Body of theorem.
+#+end_theorem
+
+#+begin_definition
+Untitled definition body.
+#+end_definition
+
+#+begin_proof
+Proof body line one.
+
+Last line.
+#+end_proof
