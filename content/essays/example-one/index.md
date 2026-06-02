@@ -50,7 +50,9 @@ Lorem ipsum.
 
 ## Section two — example heading {#section-two-example-heading}
 
-{{< math >}}&alpha; + &beta; = &gamma;{{< /math >}}
+\(\alpha + \beta = \gamma\)
+
+\[\sum_{i=1}^{n} x_i = \bar{x}\,n\]
 
 {{< figure src="hero.svg" caption="Example figure one — placeholder caption." alt="" >}}
 
