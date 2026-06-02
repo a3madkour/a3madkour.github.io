@@ -11,7 +11,7 @@ Personal website for Abdelrahman Madkour, built as a Hugo static site with hand-
 - `hugo server --buildDrafts` — dev server with drafts visible.
 - `hugo --minify` — production build to `public/`. **Do not run with a dev server alive**; it poisons the dev-server CSS via a MIME mismatch.
 - `python3 tools/check-contrast.py` — WCAG 2.1 contrast verifier (CI gate).
-- Twenty-four linter pairs under `tools/check_*.py` + `tools/test_check_*.py` (CI runs each linter then its unit-test sibling): essay fixtures, essay TOC depth, garden fixtures, garden links, filter-chips config, research fixtures, research links, citations, works fixtures, works links, synced poetry, library fixtures, library links, library covers, library shelves, icon attribution, RSS XSL, garden history, streams fixtures, streams links, pagefind metadata, cite metadata, page weights, org-asset references. `tools/check_smoke.py` and `tools/check_graph_chrome.py` are sibling-less linters (no paired test file — spec §3.1: logic is too thin to warrant pairing).
+- Twenty-five linter pairs under `tools/check_*.py` + `tools/test_check_*.py` (CI runs each linter then its unit-test sibling): essay fixtures, essay TOC depth, garden fixtures, garden links, filter-chips config, research fixtures, research links, citations, math frontmatter coupling, works fixtures, works links, synced poetry, library fixtures, library links, library covers, library shelves, icon attribution, RSS XSL, garden history, streams fixtures, streams links, pagefind metadata, cite metadata, page weights, org-asset references. `tools/check_smoke.py` and `tools/check_graph_chrome.py` are sibling-less linters (no paired test file — spec §3.1: logic is too thin to warrant pairing).
 
 No npm. Python tooling is stdlib-only. Hugo **extended** (≥ 0.162.1) is required — `.github/workflows/hugo.yaml` pins `HUGO_VERSION=0.162.1`. (Hugo 0.162+ tightened the default `security.allowContent` policy to deny `text/html` source files; this site avoids the issue by using `_index.md` rather than `_index.html` for the homepage.)
 
@@ -81,6 +81,15 @@ Three-state cycle: **system → light → dark → system**.
 | About / Home / Blog (legacy) | section name only | — |
 
 **Indexing controls**: `<main data-pagefind-body>` in `baseof.html` scopes the indexed body. `data-pagefind-ignore` on `.spoiler-body` (in `spoiler` shortcode) excludes spoiler content from the index.
+
+### Math pipeline
+
+Math content is authored in org-mode and validated **before publish**, not after.
+
+1. **`org-math-lint` (pre-publish, dotfiles)** — runs against org source files; tokenizes, applies a 10-rule registry (delimiters, fragmented math, unicode → LaTeX, unknown commands), verifies each fragment by parsing it with vendored KaTeX in V8 via `py-mini-racer`. Source: `~/org/notes/tools/org-math-lint/` (not in this repo). Invoked by `a3-pub.sh` (default on; opt out via `--skip-math-check`).
+2. **B.4 essays handler `has_math` scanner (dotfiles)** — buffer scan for math markers (`{{< math >}}` stub, `\(`, `\[`, `\begin{…}`) excluding fenced code blocks; sets emitted `has_math` frontmatter. `#+HUGO_HAS_MATH:` keyword acts as manual override when present.
+3. **`tools/check_math.py` (site CI, 25th linter pair)** — coupling-only: every essay's `has_math` value must match whether the body actually contains math markers. Catches publish bugs the source-side validator can't see.
+4. **KaTeX runtime — deferred.** No math engine ships on the site yet. When it lands, it will parse the canonical `\(...\)` / `\[...\]` forms `org-math-lint` produces.
 
 ### Content & layouts
 
@@ -156,7 +165,7 @@ woff2 files live in `static/fonts/` (latin + latin-ext subsets only; browsers do
 
 ### Deployment
 
-`.github/workflows/hugo.yaml` builds with Hugo extended and deploys `public/` to GitHub Pages on pushes to `master`. CI step order: pre-build linters (contrast + 24 linter pairs + 1 sibling-less = 50 steps) → `hugo --minify` → pagefind metadata linter unit tests → verify pagefind metadata on built pages → cite metadata linter unit tests → verify cite metadata on built pages → install Pagefind 1.5.2 binary → build Pagefind index into `public/pagefind/` → smoke test → page-weight linter + unit tests → Lighthouse CI desktop (2 steps: `lighthouserc.json`) → Lighthouse CI mobile (`lighthouserc.mobile.json`) → upload artifact → deploy. Total: 61 named steps. (A separate cron workflow `.github/workflows/streams-poll.yaml` runs every 5 minutes — outside this build/deploy pipeline.) Any failure blocks deploy. `public/pagefind/` is gitignored and CI-regenerated each run. Two separate LHCI config files (`lighthouserc.json` for desktop, `lighthouserc.mobile.json` for mobile) — simpler than an env-override approach.
+`.github/workflows/hugo.yaml` builds with Hugo extended and deploys `public/` to GitHub Pages on pushes to `master`. CI step order: pre-build linters (contrast + 25 linter pairs + 1 sibling-less = 52 steps) → `hugo --minify` → pagefind metadata linter unit tests → verify pagefind metadata on built pages → cite metadata linter unit tests → verify cite metadata on built pages → install Pagefind 1.5.2 binary → build Pagefind index into `public/pagefind/` → smoke test → page-weight linter + unit tests → Lighthouse CI desktop (2 steps: `lighthouserc.json`) → Lighthouse CI mobile (`lighthouserc.mobile.json`) → upload artifact → deploy. Total: 63 named steps. (A separate cron workflow `.github/workflows/streams-poll.yaml` runs every 5 minutes — outside this build/deploy pipeline.) Any failure blocks deploy. `public/pagefind/` is gitignored and CI-regenerated each run. Two separate LHCI config files (`lighthouserc.json` for desktop, `lighthouserc.mobile.json` for mobile) — simpler than an env-override approach.
 
 ## Reference docs
 
