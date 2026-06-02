@@ -16,7 +16,7 @@ Ship pre-publish math-syntax validation for org-authored content **by integratin
 C wires it into the publish pipeline and tightens the surrounding site contract:
 
 1. **Pre-publish gate (dotfiles):** `a3-pub.sh` invokes `org-math-lint check` against the source dir before launching Emacs. Non-zero exit aborts publish — same fail-fast discipline as F's cite-key resolver.
-2. **`has_math` auto-derivation (dotfiles):** B.4's essays handler stops requiring a manual `#+HUGO_HAS_MATH:` keyword and instead scans the buffer for math markers; emitted frontmatter reflects reality.
+2. **`has_math` scanner refinements (dotfiles):** B.4 already auto-derives `has_math` from buffer markers (`{{< math >}}` shortcode + `\(...\)` + `\[...\]`, with `#+HUGO_HAS_MATH:` as an override) — shipped 2026-05-31. This slice extends the scanner with two refinements C surfaces: detect environment-based math (`\begin{equation}…\end{equation}` etc.) and exclude fenced code blocks from the scan to prevent false-positives.
 3. **Site-side coupling check (site, 25th linter pair):** a small `tools/check_math.py` validates `has_math` ↔ body markers consistency in essays. Catches publish bugs the source-side validator can't see (Hugo markdown is the ground truth for the site).
 4. **`{{< math >}}` stub retirement + example-one fixture conversion (site):** delete the placeholder shortcode; convert example-one's math block to real LaTeX (`\(\alpha + \beta = \gamma\)` + a display block) so the full chain has an end-to-end fixture.
 5. **Documentation (site):** CLAUDE.md gains a "Math pipeline" subsection naming the chain `org source → org-math-lint → ox-hugo → has_math auto-derive (B.4) → site coupling check → KaTeX runtime (deferred)`.
@@ -25,7 +25,7 @@ C wires it into the publish pipeline and tightens the surrounding site contract:
 
 - `a3-pub.sh` calls `org-math-lint check` by default before invoking Emacs. New flag `--skip-math-check` opts out (in-progress drafts, repo bootstrap).
 - Discovery of the `org-math-lint` venv at `~/org/notes/tools/org-math-lint/.venv/bin/python` with a clear "not installed" error if missing.
-- B.4 essays handler buffer scan for `\(`, `\[`, `\begin{<env>}` outside code/example blocks; sets emitted `has_math:` accordingly. `#+HUGO_HAS_MATH:` becomes an optional manual override (true / false) that wins over auto-derivation when present.
+- Extend B.4 essays scanner (`a3madkour-publish-essays.el` `--scan-has-flags`): add `\begin{<env>}` detection (currently `\(`, `\[`, and the `{{< math >}}` shortcode are recognized — envs are not), and exclude fenced code blocks before scanning so that code-sample bodies containing math syntax don't false-positive. Existing `#+HUGO_HAS_MATH:` keyword override semantics unchanged.
 - Site `tools/check_math.py` + `tools/test_check_math.py` — coupling-only validator, ~50 LoC + ~6 tests.
 - Site CI integration: new linter pair in `.github/workflows/hugo.yaml` and `tools/ci-local.sh` (step count goes 61 → 63).
 - Delete `layouts/shortcodes/math.html`.
@@ -123,47 +123,52 @@ a3-pub.sh, not begin-publish in elisp. Rationale captured during brainstorm: the
 
 ---
 
-## 4 — `has_math` auto-derivation (B.4 essays handler)
+## 4 — `has_math` scanner refinements (B.4 essays handler)
 
-### 4.1 Current state
+### 4.1 What already exists
 
-B.4 essays handler (shipped 2026-05-31, see [[b4-complete]]) reads `has_math` from `#+HUGO_HAS_MATH: t` / `nil` in the org buffer and emits it into the markdown frontmatter. Authors who add math without flipping the keyword get a frontmatter / body mismatch — invisible until a runtime feature uses the flag (the future KaTeX loader will silently no-op).
+B.4 essays handler (shipped 2026-05-31, see [[b4-complete]]) auto-derives `has_math` from buffer markers at `a3madkour-publish-essays.el:24-45` (function `a3madkour-pub-essays--scan-has-flags`). The scanner runs on `(concat src-content body)` — both the org source and the post-export markdown body — and detects:
 
-### 4.2 New behaviour
+- The `{{< math >}}` shortcode (legacy stub being retired in this slice).
+- `\(` inline LaTeX delimiter.
+- `\[` display LaTeX delimiter.
 
-When the essays handler builds the emitted frontmatter dict, it adds an auto-derivation pass for `has_math`:
+The override merge at `a3madkour-publish-essays.el:70-80` (function `--merge-has-flags`) applies `#+HUGO_HAS_<X>:` keyword values on top of the scanner result. Semantics: `t`/`true`/`1`/`yes` → `t`; `nil`/`false`/`0`/`no` → `nil`; absent or unrecognised → scanner result passes through.
 
-```
-1. Scan the buffer for math markers.
-2. If a manual `#+HUGO_HAS_MATH:` exists, it wins (lets authors silence false positives).
-3. Otherwise emit `has_math: true` iff any math marker was found outside code/example/quote blocks.
-```
+Existing test coverage in `a3madkour-publish-essays-test.el`:
 
-Marker regex (in scan order, dotall-aware where relevant):
+- `scan-math-shortcode` (lines 42-46) — `{{< math >}}` shortcode detected.
+- `scan-math-inline-delim` (lines 48-51) — `\(\alpha\)` detected.
+- `scan-math-display-delim` (lines 53-56) — `\[\alpha\]` detected.
+- `scan-math-negative` (lines 58-61) — plain text not detected.
 
-- `\\(.+?\\\)` (inline)
-- `\\\[.+?\\\]` (display)
-- `\\begin\{(\w+\*?)\}.+?\\end\{\1\}` (environments — same-name pairing)
+### 4.2 Two new gaps closed in this slice
 
-Code blocks excluded: `#+begin_src` / `#+end_src`, `#+begin_example` / `#+end_example`, `#+begin_quote` / `#+end_quote`, plus inline `~...~` / `=...=` spans. This mirrors `org-math-lint`'s parser token exclusions.
+**Gap 1: environment-based math.** The current scanner has no entry for `\begin{equation}…\end{equation}` or sibling environments. Real authors writing display math in org-mode commonly reach for `\begin{align}…\end{align}` rather than `\[…\]`. Without detection, those essays get `has_math: false` despite carrying display math, breaking the site-side coupling check we ship in §5.
 
-### 4.3 Why the keyword stays as override
+Fix: add `(string-match-p "\\\\begin{[a-zA-Z]+\\*?}" body)` to the math disjunction at line 41-43. Matches `\begin{<name>}` with optional `*` suffix (KaTeX's starred envs). One additional ert test (`scan-math-environment`).
+
+**Gap 2: code-fenced false-positive.** A code block containing `\(x\)` (e.g., an essay teaching LaTeX syntax) currently makes the scanner report `has_math: true` even though the math is just illustrative text. The site coupling check would then fail because the rendered markdown body has the markers inside a code fence — the linter would correctly say "math markers found, but they're inside a code fence" while the scanner over-reported.
+
+Fix: before scanning, strip both Hugo-style fenced code blocks (` ``` ` to ` ``` `) and org-style `#+begin_src` … `#+end_src` / `#+begin_example` … `#+end_example` regions from the body. Inline backtick code spans (``\`...\``) and org inline `~…~` / `=…=` are not stripped — they're single-line, math-rare, and stripping them would over-complicate the helper.
+
+One additional ert test (`scan-math-inside-code-fence-ignored`).
+
+### 4.3 Why the keyword stays as override (unchanged)
 
 Two cases the keyword still earns its keep:
 
 - **False-positive silencing:** an author quotes raw `\alpha` in prose without intending KaTeX rendering (rare, but possible in a meta-essay about LaTeX). `#+HUGO_HAS_MATH: nil` forces `false`.
 - **Forward-declared math:** an essay placeholder reserves `has_math: true` before the math is written, so the runtime loader is in place from the start. `#+HUGO_HAS_MATH: t` forces `true`.
 
-The override semantics: if `#+HUGO_HAS_MATH:` is `t` / `true` → emit `true`; if `nil` / `false` → emit `false`; absent → auto-derive.
-
-### 4.4 Sibling test coverage
+### 4.4 Sibling test coverage delta
 
 `a3madkour-publish-essays-test.el` adds two ert tests:
 
-- `essays--has-math-auto-derive-detects-math` — buffer contains `\(x\)`; no `#+HUGO_HAS_MATH:`; emitted frontmatter has `has_math: true`.
-- `essays--has-math-manual-override-wins` — buffer contains `\(x\)`; has `#+HUGO_HAS_MATH: nil`; emitted frontmatter has `has_math: false`.
+- `scan-math-environment` — body contains `\begin{equation}E = mc^2\end{equation}`; `:has_math` is `t`.
+- `scan-math-inside-code-fence-ignored` — body contains a fenced code block whose only math marker is `\(x\)`; `:has_math` is `nil` (the math is inside the fence and shouldn't count).
 
-Existing tests that hard-code `#+HUGO_HAS_MATH: t` in fixtures keep passing because the manual value still wins; no fixture rewrites needed.
+Existing 4 math scanner tests pass unchanged; existing override merge tests pass unchanged.
 
 ---
 
@@ -357,9 +362,9 @@ After implementation:
 Expected commits (subagent-driven plan will lay these out in detail):
 
 **Dotfiles:**
-1. `feat(c): a3-pub.sh --check-math flag + org-math-lint subprocess gate`
-2. `feat(c): B.4 essays handler auto-derives has_math from buffer markers`
-3. `test(c): essays handler — has_math auto-derive + manual-override ert tests`
+1. `feat(c): a3-pub.sh --skip-math-check flag + org-math-lint subprocess gate`
+2. `feat(c): B.4 essays scanner — env detection + code-fence exclusion`
+3. `test(c): essays scanner — env + code-fence ert tests`
 
 **Site:**
 4. `feat(c): tools/check_math.py — has_math frontmatter coupling linter`
