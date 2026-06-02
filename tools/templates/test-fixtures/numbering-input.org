@@ -1,0 +1,25 @@
+#+title: Numbering smoke
+
+#+begin_theorem
+First theorem.
+#+end_theorem
+
+#+begin_lemma
+First lemma (shares theorem family).
+#+end_lemma
+
+#+begin_definition
+First definition.
+#+end_definition
+
+#+begin_theorem
+Second theorem.
+#+end_theorem
+
+#+begin_proof
+Proof body.
+#+end_proof
+
+#+begin_definition
+Second definition.
+#+end_definition
