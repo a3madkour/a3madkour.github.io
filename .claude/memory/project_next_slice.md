@@ -1,69 +1,68 @@
 ---
 name: next-slice
-description: "Session-start pointer — next slice is Phase 3 sub-project C (pre-publish validators). F shipped 2026-06-01 end-to-end with Task 18 spot-check passing on real corpus (notes_ref auto-detect now produces 'Related note' links next to bib refs). Per spec sequencing: A → B → F → **C** → D → E."
-metadata:
+description: "Session-start pointer — next slice is Phase 3 sub-project D (unified semantic markup: def / thm / figure / sidenotes / math in one source vocabulary rendering to Hugo + PDF + Word). C shipped 2026-06-01 (math validator, integration slice; see [[c-complete]]). Per spec sequencing: A → B → F → C → **D** → E."
+metadata: 
   node_type: memory
   type: project
+  originSessionId: 29127c6c-92db-4a63-8841-a53b487a6d52
 ---
 
-**Next slice = Phase 3 sub-project C — pre-publish validators.** F shipped 2026-06-01; see [[f-complete]].
+**Next slice = Phase 3 sub-project D — unified semantic markup.** C shipped 2026-06-01; see [[c-complete]].
 
-Per the parent decomposition ([[phase-3-decomposition]]) + CLAUDE.md sequencing: A → B → F → **C (next)** → D → E.
+Per the parent decomposition ([[phase-3-decomposition]]) + CLAUDE.md sequencing: A → B → F → C → **D (next)** → E.
 
-## What C is
+## What D is
 
-From CLAUDE.md "C. Pre-publish validators":
+From CLAUDE.md "D. Unified semantic markup":
 
-> Python `check_*` pattern.  Math-rendering lint (KaTeX/MathJax compatibility, balanced delimiters, macro availability).  Citation validation was moved to F.
+> Definitions / theorems / proofs / sidenotes / figures / math in one source vocabulary that renders to Hugo + PDF + Word. **Subsumes** the prior Multi-target export spec (`docs/superpowers/specs/2026-05-13-multi-target-export-design.md`) — revisit inside D.
 
-So C is the **math validator**, paralleling the existing site-side `check_*` Python linters (essay-fixtures, garden-links, etc.). New pair: `tools/check_math.py` + `tools/test_check_math.py`.
+So D is the **largest** of the remaining sub-projects. It:
 
-Scope candidates (to confirm in C's brainstorm):
-- Balanced `\(...\)`, `\[...\]`, `$...$`, `$$...$$` delimiters across all `has_math: true` essay bodies.
-- KaTeX-supported macro vocabulary (or MathJax, depending on which the site bundles — currently neither is shipped; math is a deferred feature exercised by essay fixture #2's `has_math` flag).
-- LaTeX-specific commands that won't render in the chosen JS engine.
-- Inline vs display math context sanity.
+1. Defines a single source vocabulary for semantic blocks — `definition`, `theorem`, `proof`, `figure`, `sidenote`, plus math (which K just validated).
+2. Renders that vocabulary to **three** targets: Hugo (web), PDF (LaTeX), Word (docx). Multi-target export folds into this.
+3. Likely subsumes the existing fragmented stub-shortcodes (`sidenote`, `figure`, `spoiler`) that already exist on the Hugo side, AND the deferred ones (`widget`, `lyrics`, `video-sync`).
+4. Has the biggest unresolved-design surface of any remaining slice. Brainstorm will be substantial.
 
-## Pre-C prep
+## Pre-D prep
 
-Per [[design-batch-no-plan-until-implement]] — design batch only; spec C first, plan when implementation slot opens.
+Per [[design-batch-no-plan-until-implement]] — when D's slot opens, brainstorm fresh; don't try to draft the plan from this stub. Required reads:
 
-Required reads when C kicks off:
-1. CLAUDE.md "Phase 3" section + the deferred features table (math is on it).
+1. CLAUDE.md "Phase 3" section + the deferred features table.
 2. [[phase-3-decomposition]] for the 6-sub-project frame.
-3. The 24 existing `tools/check_*.py` linter pairs as the Python style precedent (look at `check_citations.py` for the closest analog since math is also a content-shape check).
-4. F spec + plan for how the citation linter pair was scoped (F kept the existing schema, just loosened a regex — C builds a new linter from scratch).
+3. The existing multi-target export spec: `docs/superpowers/specs/2026-05-13-multi-target-export-design.md` (will be revisited inside D).
+4. The existing shortcode stubs in `layouts/shortcodes/` — `sidenote.html`, `figure.html`, `spoiler.html` are real; `widget.html`, `lyrics.html`, `video-sync.html` are deferred-feature placeholders (per CLAUDE.md "Deferred features" table).
+5. [[c-complete]] for what math validation looks like post-C.
+6. [[time-synced-poetry-slice]] + [[citation-export-slice]] for prior multi-target-ish work (poetry has audio+animation modes; citations have BibTeX/APA/Chicago/MLA/RIS exports).
 
 ## State of the world at session start
 
 **Site (`~/Sync/Workspace/a3madkour.github.io/`):**
-- master = post-F merge (`--no-ff` of `worktree-f-citation-pipeline`). Pre-existing unpushed commits from before F (spec/plan/LHCI stub) + 4 F commits + the merge. Push pending — author held it for the next session.
-- Worktree at `.claude/worktrees/f-citation-pipeline` still exists; clean up when push happens.
-- `data/citations.yaml` now contains the 3 fixture entries + the author's first real cite (`meiRWoMRetrievalaugmentedWorld2026`) — proof F works end-to-end.
-- New garden bundle `content/garden/mei-r-wom-2026/` from the spot-check (a ref-note promoted to garden via `#+HUGO_PUBLISH: t` + `#+HUGO_SECTION: garden`).
-- 478 ert + 36 integration tests passing.
+- master = post-C local tip `8808c74`. Pre-existing unpushed F commits (`9d333c4`, `930bcec`, `e3b9c6a`) + new C commits (`07ff27e`, `3448b13`, `0639291`, `9a4e4e3`, `bd70977`, `0ae3c73`, `5e0284b`, `8808c74`). **Not pushed** — held for author review of the C slice.
+- Worktree `.claude/worktrees/f-citation-pipeline` still exists; clean to remove after push.
+- 480 ert + 36 integration + 7 new check_math sibling tests passing.
 
 **Dotfiles (`~/dotfiles/`):**
-- main = `116950b` (Task 18 follow-ups). Unpushed.
+- main = `0284026` (C T9 wire). 5 local C commits (`81fae4d`, `89092f8`, `8049844`, `7b2db57`, `0284026`). **Not pushed**.
 - 5 pre-existing dirty tracked files (`.gitignore`, `.zshrc`, `bookmarks`, `early-init.el`, `init.el`) — author's in-progress local work, NEVER commit them.
+- `org-math-lint` venv at `~/org/notes/tools/org-math-lint/.venv/` is **broken** on this host (cross-platform mismatch); recreate before exercising the math gate. See [[reference-org-math-lint-venv-platform]].
 
 **Personal notes (`~/org/`):**
-- `org/essays/example-one.org` carries the author's first `[cite:@meiRWoMRetrievalaugmentedWorld2026]` — kept for the spot-check.
-- `org/notes/ref-notes/meiRWoMRetrievalaugmentedWorld2026.org` was promoted to garden via flags; if you decide to roll back the spot-check, edit the flags back out (or leave it — it's working content now).
+- Unchanged since end of F.
 
-## Pending follow-ups (NOT C-scope)
+## Pending follow-ups (NOT D-scope)
 
-Logged in [[f-complete]]:
-- **B.4 orphan-sweep over-deletion** — `--publish-deliberate` of one essay deletes other essay bundles. NOT an F issue; file under B.4.x.
-- F.2 — style-override / prefix-suffix org-cite syntax.
-- F.3 — `#+print_bibliography:` positional rendering.
-- F.x — title quality on ref-notes promoted to garden (full bibliographic header makes a clunky tile title).
-- F.x — promote `TestSyncPurges` + `TestHugoRendersCitedEssay` from `@unittest.skip` to runnable (needs roam-indexed fixture harness OR a self-contained live-tree workspace).
-- Performance regression test against 15.6k-entry library.bib if publish slowdown surfaces.
+Logged in [[c-complete]]:
+- **org-math-lint venv recreation** on this host (5-line shell incantation).
+- **Helper exit-code conflation** in `a3-pub.sh` — distinguish "broken install" from "validation failure" via an `import org_math_lint` probe.
+- **Interactive `M-x a3-publish-*` paths uncovered** by the math gate.
+- **Garden / research / library math** not validated by `check_math.py` (essays-only V1).
+
+Plus from [[f-complete]]: B.4 orphan-sweep over-deletion; F.2/F.3 cite-syntax extensions; F.x ref-note title quality.
 
 ## Recommended session start
 
-1. Author pushes the queued site + dotfiles commits (held from F's session).
-2. Read CLAUDE.md + [[phase-3-decomposition]] + this file.
-3. `superpowers:brainstorming` for C — open design questions: which math engine (KaTeX vs MathJax, both deferred); whether to validate against a vocabulary list or just delimiter balance; whether per-essay `has_math: true` triggers the check.
-4. Spec C, queue the plan, ship.
+1. Author pushes the queued site + dotfiles commits (10 local C commits held from this session).
+2. Read CLAUDE.md + [[phase-3-decomposition]] + this file + [[c-complete]].
+3. Decide whether D is in scope now or defer (D is large; E may be smaller).
+4. If D: `superpowers:brainstorming`. Open questions: source vocabulary syntax (org `:custom-id:` blocks? `#+begin_definition`?); render-target architecture (one renderer per target? one IR?); how `definition` / `theorem` / `proof` interact with the existing org-mode export and ox-hugo.
