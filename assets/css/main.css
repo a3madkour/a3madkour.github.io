@@ -5443,9 +5443,10 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   font-style: normal; /* keep ∎ upright even though body is italic */
 }
 
-/* Deep-link affordance: anchored blocks (id attr present) get the same
-   hover # affordance as headings in §11. The selector mirrors the heading
-   pattern: a sibling-of nothing trick, so we use direct id presence.
+/* Deep-link affordance: anchored blocks (id attr present) surface a
+   hover " #" indicator for visibility. This is the first surface to use
+   the pattern; generalize via a shared selector when other anchored
+   elements (headings, garden notes) want the same affordance.
 */
 .block-strong[id]:hover::after,
 .block-soft[id]:hover::after,
