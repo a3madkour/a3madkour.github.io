@@ -44,7 +44,7 @@ The brainstorm split D into two sub-projects (D.1 vocab, D.2 multi-target export
 3. **Custom block kinds beyond the 12** (e.g., `principle`, `metatheorem`, `observation`). Trigger: spec request from real essay usage.
 4. **Per-essay numbering reset point** ("reset theorem-family at this H2"). Trigger: long essays where two unrelated arguments share theorem numbering.
 5. **D.2 multi-target export.** Picks up the existing multi-target spec; wires the same 12-kind vocabulary into PDF (ox-latex) + Word (pandoc) renderers.
-6. **Generalize the `[id]:hover::after` deep-link affordance** to headings and garden notes when the appetite shows up. Currently the pattern is only on `.block-strong[id]` / `.block-soft[id]` / `.block-proof[id]`.
+6. **Anchor affordance — needs a real design.** D.1's `[id]:hover::after { content: " #"; }` is a placeholder that looks bad and doesn't actually solve the underlying UX problem (not clickable; invisible on touch; visually noisy). Queued for its own brainstorm; the underlying problem (deep-link discoverability + URL grab) applies site-wide to semantic blocks, essay headings, garden notes, etc. See [[anchor-affordance-followup]] for the full problem framing.
 7. **Goldmark LaTeX-delimiter strategy for KaTeX integration.** D.1 doesn't surface this since KaTeX is deferred, but the dev-server spot-check noticed that Goldmark strips `\(...\)` backslashes by default (renders `\(x_0\)` as `(x_0)`). Future KaTeX shortcode-or-Goldmark-extension work will need to handle this. C's `tools/check_math.py` was correctly catching the markdown-level markers — the issue is render-time only.
 
 ## End-of-slice test inventory

@@ -5442,17 +5442,3 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   margin-left: 0.4em;
   font-style: normal; /* keep ∎ upright even though body is italic */
 }
-
-/* Deep-link affordance: anchored blocks (id attr present) surface a
-   hover " #" indicator for visibility. This is the first surface to use
-   the pattern; generalize via a shared selector when other anchored
-   elements (headings, garden notes) want the same affordance.
-*/
-.block-strong[id]:hover::after,
-.block-soft[id]:hover::after,
-.block-proof[id]:hover::after {
-  content: " #";
-  color: var(--color-ink-soft);
-  font-weight: 400;
-  margin-left: 0.4em;
-}
