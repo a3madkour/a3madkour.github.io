@@ -107,6 +107,44 @@ class TestLintBundle(unittest.TestCase):
         errors, _ = self._lint()
         self.assertEqual(errors, [])  # Dotfile is not flagged orphan
 
+    # ---- D.2 downloads frontmatter ------------------------------------
+
+    def test_downloads_inline_flow_resolves(self) -> None:
+        _write(self.bundle / "index.md",
+               '---\n'
+               'title: ok\n'
+               'multi_export: true\n'
+               'downloads: {pdf: "out.pdf", word: "out.docx"}\n'
+               '---\nBody.\n')
+        _write(self.bundle / "out.pdf", "%PDF-1.7\n%fake\n")
+        _write(self.bundle / "out.docx", "PK\x03\x04fake")
+        errors, _ = self._lint()
+        self.assertEqual(errors, [])
+
+    def test_downloads_block_flow_resolves(self) -> None:
+        _write(self.bundle / "index.md",
+               '---\n'
+               'title: ok\n'
+               'multi_export: true\n'
+               'downloads:\n'
+               '  pdf: out.pdf\n'
+               '  word: out.docx\n'
+               '---\nBody.\n')
+        _write(self.bundle / "out.pdf", "x")
+        _write(self.bundle / "out.docx", "x")
+        errors, _ = self._lint()
+        self.assertEqual(errors, [])
+
+    def test_downloads_missing_artifact_errors(self) -> None:
+        _write(self.bundle / "index.md",
+               '---\n'
+               'title: ok\n'
+               'downloads: {pdf: "missing.pdf"}\n'
+               '---\nBody.\n')
+        errors, _ = self._lint()
+        self.assertTrue(any("missing.pdf" in e and "does not resolve" in e for e in errors),
+                        errors)
+
 
 if __name__ == "__main__":
     unittest.main()

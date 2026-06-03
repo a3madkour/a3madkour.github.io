@@ -68,7 +68,30 @@ def _extract_refs(body: str, frontmatter: str = "") -> list[str]:
         m = re.search(rf"^{field}:\s*['\"]?([^\s'\"]+)['\"]?\s*$", frontmatter, re.MULTILINE)
         if m:
             refs.append(m.group(1))
+    # D.2 multi-target export: downloads:{pdf: …, word: …} maps to bundle artifacts.
+    refs.extend(_downloads_refs(frontmatter))
     return refs
+
+
+_DOWNLOADS_INLINE_RE = re.compile(r"^downloads:\s*\{([^}]*)\}\s*$", re.MULTILINE)
+_DOWNLOADS_BLOCK_RE = re.compile(
+    r"^downloads:\s*\n((?:[ \t]+\S.*\n?)+)", re.MULTILINE
+)
+_KV_RE = re.compile(r"\b(\w+)\s*:\s*['\"]?([^'\",\s]+)['\"]?")
+
+
+def _downloads_refs(frontmatter: str) -> list[str]:
+    out: list[str] = []
+    m = _DOWNLOADS_INLINE_RE.search(frontmatter)
+    if m:
+        for _, val in _KV_RE.findall(m.group(1)):
+            out.append(val)
+        return out
+    m = _DOWNLOADS_BLOCK_RE.search(frontmatter)
+    if m:
+        for _, val in _KV_RE.findall(m.group(1)):
+            out.append(val)
+    return out
 
 
 def _classify(ref: str) -> str:
