@@ -150,5 +150,31 @@ class CheckFixturesTest(unittest.TestCase):
         self.assertEqual(rc, 0, msg=f"unexpected: {errors}")
 
 
+class FlowMappingDownloadsTest(unittest.TestCase):
+    """Inline flow `downloads:' parses to a dict the validator can introspect."""
+
+    def test_parses_inline_flow_downloads(self):
+        fm = lint.parse_frontmatter(
+            '---\n'
+            'title: "X"\n'
+            'multi_export: true\n'
+            'downloads: {pdf: "x.pdf", word: "x.docx"}\n'
+            '---\nbody\n'
+        )
+        self.assertIsInstance(fm, dict)
+        self.assertEqual(fm.get("multi_export"), True)
+        self.assertEqual(fm.get("downloads"), {"pdf": "x.pdf", "word": "x.docx"})
+
+    def test_parses_pdf_only_downloads(self):
+        fm = lint.parse_frontmatter(
+            '---\n'
+            'title: "X"\n'
+            'multi_export: true\n'
+            'downloads: {pdf: "x.pdf"}\n'
+            '---\nbody\n'
+        )
+        self.assertEqual(fm.get("downloads"), {"pdf": "x.pdf"})
+
+
 if __name__ == "__main__":
     unittest.main()
