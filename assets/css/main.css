@@ -469,6 +469,22 @@ main { flex-grow: 1; }
   font-style: italic;
   color: var(--color-ink-soft);
 }
+.essay-downloads {
+  display: inline-flex;
+  gap: 0.35rem;
+}
+.download-link {
+  font-size: 0.7rem;
+  padding: 1px 7px;
+  background: transparent;
+  color: var(--color-burgundy);
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 99px;
+  text-decoration: none;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+.download-link:hover { border-color: var(--color-burgundy); }
 
 /* ------------------------------------------------------------------
  * 11. Essay grid + cards
