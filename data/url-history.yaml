@@ -1,45 +1,46 @@
 notes: 
-- current_url: "/garden/bayesian-statistics/"
+- id: 09049cd8-ba99-435d-a8f2-9c0cbf9322a4
+  current_url: "/garden/bayesian-statistics/"
   history: []
   state: live
-  id: 09049cd8-ba99-435d-a8f2-9c0cbf9322a4
-- id: 0a07e759-74ec-44e1-903d-514ba068870f
+- state: live
+  id: 0a07e759-74ec-44e1-903d-514ba068870f
   current_url: "/garden/bias-vs-variance/"
   history: []
+- history: []
   state: live
-- state: live
   id: e191ccb8-0b1b-4d61-b0cf-e7eb26e866a6
   current_url: "/garden/cellular-automata-are-visual-rule-based-systems/"
+- current_url: "/garden/maximum-a-posteriori-map/"
   history: []
-- history: []
   state: live
   id: 235402ca-0637-455a-b66c-fb23067b0874
-  current_url: "/garden/maximum-a-posteriori-map/"
-- current_url: "/research/questions/example-question-four/"
-  history: []
-  state: live
-  id: 20000004-0000-0000-0000-000000000004
-- id: 20000001-0000-0000-0000-000000000001
-  current_url: "/research/questions/example-question-one/"
+- id: 20000004-0000-0000-0000-000000000004
+  current_url: "/research/questions/example-question-four/"
   history: []
   state: live
 - state: live
-  id: 20000003-0000-0000-0000-000000000003
-  current_url: "/research/questions/example-question-three/"
+  id: 20000001-0000-0000-0000-000000000001
+  current_url: "/research/questions/example-question-one/"
   history: []
 - history: []
   state: live
-  id: 20000002-0000-0000-0000-000000000002
-  current_url: "/research/questions/example-question-two/"
-- current_url: "/research/themes/example-theme-one/"
+  id: 20000003-0000-0000-0000-000000000003
+  current_url: "/research/questions/example-question-three/"
+- current_url: "/research/questions/example-question-two/"
   history: []
   state: live
-  id: 10000001-0000-0000-0000-000000000001
-- id: 10000002-0000-0000-0000-000000000002
+  id: 20000002-0000-0000-0000-000000000002
+- id: 10000001-0000-0000-0000-000000000001
+  current_url: "/research/themes/example-theme-one/"
+  history: []
+  state: live
+- state: live
+  id: 10000002-0000-0000-0000-000000000002
   current_url: "/research/themes/example-theme-two/"
   history: []
-  state: live
-- id: essay-one-uuid-placeholder
+- state: live
+  id: essay-one-uuid-placeholder
   current_url: "/essays/example-one/"
   history: 
   - replaced_at: "2026-06-01T19:24:54Z"
@@ -54,20 +55,30 @@ notes:
   - url: null
     replaced_at: "2026-06-01T23:15:19Z"
     reason: republished
-  state: live
-- history: []
+- current_url: "/essays/example-four/"
+  history: []
   state: live
   id: essay-four-uuid-placeholder
-  current_url: "/essays/example-four/"
-- current_url: "/essays/example-two/"
+- id: essay-two-uuid-placeholder
+  current_url: "/essays/example-two/"
   history: []
   state: live
-  id: essay-two-uuid-placeholder
-- id: essay-three-uuid-placeholder
+- state: live
+  id: essay-three-uuid-placeholder
   current_url: "/essays/example-three/"
   history: []
-  state: live
-- history: []
+- current_url: "/garden/mei-r-wom-2026/"
+  history: []
   state: live
   id: E2C28B89-4E71-4E7C-B220-BCE051F1BD53
-  current_url: "/garden/mei-r-wom-2026/"
+- history: []
+  state: live
+  id: 11111111-2222-3333-4444-555555555555
+  current_url: "/essays/example-essay-multi-target-export/"
+- id: null
+  current_url: "/essays/example-multi/"
+  history: 
+  - url: "/essays/example-essay-multi-target-export/"
+    replaced_at: "2026-06-03T21:57:11Z"
+    reason: title_change
+  state: live
