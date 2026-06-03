@@ -215,6 +215,27 @@ def lint_essay(essay_dir: Path, valid_cite_keys: set[str]) -> list[str]:
         if not (essay_dir / str(hero)).exists():
             errors.append(f"{md_path}: hero file '{hero}' not found in page bundle")
 
+    multi_export = fm.get("multi_export", False)
+    downloads = fm.get("downloads", {}) or {}
+    if not isinstance(downloads, dict):
+        errors.append(f"{md_path}: downloads must be a mapping")
+        downloads = {}
+
+    if multi_export is True:
+        allowed = {"pdf", "word"}
+        unknown = set(downloads.keys()) - allowed
+        for key in sorted(unknown):
+            errors.append(f"{md_path}: downloads.{key} is not a recognized key (allowed: pdf, word)")
+        if not (downloads.get("pdf") or downloads.get("word")):
+            errors.append(
+                f"{md_path}: multi_export: true requires at least one of downloads.pdf / downloads.word"
+            )
+        for key in ("pdf", "word"):
+            rel = downloads.get(key)
+            if rel:
+                if not (essay_dir / str(rel)).exists():
+                    errors.append(f"{md_path}: downloads.{key} '{rel}' not found in page bundle")
+
     date = fm.get("date")
     lastmod = fm.get("lastmod")
     if isinstance(date, Date) and isinstance(lastmod, Date) and lastmod < date:

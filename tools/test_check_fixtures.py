@@ -176,5 +176,70 @@ class FlowMappingDownloadsTest(unittest.TestCase):
         self.assertEqual(fm.get("downloads"), {"pdf": "x.pdf"})
 
 
+class MultiExportValidationTest(unittest.TestCase):
+    def setUp(self):
+        self.repo = TempRepo()
+
+    def tearDown(self):
+        self.repo.cleanup()
+
+    def _fm_with(self, extra: str) -> str:
+        return VALID_FRONTMATTER.replace(
+            "has_video_sync: false\n",
+            f"has_video_sync: false\n{extra}\n",
+        )
+
+    def test_multi_export_true_with_both_downloads_passes(self):
+        body = self._fm_with(
+            'multi_export: true\n'
+            'downloads: {pdf: "example-essay-one.pdf", word: "example-essay-one.docx"}'
+        )
+        d = self.repo.root / "content" / "essays" / "example-essay-one"
+        self.repo.write_essay("example-essay-one", body, hero=True)
+        (d / "example-essay-one.pdf").write_bytes(b"%PDF-1.4 stub")
+        (d / "example-essay-one.docx").write_bytes(b"PK stub")
+        self.repo.write_citations(VALID_CITATIONS)
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 0, msg=f"unexpected: {errors}")
+
+    def test_multi_export_true_with_missing_pdf_fails(self):
+        body = self._fm_with(
+            'multi_export: true\n'
+            'downloads: {pdf: "example-essay-one.pdf"}'
+        )
+        self.repo.write_essay("example-essay-one", body, hero=True)
+        # Intentionally do NOT create the pdf file.
+        self.repo.write_citations(VALID_CITATIONS)
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("example-essay-one.pdf" in e for e in errors))
+
+    def test_multi_export_true_without_downloads_fails(self):
+        body = self._fm_with('multi_export: true')
+        self.repo.write_essay("example-essay-one", body, hero=True)
+        self.repo.write_citations(VALID_CITATIONS)
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("downloads" in e for e in errors))
+
+    def test_multi_export_false_passes(self):
+        body = self._fm_with('multi_export: false')
+        self.repo.write_essay("example-essay-one", body, hero=True)
+        self.repo.write_citations(VALID_CITATIONS)
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 0, msg=f"unexpected: {errors}")
+
+    def test_unknown_downloads_key_fails(self):
+        body = self._fm_with(
+            'multi_export: true\n'
+            'downloads: {epub: "x.epub"}'
+        )
+        self.repo.write_essay("example-essay-one", body, hero=True)
+        self.repo.write_citations(VALID_CITATIONS)
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("epub" in e for e in errors))
+
+
 if __name__ == "__main__":
     unittest.main()
