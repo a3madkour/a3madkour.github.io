@@ -88,3 +88,78 @@ def check_assert_matrix(config: dict, urls: list[str], source: str) -> list[str]
                 f"'{pattern}' matches no URL in collect.url"
             )
     return errors
+
+
+def run(
+    public_dir: Path,
+    desktop_config: Path,
+    mobile_config: Path,
+) -> tuple[int, list[str]]:
+    """Orchestrate the three checks. Returns (exit_code, error_lines).
+
+    exit_code 2 reserved for bootstrap failures (missing public/, missing
+    config, unparseable JSON). exit_code 1 for validation failures. 0 on
+    clean.
+    """
+    if not public_dir.is_dir():
+        return 2, [
+            f"check_lhci_urls: {public_dir}/ not found. Run `hugo --minify` first."
+        ]
+
+    for cfg in (desktop_config, mobile_config):
+        if not cfg.is_file():
+            return 2, [f"check_lhci_urls: {cfg.name} not found"]
+
+    try:
+        desktop = json.loads(desktop_config.read_text(encoding="utf-8"))
+        mobile = json.loads(mobile_config.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        return 2, [f"check_lhci_urls: invalid JSON: {e}"]
+
+    desktop_urls: list[str] = desktop.get("ci", {}).get("collect", {}).get("url", [])
+    mobile_urls: list[str] = mobile.get("ci", {}).get("collect", {}).get("url", [])
+
+    errors: list[str] = []
+    errors.extend(check_existence(public_dir, desktop_urls, "lighthouserc.json"))
+    errors.extend(check_existence(public_dir, mobile_urls, "lighthouserc.mobile.json"))
+    errors.extend(check_equality(desktop_urls, mobile_urls))
+    errors.extend(check_assert_matrix(desktop, desktop_urls, "lighthouserc.json"))
+    errors.extend(check_assert_matrix(mobile, mobile_urls, "lighthouserc.mobile.json"))
+
+    return (1 if errors else 0), errors
+
+
+def main() -> int:
+    code, errors = run(PUBLIC_DIR, DESKTOP_CONFIG, MOBILE_CONFIG)
+
+    if code == 0:
+        # Compute matrix count for the success line.
+        try:
+            desktop = json.loads(DESKTOP_CONFIG.read_text(encoding="utf-8"))
+            mobile = json.loads(MOBILE_CONFIG.read_text(encoding="utf-8"))
+            url_count = len(desktop.get("ci", {}).get("collect", {}).get("url", []))
+            matrix_count = (
+                len(desktop.get("ci", {}).get("assert", {}).get("assertMatrix", []))
+                + len(mobile.get("ci", {}).get("assert", {}).get("assertMatrix", []))
+            )
+            print(
+                f"check_lhci_urls: OK ({url_count} URLs, "
+                f"{matrix_count} assertMatrix overrides)"
+            )
+        except Exception:
+            print("check_lhci_urls: OK")
+        return 0
+
+    if code == 2:
+        for e in errors:
+            print(e, file=sys.stderr)
+        return 2
+
+    print(f"check_lhci_urls: {len(errors)} issue(s):", file=sys.stderr)
+    for e in errors:
+        print(f"  - {e}", file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -152,3 +152,97 @@ class TestCheckAssertMatrix(unittest.TestCase):
         errors = mod.check_assert_matrix(config, urls, "lighthouserc.mobile.json")
         self.assertEqual(len(errors), 1)
         self.assertIn("not a valid regex", errors[0])
+
+
+class TestRun(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp(prefix="check_lhci_urls_test_"))
+        self.public = self.tmp / "public"
+        self.public.mkdir()
+        self.desktop_config = self.tmp / "lighthouserc.json"
+        self.mobile_config = self.tmp / "lighthouserc.mobile.json"
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _write_configs(
+        self, urls: list[str], mobile_matrix: list[dict] | None = None
+    ) -> None:
+        self.desktop_config.write_text(
+            json.dumps({"ci": {"collect": {"url": urls}}}), encoding="utf-8"
+        )
+        mobile_body: dict = {"ci": {"collect": {"url": urls}}}
+        if mobile_matrix is not None:
+            mobile_body["ci"]["assert"] = {"assertMatrix": mobile_matrix}
+        self.mobile_config.write_text(json.dumps(mobile_body), encoding="utf-8")
+
+    def _run(self) -> tuple[int, list[str]]:
+        return mod.run(self.public, self.desktop_config, self.mobile_config)
+
+    def test_clean_run_returns_zero(self) -> None:
+        _touch(self.public / "index.html")
+        _touch(self.public / "essays/example-one/index.html")
+        self._write_configs(
+            ["http://localhost/", "http://localhost/essays/example-one/"],
+            mobile_matrix=[{"matchingUrlPattern": "/essays/example-one/$"}],
+        )
+        code, errors = self._run()
+        self.assertEqual(code, 0, msg=f"errors={errors}")
+        self.assertEqual(errors, [])
+
+    def test_multiple_failures_aggregate(self) -> None:
+        # Existence: /missing/ won't resolve. Equality: mobile has extra.
+        # AssertMatrix: pattern matches nothing.
+        _touch(self.public / "index.html")
+        self.desktop_config.write_text(
+            json.dumps({"ci": {"collect": {"url": ["http://localhost/", "http://localhost/missing/"]}}}),
+            encoding="utf-8",
+        )
+        self.mobile_config.write_text(
+            json.dumps({
+                "ci": {
+                    "collect": {"url": ["http://localhost/", "http://localhost/missing/", "http://localhost/extra/"]},
+                    "assert": {"assertMatrix": [{"matchingUrlPattern": "/retired/$"}]},
+                }
+            }),
+            encoding="utf-8",
+        )
+        code, errors = self._run()
+        self.assertEqual(code, 1)
+        # At least: 2 existence errors (one per config) for /missing/ + 1 existence for /extra/ + 1 equality + 1 regex
+        joined = "\n".join(errors)
+        self.assertIn("/missing/", joined)
+        self.assertIn("/extra/", joined)
+        self.assertIn("1 added", joined)
+        self.assertIn("/retired/", joined)
+
+    def test_missing_public_dir_returns_two(self) -> None:
+        shutil.rmtree(self.public)
+        self._write_configs(["http://localhost/"])
+        code, errors = self._run()
+        self.assertEqual(code, 2)
+        self.assertTrue(any("public/" in e for e in errors))
+
+    def test_missing_config_returns_two(self) -> None:
+        _touch(self.public / "index.html")
+        self.desktop_config.write_text(
+            json.dumps({"ci": {"collect": {"url": ["http://localhost/"]}}}), encoding="utf-8"
+        )
+        # mobile_config not written
+        code, errors = self._run()
+        self.assertEqual(code, 2)
+        self.assertTrue(any("lighthouserc.mobile.json" in e for e in errors))
+
+    def test_unparseable_json_returns_two(self) -> None:
+        _touch(self.public / "index.html")
+        self.desktop_config.write_text("not json {", encoding="utf-8")
+        self.mobile_config.write_text(
+            json.dumps({"ci": {"collect": {"url": ["http://localhost/"]}}}), encoding="utf-8"
+        )
+        code, errors = self._run()
+        self.assertEqual(code, 2)
+        self.assertTrue(any("invalid JSON" in e or "JSON" in e for e in errors))
+
+
+if __name__ == "__main__":
+    unittest.main()
