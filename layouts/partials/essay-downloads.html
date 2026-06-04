@@ -1,0 +1,23 @@
+{{/* D.2 multi-target export downloads cluster.  Called only from the per-essay
+     single page (layouts/essays/single.html); kept OUT of essay-meta so the
+     downloads buttons don't leak into bento essay-card / essay-card-featured
+     contexts on the homepage and essays index. */}}
+{{ if .Params.multi_export }}
+  <p class="essay-downloads-line">
+    <span class="essay-downloads" aria-label="Download other formats">
+      {{ $page := . }}
+      {{ with index .Params "downloads" }}
+        {{ with .pdf }}
+          {{ with $page.Resources.GetMatch . }}
+            <a href="{{ .RelPermalink }}" class="download-link download-pdf" download>↓ PDF</a>
+          {{ end }}
+        {{ end }}
+        {{ with .word }}
+          {{ with $page.Resources.GetMatch . }}
+            <a href="{{ .RelPermalink }}" class="download-link download-word" download>↓ Word</a>
+          {{ end }}
+        {{ end }}
+      {{ end }}
+    </span>
+  </p>
+{{ end }}

@@ -16,22 +16,4 @@
     <span class="meta-sep">·</span>
     <span class="series-pill">{{ . }} (Part {{ $.Params.series_order }})</span>
   {{ end }}
-  {{ if .Params.multi_export }}
-    <span class="meta-sep">·</span>
-    <span class="essay-downloads" aria-label="Download other formats">
-      {{ $page := . }}
-      {{ with index .Params "downloads" }}
-        {{ with .pdf }}
-          {{ with $page.Resources.GetMatch . }}
-            <a href="{{ .RelPermalink }}" class="download-link download-pdf" download>↓ PDF</a>
-          {{ end }}
-        {{ end }}
-        {{ with .word }}
-          {{ with $page.Resources.GetMatch . }}
-            <a href="{{ .RelPermalink }}" class="download-link download-word" download>↓ Word</a>
-          {{ end }}
-        {{ end }}
-      {{ end }}
-    </span>
-  {{ end }}
 </p>
