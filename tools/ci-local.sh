@@ -111,6 +111,9 @@ python3 tools/check_page_weights.py
 
 python3 tools/check_smoke.py
 
+python3 tools/check_lhci_urls.py
+(cd tools && python3 -m unittest test_check_lhci_urls.py -v 2>&1 | tail -3)
+
 separator "Lighthouse CI (desktop + mobile)"
 
 # LHCI is the only CI gate that lives outside Python+Hugo. Catches things the
