@@ -168,6 +168,10 @@ jobs:
         run: pagefind --site public/
       - name: Verify build smoke test
         run: python3 tools/check_smoke.py
+      - name: Verify LHCI URLs resolve to built pages
+        run: python3 tools/check_lhci_urls.py
+      - name: Run LHCI URL linter unit tests
+        run: cd tools && python3 -m unittest test_check_lhci_urls.py -v
       - name: Verify page weights against §8 budgets
         run: python3 tools/check_page_weights.py
       - name: Run page-weight linter unit tests
