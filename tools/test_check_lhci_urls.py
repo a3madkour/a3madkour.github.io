@@ -99,3 +99,56 @@ class TestCheckEquality(unittest.TestCase):
         errors = mod.check_equality(desktop, mobile)
         self.assertEqual(len(errors), 1)
         self.assertIn("ordering differs", errors[0])
+
+
+class TestCheckAssertMatrix(unittest.TestCase):
+    def test_matrix_pattern_matches_url(self) -> None:
+        config = {
+            "ci": {
+                "assert": {
+                    "assertMatrix": [
+                        {"matchingUrlPattern": "/essays/example-one/$"}
+                    ]
+                }
+            }
+        }
+        urls = ["http://localhost/essays/example-one/"]
+        errors = mod.check_assert_matrix(config, urls, "lighthouserc.mobile.json")
+        self.assertEqual(errors, [])
+
+    def test_matrix_pattern_matches_no_url(self) -> None:
+        config = {
+            "ci": {
+                "assert": {
+                    "assertMatrix": [
+                        {"matchingUrlPattern": "/essays/retired-slug/$"}
+                    ]
+                }
+            }
+        }
+        urls = ["http://localhost/essays/example-one/"]
+        errors = mod.check_assert_matrix(config, urls, "lighthouserc.mobile.json")
+        self.assertEqual(len(errors), 1)
+        self.assertIn("assertMatrix[0]", errors[0])
+        self.assertIn("retired-slug", errors[0])
+        self.assertIn("matches no URL", errors[0])
+
+    def test_matrix_absent_returns_no_errors(self) -> None:
+        config = {"ci": {"assert": {}}}
+        errors = mod.check_assert_matrix(config, [], "lighthouserc.json")
+        self.assertEqual(errors, [])
+
+    def test_invalid_regex_reports_syntax_error(self) -> None:
+        config = {
+            "ci": {
+                "assert": {
+                    "assertMatrix": [
+                        {"matchingUrlPattern": "/["}
+                    ]
+                }
+            }
+        }
+        urls = ["http://localhost/"]
+        errors = mod.check_assert_matrix(config, urls, "lighthouserc.mobile.json")
+        self.assertEqual(len(errors), 1)
+        self.assertIn("not a valid regex", errors[0])

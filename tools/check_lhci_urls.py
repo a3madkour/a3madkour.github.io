@@ -66,3 +66,25 @@ def check_equality(desktop_urls: list[str], mobile_urls: list[str]) -> list[str]
     return [
         "lighthouserc.mobile.json: collect.url ordering differs from lighthouserc.json"
     ]
+
+
+def check_assert_matrix(config: dict, urls: list[str], source: str) -> list[str]:
+    """Each assertMatrix matchingUrlPattern must match at least one URL."""
+    errors: list[str] = []
+    matrix = config.get("ci", {}).get("assert", {}).get("assertMatrix", [])
+    for i, entry in enumerate(matrix):
+        pattern = entry.get("matchingUrlPattern", "")
+        try:
+            rx = re.compile(pattern)
+        except re.error as e:
+            errors.append(
+                f"{source}: assertMatrix[{i}].matchingUrlPattern "
+                f"'{pattern}' is not a valid regex: {e}"
+            )
+            continue
+        if not any(rx.search(u) for u in urls):
+            errors.append(
+                f"{source}: assertMatrix[{i}].matchingUrlPattern "
+                f"'{pattern}' matches no URL in collect.url"
+            )
+    return errors
