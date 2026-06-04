@@ -48,3 +48,21 @@ def check_existence(public: Path, urls: list[str], source: str) -> list[str]:
             relpath = f.relative_to(public)
             errors.append(f"{source}: {url}: missing file at {relpath}")
     return errors
+
+
+def check_equality(desktop_urls: list[str], mobile_urls: list[str]) -> list[str]:
+    """The two collect.url arrays must be ordered-equal."""
+    if desktop_urls == mobile_urls:
+        return []
+    d_set = set(desktop_urls)
+    m_set = set(mobile_urls)
+    added = m_set - d_set
+    removed = d_set - m_set
+    if added or removed:
+        return [
+            f"lighthouserc.mobile.json: collect.url differs from lighthouserc.json "
+            f"({len(added)} added, {len(removed)} removed)"
+        ]
+    return [
+        "lighthouserc.mobile.json: collect.url ordering differs from lighthouserc.json"
+    ]

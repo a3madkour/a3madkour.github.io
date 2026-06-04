@@ -70,3 +70,32 @@ class TestCheckExistence(unittest.TestCase):
         self.assertIn("lighthouserc.json", errors[0])
         self.assertIn("/missing/", errors[0])
         self.assertIn("missing/index.html", errors[0])
+
+
+class TestCheckEquality(unittest.TestCase):
+    def test_identical_lists_pass(self) -> None:
+        urls = ["http://localhost/", "http://localhost/essays/"]
+        self.assertEqual(mod.check_equality(urls, urls), [])
+
+    def test_mobile_extra_url_fails(self) -> None:
+        desktop = ["http://localhost/", "http://localhost/essays/"]
+        mobile = desktop + ["http://localhost/garden/"]
+        errors = mod.check_equality(desktop, mobile)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("1 added", errors[0])
+        self.assertIn("0 removed", errors[0])
+
+    def test_desktop_extra_url_fails(self) -> None:
+        desktop = ["http://localhost/", "http://localhost/essays/", "http://localhost/garden/"]
+        mobile = ["http://localhost/", "http://localhost/essays/"]
+        errors = mod.check_equality(desktop, mobile)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("0 added", errors[0])
+        self.assertIn("1 removed", errors[0])
+
+    def test_reordered_lists_fail(self) -> None:
+        desktop = ["http://localhost/", "http://localhost/essays/"]
+        mobile = ["http://localhost/essays/", "http://localhost/"]
+        errors = mod.check_equality(desktop, mobile)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("ordering differs", errors[0])
