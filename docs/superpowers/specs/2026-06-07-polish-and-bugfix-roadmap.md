@@ -1,0 +1,173 @@
+# Polish + Bug-fix Roadmap — Tier Ordering
+
+**Date:** 2026-06-07
+**Status:** Active. Each tier maps to one or more future sessions. Tier 1 is the next session.
+
+**Why this exists:** The Phase 3 publish-pipeline buildout (sub-projects A → B → F → C → D, all shipped) left a queue of correctness bugs, polish gaps, hygiene cleanups, tooling gaps, and queued small features. Rather than jump straight to sub-project E (explorables — the last Phase 3 piece), the author chose to clear the polish/bug-fix backlog first. This file documents that ordering so future sessions can pick up any tier cleanly without re-deriving the queue.
+
+**Companions:**
+- Deferred features (long-horizon, trigger-gated): [`2026-06-07-deferred-features-registry.md`](2026-06-07-deferred-features-registry.md).
+- Parent design spec: [`2026-05-03-personal-site-design.md`](2026-05-03-personal-site-design.md) §14.
+
+**Rules:**
+- Tiers run in numbered order. Within a tier, items can fuse into a single commit when low-risk; correctness bugs get their own commits with named test coverage.
+- Each tier is one or more sessions. Don't fuse tiers.
+- Item status: ☐ open · ✓ shipped · ⊘ obsoleted. Mark shipped with a link to the `project_*_complete.md` memory file.
+- Don't draft per-tier *plans* until the tier opens. Per [feedback-design-batch-no-plan-until-implement](https://example.invalid) — specs first, plan-per-slice when implementation begins.
+
+---
+
+## Tier 1 — Correctness bugs (data wrong or silently broken)
+
+**Goal:** restore trust in the publish pipeline before piling new features on top. Several of these can hide in CI green because the test layer stubs around them.
+
+| # | Item | Severity | Where to start |
+|---|---|---|---|
+| 1.1 | ☐ **`finish-publish` advances past failed `delete-bundle`.** Manifest gets marked `state: removed` even when on-disk delete failed silently (e.g. permission error, wrong content-dir computation). Next run sees "manifest already removed → no diff to act on" and the orphan persists. | High (data integrity) | `a3madkour-publish-unpublish.el` `--unpublish-delete-bundle` + caller in `finish-publish` Step A. Source: B.1 carry-forward #5 in [project-b1-complete](../../../.claude/memory/project_b1_complete.md). |
+| 1.2 | ☐ **`--rewrite-file-link` parity with rewrite-asset-link.** Same architectural issue I fixed for figref this session: `[[file:other-essay.org]]` derives `source-file` via `--id-to-file` (DB lookup). When the source essay isn't in `org-roam-directory`, falls back to `default-directory` → silent breakage. | Medium (silent fallback) | `a3madkour-publish-rewrite.el:245` — mirror the fix from `1edd900`. Add a production-mirroring ert test (`--id-to-file` → nil). |
+| 1.3 | ☐ **`TODO` filetag leaks into Hugo tags.** `#+filetags: :Foo:TODO:` round-trips `TODO` as a content tag. Observable on MAP bundle. | Low (cosmetic) | Garden frontmatter normalizer in `a3madkour-publish-frontmatter.el`. Filter editorial tag values (`TODO`, `DRAFT`, etc.) before emit. Source: B.1 #6. |
+| 1.4 | ☐ **`last_modified` uses file mtime, not git mtime.** Unstable across `touch` or no-content saves. Spec §12 open-Q-5 wants `git log -1 --format=%cI -- <file>`. | Low (cosmetic but spec-divergent) | Garden normalizer (same place as 1.3). Source: B.1 #2. |
+| 1.5 | ☐ **Library `last_modified` cascade not upgraded.** Still uses 2-step `or`; B.3 shipped `--last-modified-cascade` everywhere else. | Low (consistency) | `a3madkour-publish-library.el` — swap to the shared helper. Source: B.3 carry-forward T1. |
+| 1.6 | ☐ **B emits `slug:` on garden concept bundles.** Site linter rejects `slug` on concept-flavor notes; workaround applied 2026-06-02 (hand-edit). Re-bites on every ref-note→garden promotion. | Medium (CI fail trigger) | `a3madkour-publish-garden.el` frontmatter assembly — drop the slug line. Source: [project-b-slug-on-concept-followup](../../../.claude/memory/project_b_slug_on_concept_followup.md). |
+| 1.7 | ☐ **D.1 attr_shortcode multi-word titles round-trip quotes.** `:title "Two words"` renders as `&amp;quot;Two words&amp;quot;`. Workaround: unquoted single-word titles. | Low (workaround sufficient until multi-word title needed) | ox-hugo custom translator OR pre-export buffer rewrite. Source: [feedback-d1-attr-shortcode-unquoted-titles](../../../.claude/memory/feedback_d1_attr_shortcode_unquoted_titles.md). |
+| 1.8 | ☐ **`a3-pub.sh --check-orphans` crashes when org-roam dir missing.** `(org-roam-db-sync)` raises on machines without `~/org-roam/`. | Low (machine-specific) | `a3-pub.sh` wrapper — gate on dir existing OR add `--notes-dir <path>` flag. Source: [project-a1d-complete](../../../.claude/memory/project_a1d_complete.md) "Other A.1.d known limitations". |
+| 1.9 | ☐ **Asset link `alt` text retains `file:` prefix when no display text.** Observable in `content/essays/example-multi/index.md` after the 2026-06-07 figref fix: `<img src="diagram-1.svg" alt="file:diagram-1.svg" />` — `file:` should have been stripped from the display the same way it's stripped from the path. | Low (a11y suboptimal) | `a3madkour-pub/rewrite-asset-link` in `a3madkour-publish-assets.el`: derive display from `filename` when `text == raw path with file: prefix`. Add ert. Discovered during figref Task 9 verification. |
+
+**Session shape:** Probably two sessions. Session 1A: high-severity bugs (1.1, 1.2, 1.6) — each gets its own commit with named ert test. Session 1B: small batch (1.3, 1.4, 1.5, 1.7, 1.8, 1.9) when triggered or convenient.
+
+**Entry checklist (next session):**
+1. Read this section + the linked memory files.
+2. Pick bug 1.1 (highest severity). Use `superpowers:systematic-debugging`.
+3. Write a production-mirroring failing test FIRST. Reproduce the bug with the test before the fix.
+4. Commit each fix on its own with a focused message; never bundle bugs across files unless the root cause is shared.
+5. Per the dotfiles-bystanders rule, stage dotfiles by exact path; never `git add -A` in dotfiles.
+
+---
+
+## Tier 2 — UX polish (visible gaps in shipped features)
+
+**Goal:** make shipped features feel finished. Most items have user-facing impact across multiple surfaces.
+
+| # | Item | Trigger | Where to start |
+|---|---|---|---|
+| 2.1 | ☐ **Anchor affordance.** D.1 shipped `[id]:hover::after { content: " #"; }` as a placeholder — but pseudo-element content isn't clickable, invisible on touch. Needs real solution across semantic blocks + essay headings + garden sections. | Now (visible regression of intent) | `superpowers:brainstorming`. Pre-brainstorm reads in [project-anchor-affordance-followup](../../../.claude/memory/project_anchor_affordance_followup.md). Pre-decision: pure-CSS-with-real-anchor vs. JS clipboard. |
+| 2.2 | ☐ **D.1 cross-reference auto-formatting.** `{{< ref-block "thm-foo" >}}` → "Theorem 1" via two-pass scratch lookup. | First essay author types a manual reference that gets stale after a renumber. | New shortcode in `layouts/shortcodes/`. Source: D.1 follow-up #1 in [project-d1-complete](../../../.claude/memory/project_d1_complete.md). |
+| 2.3 | ☐ **D.1 section-prefixed numbering** ("Theorem 3.2" not just "Theorem 1"). | First long essay where bare integers stop being navigable. | Block-shortcode counters in `layouts/shortcodes/`. Source: D.1 follow-up #2. |
+
+**Session shape:** 2.1 is its own session (needs brainstorm). 2.2 + 2.3 ship together when triggered.
+
+---
+
+## Tier 3 — Phase 8 QA walkthrough (manual; human-driven)
+
+**Goal:** verify accessibility / perf / mobile / cross-browser claims by walking the canonical QA checklist with a human at the keyboard. Cannot automate; can only prep.
+
+**Source:** `docs/superpowers/qa-checklists/2026-05-13-phase-8-final-qa.md` — checklist of 45 items across 5 categories. Static-findable issues already resolved (commit `7ac2539`).
+
+| # | Item | What's needed |
+|---|---|---|
+| 3.1 | ☐ §1.1–1.5, 1.7–1.9 keyboard navigation walkthrough | Human at keyboard + Tab through every interactive surface |
+| 3.2 | ☐ §2 screen-reader walkthrough | macOS VoiceOver or NVDA pass |
+| 3.3 | ☐ §3 color-blindness simulation | DevTools rendering panel, three palettes |
+| 3.4 | ☐ §4 mobile breakpoint pass | Real device at 360 / 414 / 768 / 960 / 1220px or responsive DevTools |
+| 3.5 | ☐ §5 perf walk | DevTools throttled CPU + 3G; cross-reference LHCI gates |
+
+**Session shape:** one session per category, or one big "QA day" session. Owner: the author. Claude's role limited to prep — capture findings + file fixes as Tier 1 / 2 items.
+
+**Entry checklist:** Open `docs/superpowers/qa-checklists/2026-05-13-phase-8-final-qa.md`, walk top-to-bottom, log every finding inline in the checklist (already structured for it).
+
+---
+
+## Tier 4 — Hygiene / cleanup (low-risk, fast cycle)
+
+**Goal:** batch the long tail of "logged, not blocking" findings into one or two cleanup commits.
+
+| # | Item | Where | Source |
+|---|---|---|---|
+| 4.1 | ☐ `defcustom :group 'a3madkour-publish` should be `'a3madkour-pub` | Per-module `defgroup` declarations | B.2 carry-forward #3 |
+| 4.2 | ☐ `--coerce-year` has unused `_file` arg | `a3madkour-publish-research.el` | B.3 carry-forward #1 |
+| 4.3 | ☐ `rewrite-to-tmp-file` duplicated across garden/research/essays (3 copies now) | Extract into shared `a3madkour-publish-io` (or similar). Verify with grep — may be partially extracted already. | B.3 carry-forward #2 (stale; verify) |
+| 4.4 | ☐ `--render-scalar` `%S` fallback errors on custom structs / hashtables | `a3madkour-publish-frontmatter.el` | B.2 carry-forward #2 |
+| 4.5 | ☐ `check_library_covers.py` lacks `run(root)` API; other linters have it | `tools/check_library_covers.py` | B.2 carry-forward #1 |
+| 4.6 | ☐ B.4 spec §6.3 template amendment — document `@@hugo:{{< X >}}@@` syntax | `docs/superpowers/specs/2026-05-31-phase-3-b-4-essays-handler-design.md` §6.3 | B.4 follow-up |
+
+**Session shape:** one batch session. Each item is a small diff. Per the dotfiles bystander rule, stage by exact path.
+
+---
+
+## Tier 5 — Tooling gaps
+
+**Goal:** author-side ergonomics. Reduces friction for next batch of real content.
+
+| # | Item | Source |
+|---|---|---|
+| 5.1 | ☐ **`a3-unpublish-deliberate` command.** Recover from a stale deliberate publish (today: hand-delete bundle + manifest entry). | B.4 follow-up #1 |
+| 5.2 | ☐ **Emacs publish-author helpers** — `--mark-publish`, `--insert-library-item`, `--preview-section`, `--jump-to-source`, `--current-status`. Standalone module in `a3madkour-publish-author.el`. | [project-emacs-publish-helpers-followup](../../../.claude/memory/project_emacs_publish_helpers_followup.md) |
+
+**Session shape:** 5.1 is small (one session). 5.2 is its own brainstorm → spec → plan → ship cycle.
+
+---
+
+## Tier 6 — Small new features
+
+**Goal:** small new surfaces that don't warrant a full sub-project.
+
+| # | Item | Source |
+|---|---|---|
+| 6.1 | ☐ **About Now widget.** Phase 3 leftover; B.4 essay-publish unblocked it. About page has a placeholder slot. Surfaces "what I'm currently working on / reading / playing". | CLAUDE.md "Not started, in phase order" |
+
+**Session shape:** one brainstorm + spec + plan + ship cycle. Reads from `data/library-*.yaml` + maybe a hand-authored "now.md" or pulled from a streams cache.
+
+---
+
+## Tier 7 — Deferred ergonomics (CI-side)
+
+**Goal:** when authoring friction shows up around LHCI URL list management, ship 4.2 / 4.3.
+
+| # | Item | Trigger | Source |
+|---|---|---|---|
+| 7.1 | ☐ **LHCI 4.2 — sitemap-derived URLs.** `tools/gen_lhci_urls.py` parses `public/sitemap.xml`, regenerates `lighthouserc.{json,mobile.json}`. ~80 LOC. | Next fixture retirement annoys the author. | [project-lhci-representative-pages-queued](../../../.claude/memory/project_lhci_representative_pages_queued.md) |
+| 7.2 | ☐ **LHCI 4.3 — visual-feature autodetect.** Fingerprint URLs by CSS classes + shortcodes; auto-add novel signatures. ~150 LOC + allowlist. | After 4.2 + fingerprint corpus observable. | Same |
+
+**Session shape:** 7.1 first (only when triggered). 7.2 after 7.1.
+
+---
+
+## Tier 8 — Large new features (LAST, per author's 2026-06-07 reorder)
+
+**Goal:** the big new scopes. Each is its own brainstorm → spec → plan → ship cycle. Held until the polish/bugfix backlog is empty.
+
+| # | Item | Source |
+|---|---|---|
+| 8.1 | ☐ **Sub-project E — explorable explainables** (Phase 3 final piece). Per-page interactive widgets + per-page JS bundle convention. No spec, no plan. | [project-phase-3-decomposition](../../../.claude/memory/project_phase_3_decomposition.md) |
+| 8.2 | ☐ **Org → synced-poetry export.** Phase 3 Essay/poetry publish must emit the shipped `[mm:ss]` + `audio_url` contract. Stub spec exists. | `docs/superpowers/specs/2026-05-19-org-synced-poetry-export.md` |
+
+**Session shape:** each is a multi-session sub-project. Don't open until prior tiers are clear (or author chooses to).
+
+---
+
+## Tier 9 — Long-horizon deferrals
+
+See [`2026-06-07-deferred-features-registry.md`](2026-06-07-deferred-features-registry.md). All entries there are trigger-gated, no near-term commitment. The registry is durable across CLAUDE.md churn — when triggered, items graduate from there into a new Tier 6 / 7 row here.
+
+---
+
+## Authoring infrastructure (not a tier — author task)
+
+- ☐ **B.4 example-*.org stubs not in version control.** The 4 example essays + `~/org/essays/assets/essay-one-uuid-placeholder/` live in `~/org/` (author's notes tree, untracked). If reproducibility matters, copy into a tracked location. Source: B.4 follow-up.
+
+---
+
+## How to use this file
+
+- **Starting a tier session.** Read this file top-to-bottom. Pick the tier called out as "next" (or the first tier with open items if no annotation). For Tier 1 specifically, treat each ☐ as a separate slice with its own commit + ert coverage.
+- **Marking shipped.** Edit the ☐ → ✓ inline, append `→ [project-<slug>-complete](../../../.claude/memory/...md)` link. Do NOT delete the row.
+- **Adding work mid-tier.** New bugs discovered during a tier session: append to the same tier under "Discovered during this session" subheading; ship in the same session or carry to a follow-up commit.
+- **Adding a new tier.** Insert numerically; renumber later tiers if needed. Update the "Active queue" pointer in [`2026-06-07-deferred-features-registry.md`](2026-06-07-deferred-features-registry.md).
+- **Reordering.** Update this file with the new ordering + a short note documenting the reorder decision (echo: this file was created in a 2026-06-07 reorder session).
+
+---
+
+## Reorder decision log
+
+- **2026-06-07** — Author's gut said "fix and polish before new features; explorables last". Tiers as listed above; sub-project E pushed to Tier 8. This file created in the same session. Memory pointer: [project-next-slice](../../../.claude/memory/project_next_slice.md).

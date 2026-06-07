@@ -1,61 +1,57 @@
 ---
 name: next-slice
-description: "Session-start pointer — D.2 multi-target export SPEC SHIPPED 2026-06-02 (commit c05b46c; see [[d2-spec-queued]]); plan queued. Choose next: (a) D.2 implementation (plan + ship), (b) LHCI 4.1 representative-pages validator (queued ~1h slice), (c) Emacs publish-author helpers (no spec yet), (d) E (explorable explainables; per phase order after D.2). User picks at session start."
+description: "Polish + bugfix tier roadmap shipped 2026-06-07 in two site specs. Active queue is now polish/bugfix Tier 1 (correctness bugs). Sub-project E (explorables) deferred to Tier 8 per author's 2026-06-07 reorder. Source-of-truth files in site repo."
 metadata: 
   node_type: memory
   type: project
-  originSessionId: 6e8aa45d-e277-4939-bd42-732f52c1c0ff
+  originSessionId: 2c08431e-013f-458c-a665-ac6e0c33baf8
 ---
 
-**Pick next slice at session start.** D.2 spec shipped; per [[design-batch-no-plan-until-implement]], plan drafting waits until implementation begins.
+## Source of truth (read these first, they're durable across CLAUDE.md churn)
 
-## Queued slices
+- **Active tier roadmap**: `docs/superpowers/specs/2026-06-07-polish-and-bugfix-roadmap.md` (site repo). 8 tiers, items with severity/source/entry points, reorder decision log.
+- **Long-horizon deferrals**: `docs/superpowers/specs/2026-06-07-deferred-features-registry.md` (site repo). Trigger-gated capabilities; promotion path from registry → roadmap when triggers fire.
 
-### (a) D.2 implementation — plan + ship
+## Next session
 
-- Spec: `docs/superpowers/specs/2026-06-02-phase-3-d2-multi-target-export-design.md` (commit `c05b46c`).
-- Per the phase order ([[phase-3-decomposition]]), D.2 is the immediate next slice; E follows.
-- Estimate: ~7 days focused work. Highest-novelty piece is the pandoc Lua filter for stateful theorem-family numbering pass (~2d, own subagent task).
-- Tool deps: `xelatex`, `biber`, `rsvg-convert`, `pandoc` on author machine (CI does NOT run them).
-- See [[d2-spec-queued]] for full architecture summary, pre-implementation reads, risks.
+**Tier 1 — Correctness bugs.** Recommended starting point: bug **1.1 — `finish-publish` advances past failed `delete-bundle`** (data-integrity, highest severity). Then 1.2 (`--rewrite-file-link` parity, architectural). Smaller bugs (1.3-1.8) batch when convenient.
 
-### (b) LHCI 4.1 representative-pages validator (~1h slice)
+Each Tier 1 fix gets its own commit with a production-mirroring failing test FIRST, then the fix. Use `superpowers:systematic-debugging`. Stage dotfiles by exact path per the bystander rule.
 
-- Stub spec: `docs/superpowers/specs/2026-06-01-lhci-representative-page-set-design.md`.
-- Filed after B.4 push triggered 2 LHCI 404 round-trips from drifted fixture slugs. Ship 4.1 validator first (fast-fails drift); 4.2 sitemap-derived + 4.3 visual-feature autodetect are later phases.
-- See [[lhci-representative-pages-queued]].
+## Tier-at-a-glance
 
-### (c) Emacs publish-author helpers
+1. **Correctness bugs** (8 items, this session's TODO)
+2. **UX polish** (3 items — anchor affordance is the big one, needs brainstorm)
+3. **Phase 8 QA walkthrough** (5 categories — human-driven, author owns)
+4. **Hygiene / cleanup** (6 small items — batch session)
+5. **Tooling gaps** (`a3-unpublish-deliberate` + publish-author helpers)
+6. **Small new features** (About Now widget)
+7. **Deferred CI ergonomics** (LHCI 4.2 / 4.3 — trigger-gated)
+8. **Large new features** — sub-project E (explorables), org→synced-poetry export
 
-- No spec; no plan. Brainstorm fresh when scheduled.
-- Sketched 2026-05-30 while seeding library scaffolds. Dotfiles-side ergonomics: interactive commands to mark notes for publish + insert library-item drawer scaffolds + dry-run preview, instead of hand-editing headers/drawers.
-- See [[emacs-publish-helpers-followup]].
+See the roadmap spec for the full breakdown.
 
-### (d) Sub-project E (explorable explainables)
-
-- Per phase order ([[phase-3-decomposition]]), E follows D after D.2 ships.
-- No spec; no plan. Big design surface: per-page interactive widgets + per-page JS bundle convention + cross-format degradation (PDF/Word fall back to screenshots + URL caption).
-- D.2's spec §12 already lays a forward-compat hook (PDF + Word backends skip explorable blocks via `:explorable:` class).
-
-## Recommended sequencing
-
-Strict phase order says D.2 → E. Pragmatic deviations:
-- If a real paper or report is coming up that needs PDF/Word: **D.2 implementation first**.
-- If LHCI 404s have become a recurring footgun: **4.1 validator first** (~1h, unblocks confident publishing of new B-emitted slugs).
-- If you're about to do a publish/library-scaffold session in Emacs and the hand-editing is grating: **(c) Emacs helpers first**.
-
-Each of these is a separable spec → plan → ship cycle. Don't fuse.
-
-## State of the world at session start
+## State of the world at session start (next session)
 
 **Site (`~/Sync/Workspace/a3madkour.github.io/`):**
-- `master` at `c05b46c` (D.2 spec). All earlier work pushed.
-- 481 ert tests + 7 site check_math tests passing.
+- `master` after this session's roadmap commit (TBD on push). Pre-this-session: `41c7a37`.
+- `content/essays/example-multi/index.md` bundle contains `<img src="diagram-1.svg" />` (Task 9 verified) — figref bug closed.
 
 **Dotfiles (`~/dotfiles/`):**
-- `main` at `a6336f3` (D.1 T6 ox-hugo config). All pushed.
-- 5 pre-existing dirty tracked files (`.gitignore`, `.zshrc`, `bookmarks`, `early-init.el`, `init.el`) — author's in-progress local work, NEVER commit them.
-- `org-math-lint` venv at `~/org/notes/tools/org-math-lint/.venv/` may still be broken (cross-platform mismatch from C-era). Pre-existing issue; recreate if math validation gate is needed. See [[reference-org-math-lint-venv-platform]].
+- `main` at `99f0240` (async-pub cleanup; pushed to origin).
+- Pre-existing dirty tracked files (`.gitignore`, `.zshrc`, `bookmarks`, `early-init.el`, `init.el`, `config.org`, `config.el`) — author's in-progress local work, NEVER commit.
+- Stale `.elc` files frequently shadow source. Recommend `find ~/dotfiles/emacs-configs/custom/lisp -name '*.elc' -delete` before next interactive Emacs session.
+- `org-math-lint` venv at `~/org/notes/tools/org-math-lint/.venv/` — recreate if math validation gate is needed. See [[reference-org-math-lint-venv-platform]].
 
 **Personal notes (`~/org/`):**
-- Unchanged since end of F.
+- `essays/example-multi.org` — has `:ID: 394db383-e408-44a2-a347-20ad7a54c5e7` drawer.
+- `essays/assets/394db383-e408-44a2-a347-20ad7a54c5e7/diagram-1.svg` — moved here from sibling location.
+- `essays/diagram-1.svg` — gone (moved into per-essay assets dir).
+
+## Related memories
+
+- [[project-figref-inert-missing-complete]] — figref bug shipped 2026-06-07
+- [[project-async-pub-cleanup-complete]] — async-pub cleanup + mode-line hygiene shipped 2026-06-07
+- [[project-async-publish-complete]] — async publish pipeline shipped 2026-06-07
+- [[project-d2-complete]] — D.2 multi-target export shipped 2026-06-04
+- [[project-phase-3-decomposition]] — parent decomposition; sub-project E queued for Tier 8

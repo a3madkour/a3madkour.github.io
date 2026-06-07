@@ -189,60 +189,18 @@ woff2 files live in `static/fonts/` (latin + latin-ext subsets only; browsers do
 - **Multi-target export**: `docs/superpowers/specs/2026-05-13-multi-target-export-design.md`. Phase 3 Slice 3 — literate org → Hugo + PDF + Word.
 - **TOC collapsible subsections**: `docs/superpowers/specs/2026-05-14-toc-collapsible-subsections-design.md` (designed) + `docs/superpowers/plans/2026-05-18-toc-collapsible-subsections.md` (plan). Shipped — see memory `project_toc_collapsible_subsections_slice.md`.
 
-## Project status (as of 2026-05-18)
+## Project status (as of 2026-06-07)
 
-**Shipped**: Phases 0–8 (modulo interactive QA walkthrough) plus Citation export + Library redesign + Graph-view chrome-consistency + Persistent-graph-access + TOC collapsible subsections + Time-synced poetry + Streams section slices. Per-slice merge details live in memory under `project_*.md` (one entry per shipped slice). Most recent: Time-synced poetry merged 2026-05-19 — `[mm:ss]`-marker → synced-reveal poetry runtime (Hugo-side parser, JS player audio/animation modes, §9 cite note, CSS §45), new `check_poetry_synced` linter pair (21st) + `example-poem-synced` fixture.
+**Shipped**: Phases 0–8 (modulo interactive QA walkthrough) plus Citation export + Library redesign + Graph-view chrome-consistency + Persistent-graph-access + TOC collapsible subsections + Time-synced poetry + Streams section slices. Phase 3 org-mode pipeline: sub-projects **A** (5 plans), **B** (B.0–B.4), **F** (citations), **C** (math validator), **D** (D.1 semantic blocks + D.2 multi-target export) all shipped. Per-slice merge details live in memory under `project_*.md`.
 
-**Not started, in phase order:**
+**Active queue is now polish-and-bugfix-first.** Sub-project E (explorables — the last Phase 3 piece) was pushed to Tier 8 in the 2026-06-07 reorder. Two durable specs hold the canonical queue:
 
-- **Phase 3 — org-mode pipeline**: decomposed 2026-05-20 into **6 independently-spec'd sub-projects** (each gets its own spec → plan → ship cycle):
-  - **A. Access control + link semantics** — *first; foundational.* Which org notes get published, how `[[id:UUID]]` + `[[file:...]]` org-roam links rewrite to web URLs on export, what happens when a linked-to note isn't published. Drives the "is this published?" oracle every other sub-project queries. Split into 5 sequential plans (A.1.0 → A.1.a → A.1.b → A.1.c → A.1.d). **All five shipped: A.1.0 (bootstrap) + A.1.a (foundations) + A.1.b (link rewriter) + A.1.c (asset handling + 24th linter pair) + A.1.d (unpublish flow + integration tests) implementation complete; 223 ert tests passing + Python integration fixtures grown 4 → 8. Sub-project A is now fully shipped. Sub-project B is in progress: B.0 (shared publisher infrastructure) shipped 2026-05-25; B.1 (garden handler) shipped 2026-05-25; **B.1.1 (pre-export id-link rewriter) shipped 2026-05-26 in dotfiles** — closes the round-2 spot-check `REF_NOT_FOUND` finding; 271 ert tests + 14 Python integration fixtures. B.2 (library handler) shipped 2026-05-29/30; per-medium YAML row publisher (4 source org files → `data/<medium>.yaml`); 309 ert + 19 integration tests. **B.3 (research handler) shipped 2026-05-31** — third per-content-type publisher; per-page Hugo bundles for both research cascade types (themes + questions sharing one handler); 6 stub bundles emitted from `~/org/notes/research-{themes,questions}-example-*.org` replacing the 9 hand-authored fixtures; also adds `--filesystem-mtime-of-file` cascade fallback (closes B.1.x #10) and `#+HUGO_DESCRIPTION:` custom keyword. Next: B.4 (essays). See `memory/project_b3_complete.md` (current) + `memory/project_b2_complete.md` (B.2).
-  - **B. Per-content-type publish + templates** — the publisher itself (elisp/ox-hugo). Per-destination templates: garden / essay / library / research / works. Carries the **two-publish-commands** rule (frequent/idempotent garden+library+research vs. per-post/deliberate essays), the **library-tags-round-trip** rule, and the Essay/poetry publish **synced-poetry contract** (`[mm:ss]`+`audio_url`, stub `docs/superpowers/specs/2026-05-19-org-synced-poetry-export.md`).
-  - **F. Citation pipeline + bibliography integration** — `[cite:@key]` parser, `library.bib` lookup via citar, `data/citations.yaml` emission, site `{{< cite >}}` shortcode integration, cite-key validation. Split out of C at A's brainstorm (2026-05-20) because the scope was large enough to warrant its own design cycle.
-  - **C. Pre-publish validators** — Python `check_*` pattern. Math-rendering lint (KaTeX/MathJax compatibility, balanced delimiters, macro availability). Citation validation was moved to F.
-  - **D. Unified semantic markup** — definitions / theorems / proofs / sidenotes / figures / math in one source vocabulary that renders to Hugo + PDF + Word. **Subsumes** the prior Multi-target export spec (`docs/superpowers/specs/2026-05-13-multi-target-export-design.md`) — revisit inside D.
-  - **E. Explorable explainable workflow** — per-page interactive widgets + per-page JS bundle convention. Was deferred ("own future spec"); now in this batch.
-- **About Now widget** — depends on sub-project B (essay/about publish).
-- **Phase 8 follow-up: interactive QA walkthrough.** Static-findable issues resolved (commit `7ac2539`). Remaining items in `docs/superpowers/qa-checklists/2026-05-13-phase-8-final-qa.md` need a human at keyboard / screen-reader / DevTools deficiency emulation / mobile device (§1.1–1.5, §1.7–1.9, §2, §3, §4 at breakpoints 360/414/768/960/1220, §5).
+- **`docs/superpowers/specs/2026-06-07-polish-and-bugfix-roadmap.md`** — 8 tiers, ordering, entry checklists. Tier 1 (correctness bugs) is next.
+- **`docs/superpowers/specs/2026-06-07-deferred-features-registry.md`** — long-horizon trigger-gated capabilities (Tier 9).
 
-**Designed but not yet implemented** (pick up via `superpowers:executing-plans` when scheduled):
+Both specs are the source of truth — they survive independently of this file. The CLAUDE.md "Deferred features" table that lived here previously is now in the registry spec.
 
-| Feature | Sub-project fit | Notes |
-|---|---|---|
-| Multi-target export | Folds into Phase 3 sub-project **D** | Existing spec `2026-05-13-multi-target-export-design.md` will be revisited inside D. |
-| Org → synced-poetry export | Phase 3 sub-project **B** (rides Essay/poetry publish) | elisp/ox-hugo emits the shipped `[mm:ss]`+`audio_url` contract; output must pass `check_poetry_synced` + `check_works_fixtures`. Stub spec `2026-05-19-org-synced-poetry-export.md`. |
-
-Recommended sequencing: ~~Phase 3 sub-project A~~ (shipped 2026-05-24) → **B (next)** → F → C → D → E. Each sub-project is its own spec + plan + ship cycle; don't fuse them. F slots after B because the citation export pipeline needs B's per-content-type template hooks. Time-synced poetry shipped 2026-05-19; Streams shipped 2026-05-20.
-
-To pick up a sub-project: read this file + parent spec §14 + `memory/project_phase_3_decomposition.md`, then `superpowers:brainstorming` → `superpowers:writing-plans`.
-
-### Deferred features (fixtures exercise the shape; stubs carry `data-pending` for future swap-in)
-
-| Capability | Target | Fixture seed |
-|---|---|---|
-| KaTeX math rendering | Gated on author need | essay fixture #2 (`has_math`) |
-| Scroll-synced video runtime | Gated on author need | essay fixture #4 (`has_video_sync`) |
-| Per-page interactive widgets + per-page JS bundle convention | Explorable explainables — own future spec (referenced from §7 of multi-target export spec) | essay fixture #5 (`has_widgets`); `widget` shortcode stub emits `data-pending` |
-| Game iframe embed (itch / Bitsy / WebGL) | Future works runtime slice | game fixture #1 `embed_url`; `works-embed-stub` anchor |
-| Music platform iframe (Bandcamp / SoundCloud / YouTube) | Future works runtime slice | music fixtures #1 / #2 / #4; `works-audio-link` text link only |
-| Custom audio player | Future works runtime slice | `works-player-stub` block |
-| Synced-lyrics runtime + two-column lyrics layout | Future works runtime slice | music fixture #2 ↔ poem fixture #1; `synced-lyrics-stub`, `lyrics` shortcode is a no-op. Parser foundation (`partials/works/synced-text-parser.html`) is designed in the time-synced poetry spec — lyrics slice reuses it. |
-| Audio-pill pulse animation | Future works runtime slice | poem-page audio pill renders without animation |
-| Gif-vs-hero toggle on game cards | When real gif assets land | n/a |
-| Figure lightbox | Polish phase | n/a |
-| Code highlighting palette swap from Dracula | Post-Phase-2 polish | n/a |
-| Print stylesheet | Phase 8 polish | n/a |
-| Library cover thumbnails (book / album / game / film / series) | Infra shipped 2026-05-12; live IGDB + TMDB paths land with elisp or real items | yaml `extras` accepts `isbn` / `mbid` / `igdb_id` / `tmdb_id` / `cover_url` / `cover_file`; 8 thumbnails seeded via Wikimedia thumb URLs |
-| Last.fm scrobble counts on `/library/listening/` | Gated on author need | listening yaml `extras` already accepts (none defined yet); spec §4.23 documents deferral |
-| Library RSS feeds | Phase 7 polish or later | essays + garden have RSS; works + library do not |
-| `/library/graph/` constellation | Future library polish slice | parent spec did not request a graph view; defer unless appetite shows up |
-| About Now widget | Phase 3 (org-mode) | About template has a placeholder slot |
-| ORCID `citation_author_orcid` meta | Add when an ORCID exists | partial scaffolds the slot |
-| Library item cite export | Reader appetite; library items already have ISBN/MBID/IGDB/TMDB external metadata | n/a |
-| DOI / CrossRef integration | When a DOI registrar is in scope | `data/citations.yaml` already accepts a `doi:` field |
-| Bulk export (single .bib for all refs on a page) | Reader feedback if requested | n/a |
-| Bilingual / Arabic-aware citation formats | Gated on real Arabic content (Phase 3 follow-up) | n/a |
-| Audio-driven playback QA (real recording) | Synced poetry shipped; gated on author recording a reading | `example-poem-synced` uses a dummy absolute `audio_url` → the audio→animation fallback path is exercised live; true audio-driven playback QA needs a real recording (no AI-generated audio) |
+To pick up the next session: read the roadmap top-to-bottom, start at the highest-numbered open Tier 1 item (or whichever the roadmap calls out as next). For sub-project E specifically (when its time comes), also read `memory/project_phase_3_decomposition.md` + parent spec §14.
 
 ## Hard constraints (from spec §1)
 
