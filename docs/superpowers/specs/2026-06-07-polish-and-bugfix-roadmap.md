@@ -1,7 +1,7 @@
 # Polish + Bug-fix Roadmap — Tier Ordering
 
 **Date:** 2026-06-07
-**Status:** Active. Each tier maps to one or more future sessions. **Tier 6 is the next session.** Tier 1 fully closed 2026-06-07; Tier 2.1 + 2.5 shipped, 2.2/2.3/2.4 trigger-gated; Tier 3 human-driven (manual QA); Tier 4 closed 2026-06-08; Tier 5 closed 2026-06-08 (5.1 + 5.2 shipped; preview-section deferred as 5.3 stub).
+**Status:** Active. Each tier maps to one or more future sessions. **Tiers 1, 4, 5, 6 closed; Tier 7 is trigger-gated and Tier 8 holds the large new scopes.** Tier 1 fully closed 2026-06-07; Tier 2.1 + 2.5 shipped, 2.2/2.3/2.4 trigger-gated; Tier 3 human-driven (manual QA); Tier 4 closed 2026-06-08; Tier 5 closed 2026-06-08 (5.1 + 5.2 shipped; preview-section deferred as 5.3 stub); Tier 6 closed-by-deferral 2026-06-08 (6.1 demoted back to the deferred-features registry — see CLOSED block below).
 
 **Why this exists:** The Phase 3 publish-pipeline buildout (sub-projects A → B → F → C → D, all shipped) left a queue of correctness bugs, polish gaps, hygiene cleanups, tooling gaps, and queued small features. Rather than jump straight to sub-project E (explorables — the last Phase 3 piece), the author chose to clear the polish/bug-fix backlog first. This file documents that ordering so future sessions can pick up any tier cleanly without re-deriving the queue.
 
@@ -118,9 +118,11 @@
 
 | # | Item | Source |
 |---|---|---|
-| 6.1 | ☐ **About Now widget.** Phase 3 leftover; B.4 essay-publish unblocked it. About page has a placeholder slot. Surfaces "what I'm currently working on / reading / playing". | CLAUDE.md "Not started, in phase order" |
+| 6.1 | ⊘ **About Now widget.** Demoted back to deferred-features registry 2026-06-08 — see CLOSED block. → [project-tier-6-deferred](../../../.claude/memory/project_tier_6_deferred.md) | CLAUDE.md "Not started, in phase order" |
 
-**Session shape:** one brainstorm + spec + plan + ship cycle. Reads from `data/library-*.yaml` + maybe a hand-authored "now.md" or pulled from a streams cache.
+**Session shape (historical):** one brainstorm + spec + plan + ship cycle.
+
+**TIER 6 CLOSED-BY-DEFERRAL 2026-06-08.** Brainstorm opened, scoping question surfaced the overlap: the homepage Currently widget (shipped homepage-v3 slice 2026-05-13) already covers Reading / Listening / Playing / Watching auto-derived from `data/{reading,listening,playing,watching}.yaml`. The only *new* surface the Phase 3 spec §4.2 Now section adds beyond that is hand-authored **Working on** + **Wondering** prose. The author opted to skip rather than commit to that maintenance burden today — re-open if "I want a place to write Working on / Wondering copy" becomes a real ask. Row 6.1 moved back to [`2026-06-07-deferred-features-registry.md`](2026-06-07-deferred-features-registry.md) "Authoring / metadata extensions" table with the new trigger condition. Also corrects a factual error in the previous wording — `layouts/about/single.html` has no Now placeholder slot; the Tier 6 work would have added the section from scratch. No spec, no plan, no code shipped this session.
 
 ---
 

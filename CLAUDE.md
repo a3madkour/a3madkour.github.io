@@ -193,18 +193,18 @@ Every `id`-bearing reading-flow element inside `<main>` (headings `<h2>`–`<h6>
 - **Multi-target export**: `docs/superpowers/specs/2026-05-13-multi-target-export-design.md`. Phase 3 Slice 3 — literate org → Hugo + PDF + Word.
 - **TOC collapsible subsections**: `docs/superpowers/specs/2026-05-14-toc-collapsible-subsections-design.md` (designed) + `docs/superpowers/plans/2026-05-18-toc-collapsible-subsections.md` (plan). Shipped — see memory `project_toc_collapsible_subsections_slice.md`.
 
-## Project status (as of 2026-06-07)
+## Project status (as of 2026-06-08)
 
 **Shipped**: Phases 0–8 (modulo interactive QA walkthrough) plus Citation export + Library redesign + Graph-view chrome-consistency + Persistent-graph-access + TOC collapsible subsections + Time-synced poetry + Streams section slices. Phase 3 org-mode pipeline: sub-projects **A** (5 plans), **B** (B.0–B.4), **F** (citations), **C** (math validator), **D** (D.1 semantic blocks + D.2 multi-target export) all shipped. Per-slice merge details live in memory under `project_*.md`.
 
 **Active queue is now polish-and-bugfix-first.** Sub-project E (explorables — the last Phase 3 piece) was pushed to Tier 8 in the 2026-06-07 reorder. Two durable specs hold the canonical queue:
 
-- **`docs/superpowers/specs/2026-06-07-polish-and-bugfix-roadmap.md`** — 8 tiers, ordering, entry checklists. **Tier 1 closed 2026-06-07 (10/10); Tier 2.1 (anchor affordance) shipped 2026-06-07** ([spec](docs/superpowers/specs/2026-06-07-anchor-affordance-design.md), [memory](.claude/memory/project_anchor_affordance_complete.md)). Tier 2.2 + 2.3 + 2.4 still queued; Tier 2 not yet fully closed.
+- **`docs/superpowers/specs/2026-06-07-polish-and-bugfix-roadmap.md`** — 8 tiers, ordering, entry checklists. **Tier 1 closed 2026-06-07 (10/10); Tier 2.1 (anchor affordance) shipped 2026-06-07** ([spec](docs/superpowers/specs/2026-06-07-anchor-affordance-design.md), [memory](.claude/memory/project_anchor_affordance_complete.md)). **Tier 4 closed 2026-06-08; Tier 5 closed 2026-06-08 (5.1 + 5.2 shipped); Tier 6 closed-by-deferral 2026-06-08** (6.1 demoted back to deferred registry — homepage Currently already covers the auto part; user opted to skip the hand-authored "Working on / Wondering" surface). Tier 2.2 + 2.3 + 2.4 still queued (trigger-gated); Tier 2 not yet fully closed.
 - **`docs/superpowers/specs/2026-06-07-deferred-features-registry.md`** — long-horizon trigger-gated capabilities (Tier 9).
 
 Both specs are the source of truth — they survive independently of this file. The CLAUDE.md "Deferred features" table that lived here previously is now in the registry spec.
 
-To pick up the next session: read the roadmap top-to-bottom, start at the highest-numbered open item in the next-up tier (Tier 2.2 + 2.3 + 2.4 are trigger-gated fast-follows — open only when their triggers fire; otherwise pick the next open ☐ tier). For sub-project E specifically (when its time comes), also read `memory/project_phase_3_decomposition.md` + parent spec §14.
+To pick up the next session: read the roadmap top-to-bottom, start at the highest-numbered open item in the next-up tier. **As of 2026-06-08, all near-term tiers are closed or trigger-gated** — Tier 2.2/2.3/2.4 trigger-gated, Tier 3 human-driven, Tier 7 trigger-gated (LHCI ergonomics), Tier 8 holds the large new scopes (sub-project E + org→synced-poetry export). With no triggers fired, the next-session work is either: (a) wait for a real trigger; (b) open Tier 8.1 (sub-project E explorables) if author wants to push the large-feature queue; or (c) author-driven small asks. For sub-project E specifically, also read `memory/project_phase_3_decomposition.md` + parent spec §14.
 
 ## Hard constraints (from spec §1)
 

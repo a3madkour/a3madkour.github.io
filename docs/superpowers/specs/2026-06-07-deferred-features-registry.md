@@ -56,7 +56,7 @@
 
 | Capability | Trigger | Fixture / current state |
 |---|---|---|
-| **About Now widget** | See roadmap Tier 6 #25 — promoted to near-term. | About template has a placeholder slot. |
+| **About Now widget** | Author wants a place to hand-author "Working on" + "Wondering" prose recurrently. (Homepage Currently widget already auto-covers Reading / Listening / Playing / Watching from `data/{reading,listening,playing,watching}.yaml`; that's not the trigger.) | No fixture, no placeholder slot in `layouts/about/single.html` (the previous claim of a placeholder was factually wrong). Demoted back to this registry 2026-06-08 after the Tier 6 brainstorm — see [project-tier-6-deferred](../../../.claude/memory/project_tier_6_deferred.md). |
 | **ORCID `citation_author_orcid` meta** | When an ORCID exists. | `essay-references.html` scaffolds the slot. |
 | **Library item cite export** | Reader appetite. | Library items already have ISBN / MBID / IGDB / TMDB external metadata. |
 | **DOI / CrossRef integration** | DOI registrar in scope. | `data/citations.yaml` accepts a `doi:` field. |
@@ -70,7 +70,7 @@
 
 These were on the deferred list but the user prioritized them into the active tier roadmap during the 2026-06-07 reordering session:
 
-- **About Now widget** → Tier 6 #25 in [`polish-and-bugfix-roadmap.md`](2026-06-07-polish-and-bugfix-roadmap.md). Stays cross-linked here for navigation.
+- ~~**About Now widget** → Tier 6 #25 in [`polish-and-bugfix-roadmap.md`](2026-06-07-polish-and-bugfix-roadmap.md).~~ **Demoted back to this registry 2026-06-08** after Tier 6 brainstorm concluded the homepage Currently widget already covers the auto-derived portion; only "Working on / Wondering" prose remains, which the author chose to defer rather than commit to maintaining. See "Authoring / metadata extensions" table above for the trigger condition.
 - **Per-page interactive widgets** → folded into sub-project E (Tier 8 #29 in roadmap). Stays cross-linked here.
 
 ---
