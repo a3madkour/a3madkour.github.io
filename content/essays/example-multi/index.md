@@ -24,7 +24,7 @@ Lorem ipsum dolor sit amet.
 
 Lorem ipsum body.
 
-<img src="diagram-1.svg" alt="file:diagram-1.svg" />
+<img src="diagram-1.svg" alt="diagram-1.svg" />
 {{< theorem title="Example" id="thm-example" >}}
 Example one statement.
 {{< /theorem >}} See Theorem 1 above.

@@ -14,6 +14,7 @@
 - [Verify WCAG contrast ratios numerically](feedback_verify_contrast_ratios.md) — compute ratios precisely; don't estimate
 - [Use only obvious filler text in fixtures](feedback_filler_text_only.md) — lorem ipsum / "Example N" only; never AI-author placeholder prose
 - [Deferred features must stay visible](feedback_deferred_features_stay_visible.md) — document deferrals in spec/plan AND exercise them in fixtures so they round-trip when implemented
+- [Trigger-gated → build a fixture](feedback_trigger_gated_make_fixture.md) — don't default to "wait" on trigger-gated rows; author a fixture that exercises the trigger, ship the proposed default against it, surface for review before commit
 - [Don't defer cheap things](feedback_dont_defer_cheap_things.md) — include cheap items by default; reserve deferral for real implementation cost or unresolved design questions
 - [Filter chip dimensions compose with AND](feedback_filter_chips_compose.md) — multi-dimension filter strips: each dimension active independently, result is intersection
 - [Grep the whole codebase before planning class renames](feedback_class_rename_grep_full_codebase.md) — the "obvious" file list almost always misses a usage; grep-r first, then plan

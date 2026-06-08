@@ -27,11 +27,12 @@ No npm. Python tooling is stdlib-only. Hugo **extended** (≥ 0.162.1) is requir
 
 ### JS pipeline — multi-entry bundling
 
-`layouts/partials/scripts.html` runs Hugo's `js.Build` (esbuild) eleven times — minified + fingerprinted, classic-script with SRI:
+`layouts/partials/scripts.html` runs Hugo's `js.Build` (esbuild) twelve times — minified + fingerprinted, classic-script with SRI:
 
 | Entry | Output | Loaded on | Notes |
 |---|---|---|---|
 | `js/index.js` | `core.<hash>.js` (~1.4 KB) | every page | `toggle-theme.js` + `nav.js` |
+| `js/entry-anchor-link.js` | `anchor-link.<hash>.js` (~1 KB) | every page | `anchor-link.js` — click-to-clipboard §-glyph runtime; self-guards on `<main>` presence (shipped 2026-06-07 with Tier 2.1 anchor-affordance) |
 | `js/entry-essay.js` | `essay.<hash>.js` (~4.8 KB) | `.Section == "essays"` | imports `filter-chips.js` + `citation-card.js` |
 | `js/entry-garden.js` | `garden.<hash>.js` (~117 KB) | `.Section == "garden"` | `garden.js` + `garden-stack.js` + `garden-graph.js` + ~95 KB vendored d3 modules |
 | `js/entry-research.js` | `research.<hash>.js` (~107 KB) | `/research/` and `/research/graph/` only | `research-graph.js` (copy + trim of `garden-graph.js`); page-narrow predicate over section-wide |
