@@ -1,7 +1,7 @@
 # Polish + Bug-fix Roadmap — Tier Ordering
 
 **Date:** 2026-06-07
-**Status:** Active. Each tier maps to one or more future sessions. **Tier 2 is the next session** (Tier 1 fully closed 2026-06-07).
+**Status:** Active. Each tier maps to one or more future sessions. **Tier 5 is the next session.** Tier 1 fully closed 2026-06-07; Tier 2.1 + 2.5 shipped, 2.2/2.3/2.4 trigger-gated; Tier 3 human-driven (manual QA); Tier 4 closed 2026-06-08.
 
 **Why this exists:** The Phase 3 publish-pipeline buildout (sub-projects A → B → F → C → D, all shipped) left a queue of correctness bugs, polish gaps, hygiene cleanups, tooling gaps, and queued small features. Rather than jump straight to sub-project E (explorables — the last Phase 3 piece), the author chose to clear the polish/bug-fix backlog first. This file documents that ordering so future sessions can pick up any tier cleanly without re-deriving the queue.
 
@@ -82,14 +82,16 @@
 
 | # | Item | Where | Source |
 |---|---|---|---|
-| 4.1 | ☐ `defcustom :group 'a3madkour-publish` should be `'a3madkour-pub` | Per-module `defgroup` declarations | B.2 carry-forward #3 |
-| 4.2 | ☐ `--coerce-year` has unused `_file` arg | `a3madkour-publish-research.el` | B.3 carry-forward #1 |
-| 4.3 | ☐ `rewrite-to-tmp-file` duplicated across garden/research/essays (3 copies now) | Extract into shared `a3madkour-publish-io` (or similar). Verify with grep — may be partially extracted already. | B.3 carry-forward #2 (stale; verify) |
-| 4.4 | ☐ `--render-scalar` `%S` fallback errors on custom structs / hashtables | `a3madkour-publish-frontmatter.el` | B.2 carry-forward #2 |
+| 4.1 | ✓ `defcustom :group 'a3madkour-publish` should be `'a3madkour-pub` → [project-tier-4-complete](../../../.claude/memory/project_tier_4_complete.md) (shipped 2026-06-08; two stragglers — `frontmatter.el:38` + `unpublish.el:47` — corrected; remaining modules already used the canonical `'a3madkour-pub`) | Per-module `defgroup` declarations | B.2 carry-forward #3 |
+| 4.2 | ✓ `--coerce-year` has unused `_file` arg → [project-tier-4-complete](../../../.claude/memory/project_tier_4_complete.md) (shipped 2026-06-08; arg dropped from defun + caller; no ert callers existed) | `a3madkour-publish-research.el` | B.3 carry-forward #1 |
+| 4.3 | ✓ `rewrite-to-tmp-file` duplicated across garden/research/essays — CLOSED retroactively. Grep confirms full extraction: single source at `a3madkour-publish-rewrite.el:425` (`a3madkour-pub-rewrite/rewrite-to-tmp-file`), called from essays/garden/research handlers. No code change needed. Verified 2026-06-08. | Extract into shared module | B.3 carry-forward #2 (stale; verified retro-closed) |
+| 4.4 | ✓ `--render-scalar` `%S` fallback errors on custom structs / hashtables → [project-tier-4-complete](../../../.claude/memory/project_tier_4_complete.md) (shipped 2026-06-08; wrapped the `%S` print form in `--yaml-single-quote` so hashtables/structs/vectors round-trip as quoted strings; +2 ert tests). NOTE: roadmap originally pointed at `frontmatter.el` — actual function lives in `a3madkour-publish-library.el:240`. | `a3madkour-publish-library.el` (was: frontmatter.el — corrected) | B.2 carry-forward #2 |
 | 4.5 | ✓ Shipped 2026-06-08. `check_library_covers.run(repo_root) -> (rc, errors)` added for parity with sibling linters; 2 new tests in `test_check_library_covers.py` (13 → 15). Warnings remain CLI-only (advisory). | `tools/check_library_covers.py` | B.2 carry-forward #1 |
 | 4.6 | ✓ Shipped 2026-06-08. §6.3 template updated to wrap every shortcode in `@@hugo:...@@` export-snippet, with prelude explaining the ox-hugo HTML-encoding behavior. | `docs/superpowers/specs/2026-05-31-phase-3-b-4-essays-handler-design.md` §6.3 | B.4 follow-up |
 
 **Session shape:** one batch session. Each item is a small diff. Per the dotfiles bystander rule, stage by exact path.
+
+**TIER 4 CLOSED 2026-06-08.** All 4 rows ✓: 4.1, 4.2, 4.4 shipped this session in one dotfiles commit; 4.3 verified retro-closed by prior rewrite-extraction work. Suite 616 → 618 (+2 named tests for the 4.4 fallback). Tier 5 is the next session's queue head — see entry checklist there.
 
 ---
 
