@@ -1,2 +1,5 @@
-{{- /* Inputs: . — a status string ("active" | "dormant" | "answered") */ -}}
-<span class="status-pill status-{{ . }}">{{ . }}</span>
+{{- /* Inputs: . — a status string ("active" | "dormant" | "answered").
+       Renamed from .status-pill 2026-06-07: was clobbering garden
+       .status-pill via CSS cascade (both rules used the same class, the
+       later one won, broke the garden Finished pill's inline-flex layout). */ -}}
+<span class="research-status-pill research-status-{{ . }}">{{ . }}</span>

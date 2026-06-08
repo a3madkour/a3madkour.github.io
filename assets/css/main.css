@@ -1982,8 +1982,10 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
  * use existing palette tokens — no new contrast pair introduced.
  * ------------------------------------------------------------------ */
 
-/* Shared status pill (used on theme cards, theme hero, question status strip, sibling list) */
-.status-pill {
+/* Research status pill (theme cards, theme hero, question status strip, sibling list).
+   Class renamed from .status-pill -> .research-status-pill 2026-06-07: the
+   shared name was clobbering the garden .status-pill via CSS cascade. */
+.research-status-pill {
   display: inline-block;
   padding: 0.05rem 0.5rem;
   border-radius: 999px;
@@ -1995,9 +1997,9 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   border: 1px solid currentColor;
   background: transparent;
 }
-.status-pill.status-active   { color: var(--color-burgundy); }
-.status-pill.status-dormant  { color: var(--color-warn); }
-.status-pill.status-answered { color: var(--color-green); }
+.research-status-pill.research-status-active   { color: var(--color-burgundy); }
+.research-status-pill.research-status-dormant  { color: var(--color-warn); }
+.research-status-pill.research-status-answered { color: var(--color-green); }
 
 /* Index page */
 .research-page { padding-top: 2rem; padding-bottom: 4rem; }
@@ -2024,7 +2026,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   flex-direction: column;
   gap: 0.5rem;
 }
-.research-card .status-pill { align-self: flex-start; }
+.research-card .research-status-pill { align-self: flex-start; }
 .research-card-title {
   margin: 0;
   font-size: var(--text-xl);
