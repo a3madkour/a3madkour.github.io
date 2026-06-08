@@ -37,7 +37,11 @@ function handleClick(e) {
   navigator.clipboard.writeText(absoluteUrl).then(
     () => showBanner(`Link to "${title}" copied`),
     () => {
-      location.hash = anchor.getAttribute('href');
+      // Fallback when clipboard API is unavailable (denied permission,
+      // unfocused document, non-secure context). Use replaceState rather
+      // than `location.hash = …` so the URL bar updates without
+      // scrolling the page or adding a history entry.
+      history.replaceState(null, '', anchor.getAttribute('href'));
       showBanner('Link in address bar — copy from there');
     }
   );
