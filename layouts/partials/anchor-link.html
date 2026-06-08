@@ -1,0 +1,8 @@
+{{- /* anchor-link.html — emit the §-glyph deep-link affordance.
+       Inputs: .id (required), .title (required, used for aria-label + banner).
+       Spec: docs/superpowers/specs/2026-06-07-anchor-affordance-design.md §3.3. */ -}}
+{{- $id := .id -}}
+{{- $title := .title | default "this section" -}}
+<a class="anchor-link" href="#{{ $id }}"
+   aria-label="Copy link to {{ $title }}"
+   data-anchor-title="{{ $title }}">§</a>
