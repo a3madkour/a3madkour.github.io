@@ -5456,7 +5456,15 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 }
 
 .block-header {
+  /* `display: inline-block` lets the sibling .anchor-link sit on the
+     same baseline as the heading text instead of dropping to its own
+     line below (the block-* container emits the anchor-link as a sibling
+     of <h4>, not a child — see check_anchor_link.py BLOCK pending mode).
+     The next .block-body div is block-level so it correctly starts a
+     new line below the header + § pair. */
+  display: inline-block;
   margin: 0;
+  margin-right: 0.4em;
   font-family: var(--font-body);
   font-size: 1rem;
   font-weight: 600;
@@ -5479,6 +5487,31 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 .proof-tombstone {
   margin-left: 0.4em;
   font-style: normal; /* keep ∎ upright even though body is italic */
+}
+
+/* Cross-reference links (ref-block shortcode). Resolved refs render
+   as inline links; unresolved (forward / broken) refs render as the
+   bare id with a dashed underline so authors notice them in proofing.
+   Roadmap row 2.2; shortcode: layouts/shortcodes/ref-block.html. */
+.ref-block {
+  color: var(--color-burgundy);
+  font-style: normal;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+.ref-block:hover {
+  text-decoration-thickness: 2px;
+}
+.ref-block-unresolved {
+  color: var(--color-warn);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  text-decoration: underline dashed;
+  text-decoration-thickness: 1px;
+}
+.ref-block-unresolved:hover {
+  text-decoration-style: solid;
 }
 
 /* §48 Anchor-link affordance — deep-link glyph for [id] elements

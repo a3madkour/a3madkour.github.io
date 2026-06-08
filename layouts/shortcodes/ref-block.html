@@ -1,0 +1,25 @@
+{{- /* D.1 cross-reference shortcode.
+       Usage: {{< ref-block "thm-foo" >}} → <a href="#thm-foo">Theorem 1</a>.
+
+       Reads the rendered block's label from page Scratch, written by each
+       numbered AMS-block shortcode (theorem/lemma/corollary/proposition/
+       definition/remark/example/note/claim/conjecture/axiom) right after
+       its own counter increments. Proof is unnumbered and unsupported.
+
+       Limitation: Hugo renders shortcodes top-to-bottom, so a ref-block
+       used BEFORE its target block runs reads an empty Scratch — there
+       is no second pass. In that case the link renders with the bare id
+       as visible text (`thm-foo`), wrapped in `.ref-block-unresolved`
+       for visual distinction. Authors should place ref-block AFTER the
+       block it references, or use [[#thm-foo][Theorem 1]] manual form
+       for forward refs. Roadmap row 2.2. */ -}}
+{{- $id := .Get 0 -}}
+{{- if not $id -}}
+  {{- errorf "ref-block: missing id argument (file %s)" .Page.File.Path -}}
+{{- end -}}
+{{- $label := .Page.Scratch.Get (printf "block-label-%s" $id) -}}
+{{- if $label -}}
+<a class="ref-block" href="#{{ $id }}">{{ $label }}</a>
+{{- else -}}
+<a class="ref-block ref-block-unresolved" href="#{{ $id }}" data-ref-id="{{ $id }}" title="ref-block to {{ $id }} is unresolved — block must come before the ref">{{ $id }}</a>
+{{- end -}}

@@ -108,7 +108,7 @@ Authors write `#+begin_theorem` blocks in org, with optional `#+attr_shortcode: 
 
 **Numbering follows AMS conventions:** theorem/lemma/corollary/proposition share one counter (`theorem-family`); definition/remark/example/note/claim/conjecture/axiom each have independent counters; proof is unnumbered (auto-appends ∎ tombstone).
 
-**Cross-references** use the block's `#+attr_shortcode: :id <slug>` + org's `[[#id][text]]` link syntax. Visible reference text is author-managed (renumber-induced drift is a documented limitation; auto-formatting is a D.x follow-up). `:CUSTOM_ID:` property drawers continue to work for headings (B.1.1 unchanged) but are silently dropped by ox-hugo on special blocks.
+**Cross-references** use the block's `#+attr_shortcode: :id <slug>` + org's `[[#id][text]]` link syntax (manual form, drift-prone), OR the `ref-block` shortcode (`{{< ref-block "thm-foo" >}}` → `Theorem 1`) which auto-formats via a `$page.Scratch` lookup populated by each numbered block at render time. Roadmap row 2.2. Forward references (ref-block called before the target block renders) fall back to the bare id with a `.ref-block-unresolved` warning style — Hugo cannot do a second pass over shortcodes. `:CUSTOM_ID:` property drawers continue to work for headings (B.1.1 unchanged) but are silently dropped by ox-hugo on special blocks.
 
 **CSS §47** styles three visual tiers (strong / soft / chrome-less) using existing color tokens. No new `has_*` frontmatter flag — the CSS loads on every essay page.
 

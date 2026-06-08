@@ -10,6 +10,7 @@
   </h4>
   {{- with $id -}}
     {{- $aria := printf "Corollary %d" $n -}}
+    {{- $page.Scratch.Set (printf "block-label-%s" $id) $aria -}}
     {{- with $title -}}{{ $aria = printf "Corollary %d (%s)" $n . -}}{{- end -}}
     {{ partial "anchor-link.html" (dict "id" $id "title" $aria) }}
   {{- end -}}
