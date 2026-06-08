@@ -32,7 +32,13 @@ import sys
 from html.parser import HTMLParser
 from pathlib import Path
 
-_HEADING_TAGS = {"h1", "h2", "h3", "h4", "h5", "h6"}
+_HEADING_TAGS = {"h1", "h2", "h3"}
+# H4-H6 are intentionally excluded — the heading render hook skips the
+# §-glyph at those levels to avoid visual density on deeply-nested
+# subsections (roadmap row 2.4; render-heading.html). Excluding them from
+# this set lets Goldmark-emitted H4/H5/H6 carry their id without a
+# matching anchor-link. AMS block-header H4s (block-* container children)
+# remain checked via the BLOCK pending mode below.
 
 # HTML void elements that produce a start-tag event but no end-tag event.
 _VOID_TAGS = {

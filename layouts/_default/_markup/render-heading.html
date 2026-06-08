@@ -1,13 +1,16 @@
 {{- /* render-heading.html — Goldmark heading render hook.
        Emits the standard <hN id="…"> element and appends a §-glyph
-       anchor-link partial when an ID is present. Covers every essay,
+       anchor-link partial when an ID is present AND the heading is at
+       H1-H3. H4+ are skipped to avoid §-glyph visual density on
+       deeply-nested subsections (roadmap row 2.4; trigger: 9-H4 fixture
+       at content/essays/example-h4-density/). Covers every essay,
        garden, research, works, library body heading site-wide.
        Spec: docs/superpowers/specs/2026-06-07-anchor-affordance-design.md §3.3. */ -}}
 {{- $id := .Anchor -}}
 {{- $text := .Text -}}
 <h{{ .Level }}{{ with $id }} id="{{ . }}"{{ end }}>
   {{ $text | safeHTML }}
-  {{- with $id -}}
-    {{ partial "anchor-link.html" (dict "id" . "title" ($text | plainify)) }}
+  {{- if and $id (lt .Level 4) -}}
+    {{ partial "anchor-link.html" (dict "id" $id "title" ($text | plainify)) }}
   {{- end -}}
 </h{{ .Level }}>
