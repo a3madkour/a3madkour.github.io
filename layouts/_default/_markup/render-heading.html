@@ -1,0 +1,13 @@
+{{- /* render-heading.html — Goldmark heading render hook.
+       Emits the standard <hN id="…"> element and appends a §-glyph
+       anchor-link partial when an ID is present. Covers every essay,
+       garden, research, works, library body heading site-wide.
+       Spec: docs/superpowers/specs/2026-06-07-anchor-affordance-design.md §3.3. */ -}}
+{{- $id := .Anchor -}}
+{{- $text := .Text -}}
+<h{{ .Level }}{{ with $id }} id="{{ . }}"{{ end }}>
+  {{ $text | safeHTML }}
+  {{- with $id -}}
+    {{ partial "anchor-link.html" (dict "id" . "title" ($text | plainify)) }}
+  {{- end -}}
+</h{{ .Level }}>
