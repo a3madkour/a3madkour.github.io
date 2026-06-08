@@ -1,7 +1,10 @@
 """Smoke test for the post-build site.
 
-Asserts that the seven top-level URLs listed in spec §11 each resolve to a
+Asserts that the eight top-level URLs listed in spec §11 each resolve to a
 non-empty, parseable HTML file in public/. Runs in CI after `hugo --minify`.
+Also asserts that the D.1 kitchen-sink essay (/essays/example-five/) contains
+at least one anchor-link element — catches catastrophic regressions of the
+Tier 2.1 anchor-affordance pipeline before the full linter runs.
 
 No paired unit-test sibling: the logic is too thin (it's mostly stdlib
 HTMLParser + file-exists checks). Documented in spec §3.1.
@@ -24,20 +27,29 @@ URLS = [
     "/credits/",
 ]
 
+# Tier 2.1 anchor-affordance smoke target.
+ANCHOR_LINK_REQUIRED_URLS = ["/essays/example-five/"]
+
 
 class _Parser(HTMLParser):
-    """Tracks whether at least one <html> and <body> tag was seen."""
+    """Tracks whether <html> + <body> were seen and counts .anchor-link tags."""
 
     def __init__(self) -> None:
         super().__init__()
         self.saw_html = False
         self.saw_body = False
+        self.anchor_link_count = 0
 
     def handle_starttag(self, tag: str, attrs: list) -> None:
         if tag == "html":
             self.saw_html = True
         elif tag == "body":
             self.saw_body = True
+        elif tag == "a":
+            for k, v in attrs:
+                if k == "class" and v and "anchor-link" in v.split():
+                    self.anchor_link_count += 1
+                    break
 
 
 def file_for_url(public: Path, url: str) -> Path:
@@ -67,6 +79,11 @@ def check_url(public: Path, url: str) -> list:
         errors.append(f"{url}: no <html> tag")
     if not parser.saw_body:
         errors.append(f"{url}: no <body> tag")
+    if url in ANCHOR_LINK_REQUIRED_URLS and parser.anchor_link_count == 0:
+        errors.append(
+            f"{url}: no <a class='anchor-link'> elements found — "
+            "Tier 2.1 anchor-affordance pipeline broken"
+        )
     return errors
 
 
@@ -80,7 +97,7 @@ def main() -> int:
         return 2
 
     all_errors = []
-    for url in URLS:
+    for url in URLS + ANCHOR_LINK_REQUIRED_URLS:
         all_errors.extend(check_url(public, url))
 
     if all_errors:
@@ -89,7 +106,7 @@ def main() -> int:
             print(f"  - {e}", file=sys.stderr)
         return 1
 
-    print(f"check_smoke: OK ({len(URLS)} URLs)")
+    print(f"check_smoke: OK ({len(URLS) + len(ANCHOR_LINK_REQUIRED_URLS)} URLs)")
     return 0
 
 
