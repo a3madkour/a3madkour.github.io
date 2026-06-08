@@ -113,13 +113,24 @@ def load_audit_log() -> dict:
     return {}
 
 
-def load_all_items() -> list[dict]:
-    sys.path.insert(0, str(REPO_ROOT / "tools"))
-    from fetch_library_covers import load_leaf  # noqa: E402
+def load_all_items(data_dir: Path = DATA_DIR) -> list[dict]:
+    sys.path.insert(0, str(data_dir.parent / "tools"))
+    from check_library_fixtures import parse_library_yaml  # noqa: E402
     out = []
     for leaf in LEAVES:
-        out.extend(load_leaf(leaf))
+        out.extend(parse_library_yaml((data_dir / f"{leaf}.yaml").read_text()))
     return out
+
+
+def run(repo_root: Path) -> tuple[int, list[str]]:
+    """Programmatic entrypoint mirroring sibling linters. Returns (rc, errors).
+
+    Warnings (cache coverage, audit consistency, freshness) are advisory and
+    surfaced only through main()/CLI; this entrypoint exposes gating errors only.
+    """
+    items = load_all_items(repo_root / "data")
+    errors, _ = check_schema(items)
+    return (1 if errors else 0, errors)
 
 
 def main(argv=None) -> int:

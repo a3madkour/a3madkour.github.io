@@ -310,6 +310,8 @@ Each stub uses filler text only (lorem ipsum / "Example N") per [[feedback_fille
 
 ### 6.3 `example-one.org` reference template
 
+**Shortcode syntax note.** Raw `{{< X >}}` written in org body text gets HTML-encoded by ox-hugo (`&lt;cite ...&gt;` reaches the rendered page). Wrap every Hugo shortcode in an `@@hugo:...@@` export-snippet so it survives export as raw markup. For paired shortcodes, wrap both the open and close tags (the inner content stays as plain org). The B.4 has-marker scanner reads org-source + post-export body together, so either form is detected — but only the export-snippet form actually renders correctly.
+
 ```org
 :PROPERTIES:
 :ID:       essay-one-uuid-placeholder
@@ -329,7 +331,7 @@ Each stub uses filler text only (lorem ipsum / "Example N") per [[feedback_fille
 #+HUGO_SOURCE_STREAM: 2026-04-22-example-music-jam-stream
 
 * Section one — example heading
-Lorem ipsum. {{< cite "example-source-1" >}}
+Lorem ipsum. @@hugo:{{< cite "example-source-1" >}}@@
 
 Lorem ipsum.[fn:1]
 
@@ -339,7 +341,7 @@ def example(x, y):
 #+end_src
 
 ** Subsection one.a — example
-Lorem ipsum. {{< sidenote >}}Lorem ipsum sidenote — example one.{{< /sidenote >}}
+Lorem ipsum. @@hugo:{{< sidenote >}}@@Lorem ipsum sidenote — example one.@@hugo:{{< /sidenote >}}@@
 
 *** Subsubsection one.a.i — example
 Lorem ipsum.
@@ -348,15 +350,15 @@ Lorem ipsum.
 Deep heading; stresses TOC scrollspy collapse.
 
 * Section two — example heading
-{{< math >}}\alpha + \beta = \gamma{{< /math >}}
+@@hugo:{{< math >}}@@\alpha + \beta = \gamma@@hugo:{{< /math >}}@@
 
-{{< figure src="hero.svg" caption="Example figure one — placeholder caption." alt="" >}}
+@@hugo:{{< figure src="hero.svg" caption="Example figure one — placeholder caption." alt="" >}}@@
 
-{{< widget src="example-widget" >}}
+@@hugo:{{< widget src="example-widget" >}}@@
 
-{{< video-sync src="example.mp4" >}}
+@@hugo:{{< video-sync src="example.mp4" >}}@@
 
-{{< figure src="hero.svg" caption="Example figure two — placeholder caption." alt="" class="wide" >}}
+@@hugo:{{< figure src="hero.svg" caption="Example figure two — placeholder caption." alt="" class="wide" >}}@@
 
 [fn:1] Lorem ipsum footnote — example one two three.
 ```

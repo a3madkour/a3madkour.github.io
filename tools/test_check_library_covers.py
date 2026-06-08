@@ -92,5 +92,30 @@ class FreshnessTests(unittest.TestCase):
         warns = clc.check_freshness(audit, stale_days=365, now_iso="2026-05-12T00:00:00Z")
         self.assertEqual(warns, [])
 
+class RunApiTests(unittest.TestCase):
+    """Parity with sibling linters: run(repo_root) -> (rc, errors)."""
+
+    def test_run_passes_on_real_repo(self):
+        repo_root = TOOLS.parent
+        rc, errors = clc.run(repo_root)
+        self.assertEqual(rc, 0, msg=f"unexpected errors: {errors}")
+
+    def test_run_propagates_schema_error(self):
+        with tempfile.TemporaryDirectory() as td:
+            data = Path(td) / "data"
+            data.mkdir()
+            for leaf in clc.LEAVES:
+                (data / f"{leaf}.yaml").write_text("items: []\n")
+            (data / "reading.yaml").write_text(
+                "items:\n"
+                "  - slug: bad\n"
+                "    media_type: book\n"
+                "    extras:\n"
+                "      isbn: not-a-real-isbn\n"
+            )
+            rc, errors = clc.run(Path(td))
+            self.assertEqual(rc, 1)
+            self.assertTrue(any("isbn" in e for e in errors))
+
 if __name__ == "__main__":
     unittest.main()

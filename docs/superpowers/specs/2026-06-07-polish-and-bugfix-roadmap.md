@@ -86,8 +86,8 @@
 | 4.2 | ☐ `--coerce-year` has unused `_file` arg | `a3madkour-publish-research.el` | B.3 carry-forward #1 |
 | 4.3 | ☐ `rewrite-to-tmp-file` duplicated across garden/research/essays (3 copies now) | Extract into shared `a3madkour-publish-io` (or similar). Verify with grep — may be partially extracted already. | B.3 carry-forward #2 (stale; verify) |
 | 4.4 | ☐ `--render-scalar` `%S` fallback errors on custom structs / hashtables | `a3madkour-publish-frontmatter.el` | B.2 carry-forward #2 |
-| 4.5 | ☐ `check_library_covers.py` lacks `run(root)` API; other linters have it | `tools/check_library_covers.py` | B.2 carry-forward #1 |
-| 4.6 | ☐ B.4 spec §6.3 template amendment — document `@@hugo:{{< X >}}@@` syntax | `docs/superpowers/specs/2026-05-31-phase-3-b-4-essays-handler-design.md` §6.3 | B.4 follow-up |
+| 4.5 | ✓ Shipped 2026-06-08. `check_library_covers.run(repo_root) -> (rc, errors)` added for parity with sibling linters; 2 new tests in `test_check_library_covers.py` (13 → 15). Warnings remain CLI-only (advisory). | `tools/check_library_covers.py` | B.2 carry-forward #1 |
+| 4.6 | ✓ Shipped 2026-06-08. §6.3 template updated to wrap every shortcode in `@@hugo:...@@` export-snippet, with prelude explaining the ox-hugo HTML-encoding behavior. | `docs/superpowers/specs/2026-05-31-phase-3-b-4-essays-handler-design.md` §6.3 | B.4 follow-up |
 
 **Session shape:** one batch session. Each item is a small diff. Per the dotfiles bystander rule, stage by exact path.
 
