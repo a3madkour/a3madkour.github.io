@@ -706,6 +706,9 @@ main { flex-grow: 1; }
 .citation-card em { font-style: italic; }
 .citation-card a { color: var(--color-burgundy); }
 .citation-card a:hover { text-decoration: underline; }
+/* Preserve nav-pill text colors when cloned into the card (border + text match). */
+.citation-card .ref-cite-source { color: var(--color-steel); }
+.citation-card .ref-cite-note   { color: var(--color-green); }
 .citation-card-close {
   display: none;
 }
