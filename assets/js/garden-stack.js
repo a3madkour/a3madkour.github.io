@@ -281,7 +281,13 @@ function isInternalGardenLink(a) {
   const u = new URL(a.href, window.location.href);
   if (u.origin !== window.location.origin) return null;
   const m = u.pathname.match(/^\/garden\/([a-z0-9][a-z0-9-]*)\/?$/);
-  return m ? m[1] : null;
+  if (!m) return null;
+  // Fragment-bearing link to the SAME page is an intra-note anchor jump
+  // (e.g. the §-glyph anchor-link affordance, or any in-content `#id`
+  // link). Skip — let the click bubble to other listeners (e.g.
+  // anchor-link.js) and don't append a redundant column.
+  if (u.hash && u.pathname === window.location.pathname) return null;
+  return m[1];
 }
 
 async function init() {
