@@ -1,7 +1,7 @@
 # Polish + Bug-fix Roadmap — Tier Ordering
 
 **Date:** 2026-06-07
-**Status:** Active. Each tier maps to one or more future sessions. **Tier 5.2 + Tier 6 are the next sessions.** Tier 1 fully closed 2026-06-07; Tier 2.1 + 2.5 shipped, 2.2/2.3/2.4 trigger-gated; Tier 3 human-driven (manual QA); Tier 4 closed 2026-06-08; Tier 5.1 closed 2026-06-08 (5.2 remains — own brainstorm cycle).
+**Status:** Active. Each tier maps to one or more future sessions. **Tier 6 is the next session.** Tier 1 fully closed 2026-06-07; Tier 2.1 + 2.5 shipped, 2.2/2.3/2.4 trigger-gated; Tier 3 human-driven (manual QA); Tier 4 closed 2026-06-08; Tier 5 closed 2026-06-08 (5.1 + 5.2 shipped; preview-section deferred as 5.3 stub).
 
 **Why this exists:** The Phase 3 publish-pipeline buildout (sub-projects A → B → F → C → D, all shipped) left a queue of correctness bugs, polish gaps, hygiene cleanups, tooling gaps, and queued small features. Rather than jump straight to sub-project E (explorables — the last Phase 3 piece), the author chose to clear the polish/bug-fix backlog first. This file documents that ordering so future sessions can pick up any tier cleanly without re-deriving the queue.
 
@@ -102,9 +102,11 @@
 | # | Item | Source |
 |---|---|---|
 | 5.1 | ✓ **`a3-unpublish-deliberate` command.** Recover from a stale deliberate publish. → [project-tier-5-1-complete](../../../.claude/memory/project_tier_5_1_complete.md) (shipped 2026-06-08; synchronous command composing existing primitives — manifest lookup → `--unpublish-delete-bundle` → `record-publish 'removed`; refuses living-section ids; mirrors bug-1.1's self-healing contract on `'failed` delete; +11 ert tests) | B.4 follow-up #1 |
-| 5.2 | ☐ **Emacs publish-author helpers** — `--mark-publish`, `--insert-library-item`, `--preview-section`, `--jump-to-source`, `--current-status`. Standalone module in `a3madkour-publish-author.el`. | [project-emacs-publish-helpers-followup](../../../.claude/memory/project_emacs_publish_helpers_followup.md) |
+| 5.2 | ✓ **Emacs publish-author helpers** — 6 interactive commands in `a3madkour-publish-author.el`. → [project-tier-5-2-complete](../../../.claude/memory/project_tier_5_2_complete.md) (shipped 2026-06-08, dotfiles `8e5e76b`; mark / unmark / status / library-insert-item / library-insert-extras / jump-to-source; +33 ert; preview-section deferred to its own slice — Tier 5.3 once filed). | [project-emacs-publish-helpers-followup](../../../.claude/memory/project_emacs_publish_helpers_followup.md) |
 
-**Session shape:** 5.1 is small (one session). 5.2 is its own brainstorm → spec → plan → ship cycle.
+**Session shape:** 5.1 was small (one session, shipped 2026-06-08). 5.2 shipped 2026-06-08 in its own brainstorm → spec → plan → ship cycle.
+
+**TIER 5.2 CLOSED 2026-06-08.** Six interactive commands shipped in one dotfiles commit (`8e5e76b`); +33 ert (suite 629 → 662). preview-section deferred — open a Tier 5.3 row when authoring friction surfaces.
 
 **TIER 5.1 CLOSED 2026-06-08.** Synchronous recovery command; bundle delete + manifest `removed` advance; refuses living-section ids (publish-living owns those); preserves bug-1.1's self-healing contract on `'failed` delete. Suite 618 → 629 (+11 ert). Tier 5.2 still queued — own brainstorm cycle.
 
