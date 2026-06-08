@@ -44,10 +44,12 @@ function handleClick(e) {
 }
 
 function handleEscape(e) {
-  if (e.key === 'Escape' && bannerEl && !bannerEl.hidden) {
-    bannerEl.hidden = true;
-    if (hideTimer) clearTimeout(hideTimer);
-  }
+  // Skip when a <dialog> is open — the dialog owns Escape (native cancel).
+  if (e.key !== 'Escape') return;
+  if (document.querySelector('dialog[open]')) return;
+  if (!bannerEl || bannerEl.hidden) return;
+  bannerEl.hidden = true;
+  if (hideTimer) clearTimeout(hideTimer);
 }
 
 const main = document.querySelector('main');
