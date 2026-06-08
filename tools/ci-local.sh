@@ -111,6 +111,9 @@ python3 tools/check_page_weights.py
 
 python3 tools/check_smoke.py
 
+python3 tools/check_anchor_link.py
+python3 -m unittest tools/test_check_anchor_link.py -v 2>&1 | tail -3
+
 python3 tools/check_lhci_urls.py
 (cd tools && python3 -m unittest test_check_lhci_urls.py -v 2>&1 | tail -3)
 

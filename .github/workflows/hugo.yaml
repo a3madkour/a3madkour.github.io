@@ -168,6 +168,10 @@ jobs:
         run: pagefind --site public/
       - name: Verify build smoke test
         run: python3 tools/check_smoke.py
+      - name: Verify anchor-link affordance present
+        run: python3 tools/check_anchor_link.py
+      - name: Run anchor-link linter unit tests
+        run: python3 -m unittest tools/test_check_anchor_link.py -v
       - name: Verify LHCI URLs resolve to built pages
         run: python3 tools/check_lhci_urls.py
       - name: Run LHCI URL linter unit tests
