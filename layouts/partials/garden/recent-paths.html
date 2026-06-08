@@ -5,6 +5,7 @@
 */ -}}
 <section class="garden-recent-paths" hidden aria-labelledby="recent-paths-heading">
   <h2 id="recent-paths-heading">Recent paths</h2>
+  {{ partial "anchor-link.html" (dict "id" "recent-paths-heading" "title" "Recent paths") }}
   <ol class="recent-paths-list"></ol>
   <div class="recent-paths-actions">
     <a class="recent-paths-view-all" href="{{ "/garden/history/" | relURL }}">Reading history</a>

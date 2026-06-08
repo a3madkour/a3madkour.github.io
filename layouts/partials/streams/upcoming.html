@@ -56,7 +56,7 @@
 
 {{- if $sorted -}}
 <section class="streams-upcoming"{{ if $heading }} aria-labelledby="streams-upcoming-heading"{{ end }}>
-  {{- if $heading -}}<h2 id="streams-upcoming-heading">{{ $heading }}</h2>{{- end -}}
+  {{- if $heading -}}<h2 id="streams-upcoming-heading">{{ $heading }}</h2>{{- partial "anchor-link.html" (dict "id" "streams-upcoming-heading" "title" $heading) -}}{{- end -}}
   <ul class="streams-upcoming-list">
     {{- range $sorted -}}
       {{- $cat := .category | default "" -}}

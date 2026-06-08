@@ -3,6 +3,7 @@
 {{- $media := index site.Data "library-media" -}}
 <section class="library-catalogue" id="catalogue" aria-labelledby="catalogue-heading">
   <h2 id="catalogue-heading">Browse the catalogue</h2>
+  {{ partial "anchor-link.html" (dict "id" "catalogue-heading" "title" "Browse the catalogue") }}
   <div class="library-cat-cards">
     {{- range $entry := $media.media }}
     {{- $key := $entry.key -}}

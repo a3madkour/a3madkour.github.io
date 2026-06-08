@@ -18,6 +18,7 @@
 {{- if $anyShown -}}
 <section class="streams-cross-refs" aria-labelledby="streams-cross-refs-heading">
   <h2 id="streams-cross-refs-heading">From this stream</h2>
+  {{ partial "anchor-link.html" (dict "id" "streams-cross-refs-heading" "title" "From this stream") }}
   {{- range $groups -}}
     {{- $refs := index $page.Params .field | default slice -}}
     {{- if $refs -}}

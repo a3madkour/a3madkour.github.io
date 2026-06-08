@@ -30,6 +30,7 @@
 {{- $self := partial "cite/normalize-page.html" . -}}
 <section id="cite-this" class="cite-static" aria-labelledby="cite-this-heading">
   <h2 id="cite-this-heading">{{ $label }}</h2>
+  {{ partial "anchor-link.html" (dict "id" "cite-this-heading" "title" $label) }}
   <details><summary>BibTeX</summary><pre>{{ partial "cite/fmt-bibtex.html"  $self }}</pre></details>
   <details><summary>APA</summary><pre>{{ partial "cite/fmt-apa.html"     $self }}</pre></details>
   <details><summary>Chicago</summary><pre>{{ partial "cite/fmt-chicago.html" $self }}</pre></details>

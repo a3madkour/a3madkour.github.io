@@ -35,6 +35,7 @@
 <section class="library-shelf" id="shelf-{{ $shelf_slug }}" aria-labelledby="shelf-{{ $shelf_slug }}-heading">
   <header class="library-shelf-head">
     <h2 id="shelf-{{ $shelf_slug }}-heading">{{ $title }}</h2>
+    {{ partial "anchor-link.html" (dict "id" (printf "shelf-%s-heading" $shelf_slug) "title" $title) }}
     {{- with $shelf.intro }}<p class="library-shelf-intro">{{ . }}</p>{{ end -}}
     {{- with $see_all }}<a class="library-shelf-see-all" href="{{ . }}">See all</a>{{ end -}}
   </header>
