@@ -15,6 +15,13 @@
 {{- $search := resources.Get "js/entry-search.js" | js.Build $searchOpts | fingerprint -}}
 <script src="{{ $search.RelPermalink }}" integrity="{{ $search.Data.Integrity }}" defer></script>
 
+{{- /* Anchor-link affordance: §-glyph copy-to-clipboard. Loaded on every
+       page because [id] elements exist site-wide. JS self-guards on
+       <main> presence; safely no-ops on pages without one. */ -}}
+{{- $anchorOpts := dict "targetPath" "js/anchor-link.js" "minify" true -}}
+{{- $anchor := resources.Get "js/entry-anchor-link.js" | js.Build $anchorOpts | fingerprint -}}
+<script src="{{ $anchor.RelPermalink }}" integrity="{{ $anchor.Data.Integrity }}" defer></script>
+
 {{- if eq .Section "essays" }}
 {{- $essayOpts := dict "targetPath" "js/essay.js" "minify" true -}}
 {{- $essay := resources.Get "js/entry-essay.js" | js.Build $essayOpts | fingerprint }}
