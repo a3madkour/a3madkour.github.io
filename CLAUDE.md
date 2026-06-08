@@ -11,7 +11,7 @@ Personal website for Abdelrahman Madkour, built as a Hugo static site with hand-
 - `hugo server --buildDrafts` — dev server with drafts visible.
 - `hugo --minify` — production build to `public/`. **Do not run with a dev server alive**; it poisons the dev-server CSS via a MIME mismatch.
 - `python3 tools/check-contrast.py` — WCAG 2.1 contrast verifier (CI gate).
-- Twenty-six linter pairs under `tools/check_*.py` + `tools/test_check_*.py` (CI runs each linter then its unit-test sibling): essay fixtures, essay TOC depth, garden fixtures, garden links, filter-chips config, research fixtures, research links, citations, math frontmatter coupling, works fixtures, works links, synced poetry, library fixtures, library links, library covers, library shelves, icon attribution, RSS XSL, garden history, streams fixtures, streams links, pagefind metadata, cite metadata, page weights, LHCI URL resolution, org-asset references. `tools/check_smoke.py` and `tools/check_graph_chrome.py` are sibling-less linters (no paired test file — spec §3.1: logic is too thin to warrant pairing).
+- Twenty-seven linter pairs under `tools/check_*.py` + `tools/test_check_*.py` (CI runs each linter then its unit-test sibling): essay fixtures, essay TOC depth, garden fixtures, garden links, filter-chips config, research fixtures, research links, citations, math frontmatter coupling, works fixtures, works links, synced poetry, library fixtures, library links, library covers, library shelves, icon attribution, RSS XSL, garden history, streams fixtures, streams links, pagefind metadata, cite metadata, page weights, LHCI URL resolution, org-asset references, anchor-link affordance. `tools/check_smoke.py` and `tools/check_graph_chrome.py` are sibling-less linters (no paired test file — spec §3.1: logic is too thin to warrant pairing).
 
 No npm. Python tooling is stdlib-only. Hugo **extended** (≥ 0.162.1) is required — `.github/workflows/hugo.yaml` pins `HUGO_VERSION=0.162.1`. (Hugo 0.162+ tightened the default `security.allowContent` policy to deny `text/html` source files; this site avoids the issue by using `_index.md` rather than `_index.html` for the homepage.)
 
@@ -177,7 +177,7 @@ woff2 files live in `static/fonts/` (latin + latin-ext subsets only; browsers do
 
 ### Deployment
 
-`.github/workflows/hugo.yaml` builds with Hugo extended and deploys `public/` to GitHub Pages on pushes to `master`. CI step order: pre-build linters (contrast + 25 linter pairs + 1 sibling-less = 52 steps) → `hugo --minify` → pagefind metadata linter unit tests → verify pagefind metadata on built pages → cite metadata linter unit tests → verify cite metadata on built pages → install Pagefind 1.5.2 binary → build Pagefind index into `public/pagefind/` → smoke test → LHCI URL check → page-weight linter + unit tests → Lighthouse CI desktop (2 steps: `lighthouserc.json`) → Lighthouse CI mobile (`lighthouserc.mobile.json`) → upload artifact → deploy. Total: 65 named steps. (A separate cron workflow `.github/workflows/streams-poll.yaml` runs every 5 minutes — outside this build/deploy pipeline.) Any failure blocks deploy. `public/pagefind/` is gitignored and CI-regenerated each run. Two separate LHCI config files (`lighthouserc.json` for desktop, `lighthouserc.mobile.json` for mobile) — simpler than an env-override approach.
+`.github/workflows/hugo.yaml` builds with Hugo extended and deploys `public/` to GitHub Pages on pushes to `master`. CI step order: pre-build linters (contrast + 25 linter pairs + 1 sibling-less = 52 steps) → `hugo --minify` → pagefind metadata linter unit tests → verify pagefind metadata on built pages → cite metadata linter unit tests → verify cite metadata on built pages → install Pagefind 1.5.2 binary → build Pagefind index into `public/pagefind/` → smoke test → LHCI URL check → page-weight linter + unit tests → Lighthouse CI desktop (2 steps: `lighthouserc.json`) → Lighthouse CI mobile (`lighthouserc.mobile.json`) → upload artifact → deploy. Total: 67 named steps. (A separate cron workflow `.github/workflows/streams-poll.yaml` runs every 5 minutes — outside this build/deploy pipeline.) Any failure blocks deploy. `public/pagefind/` is gitignored and CI-regenerated each run. Two separate LHCI config files (`lighthouserc.json` for desktop, `lighthouserc.mobile.json` for mobile) — simpler than an env-override approach.
 
 ### Anchor-link affordance
 
@@ -199,12 +199,12 @@ Every `id`-bearing reading-flow element inside `<main>` (headings `<h2>`–`<h6>
 
 **Active queue is now polish-and-bugfix-first.** Sub-project E (explorables — the last Phase 3 piece) was pushed to Tier 8 in the 2026-06-07 reorder. Two durable specs hold the canonical queue:
 
-- **`docs/superpowers/specs/2026-06-07-polish-and-bugfix-roadmap.md`** — 8 tiers, ordering, entry checklists. **Tier 1 fully closed 2026-06-07 (10/10); Tier 2 (UX polish) is next.** 2.1 (anchor affordance) brainstormed 2026-06-07 → [`2026-06-07-anchor-affordance-design.md`](docs/superpowers/specs/2026-06-07-anchor-affordance-design.md); plan + impl pending.
+- **`docs/superpowers/specs/2026-06-07-polish-and-bugfix-roadmap.md`** — 8 tiers, ordering, entry checklists. **Tier 1 closed 2026-06-07 (10/10); Tier 2.1 (anchor affordance) shipped 2026-06-07** ([spec](docs/superpowers/specs/2026-06-07-anchor-affordance-design.md), [memory](.claude/memory/project_anchor_affordance_complete.md)). Tier 2.2 + 2.3 + 2.4 still queued; Tier 2 not yet fully closed.
 - **`docs/superpowers/specs/2026-06-07-deferred-features-registry.md`** — long-horizon trigger-gated capabilities (Tier 9).
 
 Both specs are the source of truth — they survive independently of this file. The CLAUDE.md "Deferred features" table that lived here previously is now in the registry spec.
 
-To pick up the next session: read the roadmap top-to-bottom, start at the highest-numbered open item in the next-up tier (today, Tier 2.1 — its design spec is committed; the next session opens `superpowers:writing-plans` against that spec). For sub-project E specifically (when its time comes), also read `memory/project_phase_3_decomposition.md` + parent spec §14.
+To pick up the next session: read the roadmap top-to-bottom, start at the highest-numbered open item in the next-up tier (Tier 2.2 + 2.3 + 2.4 are trigger-gated fast-follows — open only when their triggers fire; otherwise pick the next open ☐ tier). For sub-project E specifically (when its time comes), also read `memory/project_phase_3_decomposition.md` + parent spec §14.
 
 ## Hard constraints (from spec §1)
 
