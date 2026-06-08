@@ -5,5 +5,10 @@
 {{- $id := .Get "id" -}}
 <div class="block-proof"{{ with $id }} id="{{ . }}"{{ end }}>
   <h4 class="block-header"><em>Proof{{ with $of }} of <span class="block-title">{{ . }}</span>{{ end }}.</em></h4>
+  {{- with $id -}}
+    {{- $aria := "Proof" -}}
+    {{- with $of -}}{{ $aria = printf "Proof of %s" . -}}{{- end -}}
+    {{ partial "anchor-link.html" (dict "id" $id "title" $aria) }}
+  {{- end -}}
   <div class="block-body">{{ .Inner | markdownify }}<span class="proof-tombstone" aria-hidden="true"> ∎</span></div>
 </div>

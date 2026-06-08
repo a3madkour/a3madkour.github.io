@@ -8,5 +8,10 @@
   <h4 class="block-header">
     Remark {{ $n }}{{ with $title }} (<span class="block-title">{{ . }}</span>){{ end }}.
   </h4>
+  {{- with $id -}}
+    {{- $aria := printf "Remark %d" $n -}}
+    {{- with $title -}}{{ $aria = printf "Remark %d (%s)" $n . -}}{{- end -}}
+    {{ partial "anchor-link.html" (dict "id" $id "title" $aria) }}
+  {{- end -}}
   <div class="block-body">{{ .Inner | markdownify }}</div>
 </div>
