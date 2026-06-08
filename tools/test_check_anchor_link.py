@@ -50,6 +50,37 @@ ID_OUTSIDE_MAIN = (
 )
 NO_MAIN = "<!doctype html><html><body><h2 id=\"x\">No main wrapper</h2></body></html>"
 
+# Spec §1 narrowing: structural id-bearing elements inside <main> that are
+# NOT reading-flow targets must be silently ignored (no anchor-link
+# expected). These cover the categories surfaced during Task 8 dev:
+# SVG <symbol>, graph-data <script>, sidenote <aside>, footnote <sup>/<li>.
+STRUCTURAL_IDS_IGNORED = page(
+    '<svg><symbol id="g-game"><path d="M0,0"/></symbol></svg>'
+    '<script id="garden-graph-data" type="application/json">{}</script>'
+    '<aside id="sn-1">side</aside>'
+    '<sup id="fnref:1">1</sup>'
+    '<li id="fn:1">fn body</li>'
+    '<li id="ref-foo">ref body</li>'
+    '<nav id="TableOfContents">toc</nav>'
+    '<aside id="garden-graph-panel">panel</aside>'
+)
+
+# A reading-flow target with class="block-…" gets enforced.
+BLOCK_GOOD = page(
+    '<div class="block-theorem block-strong" id="thm-x">'
+    '<h4 class="block-header">Theorem 1.</h4>'
+    '<a class="anchor-link" href="#thm-x">§</a>'
+    '<div class="block-body">body</div></div>'
+)
+
+# A reading-flow target with class="block-…" but missing the anchor-link
+# should still fail (it's a real spec-coverage gap, not an "ignore me").
+BLOCK_MISSING = page(
+    '<div class="block-theorem block-strong" id="thm-x">'
+    '<h4 class="block-header">Theorem 1.</h4>'
+    '<div class="block-body">body</div></div>'
+)
+
 
 class TempPublic:
     def __init__(self) -> None:
@@ -112,6 +143,25 @@ class CheckAnchorLinkTest(unittest.TestCase):
         self.t.write("essays/x/index.html", NO_MAIN)
         rc, errors = lint.run(self.t.public)
         self.assertEqual(rc, 0, msg=f"unexpected errors: {errors}")
+
+    def test_structural_ids_in_main_are_silently_ignored(self) -> None:
+        """SVG <symbol>, <script>, <aside>, <sup>, <li>, <nav> with ids inside
+        <main> are NOT reading-flow targets per spec §1 — the linter must not
+        flag them as missing anchor-links."""
+        self.t.write("essays/x/index.html", STRUCTURAL_IDS_IGNORED)
+        rc, errors = lint.run(self.t.public)
+        self.assertEqual(rc, 0, msg=f"unexpected errors: {errors}")
+
+    def test_block_class_element_with_anchor_passes(self) -> None:
+        self.t.write("essays/x/index.html", BLOCK_GOOD)
+        rc, errors = lint.run(self.t.public)
+        self.assertEqual(rc, 0, msg=f"unexpected errors: {errors}")
+
+    def test_block_class_element_missing_anchor_fails(self) -> None:
+        self.t.write("essays/x/index.html", BLOCK_MISSING)
+        rc, errors = lint.run(self.t.public)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("thm-x" in e for e in errors))
 
     def test_empty_public_passes(self) -> None:
         rc, errors = lint.run(self.t.public)
