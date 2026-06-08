@@ -7,7 +7,7 @@ has_math: false
 has_sidenotes: false
 has_video_sync: false
 has_widgets: false
-lastmod: 2026-06-03
+lastmod: 2026-06-06
 series: ""
 series_order: 0
 summary: ""
@@ -23,7 +23,9 @@ Lorem ipsum dolor sit amet.
 ## Universal section {#universal-section}
 
 Lorem ipsum body.
-{{< theorem title="&quot;Example&quot;" id="thm-example" >}}
+
+<img src="diagram-1.svg" alt="file:diagram-1.svg" />
+{{< theorem title="Example" id="thm-example" >}}
 Example one statement.
 {{< /theorem >}} See Theorem 1 above.
 {{< definition >}}
@@ -35,17 +37,17 @@ Lorem ipsum proof body.
 {{< /proof >}}
 
 
-## Web only <span class="tag"><span class="WEB_ONLY">WEB-ONLY</span></span> {#web-only}
+## Web only {#web-only}
 
 Lorem ipsum web-only.
 
 
-## PDF skipped <span class="tag"><span class="NOEXPORT_PDF">NOEXPORT-PDF</span></span> {#pdf-skipped}
+## PDF skipped {#pdf-skipped}
 
 Lorem ipsum PDF-skipped.
 
 
-## Word skipped <span class="tag"><span class="NOEXPORT_WORD">NOEXPORT-WORD</span></span> {#word-skipped}
+## Word skipped {#word-skipped}
 
 Lorem ipsum Word-skipped.
 

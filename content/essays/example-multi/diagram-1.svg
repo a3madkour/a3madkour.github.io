@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" width="200" height="100">
+  <rect x="10" y="10" width="80" height="80" fill="none" stroke="#7A1F2B" stroke-width="2"/>
+  <circle cx="140" cy="50" r="35" fill="none" stroke="#3A3A3A" stroke-width="2"/>
+  <line x1="50" y1="50" x2="140" y2="50" stroke="#7A1F2B" stroke-width="1" stroke-dasharray="4 2"/>
+  <text x="100" y="95" text-anchor="middle" font-family="Inter, sans-serif" font-size="9" fill="#3A3A3A">Diagram 1 (example)</text>
+</svg>
