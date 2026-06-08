@@ -62,6 +62,7 @@
 | **DOI / CrossRef integration** | DOI registrar in scope. | `data/citations.yaml` accepts a `doi:` field. |
 | **Bulk export** (single `.bib` for all refs on a page) | Reader feedback. | Per-cite export works today. |
 | **Bilingual / Arabic-aware citation formats** | First real Arabic content lands. | English-only `data/citations.yaml` shape today. |
+| **Tile / card stable IDs + deep-link affordance** | Author appetite for sharing a specific tile within a larger grid (essay-cards, garden-tiles, works-tiles, library catalogue rows, research theme cards, library shelf entries). Today the natural shareable unit is the tile's *destination* page URL. | Tiles render without `id` attributes; the 2026-06-07 anchor-affordance slice (Tier 2.1) deliberately scoped past them. Future slice decides: what ID? rendered where? composition with tile-as-link? Spec pointer: [`2026-06-07-anchor-affordance-design.md`](2026-06-07-anchor-affordance-design.md) §8 follow-up #1. |
 
 ---
 

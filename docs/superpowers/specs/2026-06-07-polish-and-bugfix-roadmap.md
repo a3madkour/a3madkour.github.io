@@ -46,11 +46,12 @@
 
 | # | Item | Trigger | Where to start |
 |---|---|---|---|
-| 2.1 | ☐ **Anchor affordance.** D.1 shipped `[id]:hover::after { content: " #"; }` as a placeholder — but pseudo-element content isn't clickable, invisible on touch. Needs real solution across semantic blocks + essay headings + garden sections. | Now (visible regression of intent) | `superpowers:brainstorming`. Pre-brainstorm reads in [project-anchor-affordance-followup](../../../.claude/memory/project_anchor_affordance_followup.md). Pre-decision: pure-CSS-with-real-anchor vs. JS clipboard. |
+| 2.1 | ☐ **Anchor affordance.** D.1 shipped `[id]:hover::after { content: " #"; }` as a placeholder — but pseudo-element content isn't clickable, invisible on touch. → **design brainstormed 2026-06-07**: [`2026-06-07-anchor-affordance-design.md`](2026-06-07-anchor-affordance-design.md). Settled scope = all `id`-bearing elements inside `<main>` (Goldmark auto-IDs + explicit), always-visible `§` glyph, SSR + JS-for-behavior, absolute URL on clipboard, top-of-viewport status banner. Plan + impl pending. | Now (visible regression of intent) | Open the design spec → invoke `superpowers:writing-plans`. Plan should follow the 7-decision table in §2 + the 5 touchpoints in §3.3. |
 | 2.2 | ☐ **D.1 cross-reference auto-formatting.** `{{< ref-block "thm-foo" >}}` → "Theorem 1" via two-pass scratch lookup. | First essay author types a manual reference that gets stale after a renumber. | New shortcode in `layouts/shortcodes/`. Source: D.1 follow-up #1 in [project-d1-complete](../../../.claude/memory/project_d1_complete.md). |
 | 2.3 | ☐ **D.1 section-prefixed numbering** ("Theorem 3.2" not just "Theorem 1"). | First long essay where bare integers stop being navigable. | Block-shortcode counters in `layouts/shortcodes/`. Source: D.1 follow-up #2. |
+| 2.4 | ☐ **Anchor-affordance heading-level tuning — skip H4 if too dense.** If real essays show §s on H4 headings as visually noisy, a one-line gate in `_default/_markup/render-heading.html` skips them. Trigger: first essay author finds H4 §s noisy after 2.1 ships. | Triggered (post-2.1 ship + real essay usage) | One conditional in the heading render hook: `{{ if lt .Level 4 }}…{{ end }}`. Source: 2.1 brainstorm §8 fast-follow #2. |
 
-**Session shape:** 2.1 is its own session (needs brainstorm). 2.2 + 2.3 ship together when triggered.
+**Session shape:** 2.1 is its own session (design already brainstormed; plan + impl is the next session). 2.2 + 2.3 ship together when triggered. 2.4 is a one-liner fast-follow after 2.1 ships and real essays surface the density question.
 
 ---
 

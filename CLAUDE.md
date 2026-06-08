@@ -195,12 +195,12 @@ woff2 files live in `static/fonts/` (latin + latin-ext subsets only; browsers do
 
 **Active queue is now polish-and-bugfix-first.** Sub-project E (explorables — the last Phase 3 piece) was pushed to Tier 8 in the 2026-06-07 reorder. Two durable specs hold the canonical queue:
 
-- **`docs/superpowers/specs/2026-06-07-polish-and-bugfix-roadmap.md`** — 8 tiers, ordering, entry checklists. Tier 1 (correctness bugs) is next.
+- **`docs/superpowers/specs/2026-06-07-polish-and-bugfix-roadmap.md`** — 8 tiers, ordering, entry checklists. **Tier 1 fully closed 2026-06-07 (10/10); Tier 2 (UX polish) is next.** 2.1 (anchor affordance) brainstormed 2026-06-07 → [`2026-06-07-anchor-affordance-design.md`](docs/superpowers/specs/2026-06-07-anchor-affordance-design.md); plan + impl pending.
 - **`docs/superpowers/specs/2026-06-07-deferred-features-registry.md`** — long-horizon trigger-gated capabilities (Tier 9).
 
 Both specs are the source of truth — they survive independently of this file. The CLAUDE.md "Deferred features" table that lived here previously is now in the registry spec.
 
-To pick up the next session: read the roadmap top-to-bottom, start at the highest-numbered open Tier 1 item (or whichever the roadmap calls out as next). For sub-project E specifically (when its time comes), also read `memory/project_phase_3_decomposition.md` + parent spec §14.
+To pick up the next session: read the roadmap top-to-bottom, start at the highest-numbered open item in the next-up tier (today, Tier 2.1 — its design spec is committed; the next session opens `superpowers:writing-plans` against that spec). For sub-project E specifically (when its time comes), also read `memory/project_phase_3_decomposition.md` + parent spec §14.
 
 ## Hard constraints (from spec §1)
 
