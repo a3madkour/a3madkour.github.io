@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-05-19-org-synced-poetry-export.md` (commit `e81e227`).
 
+**Convention note (caught during Task 2):** The dotfiles codebase uses **two parallel section symbol forms**: the `#+HUGO_SECTION:` enum + deliberate dispatch alist use **slash form** (`'works/poetry`, matches the Hugo nested-section path); the `a3madkour-pub-frontmatter--known-sections` whitelist + normalize dispatch arms use **hyphen form** (`'works-poetry`, matches existing `research-themes` / `library-reading` pattern). The poetry handler must use **slash form** for dispatch alist + `note-section` results, and **hyphen form** for the `normalize` call. Plan respects this throughout — don't bulk-rename one to the other.
+
 **Repo touch summary:**
 - Dotfiles (`/Users/a3madkour/dotfiles/emacs-configs/custom/lisp/`): one new module + one new `*-test.el` + one dispatch-alist line + one frontmatter dispatch arm + one wrapper-script `-l` line.
 - Site repo: integration-test additions in `tools/test_publish_integration.py`; final real-poem publication under `content/works/poetry/<real-slug>/` (Task 12 closure step).
@@ -340,7 +342,7 @@ Append to `lisp/a3madkour-publish-poetry-test.el`:
                 (has_sidenotes . t)            ; essay-only — should be dropped
                 (has_citations . t)            ; essay-only — should be dropped
                 (toc . t)))                    ; essay-only — should be dropped
-         (out (a3madkour-pub-frontmatter/normalize 'works/poetry raw nil)))
+         (out (a3madkour-pub-frontmatter/normalize 'works-poetry raw nil)))
     (should (equal (alist-get 'title out) "Untitled Poem"))
     (should (equal (alist-get 'collection out) "greenhouse-demos"))
     (should (equal (alist-get 'set_to_music out) "music-slug"))
@@ -375,7 +377,7 @@ In `lisp/a3madkour-publish-poetry.el`, append before the `(provide ...)`:
   (append a3madkour-pub-poetry--required-keys
           a3madkour-pub-poetry--optional-keys))
 
-(defun a3madkour-pub-frontmatter--normalize-works/poetry (raw-alist source-file)
+(defun a3madkour-pub-frontmatter--normalize-works-poetry (raw-alist source-file)
   "Tier 8.2: works/poetry frontmatter normalizer.
 
 Pipeline:
@@ -413,8 +415,8 @@ Edit `lisp/a3madkour-publish-frontmatter.el:58-89`. In the `cond` inside `a3madk
 ```elisp
    ((eq section 'research-questions)
     (a3madkour-pub-frontmatter--normalize-research-question raw-alist source-file))
-   ((eq section 'works/poetry)                              ;; NEW
-    (a3madkour-pub-frontmatter--normalize-works/poetry raw-alist source-file))   ;; NEW
+   ((eq section 'works-poetry)                              ;; NEW
+    (a3madkour-pub-frontmatter--normalize-works-poetry raw-alist source-file))   ;; NEW
    ;; ... (t raw-alist)
 ```
 
@@ -517,7 +519,7 @@ alist; the normalizer reads it as `lines:'."
 
 - [ ] **Step 4.4: Wire the count into the normalizer**
 
-Edit `a3madkour-publish-poetry.el`. Replace the `lines:` default block in `a3madkour-pub-frontmatter--normalize-works/poetry`:
+Edit `a3madkour-publish-poetry.el`. Replace the `lines:` default block in `a3madkour-pub-frontmatter--normalize-works-poetry`:
 
 ```elisp
     ;; lines: prefer caller-injected :body-line-count, else explicit lines,
@@ -537,7 +539,7 @@ Add a normalizer test that uses the injection path:
   "Normalizer reads `:body-line-count' from raw-alist and emits `lines:'."
   (let* ((raw '((title . "T") (date . "2026-06-12") (lastmod . "2026-06-12")
                 (draft . nil) (:body-line-count . 6)))
-         (out (a3madkour-pub-frontmatter/normalize 'works/poetry raw nil)))
+         (out (a3madkour-pub-frontmatter/normalize 'works-poetry raw nil)))
     (should (= (alist-get 'lines out) 6))
     (should-not (assq :body-line-count out))))
 ```
@@ -626,7 +628,7 @@ Append:
   (let* ((raw '((title . "T") (date . "2026-06-12") (lastmod . "2026-06-12")
                 (draft . nil) (:body-line-count . 1)
                 (audio_url . "https://example.com/reading.mp3")))
-         (out (a3madkour-pub-frontmatter/normalize 'works/poetry raw nil)))
+         (out (a3madkour-pub-frontmatter/normalize 'works-poetry raw nil)))
     (should (equal (alist-get 'audio_url out)
                    "https://example.com/reading.mp3"))))
 ```
@@ -824,7 +826,7 @@ Append:
   (let* ((raw '((title . "T") (date . "2026-06-12") (lastmod . "2026-06-12")
                 (draft . nil) (:body-line-count . 1)
                 (summary . "Example [00:08]ipsum poem with \\[00:99] literal.")))
-         (out (a3madkour-pub-frontmatter/normalize 'works/poetry raw nil)))
+         (out (a3madkour-pub-frontmatter/normalize 'works-poetry raw nil)))
     (should (equal (alist-get 'summary out)
                    "Example ipsum poem with  literal."))))
 
@@ -832,7 +834,7 @@ Append:
   "Empty / missing summary stays empty."
   (let* ((raw '((title . "T") (date . "2026-06-12") (lastmod . "2026-06-12")
                 (draft . nil) (:body-line-count . 1)))
-         (out (a3madkour-pub-frontmatter/normalize 'works/poetry raw nil)))
+         (out (a3madkour-pub-frontmatter/normalize 'works-poetry raw nil)))
     (should (equal (alist-get 'summary out) ""))))
 ```
 
@@ -857,7 +859,7 @@ Returns nil for nil input."
     (replace-regexp-in-string a3madkour-pub-poetry--marker-regexp "" s t t)))
 ```
 
-In `a3madkour-pub-frontmatter--normalize-works/poetry`, replace the summary default block:
+In `a3madkour-pub-frontmatter--normalize-works-poetry`, replace the summary default block:
 
 ```elisp
     ;; summary: scrub timing markers (per spec §6); default "" if missing.
@@ -1107,7 +1109,7 @@ Pipeline:
   3. Pre-export rewrite via shared rewrite-to-tmp-file.
   4. ox-hugo export → markdown buffer.
   5. Read `#+AUDIO:'; classify; if relative, copy to bundle; inject `audio_url'.
-  6. Normalize via 'works/poetry dispatch arm (injects lines, scrubs summary).
+  6. Normalize via 'works-poetry dispatch arm (injects lines, scrubs summary).
   7. Render frontmatter + body; write if different.
   8. record-publish.
 
@@ -1161,7 +1163,7 @@ Returns a plist:
                           (a3madkour-pub-poetry--collect-warnings body audio-raw)))
             ;; Stage 6: normalize.
             (let* ((normalized (a3madkour-pub-frontmatter/normalize
-                                'works/poetry raw-fm file))
+                                'works-poetry raw-fm file))
                    ;; Stage 7: render + write.
                    (rendered (a3madkour-pub-frontmatter/render
                               normalized body))
