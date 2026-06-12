@@ -4,7 +4,7 @@
 
 **Goal:** Ship the org-mode → ox-hugo → site path that emits the already-shipped time-synced-poetry runtime contract from real org content, so an authored poem with `[mm:ss]` markers + audio round-trips to a working synced page with zero hand-editing.
 
-**Architecture:** New peer module `a3madkour-publish-poetry.el` in dotfiles, sibling to `a3madkour-publish-essays.el`. Registered in `a3madkour-publish-deliberate.el`'s dispatch alist under the symbol `'works-poetry`. The handler reuses the shared B.0 infra (`rewrite-to-tmp-file`, `export-file`, `asset-validate-and-copy`, `record-publish`) and adds: a poetry-specific frontmatter normalizer, a `#+AUDIO:` keyword reader with URL-vs-filename routing, an audio-asset copy helper, and two soft warnings. Site-repo changes: extend the integration test suite to cover poetry; the final real-poem publication lives as authored content under `content/works/poetry/<slug>/`.
+**Architecture:** New peer module `a3madkour-publish-poetry.el` in dotfiles, sibling to `a3madkour-publish-essays.el`. Registered in `a3madkour-publish-deliberate.el`'s dispatch alist under the symbol `'works/poetry`. The handler reuses the shared B.0 infra (`rewrite-to-tmp-file`, `export-file`, `asset-validate-and-copy`, `record-publish`) and adds: a poetry-specific frontmatter normalizer, a `#+AUDIO:` keyword reader with URL-vs-filename routing, an audio-asset copy helper, and two soft warnings. Site-repo changes: extend the integration test suite to cover poetry; the final real-poem publication lives as authored content under `content/works/poetry/<slug>/`.
 
 **Tech Stack:** Emacs Lisp (lexical-binding), ox-hugo, ert, Python (subprocess integration tests, stdlib only), Hugo (consumer — untouched).
 
@@ -68,7 +68,7 @@ Create `/tmp/synced-poetry-recon.org`:
 :ID:       11111111-1111-1111-1111-111111111111
 :END:
 #+TITLE: Recon
-#+HUGO_SECTION: works-poetry
+#+HUGO_SECTION: works/poetry
 #+DATE: 2026-06-12
 
 [00:01]Lorem [00:02]ipsum
@@ -93,7 +93,7 @@ emacs --batch \
   --eval "(org-hugo-export-to-md)" 2>&1 | tail -20
 ```
 
-The output bundle goes to (probably) `content/works-poetry/recon.md` next to wherever org-hugo decides — observe whichever path it lands at.
+The output bundle goes to (probably) `content/works/poetry/recon.md` next to wherever org-hugo decides — observe whichever path it lands at.
 
 - [ ] **Step 0.3: Read the emitted markdown body and record the answer**
 
@@ -128,7 +128,7 @@ No commits in Task 0 — the outcome is recorded in the working tree (this plan 
 Create `lisp/a3madkour-publish-poetry-test.el`:
 
 ```elisp
-;;; a3madkour-publish-poetry-test.el --- ert tests for works-poetry handler  -*- lexical-binding: t; -*-
+;;; a3madkour-publish-poetry-test.el --- ert tests for works/poetry handler  -*- lexical-binding: t; -*-
 
 ;;; Code:
 
@@ -142,8 +142,8 @@ Create `lisp/a3madkour-publish-poetry-test.el`:
   (should (featurep 'a3madkour-publish-poetry)))
 
 (ert-deftest a3madkour-pub-poetry-test/dispatch-registered ()
-  "The deliberate dispatch alist contains a works-poetry entry."
-  (should (eq (cdr (assq 'works-poetry a3madkour-pub-deliberate--handlers))
+  "The deliberate dispatch alist contains a works/poetry entry."
+  (should (eq (cdr (assq 'works/poetry a3madkour-pub-deliberate--handlers))
               'a3madkour-pub-poetry/publish-poetry-file)))
 
 (ert-deftest a3madkour-pub-poetry-test/section-dir-default ()
@@ -165,7 +165,7 @@ Expected: FAIL with "Cannot open load file: a3madkour-publish-poetry".
 Create `lisp/a3madkour-publish-poetry.el`:
 
 ```elisp
-;;; a3madkour-publish-poetry.el --- Tier 8.2 works-poetry per-file publish handler  -*- lexical-binding: t; -*-
+;;; a3madkour-publish-poetry.el --- Tier 8.2 works/poetry per-file publish handler  -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 
@@ -191,13 +191,13 @@ Create `lisp/a3madkour-publish-poetry.el`:
 (require 'a3madkour-publish-keywords)
 
 (defgroup a3madkour-pub-poetry nil
-  "Tier 8.2 works-poetry publish handler."
+  "Tier 8.2 works/poetry publish handler."
   :group 'a3madkour-pub)
 
 (defcustom a3madkour-pub-poetry/section-dir-name "works/poetry"
   "Relative content directory under `content/' for poetry bundles.
 The on-disk path becomes `content/<section-dir-name>/<slug>/index.md'.
-Independent of the `#+HUGO_SECTION:' dispatch symbol (`works-poetry')."
+Independent of the `#+HUGO_SECTION:' dispatch symbol (`works/poetry')."
   :type 'string
   :group 'a3madkour-pub-poetry)
 
@@ -238,7 +238,7 @@ Edit `lisp/a3madkour-publish-deliberate.el`. Locate the `require` block (line 15
 
 (defvar a3madkour-pub-deliberate--handlers
   '((essays       . a3madkour-pub-essays/publish-essay-file)
-    (works-poetry . a3madkour-pub-poetry/publish-poetry-file))   ;; NEW
+    (works/poetry . a3madkour-pub-poetry/publish-poetry-file))   ;; NEW
   "Alist of (SECTION-SYMBOL . HANDLER-FUNCTION).
 Handler signature: (file run &key on-done).")
 ```
@@ -271,12 +271,12 @@ git add emacs-configs/custom/lisp/a3madkour-publish-poetry.el \
         emacs-configs/custom/lisp/a3madkour-publish-poetry-test.el \
         emacs-configs/custom/lisp/a3madkour-publish-deliberate.el \
         emacs-configs/custom/lisp/a3-pub.sh
-git commit -m "feat(poetry): Tier 8.2 skeleton — works-poetry handler stub + dispatch wiring"
+git commit -m "feat(poetry): Tier 8.2 skeleton — works/poetry handler stub + dispatch wiring"
 ```
 
 ---
 
-## Task 2: Section detection — `#+HUGO_SECTION: works-poetry` routes to the new handler
+## Task 2: Section detection — `#+HUGO_SECTION: works/poetry` routes to the new handler
 
 **Files:**
 - Test: `lisp/a3madkour-publish-poetry-test.el`
@@ -290,11 +290,11 @@ Append to `lisp/a3madkour-publish-poetry-test.el`:
 
 ```elisp
 (ert-deftest a3madkour-pub-poetry-test/section-detection ()
-  "A .org file with `#+HUGO_SECTION: works-poetry' resolves to that section."
+  "A .org file with `#+HUGO_SECTION: works/poetry' resolves to that section."
   (let ((tmp (make-temp-file "poetry-section-" nil ".org"
-                             ":PROPERTIES:\n:ID: 22222222-2222-2222-2222-222222222222\n:END:\n#+TITLE: T\n#+HUGO_SECTION: works-poetry\n#+DATE: 2026-06-12\n\nbody\n")))
+                             ":PROPERTIES:\n:ID: 22222222-2222-2222-2222-222222222222\n:END:\n#+TITLE: T\n#+HUGO_SECTION: works/poetry\n#+HUGO_PUBLISH: t\n#+DATE: 2026-06-12\n\nbody\n")))
     (unwind-protect
-        (should (equal (a3madkour-pub/note-section tmp) "works-poetry"))
+        (should (equal (a3madkour-pub/note-section tmp) "works/poetry"))
       (delete-file tmp))))
 ```
 
@@ -310,7 +310,7 @@ If FAIL, the failure mode is informative — possibly `note-metadata` caches and
 ```bash
 cd /Users/a3madkour/dotfiles
 git add emacs-configs/custom/lisp/a3madkour-publish-poetry-test.el
-git commit -m "test(poetry): verify works-poetry section detection routes through generic note-section"
+git commit -m "test(poetry): verify works/poetry section detection routes through generic note-section"
 ```
 
 ---
@@ -340,7 +340,7 @@ Append to `lisp/a3madkour-publish-poetry-test.el`:
                 (has_sidenotes . t)            ; essay-only — should be dropped
                 (has_citations . t)            ; essay-only — should be dropped
                 (toc . t)))                    ; essay-only — should be dropped
-         (out (a3madkour-pub-frontmatter/normalize 'works-poetry raw nil)))
+         (out (a3madkour-pub-frontmatter/normalize 'works/poetry raw nil)))
     (should (equal (alist-get 'title out) "Untitled Poem"))
     (should (equal (alist-get 'collection out) "greenhouse-demos"))
     (should (equal (alist-get 'set_to_music out) "music-slug"))
@@ -375,8 +375,8 @@ In `lisp/a3madkour-publish-poetry.el`, append before the `(provide ...)`:
   (append a3madkour-pub-poetry--required-keys
           a3madkour-pub-poetry--optional-keys))
 
-(defun a3madkour-pub-frontmatter--normalize-works-poetry (raw-alist source-file)
-  "Tier 8.2: works-poetry frontmatter normalizer.
+(defun a3madkour-pub-frontmatter--normalize-works/poetry (raw-alist source-file)
+  "Tier 8.2: works/poetry frontmatter normalizer.
 
 Pipeline:
   1. Filter RAW-ALIST to only allowed keys (drops ox-hugo noise + essay-only keys).
@@ -413,8 +413,8 @@ Edit `lisp/a3madkour-publish-frontmatter.el:58-89`. In the `cond` inside `a3madk
 ```elisp
    ((eq section 'research-questions)
     (a3madkour-pub-frontmatter--normalize-research-question raw-alist source-file))
-   ((eq section 'works-poetry)                              ;; NEW
-    (a3madkour-pub-frontmatter--normalize-works-poetry raw-alist source-file))   ;; NEW
+   ((eq section 'works/poetry)                              ;; NEW
+    (a3madkour-pub-frontmatter--normalize-works/poetry raw-alist source-file))   ;; NEW
    ;; ... (t raw-alist)
 ```
 
@@ -517,7 +517,7 @@ alist; the normalizer reads it as `lines:'."
 
 - [ ] **Step 4.4: Wire the count into the normalizer**
 
-Edit `a3madkour-publish-poetry.el`. Replace the `lines:` default block in `a3madkour-pub-frontmatter--normalize-works-poetry`:
+Edit `a3madkour-publish-poetry.el`. Replace the `lines:` default block in `a3madkour-pub-frontmatter--normalize-works/poetry`:
 
 ```elisp
     ;; lines: prefer caller-injected :body-line-count, else explicit lines,
@@ -537,7 +537,7 @@ Add a normalizer test that uses the injection path:
   "Normalizer reads `:body-line-count' from raw-alist and emits `lines:'."
   (let* ((raw '((title . "T") (date . "2026-06-12") (lastmod . "2026-06-12")
                 (draft . nil) (:body-line-count . 6)))
-         (out (a3madkour-pub-frontmatter/normalize 'works-poetry raw nil)))
+         (out (a3madkour-pub-frontmatter/normalize 'works/poetry raw nil)))
     (should (= (alist-get 'lines out) 6))
     (should-not (assq :body-line-count out))))
 ```
@@ -626,7 +626,7 @@ Append:
   (let* ((raw '((title . "T") (date . "2026-06-12") (lastmod . "2026-06-12")
                 (draft . nil) (:body-line-count . 1)
                 (audio_url . "https://example.com/reading.mp3")))
-         (out (a3madkour-pub-frontmatter/normalize 'works-poetry raw nil)))
+         (out (a3madkour-pub-frontmatter/normalize 'works/poetry raw nil)))
     (should (equal (alist-get 'audio_url out)
                    "https://example.com/reading.mp3"))))
 ```
@@ -824,7 +824,7 @@ Append:
   (let* ((raw '((title . "T") (date . "2026-06-12") (lastmod . "2026-06-12")
                 (draft . nil) (:body-line-count . 1)
                 (summary . "Example [00:08]ipsum poem with \\[00:99] literal.")))
-         (out (a3madkour-pub-frontmatter/normalize 'works-poetry raw nil)))
+         (out (a3madkour-pub-frontmatter/normalize 'works/poetry raw nil)))
     (should (equal (alist-get 'summary out)
                    "Example ipsum poem with  literal."))))
 
@@ -832,7 +832,7 @@ Append:
   "Empty / missing summary stays empty."
   (let* ((raw '((title . "T") (date . "2026-06-12") (lastmod . "2026-06-12")
                 (draft . nil) (:body-line-count . 1)))
-         (out (a3madkour-pub-frontmatter/normalize 'works-poetry raw nil)))
+         (out (a3madkour-pub-frontmatter/normalize 'works/poetry raw nil)))
     (should (equal (alist-get 'summary out) ""))))
 ```
 
@@ -857,7 +857,7 @@ Returns nil for nil input."
     (replace-regexp-in-string a3madkour-pub-poetry--marker-regexp "" s t t)))
 ```
 
-In `a3madkour-pub-frontmatter--normalize-works-poetry`, replace the summary default block:
+In `a3madkour-pub-frontmatter--normalize-works/poetry`, replace the summary default block:
 
 ```elisp
     ;; summary: scrub timing markers (per spec §6); default "" if missing.
@@ -985,7 +985,7 @@ Append:
   "`#+multi_export: t' on a poem → warning surfaced, D.2 dispatch not invoked."
   (let* ((dispatched nil)
          (file (make-temp-file "poetry-multi-" nil ".org"
-                               ":PROPERTIES:\n:ID: 77777777-7777-7777-7777-777777777777\n:END:\n#+TITLE: T\n#+HUGO_SECTION: works-poetry\n#+multi_export: t\n\n[00:01]hi\n")))
+                               ":PROPERTIES:\n:ID: 77777777-7777-7777-7777-777777777777\n:END:\n#+TITLE: T\n#+HUGO_SECTION: works/poetry\n#+multi_export: t\n\n[00:01]hi\n")))
     (unwind-protect
         (cl-letf (((symbol-function 'a3madkour-pub-multi/dispatch-export)
                    (lambda (&rest _args) (setq dispatched t))))
@@ -1058,7 +1058,8 @@ or hugo — pure in-process emacs."
       (insert ":PROPERTIES:\n:ID:       " id "\n:END:\n")
       (insert "#+TITLE: Test Poem\n")
       (insert "#+DATE: 2026-06-12\n")
-      (insert "#+HUGO_SECTION: works-poetry\n")
+      (insert "#+HUGO_SECTION: works/poetry\n")
+      (insert "#+HUGO_PUBLISH: t\n")
       (insert "#+AUDIO: reading.mp3\n")
       (insert "\n")
       (insert "[00:01]Lorem [00:02]ipsum\n")
@@ -1106,7 +1107,7 @@ Pipeline:
   3. Pre-export rewrite via shared rewrite-to-tmp-file.
   4. ox-hugo export → markdown buffer.
   5. Read `#+AUDIO:'; classify; if relative, copy to bundle; inject `audio_url'.
-  6. Normalize via 'works-poetry dispatch arm (injects lines, scrubs summary).
+  6. Normalize via 'works/poetry dispatch arm (injects lines, scrubs summary).
   7. Render frontmatter + body; write if different.
   8. record-publish.
 
@@ -1160,7 +1161,7 @@ Returns a plist:
                           (a3madkour-pub-poetry--collect-warnings body audio-raw)))
             ;; Stage 6: normalize.
             (let* ((normalized (a3madkour-pub-frontmatter/normalize
-                                'works-poetry raw-fm file))
+                                'works/poetry raw-fm file))
                    ;; Stage 7: render + write.
                    (rendered (a3madkour-pub-frontmatter/render
                               normalized body))
@@ -1192,7 +1193,7 @@ Expect to debug 1-3 wiring issues here — this is the integration point. Likely
 
 - Helper name mismatch (e.g. `render-frontmatter` vs `frontmatter/render`). Grep essays handler for the exact names and substitute.
 - `audio_url` rendering as `'\"…\"'` (single-quote-escaped) — check render output and tighten the regex assertion if needed.
-- `note-url` returning a path with `works-poetry` instead of `works/poetry/`. If so, override the URL computation in poetry handler analogously to essays.
+- `note-url` returning a path with `works/poetry` instead of `works/poetry/`. If so, override the URL computation in poetry handler analogously to essays.
 
 For each wiring issue: read the error, find the actual symbol/shape in dotfiles, adjust the handler, re-run.
 
@@ -1255,7 +1256,8 @@ class PoetryPublishIntegrationTest(unittest.TestCase):
             f":PROPERTIES:\n:ID:       {id_}\n:END:\n"
             f"#+TITLE: {slug.title()}\n"
             f"#+DATE: 2026-06-12\n"
-            f"#+HUGO_SECTION: works-poetry\n"
+            f"#+HUGO_SECTION: works/poetry\n"
+            f"#+HUGO_PUBLISH: t\n"
             f"{audio_line}"
             f"\n"
             f"[00:01]Lorem [00:02]ipsum\n"
