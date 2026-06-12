@@ -110,6 +110,8 @@ Authors write `#+begin_theorem` blocks in org, with optional `#+attr_shortcode: 
 
 **Cross-references** use the block's `#+attr_shortcode: :id <slug>` + org's `[[#id][text]]` link syntax (manual form, drift-prone), OR the `ref-block` shortcode (`{{< ref-block "thm-foo" >}}` → `Theorem 1`) which auto-formats via a `$page.Scratch` lookup populated by each numbered block at render time. Roadmap row 2.2. Forward references (ref-block called before the target block renders) fall back to the bare id with a `.ref-block-unresolved` warning style — Hugo cannot do a second pass over shortcodes. `:CUSTOM_ID:` property drawers continue to work for headings (B.1.1 unchanged) but are silently dropped by ox-hugo on special blocks.
 
+**Section-prefixed numbering** (roadmap row 2.3) is per-essay opt-in via frontmatter `block_numbering: "section-prefixed"`. When set, `baseof.html` emits `data-block-numbering="section-prefixed"` on `<main>` and `assets/js/block-renumber.js` (loaded via `entry-essay.js`) runs on `DOMContentLoaded` — walks H2s + `.block-*` containers in document order, rewrites every `.block-header` leading `Kind N` to `Kind M.N` (M = section index, N = per-section per-family counter), and updates matching `.ref-block` text. Hugo cannot do this server-side because shortcodes execute before Goldmark sees H2s. No-JS users see bare integers (the server render). Theorem-family (theorem / lemma / corollary / proposition) shares one per-section counter; each independent-counter kind keeps its own. Fixture: `content/essays/example-long-numbering/`.
+
 **CSS §47** styles three visual tiers (strong / soft / chrome-less) using existing color tokens. No new `has_*` frontmatter flag — the CSS loads on every essay page.
 
 ### Frontmatter contracts

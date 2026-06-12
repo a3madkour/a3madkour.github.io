@@ -2,3 +2,10 @@
 // essay.js owns its own selector guards, so it's safe even on the section
 // list page where some selectors don't match.
 import './essay.js';
+import { setupBlockRenumber } from './block-renumber.js';
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupBlockRenumber);
+} else {
+  setupBlockRenumber();
+}

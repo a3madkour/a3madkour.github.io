@@ -4,7 +4,7 @@
   <body>
     <div class="page">
       {{ partial "header.html" . }}
-      <main data-pagefind-body>
+      <main data-pagefind-body{{ with .Params.block_numbering }} data-block-numbering="{{ . }}"{{ end }}>
         {{- block "main" . -}}{{- end -}}
       </main>
       {{ partial "footer.html" . }}
