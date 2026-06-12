@@ -2082,17 +2082,6 @@ class TestPoetryPublishDeliberate(unittest.TestCase):
     in `main()` but expose `run(repo_root)` for direct use.  We invoke them
     in-process via `_import_linter` against the tmp site root (same pattern
     as `TestGardenPublishLiving.test_garden_emits_lint_clean_output`).
-
-    KNOWN HANDLER GAP (Tier 8.2 follow-up): the poetry normalizer in
-    `a3madkour-publish-poetry.el` does NOT resolve `lastmod` via the
-    drawer / `#+HUGO_LASTMOD:` / git-mtime / fs-mtime / today cascade
-    used by the essays + garden normalizers (`last-modified-cascade'
-    in `a3madkour-publish-frontmatter.el`).  Bare poetry sources with
-    only `#+DATE:` and no `#+HUGO_LASTMOD:` therefore emit an index.md
-    that is missing `lastmod:` and fails `check_works_fixtures.py`
-    POEM_REQUIRED.  This fixture works around the gap by setting
-    `#+HUGO_LASTMOD:` in the org source.  File the cascade port as a
-    follow-up to the Tier 8.2 plan.
     """
 
     def setUp(self) -> None:
@@ -2134,10 +2123,6 @@ class TestPoetryPublishDeliberate(unittest.TestCase):
             ":END:\n"
             f"#+TITLE: {slug.replace('-', ' ').title()}\n"
             "#+DATE: 2026-06-12\n"
-            # `#+HUGO_LASTMOD:` is a workaround for the missing
-            # last-modified-cascade in the poetry normalizer — see the
-            # KNOWN HANDLER GAP note on the class docstring.
-            "#+HUGO_LASTMOD: 2026-06-12\n"
             "#+HUGO_PUBLISH: t\n"
             "#+HUGO_SECTION: works/poetry\n"
             f"{audio_line}"
