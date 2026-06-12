@@ -2062,7 +2062,7 @@ class TestHugoRendersCitedEssay(unittest.TestCase):
 
 
 @unittest.skipIf(_MISSING_PREREQS, _SKIP_REASON)
-class PoetryPublishIntegrationTest(unittest.TestCase):
+class TestPoetryPublishDeliberate(unittest.TestCase):
     """Tier 8.2 Task 11: end-to-end works/poetry publish via a3-pub.sh.
 
     Mirrors `TestEssaysPublishDeliberate`'s shape (same wrapper flag, same env-
