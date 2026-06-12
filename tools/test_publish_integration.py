@@ -2061,5 +2061,172 @@ class TestHugoRendersCitedEssay(unittest.TestCase):
                       "essay-references partial did not render the entry id")
 
 
+@unittest.skipIf(_MISSING_PREREQS, _SKIP_REASON)
+class PoetryPublishIntegrationTest(unittest.TestCase):
+    """Tier 8.2 Task 11: end-to-end works/poetry publish via a3-pub.sh.
+
+    Mirrors `TestEssaysPublishDeliberate`'s shape (same wrapper flag, same env-
+    override for A3_PUB_SITE_DATA_DIR), with two poetry-specific concessions:
+
+    Compromise 1 — `a3madkour-pub/poetry-dir` defcustom: the default value
+    is `(expand-file-name "notes/works/poetry/" (getenv "HOME"))` evaluated
+    at load time inside the emacs batch session.  a3-pub.sh exposes no
+    A3_PUB_POETRY_DIR env override, so we override HOME for the subprocess
+    and stage the org corpus under <fake-home>/notes/works/poetry/.  Pair
+    with `--skip-math-check` so the wrapper's math validator (which probes
+    `$HOME/org/notes/tools/org-math-lint/.venv/bin/python`) doesn't abort
+    against the empty fake-home tree.
+
+    Compromise 2 — site-side linters: `check_poetry_synced` and
+    `check_works_fixtures` hardcode `Path(__file__).resolve().parent.parent`
+    in `main()` but expose `run(repo_root)` for direct use.  We invoke them
+    in-process via `_import_linter` against the tmp site root (same pattern
+    as `TestGardenPublishLiving.test_garden_emits_lint_clean_output`).
+
+    KNOWN HANDLER GAP (Tier 8.2 follow-up): the poetry normalizer in
+    `a3madkour-publish-poetry.el` does NOT resolve `lastmod` via the
+    drawer / `#+HUGO_LASTMOD:` / git-mtime / fs-mtime / today cascade
+    used by the essays + garden normalizers (`last-modified-cascade'
+    in `a3madkour-publish-frontmatter.el`).  Bare poetry sources with
+    only `#+DATE:` and no `#+HUGO_LASTMOD:` therefore emit an index.md
+    that is missing `lastmod:` and fails `check_works_fixtures.py`
+    POEM_REQUIRED.  This fixture works around the gap by setting
+    `#+HUGO_LASTMOD:` in the org source.  File the cascade port as a
+    follow-up to the Tier 8.2 plan.
+    """
+
+    def setUp(self) -> None:
+        self.tmp_root = Path(tempfile.mkdtemp(prefix="poetry-int-"))
+        # Fake HOME so the poetry-dir defcustom default resolves into tmp.
+        self.fake_home = self.tmp_root / "fake-home"
+        self.poetry_dir = self.fake_home / "notes" / "works" / "poetry"
+        self.poetry_dir.mkdir(parents=True)
+        # Site root (mirrors essays test layout).
+        self.site_root = self.tmp_root / "site"
+        (self.site_root / "data").mkdir(parents=True)
+        (self.site_root / "content" / "works" / "poetry").mkdir(parents=True)
+        # Seed an empty manifest so begin-publish reads cleanly.
+        (self.site_root / "data" / "url-history.yaml").write_text(
+            "manifest_version: 1\nnotes: []\n"
+        )
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.tmp_root, ignore_errors=True)
+
+    def _seed_poem(
+        self,
+        slug: str,
+        note_id: str,
+        audio_filename: str | None = "reading.mp3",
+    ) -> Path:
+        """Write a poem .org under the fake-HOME poetry-dir + optional fake mp3.
+
+        Returns the absolute path to the .org file (the publish-deliberate
+        target).  When `audio_filename` is set, also seeds a non-zero-byte
+        fake mp3 under `<poetry-dir>/assets/<id>/<filename>` (the path
+        `a3madkour-pub-poetry--copy-audio-asset` reads from).
+        """
+        org = self.poetry_dir / f"{slug}.org"
+        audio_line = f"#+AUDIO: {audio_filename}\n" if audio_filename else ""
+        org.write_text(
+            ":PROPERTIES:\n"
+            f":ID:       {note_id}\n"
+            ":END:\n"
+            f"#+TITLE: {slug.replace('-', ' ').title()}\n"
+            "#+DATE: 2026-06-12\n"
+            # `#+HUGO_LASTMOD:` is a workaround for the missing
+            # last-modified-cascade in the poetry normalizer — see the
+            # KNOWN HANDLER GAP note on the class docstring.
+            "#+HUGO_LASTMOD: 2026-06-12\n"
+            "#+HUGO_PUBLISH: t\n"
+            "#+HUGO_SECTION: works/poetry\n"
+            f"{audio_line}"
+            "\n"
+            "[00:01]Lorem [00:02]ipsum\n"
+            "[00:17]Duis aute *irure* reprehenderit\n"
+        )
+        if audio_filename:
+            assets = self.poetry_dir / "assets" / note_id
+            assets.mkdir(parents=True)
+            # Non-zero bytes — the audio-copy helper rejects empty files.
+            (assets / audio_filename).write_bytes(b"ID3" + b"\x00" * 1024)
+        return org
+
+    def _run_publish_deliberate(
+        self, org_path: Path
+    ) -> subprocess.CompletedProcess:
+        env = os.environ.copy()
+        env["A3_PUB_SITE_DATA_DIR"] = str(self.site_root / "data")
+        # HOME override anchors the poetry-dir defcustom default at the tmp
+        # tree (see Compromise 1 in the class docstring).
+        env["HOME"] = str(self.fake_home)
+        wrapper = str(DOTFILES_LISP / "a3-pub.sh")
+        return subprocess.run(
+            [wrapper, "--publish-deliberate", "--skip-math-check", str(org_path)],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+
+    def test_round_trip_with_relative_audio(self) -> None:
+        """Publish a poem with relative `#+AUDIO:` → bundle written, audio
+        copied into the bundle, and both site-side linters pass.
+
+        Asserts:
+        - exit code 0
+        - content/works/poetry/test-poem/index.md exists
+        - content/works/poetry/test-poem/reading.mp3 exists
+        - emitted frontmatter carries `audio_url: "reading.mp3"` and
+          `lines: 2` (two non-blank lines in the body)
+        - body preserves the `[mm:ss]` markers verbatim
+        - check_poetry_synced + check_works_fixtures both return rc=0
+        """
+        slug = "test-poem"
+        note_id = "99999999-9999-9999-9999-999999999999"
+        org = self._seed_poem(slug, note_id, audio_filename="reading.mp3")
+
+        result = self._run_publish_deliberate(org)
+        self.assertEqual(
+            result.returncode, 0,
+            msg=f"a3-pub.sh --publish-deliberate failed.\n"
+                f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}",
+        )
+
+        bundle = self.site_root / "content" / "works" / "poetry" / slug
+        index_md = bundle / "index.md"
+        audio_out = bundle / "reading.mp3"
+        self.assertTrue(
+            index_md.exists(),
+            f"index.md missing at {index_md}.\nstdout:\n{result.stdout}",
+        )
+        self.assertTrue(
+            audio_out.exists(),
+            f"reading.mp3 missing at {audio_out}.\nstdout:\n{result.stdout}",
+        )
+
+        emitted = index_md.read_text()
+        self.assertIn('audio_url: "reading.mp3"', emitted)
+        self.assertIn("lines: 2", emitted)
+        self.assertIn("[00:01]Lorem [00:02]ipsum", emitted)
+
+        # Site-side linter gates (Compromise 2: in-process invocation).
+        ps = _import_linter("check_poetry_synced")
+        rc_ps, errs_ps = ps.run(self.site_root)
+        self.assertEqual(
+            rc_ps, 0,
+            f"check_poetry_synced rejected B-emitted bundle:\n"
+            + "\n".join(f"  {e}" for e in errs_ps),
+        )
+
+        wf = _import_linter("check_works_fixtures")
+        rc_wf, errs_wf = wf.run(self.site_root)
+        self.assertEqual(
+            rc_wf, 0,
+            f"check_works_fixtures rejected B-emitted bundle:\n"
+            + "\n".join(f"  {e}" for e in errs_wf),
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
