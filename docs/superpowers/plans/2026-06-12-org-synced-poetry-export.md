@@ -645,13 +645,13 @@ git commit -m "feat(poetry): #+AUDIO: keyword classifier (URL vs file)"
 
 ---
 
-## Task 6: Audio asset copy — relative filename form
+## Task 6: Audio asset copy — relative filename form (+ Case C escape collapse)
 
 **Files:**
 - Modify: `lisp/a3madkour-publish-poetry.el`
 - Modify: `lisp/a3madkour-publish-poetry-test.el`
 
-*Note from Task 0 recon:* if backslash-escape was Case B/C, **also** add the protect-and-restore helper here (see end of this task).
+**Task 0 recon outcome (recorded 2026-06-12): Case C.** ox-hugo doubles the backslash — org `\[00:99]` is emitted as markdown `\\[00:99]`. The runtime parser (`layouts/partials/works/synced-text-parser.html:21`) only matches `\[mm:ss]` (one backslash); given `\\[00:99]` it eats the second `\`+`[…]` as the escape sentinel and leaves a stray first `\` in rendered output. Fix: post-export, collapse every `\\[mm:ss]` substring to `\[mm:ss]` before writing `index.md`. This restores the shipped fixture's escape shape byte-for-byte. Step 6.4 below implements this; Step 6.5 adds the regression test.
 
 - [ ] **Step 6.1: Write the failing tests**
 
@@ -752,55 +752,47 @@ success.  Creates BUNDLE-DEST-DIR if missing."
     filename))
 ```
 
-- [ ] **Step 6.4: (Conditional — Task 0 Case B/C only) Add protect-and-restore for `\[mm:ss]`**
+- [ ] **Step 6.4: Add Case C escape collapse helper**
 
-If the Task 0 reconnaissance found that ox-hugo eats the backslash, append:
+Append to `a3madkour-publish-poetry.el`, before `(provide ...)`:
 
 ```elisp
-(defconst a3madkour-pub-poetry--escape-sentinel
-  "❩❩ESCMARKER❩❩"
-  "Sentinel used to protect `\\[mm:ss]' literals through ox-hugo paragraph export.
-Replaced back to `\\[mm:ss]' after export.")
+(defun a3madkour-pub-poetry--collapse-escaped-markers (md)
+  "Collapse double-backslash escape sequences ox-hugo emits.
 
-(defun a3madkour-pub-poetry--protect-escape (org-buffer)
-  "In ORG-BUFFER, replace `\\[mm:ss]' literals with the sentinel.
-Returns the count of replacements made (for the restore step)."
-  (with-current-buffer org-buffer
-    (save-excursion
-      (goto-char (point-min))
-      (let ((count 0))
-        (while (re-search-forward
-                "\\\\\\(\\[[0-9]\\{1,2\\}:[0-9]\\{2\\}\\(?:\\.[0-9]\\{1,2\\}\\)?\\]\\)"
-                nil t)
-          (replace-match (concat a3madkour-pub-poetry--escape-sentinel
-                                 (match-string 1))
-                         t t)
-          (cl-incf count))
-        count))))
-
-(defun a3madkour-pub-poetry--restore-escape (md-string)
-  "Restore the sentinel in MD-STRING back to `\\[mm:ss]'."
+Task 0 recon outcome: org-source `\\[mm:ss]' (single backslash) is emitted
+by ox-hugo as markdown `\\\\[mm:ss]' (double backslash).  The runtime
+parser (layouts/partials/works/synced-text-parser.html:21) matches only
+the single-backslash form; the doubled form leaves a stray backslash in
+rendered output.  This helper restores the single-backslash shape that
+the parser + shipped fixture expect."
   (replace-regexp-in-string
-   (regexp-quote a3madkour-pub-poetry--escape-sentinel)
-   "\\\\"
-   md-string t t))
+   "\\\\\\\\\\(\\[[0-9]\\{1,2\\}:[0-9]\\{2\\}\\(?:\\.[0-9]\\{1,2\\}\\)?\\]\\)"
+   "\\\\\\1"
+   md t))
 ```
 
-Plus a regression test:
+The regex in Emacs syntax (`\\\\\\\\\[…\\]` = `\\\\\[…\]`): four backslashes match two literal backslashes (one is the markdown double-escape, one is consumed by Elisp string literal escaping), followed by the `[mm:ss]` capture. Replacement is `\\\1` = `\` + group 1 = single backslash + `[mm:ss]`.
+
+Append regression tests:
 
 ```elisp
-(ert-deftest a3madkour-pub-poetry-test/escape-round-trip ()
-  "protect + restore cycle returns the original byte-stream."
-  (let ((md "[00:01]Lorem [00:02]ipsum \\[00:99] [00:03]dolor"))
-    (with-temp-buffer
-      (insert md)
-      (a3madkour-pub-poetry--protect-escape (current-buffer))
-      (should (string-match-p (regexp-quote a3madkour-pub-poetry--escape-sentinel)
-                              (buffer-string)))
-      (should (equal (a3madkour-pub-poetry--restore-escape (buffer-string)) md)))))
-```
+(ert-deftest a3madkour-pub-poetry-test/collapse-double-backslash-escape ()
+  "ox-hugo Case C output `\\\\[mm:ss]' collapses to `\\[mm:ss]'."
+  (let ((md "[00:18]ut [00:19]enim \\\\[00:99] [00:20]minim"))
+    (should (equal (a3madkour-pub-poetry--collapse-escaped-markers md)
+                   "[00:18]ut [00:19]enim \\[00:99] [00:20]minim"))))
 
-(Skip Step 6.4 entirely if Task 0 was Case A.)
+(ert-deftest a3madkour-pub-poetry-test/collapse-leaves-bare-markers-alone ()
+  "Bare `[mm:ss]' (no leading backslash) is untouched."
+  (let ((md "[00:01]Lorem [00:02]ipsum"))
+    (should (equal (a3madkour-pub-poetry--collapse-escaped-markers md) md))))
+
+(ert-deftest a3madkour-pub-poetry-test/collapse-leaves-single-backslash-alone ()
+  "An already-single-backslash escape `\\[mm:ss]' is left untouched."
+  (let ((md "[00:18]ut \\[00:99] [00:20]minim"))
+    (should (equal (a3madkour-pub-poetry--collapse-escaped-markers md) md))))
+```
 
 - [ ] **Step 6.5: Run; verify all pass**
 
@@ -1150,7 +1142,9 @@ Returns a plist:
                  (export-result (a3madkour-pub-export/export-file tmp-file))
                  (md-buffer (plist-get export-result :buffer))
                  (raw-fm    (plist-get export-result :frontmatter))
-                 (body      (with-current-buffer md-buffer (buffer-string))))
+                 ;; Case C: collapse `\\[mm:ss]' → `\[mm:ss]' before downstream use.
+                 (body      (a3madkour-pub-poetry--collapse-escaped-markers
+                             (with-current-buffer md-buffer (buffer-string)))))
             ;; Stage 5: audio asset copy (relative form only).
             (when (and audio-class (eq (plist-get audio-class :kind) :file))
               (a3madkour-pub-poetry--copy-audio-asset
