@@ -11,7 +11,7 @@ Personal website for Abdelrahman Madkour, built as a Hugo static site with hand-
 - `hugo server --buildDrafts` — dev server with drafts visible.
 - `hugo --minify` — production build to `public/`. **Do not run with a dev server alive**; it poisons the dev-server CSS via a MIME mismatch.
 - `python3 tools/check-contrast.py` — WCAG 2.1 contrast verifier (CI gate).
-- Twenty-seven linter pairs under `tools/check_*.py` + `tools/test_check_*.py` (CI runs each linter then its unit-test sibling): essay fixtures, essay TOC depth, garden fixtures, garden links, filter-chips config, research fixtures, research links, citations, math frontmatter coupling, works fixtures, works links, synced poetry, library fixtures, library links, library covers, library shelves, icon attribution, RSS XSL, garden history, streams fixtures, streams links, pagefind metadata, cite metadata, page weights, LHCI URL resolution, org-asset references, anchor-link affordance. `tools/check_smoke.py` and `tools/check_graph_chrome.py` are sibling-less linters (no paired test file — spec §3.1: logic is too thin to warrant pairing).
+- Twenty-eight linter pairs under `tools/check_*.py` + `tools/test_check_*.py` (CI runs each linter then its unit-test sibling): essay fixtures, essay TOC depth, garden fixtures, garden links, filter-chips config, research fixtures, research links, citations, math frontmatter coupling, works fixtures, works links, synced poetry, library fixtures, library links, library covers, library shelves, icon attribution, RSS XSL, garden history, streams fixtures, streams links, pagefind metadata, cite metadata, page weights, LHCI URL resolution, org-asset references, anchor-link affordance, explorables. `tools/check_smoke.py` and `tools/check_graph_chrome.py` are sibling-less linters (no paired test file — spec §3.1: logic is too thin to warrant pairing).
 
 No npm. Python tooling is stdlib-only. Hugo **extended** (≥ 0.162.1) is required — `.github/workflows/hugo.yaml` pins `HUGO_VERSION=0.162.1`. (Hugo 0.162+ tightened the default `security.allowContent` policy to deny `text/html` source files; this site avoids the issue by using `_index.md` rather than `_index.html` for the homepage.)
 
@@ -27,7 +27,7 @@ No npm. Python tooling is stdlib-only. Hugo **extended** (≥ 0.162.1) is requir
 
 ### JS pipeline — multi-entry bundling
 
-`layouts/partials/scripts.html` runs Hugo's `js.Build` (esbuild) twelve times — minified + fingerprinted, classic-script with SRI:
+`layouts/partials/scripts.html` runs Hugo's `js.Build` (esbuild) twelve fixed times + a dynamic per-essay loop — minified + fingerprinted, classic-script with SRI:
 
 | Entry | Output | Loaded on | Notes |
 |---|---|---|---|
@@ -43,6 +43,7 @@ No npm. Python tooling is stdlib-only. Hugo **extended** (≥ 0.162.1) is requir
 | `js/entry-cite.js` | `cite.<hash>.js` (~2.5 KB) | `.Section in {essays, garden, research, works}` AND `.Kind == "page"` | `cite.js` — citation modal runtime (parse #cite-data blob, open `<dialog>`, tab/copy/download, Half B inline copy) |
 | `js/entry-poetry.js` | `poetry.<hash>.js` (~4 KB) | `.Section == "works"` AND `.Kind == "page"` AND `.Type == "works-poetry"` | `poem-synced.js` — synced-reveal runtime; JS-built player |
 | `js/entry-streams.js` | `streams.<hash>.js` (~1 KB) | `.Section == "streams"` | `streams.js` — click-to-load YouTube embed + filter-chip setup on the /streams/ section index |
+| `js/explorables/<slug>/index.js` (dynamic, per-essay) | `explorables-<slug>.<hash>.js` (~few KB) | `.Section == "essays"` AND `.Kind == "page"` AND `.Params.has_widgets` | per-essay; inlines runtime + lib kinds; spec at `docs/superpowers/specs/2026-06-12-sub-project-e-explorables-design.md` |
 
 **Why multi-entry, not `splitting: true`?** esbuild requires `outdir` for code splitting, but Hugo's `js.Build` is `outfile`-only. `splitting: true` on a single entry silently inlines dynamic imports rather than emitting chunks. Confirmed with a minimal repro. `filter-chips.js` is duplicated into essay/garden/works bundles (~8 KB).
 
