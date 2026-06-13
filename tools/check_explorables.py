@@ -21,6 +21,23 @@ from check_fixtures import parse_frontmatter  # noqa: E402
 
 WIDGET_SHORTCODE_RE = re.compile(r"\{\{<\s*widget\b[^>]*>\}\}")
 
+# captures the whole shortcode call and (if present) the id="..." value
+WIDGET_CALL_RE = re.compile(
+    r"\{\{<\s*widget\b([^>]*?)\s*>\}\}"
+)
+ID_ATTR_RE = re.compile(r'\bid\s*=\s*"([^"]*)"')
+
+
+def _extract_widget_ids(body: str) -> list[tuple[str, str | None]]:
+    """Returns list of (raw_call, id_value or None). None = id attribute absent.
+    Empty string = id="" present but empty."""
+    out: list[tuple[str, str | None]] = []
+    for m in WIDGET_CALL_RE.finditer(body):
+        attrs = m.group(1)
+        idm = ID_ATTR_RE.search(attrs)
+        out.append((m.group(0), idm.group(1) if idm else None))
+    return out
+
 
 def _strip_frontmatter(text: str) -> str:
     if text.startswith("---"):
@@ -63,6 +80,14 @@ def lint_explorables(repo_root: Path) -> list[str]:
             errors.append(f"{rel}: has_widgets is true but no widget shortcodes found")
         elif not has_widgets and body_has:
             errors.append(f"{rel}: widget shortcodes found but has_widgets is false (or missing)")
+
+        # Rule 2: id required + non-empty on every widget call
+        calls = _extract_widget_ids(body)
+        for raw, idv in calls:
+            if idv is None:
+                errors.append(f"{rel}: widget shortcode missing id attribute: {raw}")
+            elif idv == "":
+                errors.append(f"{rel}: widget shortcode has empty id: {raw}")
 
     return errors
 

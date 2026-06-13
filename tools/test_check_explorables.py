@@ -103,5 +103,61 @@ class HasWidgetsCoupling(unittest.TestCase):
         )
 
 
+ESSAY_NO_ID = ESSAY_WIDGET_TRUE_HAS_WIDGET.replace(
+    'Body. {{< widget id="x" >}}',
+    'Body. {{< widget >}}',
+)
+
+ESSAY_EMPTY_ID = ESSAY_WIDGET_TRUE_HAS_WIDGET.replace(
+    'Body. {{< widget id="x" >}}',
+    'Body. {{< widget id="" >}}',
+)
+
+ESSAY_WRONG_PARAM = ESSAY_WIDGET_TRUE_HAS_WIDGET.replace(
+    'Body. {{< widget id="x" >}}',
+    'Body. {{< widget src="x" >}}',
+)
+
+
+class WidgetIdRequired(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp())
+        self.essays = self.tmp / "content" / "essays"
+        self.essays.mkdir(parents=True)
+        (self.tmp / "assets" / "js" / "explorables").mkdir(parents=True)
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.tmp)
+
+    def _write_essay(self, slug: str, body: str) -> None:
+        d = self.essays / slug
+        d.mkdir()
+        (d / "index.md").write_text(body, encoding="utf-8")
+
+    def test_widget_without_id_fails(self) -> None:
+        self._write_essay("no-id", ESSAY_NO_ID)
+        errors = lint.lint_explorables(self.tmp)
+        self.assertTrue(
+            any("no-id" in e and "id" in e for e in errors),
+            f"expected missing-id error: {errors}",
+        )
+
+    def test_widget_with_empty_id_fails(self) -> None:
+        self._write_essay("empty-id", ESSAY_EMPTY_ID)
+        errors = lint.lint_explorables(self.tmp)
+        self.assertTrue(
+            any("empty-id" in e and "id" in e for e in errors),
+            f"expected empty-id error: {errors}",
+        )
+
+    def test_widget_with_wrong_param_fails(self) -> None:
+        self._write_essay("wrong-param", ESSAY_WRONG_PARAM)
+        errors = lint.lint_explorables(self.tmp)
+        self.assertTrue(
+            any("wrong-param" in e and "id" in e for e in errors),
+            f"expected wrong-param (no id=) error: {errors}",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
