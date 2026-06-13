@@ -17,10 +17,20 @@ taxonomies:
 # default to HTML-only. Essays opt back into RSS via its frontmatter
 # (content/essays/_index.md).
 outputs:
-  home: [HTML]
+  home: [HTML, LHCI-PAGES]
   section: [HTML]
   taxonomy: [HTML]
   term: [HTML]
+
+# Tier 7.1: LHCI URL manifest. Generates public/lhci-pages.json with
+# {url, kind, section, type} per page. Consumed by tools/gen_lhci_urls.py
+# to regenerate lighthouserc.{json,mobile.json} in CI.
+outputFormats:
+  LHCI-PAGES:
+    mediaType: application/json
+    baseName: lhci-pages
+    isPlainText: true
+    notAlternative: true
 
 markup:
     goldmark:

@@ -1,0 +1,30 @@
+{{- $pages := slice -}}
+
+{{/* All regular pages (excluding drafts) */}}
+{{- range where site.RegularPages "Draft" "!=" true -}}
+  {{- $pages = $pages | append (dict
+        "url" .RelPermalink
+        "kind" .Kind
+        "section" .Section
+        "type" .Type) -}}
+{{- end -}}
+
+{{/* All section indexes (Kind = "section") at any depth */}}
+{{- range .Site.Pages -}}
+  {{- if eq .Kind "section" -}}
+    {{- $pages = $pages | append (dict
+          "url" .RelPermalink
+          "kind" "section"
+          "section" .Section
+          "type" .Type) -}}
+  {{- end -}}
+{{- end -}}
+
+{{/* Home (Kind = "home") */}}
+{{- $pages = $pages | append (dict
+      "url" "/"
+      "kind" "home"
+      "section" ""
+      "type" "page") -}}
+
+{{- $pages | jsonify -}}
