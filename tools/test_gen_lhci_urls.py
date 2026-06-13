@@ -20,5 +20,36 @@ class Scaffold(unittest.TestCase):
         self.assertTrue(hasattr(gen, "main"))
 
 
+SAMPLE_MANIFEST = [
+    {"url": "/essays/example-one/", "kind": "page", "section": "essays", "type": "essays"},
+    {"url": "/essays/example-explorables/", "kind": "page", "section": "essays", "type": "essays"},
+    {"url": "/essays/", "kind": "section", "section": "essays", "type": "essays"},
+    {"url": "/research/themes/example-theme-one/", "kind": "page", "section": "research", "type": "research-theme"},
+    {"url": "/research/questions/example-question-one/", "kind": "page", "section": "research", "type": "research-question"},
+    {"url": "/", "kind": "home", "section": "", "type": "page"},
+]
+
+
+class GroupPages(unittest.TestCase):
+    def test_groups_by_tuple(self) -> None:
+        grouped = gen.group_pages(SAMPLE_MANIFEST)
+        self.assertIn("page:essays:essays", grouped)
+        self.assertEqual(
+            sorted(grouped["page:essays:essays"]),
+            ["/essays/example-explorables/", "/essays/example-one/"],
+        )
+        self.assertIn("section:essays:essays", grouped)
+        self.assertIn("home::page", grouped)
+
+    def test_separates_research_theme_from_question(self) -> None:
+        grouped = gen.group_pages(SAMPLE_MANIFEST)
+        self.assertIn("page:research:research-theme", grouped)
+        self.assertIn("page:research:research-question", grouped)
+        self.assertNotEqual(
+            grouped["page:research:research-theme"],
+            grouped["page:research:research-question"],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

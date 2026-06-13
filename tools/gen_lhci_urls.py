@@ -19,6 +19,17 @@ import sys
 from pathlib import Path
 
 
+def group_pages(manifest: list[dict]) -> dict[str, list[str]]:
+    """Group manifest entries by (kind, section, type) tuple.
+    Returns {group_key: sorted_unique_urls}.
+    group_key = "<kind>:<section>:<type>"."""
+    groups: dict[str, set[str]] = {}
+    for entry in manifest:
+        key = f"{entry['kind']}:{entry['section']}:{entry['type']}"
+        groups.setdefault(key, set()).add(entry["url"])
+    return {k: sorted(v) for k, v in groups.items()}
+
+
 def run(repo_root: Path, dry_run: bool = False) -> tuple[int, list[str]]:
     """Programmatic entry. Returns (rc, errors)."""
     return (0, [])
