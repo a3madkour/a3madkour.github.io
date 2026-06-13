@@ -36,6 +36,47 @@ def pick_representative_urls(manifest: list[dict]) -> dict[str, str]:
     return {key: urls[0] for key, urls in groups.items() if urls}
 
 
+CATEGORY_MAP = {
+    "perf": "categories:performance",
+    "accessibility": "categories:accessibility",
+    "best-practices": "categories:best-practices",
+    "seo": "categories:seo",
+}
+
+
+def render_assert_matrix(
+    picks: dict[str, str],
+    overrides: list[dict],
+) -> list[dict]:
+    """Build assertMatrix entries from group-keyed overrides.
+
+    Each override has {group, perf?, accessibility?, best-practices?, seo?}.
+    matchingUrlPattern is the regex-escaped picked URL + anchor.
+    Raises ValueError if an override references an unknown group."""
+    matrix: list[dict] = []
+    for ov in overrides:
+        group = ov["group"]
+        if group not in picks:
+            raise ValueError(
+                f"override references unknown group '{group}'; "
+                f"valid groups: {sorted(picks.keys())}"
+            )
+        url = picks[group]
+        # re.escape on Python ≥3.13 escapes '-' even though it's only special
+        # inside character classes.  LHCI patterns are plain prefix matches so
+        # hyphens in URL slugs must remain literal.
+        pattern = re.escape(url).replace(r"\-", "-") + "$"
+        assertions: dict = {}
+        for short_key, lhci_key in CATEGORY_MAP.items():
+            if short_key in ov:
+                assertions[lhci_key] = ["error", {"minScore": ov[short_key]}]
+        matrix.append({
+            "matchingUrlPattern": pattern,
+            "assertions": assertions,
+        })
+    return matrix
+
+
 def run(repo_root: Path, dry_run: bool = False) -> tuple[int, list[str]]:
     """Programmatic entry. Returns (rc, errors)."""
     return (0, [])

@@ -75,5 +75,53 @@ class PickRepresentative(unittest.TestCase):
             self.assertIsInstance(v, str)
 
 
+class RenderAssertMatrix(unittest.TestCase):
+    def test_empty_overrides_returns_empty_list(self) -> None:
+        picks = {"page:essays:essays": "/essays/example-one/"}
+        self.assertEqual(gen.render_assert_matrix(picks, []), [])
+
+    def test_override_translates_to_url_pattern(self) -> None:
+        picks = {"page:essays:essays": "/essays/example-one/"}
+        overrides = [{"group": "page:essays:essays", "perf": 0.85}]
+        matrix = gen.render_assert_matrix(picks, overrides)
+        self.assertEqual(len(matrix), 1)
+        self.assertEqual(matrix[0]["matchingUrlPattern"], "/essays/example-one/$")
+        self.assertEqual(
+            matrix[0]["assertions"]["categories:performance"],
+            ["error", {"minScore": 0.85}],
+        )
+
+    def test_multiple_category_overrides(self) -> None:
+        picks = {"page:essays:essays": "/essays/example-one/"}
+        overrides = [{
+            "group": "page:essays:essays",
+            "perf": 0.85,
+            "accessibility": 0.95,
+            "best-practices": 0.9,
+            "seo": 0.9,
+        }]
+        matrix = gen.render_assert_matrix(picks, overrides)
+        a = matrix[0]["assertions"]
+        self.assertEqual(a["categories:performance"], ["error", {"minScore": 0.85}])
+        self.assertEqual(a["categories:accessibility"], ["error", {"minScore": 0.95}])
+        self.assertEqual(a["categories:best-practices"], ["error", {"minScore": 0.9}])
+        self.assertEqual(a["categories:seo"], ["error", {"minScore": 0.9}])
+
+    def test_unknown_group_raises(self) -> None:
+        picks = {"page:essays:essays": "/essays/example-one/"}
+        overrides = [{"group": "page:nonexistent:nonexistent", "perf": 0.85}]
+        with self.assertRaises(ValueError) as ctx:
+            gen.render_assert_matrix(picks, overrides)
+        self.assertIn("page:nonexistent:nonexistent", str(ctx.exception))
+        self.assertIn("page:essays:essays", str(ctx.exception))  # lists valid groups
+
+    def test_url_regex_escaped(self) -> None:
+        picks = {"page:essays:essays": "/essays/a.b+c/"}  # regex metachars
+        overrides = [{"group": "page:essays:essays", "perf": 0.85}]
+        matrix = gen.render_assert_matrix(picks, overrides)
+        # '.' and '+' should be escaped
+        self.assertEqual(matrix[0]["matchingUrlPattern"], r"/essays/a\.b\+c/$")
+
+
 if __name__ == "__main__":
     unittest.main()
