@@ -5569,3 +5569,148 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 @media (prefers-reduced-motion: reduce) {
   #anchor-link-banner { transition: none; }
 }
+
+/* ============================================================
+ * §49 — explorables
+ *
+ * Per-essay interactive widget chrome. Library kinds:
+ * ReactiveValue (sliders + reactive text), ReactiveChart
+ * (sliders + hand-rolled SVG plot). Bespoke per-essay
+ * widgets reuse the same .explorable* classes when convenient.
+ * ============================================================ */
+
+.explorable {
+  display: block;
+  margin: var(--space-6) 0;
+}
+
+.explorable-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  color: var(--color-ink-soft);
+}
+
+.explorable-controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.explorable-label {
+  min-width: 3.5rem;
+  font-style: italic;
+}
+
+.explorable-controls input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  width: 9rem;
+  cursor: pointer;
+}
+
+.explorable-controls input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: var(--color-steel);
+  border-radius: 2px;
+}
+.explorable-controls input[type="range"]::-moz-range-track {
+  height: 4px;
+  background: var(--color-steel);
+  border-radius: 2px;
+}
+
+.explorable-controls input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--color-burgundy);
+  border: none;
+  border-radius: 50%;
+  margin-top: -6px;
+  cursor: pointer;
+}
+.explorable-controls input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: var(--color-burgundy);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.explorable-controls input[type="range"]:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
+}
+.explorable-controls input[type="range"]:focus-visible::-moz-range-thumb {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
+}
+
+.explorable-controls output {
+  font-family: var(--font-mono);
+  min-width: 2.5rem;
+  text-align: right;
+}
+
+.explorable-output {
+  font-family: var(--font-mono);
+  color: var(--color-ink-soft);
+  padding: var(--space-2) var(--space-3);
+  border-left: 2px solid var(--color-burgundy);
+  margin: 0;
+}
+
+.explorable-figure {
+  margin: 0;
+}
+
+.explorable-figure svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.explorable-axes line {
+  stroke: var(--color-steel);
+  stroke-width: 1;
+}
+
+.explorable-tick {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  fill: var(--color-ink-soft);
+}
+
+.explorable-line {
+  stroke: var(--color-burgundy);
+  stroke-width: 1.5;
+  fill: none;
+}
+
+.explorable-axes-caption {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--color-ink-soft);
+  margin-top: var(--space-2);
+}
+
+.widget-fallback {
+  font-style: italic;
+  color: var(--color-ink-soft);
+  padding: var(--space-3);
+  border: 1px dashed var(--color-steel);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  margin: 0;
+}
+
+[data-widget-id]:not([data-widget-fallback]) .widget-fallback {
+  display: none;
+}
