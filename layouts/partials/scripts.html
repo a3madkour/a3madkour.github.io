@@ -105,3 +105,18 @@
 {{- $streams := resources.Get "js/entry-streams.js" | js.Build $streamsOpts | fingerprint }}
 <script src="{{ $streams.RelPermalink }}" integrity="{{ $streams.Data.Integrity }}" defer></script>
 {{- end }}
+
+{{- /* Explorables: per-essay bundle. Each essay with has_widgets:true gets a
+       dedicated js.Build entry from assets/js/explorables/<slug>/index.js.
+       The <script> tag emits page-narrowly — only when the current page's
+       File.ContentBaseName matches the iterated essay's slug. The runtime +
+       library kinds are inlined per bundle (no shared chunk in v1; see
+       spec §10 follow-up 6). */ -}}
+{{- if and (eq .Section "essays") (eq .Kind "page") .Params.has_widgets -}}
+{{-   $slug := .File.ContentBaseName -}}
+{{-   with resources.Get (printf "js/explorables/%s/index.js" $slug) -}}
+{{-     $opts := dict "targetPath" (printf "js/explorables-%s.js" $slug) "minify" true -}}
+{{-     $bundle := . | js.Build $opts | fingerprint -}}
+<script src="{{ $bundle.RelPermalink }}" integrity="{{ $bundle.Data.Integrity }}" defer></script>
+{{-   end -}}
+{{- end }}
