@@ -33,14 +33,16 @@
     {{ partial "library/umbrella-catalogue.html" . }}
   {{- end -}}
 
-  {{/* Page sidebar — anchor list built from active sections */}}
+  {{/* Page sidebar — Featured / Browse / Shelves. Per-shelf entries are
+       intentionally omitted: shelf count grows with content and the rotated
+       rail labels overflow viewport at ~6+ entries. "Shelves" anchors to the
+       first shelf; the catalogue + linear scroll cover cross-shelf discovery. */}}
   {{- $sections := slice -}}
   {{- $sections = $sections | append (dict "id" "hero" "label" "Featured") -}}
   {{- $sections = $sections | append (dict "id" "catalogue" "label" "Browse") -}}
-  {{- if $shelves -}}
-    {{- range $shelf := (default slice $shelves.shelves) -}}
-      {{- $sections = $sections | append (dict "id" (printf "shelf-%s" (urlize $shelf.title)) "label" $shelf.title) -}}
-    {{- end -}}
+  {{- with (and $shelves $shelves.shelves) -}}
+    {{- $first := index . 0 -}}
+    {{- $sections = $sections | append (dict "id" (printf "shelf-%s" (urlize $first.title)) "label" "Shelves") -}}
   {{- end -}}
   {{ partial "page-sidebar.html" (dict "sections" $sections) }}
 </main>
