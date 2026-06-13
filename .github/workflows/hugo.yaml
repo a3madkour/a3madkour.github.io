@@ -184,6 +184,10 @@ jobs:
         run: python3 tools/check_page_weights.py
       - name: Run page-weight linter unit tests
         run: cd tools && python3 -m unittest test_check_page_weights.py -v
+      - name: Regenerate LHCI URLs from sitemap manifest
+        run: python3 tools/gen_lhci_urls.py
+      - name: Run gen_lhci_urls unit tests
+        run: python3 -m unittest tools/test_gen_lhci_urls.py -v
       - name: Lighthouse CI (desktop)
         uses: treosh/lighthouse-ci-action@v12
         with:

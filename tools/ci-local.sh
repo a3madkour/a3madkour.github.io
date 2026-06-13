@@ -120,6 +120,9 @@ python3 -m unittest tools/test_check_explorables.py -v 2>&1 | tail -3
 python3 tools/check_lhci_urls.py
 (cd tools && python3 -m unittest test_check_lhci_urls.py -v 2>&1 | tail -3)
 
+python3 tools/gen_lhci_urls.py
+python3 -m unittest tools/test_gen_lhci_urls.py -v 2>&1 | tail -3
+
 separator "Lighthouse CI (desktop + mobile)"
 
 # LHCI is the only CI gate that lives outside Python+Hugo. Catches things the
