@@ -19,9 +19,52 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_fixtures import parse_frontmatter  # noqa: E402
 
 
+WIDGET_SHORTCODE_RE = re.compile(r"\{\{<\s*widget\b[^>]*>\}\}")
+
+
+def _strip_frontmatter(text: str) -> str:
+    if text.startswith("---"):
+        parts = text.split("---", 2)
+        if len(parts) >= 3:
+            return parts[2]
+    return text
+
+
+def _body_has_widget(body: str) -> bool:
+    return WIDGET_SHORTCODE_RE.search(body) is not None
+
+
 def lint_explorables(repo_root: Path) -> list[str]:
     """Return list of error strings. Empty list = all good."""
-    return []
+    errors: list[str] = []
+    essays_dir = repo_root / "content" / "essays"
+    if not essays_dir.is_dir():
+        return errors
+
+    for d in sorted(essays_dir.iterdir()):
+        if not d.is_dir():
+            continue
+        index = d / "index.md"
+        if not index.exists():
+            continue
+        text = index.read_text(encoding="utf-8")
+        fm = parse_frontmatter(text)
+        if fm is None:
+            continue
+        body = _strip_frontmatter(text)
+
+        slug = d.name
+        rel = f"content/essays/{slug}/index.md"
+        has_widgets = bool(fm.get("has_widgets", False))
+        body_has = _body_has_widget(body)
+
+        # Rule 1: has_widgets ↔ shortcode presence
+        if has_widgets and not body_has:
+            errors.append(f"{rel}: has_widgets is true but no widget shortcodes found")
+        elif not has_widgets and body_has:
+            errors.append(f"{rel}: widget shortcodes found but has_widgets is false (or missing)")
+
+    return errors
 
 
 def run(repo_root: Path) -> tuple[int, list[str]]:

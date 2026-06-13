@@ -27,5 +27,81 @@ class ExplorablesLinterScaffold(unittest.TestCase):
         self.assertEqual(errors, [])
 
 
+ESSAY_WIDGET_TRUE_HAS_WIDGET = """\
+---
+title: "Has widget"
+date: 2026-06-12
+lastmod: 2026-06-12
+draft: false
+summary: "x"
+tags: []
+series: ""
+series_order: 0
+toc: true
+has_sidenotes: false
+has_citations: false
+has_footnotes: false
+has_math: false
+has_widgets: true
+has_video_sync: false
+---
+
+Body. {{< widget id="x" >}}
+"""
+
+ESSAY_WIDGET_FALSE_HAS_WIDGET = ESSAY_WIDGET_TRUE_HAS_WIDGET.replace(
+    "has_widgets: true", "has_widgets: false"
+)
+
+ESSAY_WIDGET_TRUE_NO_WIDGET = ESSAY_WIDGET_TRUE_HAS_WIDGET.replace(
+    'Body. {{< widget id="x" >}}', "Body, no widget."
+)
+
+
+class HasWidgetsCoupling(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp())
+        self.essays = self.tmp / "content" / "essays"
+        self.essays.mkdir(parents=True)
+        (self.tmp / "assets" / "js" / "explorables").mkdir(parents=True)
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.tmp)
+
+    def _write_essay(self, slug: str, body: str) -> None:
+        d = self.essays / slug
+        d.mkdir()
+        (d / "index.md").write_text(body, encoding="utf-8")
+
+    def test_has_widgets_true_with_widget_ok(self) -> None:
+        self._write_essay("ok", ESSAY_WIDGET_TRUE_HAS_WIDGET)
+        (self.tmp / "assets" / "js" / "explorables" / "ok").mkdir()
+        (self.tmp / "assets" / "js" / "explorables" / "ok" / "index.js").write_text(
+            'registerWidget("x", () => {});\n', encoding="utf-8"
+        )
+        errors = lint.lint_explorables(self.tmp)
+        # Other rules may add errors later; only check rule-1 cases don't appear.
+        self.assertFalse(
+            any("has_widgets" in e for e in errors),
+            f"unexpected has_widgets error: {errors}",
+        )
+
+    def test_has_widgets_false_with_widget_fails(self) -> None:
+        self._write_essay("flagged-false", ESSAY_WIDGET_FALSE_HAS_WIDGET)
+        errors = lint.lint_explorables(self.tmp)
+        self.assertTrue(
+            any("flagged-false" in e and "has_widgets" in e and "false" in e for e in errors),
+            f"expected has_widgets-false-but-body-has-widget error: {errors}",
+        )
+
+    def test_has_widgets_true_no_widget_fails(self) -> None:
+        self._write_essay("flagged-true", ESSAY_WIDGET_TRUE_NO_WIDGET)
+        errors = lint.lint_explorables(self.tmp)
+        self.assertTrue(
+            any("flagged-true" in e and "has_widgets" in e and "true" in e for e in errors),
+            f"expected has_widgets-true-but-no-widget error: {errors}",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
