@@ -1,1 +1,11 @@
-<div data-widget data-widget-id="{{ .Get "id" }}"></div>
+{{- /* Explorable widget mount point. Runtime in assets/js/explorables/runtime.js
+       removes data-widget-fallback on successful mount; CSS §49 hides the
+       static caption once the attribute is gone. */ -}}
+{{- $id := .Get "id" -}}
+{{- $label := or (.Get "label") "Interactive figure" -}}
+<div data-widget-id="{{ $id }}"
+     data-widget-fallback
+     role="figure"
+     aria-label="{{ $label }}">
+  <p class="widget-fallback">{{ $label }} — enable JavaScript to view.</p>
+</div>
