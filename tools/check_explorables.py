@@ -89,6 +89,14 @@ def lint_explorables(repo_root: Path) -> list[str]:
             elif idv == "":
                 errors.append(f"{rel}: widget shortcode has empty id: {raw}")
 
+        # Rule 3: ids unique per page
+        seen: set[str] = set()
+        for raw, idv in calls:
+            if idv and idv in seen:
+                errors.append(f"{rel}: duplicate widget id \"{idv}\" on page")
+            elif idv:
+                seen.add(idv)
+
     return errors
 
 

@@ -159,5 +159,35 @@ class WidgetIdRequired(unittest.TestCase):
         )
 
 
+ESSAY_DUPLICATE_IDS = ESSAY_WIDGET_TRUE_HAS_WIDGET.replace(
+    'Body. {{< widget id="x" >}}',
+    'A: {{< widget id="x" >}} B: {{< widget id="x" >}}',
+)
+
+
+class WidgetIdsUniquePerPage(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp())
+        self.essays = self.tmp / "content" / "essays"
+        self.essays.mkdir(parents=True)
+        (self.tmp / "assets" / "js" / "explorables").mkdir(parents=True)
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.tmp)
+
+    def _write_essay(self, slug: str, body: str) -> None:
+        d = self.essays / slug
+        d.mkdir()
+        (d / "index.md").write_text(body, encoding="utf-8")
+
+    def test_duplicate_ids_in_one_essay_fail(self) -> None:
+        self._write_essay("dup", ESSAY_DUPLICATE_IDS)
+        errors = lint.lint_explorables(self.tmp)
+        self.assertTrue(
+            any("dup" in e and "duplicate" in e.lower() and '"x"' in e for e in errors),
+            f"expected duplicate-id error: {errors}",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
