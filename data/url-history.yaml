@@ -3,82 +3,90 @@ notes:
   current_url: "/garden/bayesian-statistics/"
   history: []
   state: live
-- state: live
-  id: 0a07e759-74ec-44e1-903d-514ba068870f
+- id: 0a07e759-74ec-44e1-903d-514ba068870f
   current_url: "/garden/bias-vs-variance/"
   history: []
-- history: []
   state: live
-  id: e191ccb8-0b1b-4d61-b0cf-e7eb26e866a6
+- id: e191ccb8-0b1b-4d61-b0cf-e7eb26e866a6
   current_url: "/garden/cellular-automata-are-visual-rule-based-systems/"
-- current_url: "/garden/maximum-a-posteriori-map/"
   history: []
   state: live
-  id: 235402ca-0637-455a-b66c-fb23067b0874
+- id: 235402ca-0637-455a-b66c-fb23067b0874
+  current_url: "/garden/maximum-a-posteriori-map/"
+  history: []
+  state: live
 - id: 20000004-0000-0000-0000-000000000004
   current_url: "/research/questions/example-question-four/"
   history: []
   state: live
-- state: live
-  id: 20000001-0000-0000-0000-000000000001
+- id: 20000001-0000-0000-0000-000000000001
   current_url: "/research/questions/example-question-one/"
   history: []
-- history: []
   state: live
-  id: 20000003-0000-0000-0000-000000000003
+- id: 20000003-0000-0000-0000-000000000003
   current_url: "/research/questions/example-question-three/"
-- current_url: "/research/questions/example-question-two/"
   history: []
   state: live
-  id: 20000002-0000-0000-0000-000000000002
+- id: 20000002-0000-0000-0000-000000000002
+  current_url: "/research/questions/example-question-two/"
+  history: []
+  state: live
 - id: 10000001-0000-0000-0000-000000000001
   current_url: "/research/themes/example-theme-one/"
   history: []
   state: live
-- state: live
-  id: 10000002-0000-0000-0000-000000000002
+- id: 10000002-0000-0000-0000-000000000002
   current_url: "/research/themes/example-theme-two/"
   history: []
-- state: live
-  id: essay-one-uuid-placeholder
+  state: live
+- id: essay-one-uuid-placeholder
   current_url: "/essays/example-one/"
   history: 
-  - replaced_at: "2026-06-01T19:24:54Z"
+  - url: "/essays/example-one/"
+    replaced_at: "2026-06-01T19:24:54Z"
     reason: removed
-    url: "/essays/example-one/"
-  - url: null
+  - reason: republished
+    url: null
     replaced_at: "2026-06-01T22:18:53Z"
-    reason: republished
-  - replaced_at: "2026-06-01T23:15:04Z"
+  - url: "/essays/example-one/"
+    replaced_at: "2026-06-01T23:15:04Z"
     reason: removed
-    url: "/essays/example-one/"
-  - url: null
+  - reason: republished
+    url: null
     replaced_at: "2026-06-01T23:15:19Z"
-    reason: republished
-- current_url: "/essays/example-four/"
+  state: live
+- id: essay-four-uuid-placeholder
+  current_url: "/essays/example-four/"
   history: []
   state: live
-  id: essay-four-uuid-placeholder
 - id: essay-two-uuid-placeholder
   current_url: "/essays/example-two/"
   history: []
   state: live
-- state: live
-  id: essay-three-uuid-placeholder
+- id: essay-three-uuid-placeholder
   current_url: "/essays/example-three/"
   history: []
-- current_url: "/garden/mei-r-wom-2026/"
+  state: live
+- id: E2C28B89-4E71-4E7C-B220-BCE051F1BD53
+  current_url: "/garden/mei-r-wom-2026/"
   history: []
   state: live
-  id: E2C28B89-4E71-4E7C-B220-BCE051F1BD53
-- history: []
-  state: live
-  id: 11111111-2222-3333-4444-555555555555
+- id: 11111111-2222-3333-4444-555555555555
   current_url: "/essays/example-essay-multi-target-export/"
+  history: []
+  state: live
 - id: null
   current_url: "/essays/example-multi/"
   history: 
-  - url: "/essays/example-essay-multi-target-export/"
+  - reason: title_change
+    url: "/essays/example-essay-multi-target-export/"
     replaced_at: "2026-06-03T21:57:11Z"
-    reason: title_change
+  state: live
+- id: 394db383-e408-44a2-a347-20ad7a54c5e7
+  current_url: "/essays/example-multi/"
+  history: []
+  state: live
+- id: c0cd65d8-932f-4791-8b31-5f96f7cb772f
+  current_url: "/works/poetry/smoke-test-poem/"
+  history: []
   state: live
