@@ -227,5 +227,68 @@ class PerEssayJsExists(unittest.TestCase):
         )
 
 
+class RegisterWidgetIdSync(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp())
+        self.essays = self.tmp / "content" / "essays"
+        self.essays.mkdir(parents=True)
+        (self.tmp / "assets" / "js" / "explorables").mkdir(parents=True)
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.tmp)
+
+    def _write(self, slug: str, body: str, js: str) -> None:
+        d = self.essays / slug
+        d.mkdir()
+        (d / "index.md").write_text(body, encoding="utf-8")
+        js_dir = self.tmp / "assets" / "js" / "explorables" / slug
+        js_dir.mkdir()
+        (js_dir / "index.js").write_text(js, encoding="utf-8")
+
+    def test_widget_id_without_register_fails(self) -> None:
+        self._write("orphan-shortcode", ESSAY_WIDGET_TRUE_HAS_WIDGET, 'console.log("nothing here");\n')
+        errors = lint.lint_explorables(self.tmp)
+        self.assertTrue(
+            any("orphan-shortcode" in e and "registerWidget" in e and '"x"' in e for e in errors),
+            f"expected missing-registerWidget error: {errors}",
+        )
+
+    def test_register_without_widget_id_fails(self) -> None:
+        self._write("orphan-register", ESSAY_WIDGET_TRUE_HAS_WIDGET,
+                    'registerWidget("x", () => {});\nregisterWidget("y", () => {});\n')
+        errors = lint.lint_explorables(self.tmp)
+        self.assertTrue(
+            any("orphan-register" in e and "registerWidget" in e and '"y"' in e and "no" in e.lower() for e in errors),
+            f"expected orphan-registerWidget error: {errors}",
+        )
+
+    def test_single_quote_register_recognized(self) -> None:
+        self._write("single-quote", ESSAY_WIDGET_TRUE_HAS_WIDGET,
+                    "registerWidget('x', () => {});\n")
+        errors = lint.lint_explorables(self.tmp)
+        self.assertFalse(
+            any("registerWidget" in e for e in errors),
+            f"single-quote register should be recognized: {errors}",
+        )
+
+    def test_register_in_line_comment_ignored(self) -> None:
+        self._write("comment-strip", ESSAY_WIDGET_TRUE_HAS_WIDGET,
+                    'registerWidget("x", () => {});\n// registerWidget("z", () => {});\n')
+        errors = lint.lint_explorables(self.tmp)
+        self.assertFalse(
+            any('"z"' in e for e in errors),
+            f"// commented registerWidget should be stripped: {errors}",
+        )
+
+    def test_register_in_block_comment_ignored(self) -> None:
+        self._write("block-strip", ESSAY_WIDGET_TRUE_HAS_WIDGET,
+                    'registerWidget("x", () => {});\n/* registerWidget("z", () => {}); */\n')
+        errors = lint.lint_explorables(self.tmp)
+        self.assertFalse(
+            any('"z"' in e for e in errors),
+            f"/* */ commented registerWidget should be stripped: {errors}",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

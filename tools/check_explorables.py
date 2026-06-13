@@ -28,6 +28,22 @@ WIDGET_CALL_RE = re.compile(
 ID_ATTR_RE = re.compile(r'\bid\s*=\s*"([^"]*)"')
 
 
+LINE_COMMENT_RE = re.compile(r"//[^\n]*")
+BLOCK_COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
+REGISTER_RE = re.compile(r"""registerWidget\s*\(\s*['"]([^'"]+)['"]""")
+
+
+def _strip_js_comments(src: str) -> str:
+    src = BLOCK_COMMENT_RE.sub("", src)
+    src = LINE_COMMENT_RE.sub("", src)
+    return src
+
+
+def _registered_ids(js_text: str) -> list[str]:
+    stripped = _strip_js_comments(js_text)
+    return [m.group(1) for m in REGISTER_RE.finditer(stripped)]
+
+
 def _extract_widget_ids(body: str) -> list[tuple[str, str | None]]:
     """Returns list of (raw_call, id_value or None). None = id attribute absent.
     Empty string = id="" present but empty."""
@@ -103,6 +119,24 @@ def lint_explorables(repo_root: Path) -> list[str]:
             if not js_path.exists():
                 errors.append(
                     f"{rel}: has_widgets is true but assets/js/explorables/{slug}/index.js is missing"
+                )
+
+            js_text = ""
+            if js_path.exists():
+                js_text = js_path.read_text(encoding="utf-8")
+            registered = set(_registered_ids(js_text))
+            shortcode_ids = {idv for _, idv in calls if idv}
+
+            # Rule 5: every shortcode id has a registerWidget call
+            for sid in sorted(shortcode_ids - registered):
+                errors.append(
+                    f"{rel}: widget id \"{sid}\" has no registerWidget call in assets/js/explorables/{slug}/index.js"
+                )
+
+            # Rule 6: every registerWidget call has a corresponding shortcode
+            for rid in sorted(registered - shortcode_ids):
+                errors.append(
+                    f"assets/js/explorables/{slug}/index.js: registerWidget(\"{rid}\", ...) has no matching widget shortcode on /essays/{slug}/"
                 )
 
     return errors
