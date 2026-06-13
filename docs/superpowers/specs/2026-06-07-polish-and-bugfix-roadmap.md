@@ -132,7 +132,7 @@
 
 | # | Item | Trigger | Source |
 |---|---|---|---|
-| 7.1 | ✓ **LHCI 4.2 — sitemap-derived URLs.** Shipped 2026-06-12 (site commits TBD-FILL-AFTER-MERGE). `tools/gen_lhci_urls.py` (stdlib only, 22 unit tests) rewrites `lighthouserc.{json,mobile.json}` from Hugo-emitted `public/lhci-pages.json` manifest + `tools/lhci-overrides.json` group-keyed thresholds. First regen jumped URL count 12 → 26 (one representative per Hugo (sub-)section); essay representative shifted example-one → example-blocks-crossref (alphabetical first). → [project-tier-7-1-complete](../../../.claude/memory/project_tier_7_1_complete.md) | `docs/superpowers/specs/2026-06-12-lhci-sitemap-derived-urls-design.md` + `docs/superpowers/plans/2026-06-12-lhci-sitemap-derived-urls.md` |
+| 7.1 | ✓ **LHCI 4.2 — sitemap-derived URLs.** Shipped 2026-06-12 (site `9bd5aac..827a209`, 15 commits: spec + plan + 13 implementation). `tools/gen_lhci_urls.py` (stdlib only, 22 unit tests) rewrites `lighthouserc.{json,mobile.json}` from Hugo-emitted `public/lhci-pages.json` manifest + `tools/lhci-overrides.json` group-keyed thresholds. First regen jumped URL count 12 → 26 (one representative per Hugo (sub-)section); essay representative shifted example-one → example-blocks-crossref (alphabetical first). → [project-tier-7-1-complete](../../../.claude/memory/project_tier_7_1_complete.md) | `docs/superpowers/specs/2026-06-12-lhci-sitemap-derived-urls-design.md` + `docs/superpowers/plans/2026-06-12-lhci-sitemap-derived-urls.md` |
 | 7.2 | ☐ **LHCI 4.3 — visual-feature autodetect.** Fingerprint URLs by CSS classes + shortcodes; auto-add novel signatures. ~150 LOC + allowlist. | After 4.2 + fingerprint corpus observable. | Same |
 
 **Session shape:** 7.1 first (only when triggered). 7.2 after 7.1.

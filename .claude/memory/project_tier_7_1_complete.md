@@ -8,7 +8,7 @@ metadata:
 
 **Shipped 2026-06-12.** Tier 7.1 — LHCI sitemap-derived URLs (originally 4.2 in [[project-lhci-representative-pages-queued]]). 4.1 (`check_lhci_urls.py`, [[project-lhci-url-validator-complete]]) stays as defense-in-depth.
 
-Site commits: TBD-FILL-AFTER-PUSH.
+Site commits: `9bd5aac..827a209` (15 commits: spec + plan + 13 implementation).
 
 What landed:
 
