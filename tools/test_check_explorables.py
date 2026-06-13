@@ -189,5 +189,43 @@ class WidgetIdsUniquePerPage(unittest.TestCase):
         )
 
 
+class PerEssayJsExists(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp())
+        self.essays = self.tmp / "content" / "essays"
+        self.essays.mkdir(parents=True)
+        (self.tmp / "assets" / "js" / "explorables").mkdir(parents=True)
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.tmp)
+
+    def _write_essay(self, slug: str, body: str) -> None:
+        d = self.essays / slug
+        d.mkdir()
+        (d / "index.md").write_text(body, encoding="utf-8")
+
+    def test_missing_per_essay_js_fails(self) -> None:
+        self._write_essay("missing-js", ESSAY_WIDGET_TRUE_HAS_WIDGET)
+        # do NOT create assets/js/explorables/missing-js/index.js
+        errors = lint.lint_explorables(self.tmp)
+        self.assertTrue(
+            any("missing-js" in e and "index.js" in e for e in errors),
+            f"expected missing-js error: {errors}",
+        )
+
+    def test_per_essay_js_present_no_error(self) -> None:
+        self._write_essay("present-js", ESSAY_WIDGET_TRUE_HAS_WIDGET)
+        js_dir = self.tmp / "assets" / "js" / "explorables" / "present-js"
+        js_dir.mkdir()
+        (js_dir / "index.js").write_text(
+            'registerWidget("x", () => {});\n', encoding="utf-8"
+        )
+        errors = lint.lint_explorables(self.tmp)
+        self.assertFalse(
+            any("index.js" in e and "present-js" in e for e in errors),
+            f"unexpected per-essay-js error: {errors}",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

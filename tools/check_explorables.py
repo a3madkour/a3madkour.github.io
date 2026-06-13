@@ -97,6 +97,14 @@ def lint_explorables(repo_root: Path) -> list[str]:
             elif idv:
                 seen.add(idv)
 
+        # Rule 4: per-essay JS exists when has_widgets is true
+        if has_widgets:
+            js_path = repo_root / "assets" / "js" / "explorables" / slug / "index.js"
+            if not js_path.exists():
+                errors.append(
+                    f"{rel}: has_widgets is true but assets/js/explorables/{slug}/index.js is missing"
+                )
+
     return errors
 
 
