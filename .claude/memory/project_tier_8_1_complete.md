@@ -8,7 +8,7 @@ metadata:
 
 **Shipped 2026-06-12.** Sub-project E (Phase 3 final piece per [[project-phase-3-decomposition]]); Tier 8.1 of the polish/bugfix roadmap.
 
-Site commits: `99f6bb5..5e3d5d2` (15 commits: spec + plan + 13 implementation).
+Site commits: `fbde0f7..5d742dd` (22 commits: spec + plan + 20 implementation).
 
 What landed end-to-end:
 
