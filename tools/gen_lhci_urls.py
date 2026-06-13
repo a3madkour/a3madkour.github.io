@@ -30,6 +30,12 @@ def group_pages(manifest: list[dict]) -> dict[str, list[str]]:
     return {k: sorted(v) for k, v in groups.items()}
 
 
+def pick_representative_urls(manifest: list[dict]) -> dict[str, str]:
+    """Returns {group_key: first_url_alphabetically} per (kind, section, type)."""
+    groups = group_pages(manifest)
+    return {key: urls[0] for key, urls in groups.items() if urls}
+
+
 def run(repo_root: Path, dry_run: bool = False) -> tuple[int, list[str]]:
     """Programmatic entry. Returns (rc, errors)."""
     return (0, [])

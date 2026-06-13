@@ -51,5 +51,29 @@ class GroupPages(unittest.TestCase):
         )
 
 
+class PickRepresentative(unittest.TestCase):
+    def test_picks_alphabetical_first(self) -> None:
+        picks = gen.pick_representative_urls(SAMPLE_MANIFEST)
+        # example-explorables sorts before example-one ('e' < 'o' at offset 8)
+        self.assertEqual(picks["page:essays:essays"], "/essays/example-explorables/")
+        self.assertEqual(picks["home::page"], "/")
+
+    def test_stable_unicode_sort(self) -> None:
+        manifest = [
+            {"url": "/garden/zebra/", "kind": "page", "section": "garden", "type": "garden"},
+            {"url": "/garden/álpha/", "kind": "page", "section": "garden", "type": "garden"},
+        ]
+        picks = gen.pick_representative_urls(manifest)
+        # Python sorted() is codepoint-ordinal; 'á' (U+00E1) > 'z' (U+007A).
+        # So /garden/zebra/ sorts before /garden/álpha/.
+        self.assertEqual(picks["page:garden:garden"], "/garden/zebra/")
+
+    def test_returns_dict_str_to_str(self) -> None:
+        picks = gen.pick_representative_urls(SAMPLE_MANIFEST)
+        for k, v in picks.items():
+            self.assertIsInstance(k, str)
+            self.assertIsInstance(v, str)
+
+
 if __name__ == "__main__":
     unittest.main()
