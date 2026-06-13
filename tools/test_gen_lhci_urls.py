@@ -225,5 +225,71 @@ class RewriteLighthouserc(unittest.TestCase):
         self.assertEqual(first, second)
 
 
+class RunEndToEnd(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp())
+        (self.tmp / "public").mkdir()
+        (self.tmp / "tools").mkdir()
+        (self.tmp / "public" / "lhci-pages.json").write_text(
+            json.dumps(SAMPLE_MANIFEST), encoding="utf-8"
+        )
+        (self.tmp / "tools" / "lhci-overrides.json").write_text(
+            json.dumps({"desktop": [], "mobile": [
+                {"group": "page:essays:essays", "perf": 0.85}
+            ]}), encoding="utf-8"
+        )
+        (self.tmp / "lighthouserc.json").write_text(
+            json.dumps(DESKTOP_SEED, indent=2), encoding="utf-8"
+        )
+        (self.tmp / "lighthouserc.mobile.json").write_text(
+            json.dumps(MOBILE_SEED, indent=2), encoding="utf-8"
+        )
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.tmp)
+
+    def test_run_full_round_trip(self) -> None:
+        rc, errors = gen.run(self.tmp)
+        self.assertEqual((rc, errors), (0, []))
+        desktop = json.loads((self.tmp / "lighthouserc.json").read_text())
+        mobile = json.loads((self.tmp / "lighthouserc.mobile.json").read_text())
+        # Desktop: collect.url replaced, no assertMatrix
+        self.assertGreater(len(desktop["ci"]["collect"]["url"]), 1)
+        self.assertNotIn("assertMatrix", desktop["ci"]["assert"])
+        # Mobile: collect.url replaced, assertMatrix targeting picked essay
+        matrix = mobile["ci"]["assert"]["assertMatrix"]
+        self.assertEqual(len(matrix), 1)
+
+    def test_run_missing_manifest_returns_rc1(self) -> None:
+        (self.tmp / "public" / "lhci-pages.json").unlink()
+        rc, errors = gen.run(self.tmp)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("lhci-pages.json" in e for e in errors))
+
+    def test_run_missing_overrides_falls_back_to_empty(self) -> None:
+        (self.tmp / "tools" / "lhci-overrides.json").unlink()
+        rc, errors = gen.run(self.tmp)
+        self.assertEqual((rc, errors), (0, []))
+        mobile = json.loads((self.tmp / "lighthouserc.mobile.json").read_text())
+        # Without overrides, no assertMatrix
+        self.assertNotIn("assertMatrix", mobile["ci"]["assert"])
+
+    def test_run_missing_lighthouserc_returns_rc1(self) -> None:
+        (self.tmp / "lighthouserc.json").unlink()
+        rc, errors = gen.run(self.tmp)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("lighthouserc.json" in e for e in errors))
+
+    def test_run_unknown_group_in_overrides_returns_rc1(self) -> None:
+        (self.tmp / "tools" / "lhci-overrides.json").write_text(
+            json.dumps({"desktop": [], "mobile": [
+                {"group": "page:bogus:bogus", "perf": 0.5}
+            ]}), encoding="utf-8"
+        )
+        rc, errors = gen.run(self.tmp)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("page:bogus:bogus" in e for e in errors))
+
+
 if __name__ == "__main__":
     unittest.main()

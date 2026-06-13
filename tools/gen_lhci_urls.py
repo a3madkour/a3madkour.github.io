@@ -109,8 +109,63 @@ def rewrite_lighthouserc(
 
 
 def run(repo_root: Path, dry_run: bool = False) -> tuple[int, list[str]]:
-    """Programmatic entry. Returns (rc, errors)."""
+    """Programmatic entry. Returns (rc, errors).
+
+    Steps:
+    1. Load public/lhci-pages.json. Missing → error.
+    2. Load tools/lhci-overrides.json. Missing → empty overrides (no error).
+    3. group + pick representative URLs.
+    4. For each lighthouserc config (desktop, mobile): rewrite in place
+       unless dry_run=True; in that case print the resulting JSON.
+    """
+    errors: list[str] = []
+    manifest_path = repo_root / "public" / "lhci-pages.json"
+    if not manifest_path.exists():
+        return (1, [f"manifest missing at {manifest_path} — run after `hugo --minify`"])
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if not manifest:
+        return (1, [f"manifest is empty at {manifest_path}"])
+
+    overrides_path = repo_root / "tools" / "lhci-overrides.json"
+    overrides = {"desktop": [], "mobile": []}
+    if overrides_path.exists():
+        overrides = json.loads(overrides_path.read_text(encoding="utf-8"))
+
+    picks = pick_representative_urls(manifest)
+
+    configs = [
+        (repo_root / "lighthouserc.json", overrides.get("desktop", [])),
+        (repo_root / "lighthouserc.mobile.json", overrides.get("mobile", [])),
+    ]
+    for cfg_path, cfg_overrides in configs:
+        if not cfg_path.exists():
+            errors.append(f"lighthouserc missing at {cfg_path}")
+            continue
+        try:
+            if dry_run:
+                _preview_rewrite(cfg_path, picks, cfg_overrides)
+            else:
+                rewrite_lighthouserc(cfg_path, picks, cfg_overrides)
+        except ValueError as e:
+            errors.append(str(e))
+
+    if errors:
+        return (1, errors)
     return (0, [])
+
+
+def _preview_rewrite(cfg_path: Path, picks: dict[str, str], overrides: list[dict]) -> None:
+    """Compute what rewrite_lighthouserc would write and print to stdout."""
+    config = json.loads(cfg_path.read_text(encoding="utf-8"))
+    config["ci"]["collect"]["url"] = sorted(f"http://localhost{p}" for p in picks.values())
+    matrix = render_assert_matrix(picks, overrides)
+    if matrix:
+        config["ci"]["assert"]["assertMatrix"] = matrix
+    else:
+        config["ci"]["assert"].pop("assertMatrix", None)
+    print(f"--- {cfg_path.name} (dry-run) ---")
+    print(json.dumps(config, indent=2, sort_keys=False))
 
 
 def main() -> int:
