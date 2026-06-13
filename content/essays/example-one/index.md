@@ -56,7 +56,7 @@ Lorem ipsum.
 
 {{< figure src="hero.svg" caption="Example figure one — placeholder caption." alt="" >}}
 
-{{< widget src="example-widget" >}}
+{{< widget id="example-widget" label="Example widget" >}}
 
 {{< video-sync src="example.mp4" >}}
 
