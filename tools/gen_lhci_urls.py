@@ -77,6 +77,37 @@ def render_assert_matrix(
     return matrix
 
 
+def rewrite_lighthouserc(
+    config_path: Path,
+    picks: dict[str, str],
+    overrides: list[dict],
+    base_url: str = "http://localhost",
+) -> None:
+    """Load existing JSON config; replace collect.url + assertMatrix; write back.
+
+    - collect.url := sorted list of base_url + each picked URL.
+    - assertMatrix := render_assert_matrix(picks, overrides) when non-empty,
+      else removed entirely.
+    - All other fields (preset, numberOfRuns, base assertions, upload) preserved.
+    - Output: 2-space JSON, trailing newline, sort_keys False.
+    """
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+
+    urls = sorted(f"{base_url}{path}" for path in picks.values())
+    config["ci"]["collect"]["url"] = urls
+
+    matrix = render_assert_matrix(picks, overrides)
+    if matrix:
+        config["ci"]["assert"]["assertMatrix"] = matrix
+    else:
+        config["ci"]["assert"].pop("assertMatrix", None)
+
+    config_path.write_text(
+        json.dumps(config, indent=2, sort_keys=False) + "\n",
+        encoding="utf-8",
+    )
+
+
 def run(repo_root: Path, dry_run: bool = False) -> tuple[int, list[str]]:
     """Programmatic entry. Returns (rc, errors)."""
     return (0, [])

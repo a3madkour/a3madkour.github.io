@@ -123,5 +123,107 @@ class RenderAssertMatrix(unittest.TestCase):
         self.assertEqual(matrix[0]["matchingUrlPattern"], r"/essays/a\.b\+c/$")
 
 
+DESKTOP_SEED = {
+    "ci": {
+        "collect": {
+            "staticDistDir": "./public",
+            "url": ["http://localhost/old/"],
+            "settings": {"preset": "desktop"},
+            "numberOfRuns": 1,
+        },
+        "assert": {
+            "assertions": {
+                "categories:accessibility":  ["error", {"minScore": 0.9}],
+                "categories:performance":    ["error", {"minScore": 0.9}],
+                "categories:best-practices": ["error", {"minScore": 0.9}],
+                "categories:seo":            ["error", {"minScore": 0.9}],
+            }
+        },
+        "upload": {"target": "temporary-public-storage"},
+    }
+}
+
+MOBILE_SEED = {
+    "ci": {
+        "collect": {
+            "staticDistDir": "./public",
+            "url": ["http://localhost/old/"],
+            "numberOfRuns": 1,
+        },
+        "assert": {
+            "assertions": {
+                "categories:accessibility":  ["error", {"minScore": 0.9}],
+                "categories:performance":    ["error", {"minScore": 0.9}],
+                "categories:best-practices": ["error", {"minScore": 0.9}],
+                "categories:seo":            ["error", {"minScore": 0.9}],
+            },
+            "assertMatrix": [{"matchingUrlPattern": "/stale/$", "assertions": {}}],
+        },
+        "upload": {"target": "temporary-public-storage"},
+    }
+}
+
+
+class RewriteLighthouserc(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp())
+        self.config = self.tmp / "lighthouserc.json"
+        self.config.write_text(json.dumps(DESKTOP_SEED, indent=2), encoding="utf-8")
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.tmp)
+
+    def test_replaces_collect_url(self) -> None:
+        picks = {
+            "page:essays:essays": "/essays/example-one/",
+            "home::page": "/",
+        }
+        gen.rewrite_lighthouserc(self.config, picks, overrides=[])
+        result = json.loads(self.config.read_text())
+        urls = result["ci"]["collect"]["url"]
+        # collect.url sorted by URL for determinism
+        self.assertEqual(urls, ["http://localhost/", "http://localhost/essays/example-one/"])
+
+    def test_preserves_unrelated_fields(self) -> None:
+        picks = {"home::page": "/"}
+        gen.rewrite_lighthouserc(self.config, picks, overrides=[])
+        result = json.loads(self.config.read_text())
+        self.assertEqual(result["ci"]["collect"]["settings"]["preset"], "desktop")
+        self.assertEqual(result["ci"]["collect"]["numberOfRuns"], 1)
+        self.assertEqual(result["ci"]["upload"]["target"], "temporary-public-storage")
+        # base assertions untouched
+        self.assertIn("categories:accessibility", result["ci"]["assert"]["assertions"])
+
+    def test_desktop_strips_assertMatrix(self) -> None:
+        # If a stale assertMatrix exists in DESKTOP config, it's removed
+        # (desktop typically has no overrides; only mobile uses assertMatrix.)
+        cfg = json.loads(self.config.read_text())
+        cfg["ci"]["assert"]["assertMatrix"] = [{"matchingUrlPattern": "/stale/$"}]
+        self.config.write_text(json.dumps(cfg, indent=2), encoding="utf-8")
+        picks = {"home::page": "/"}
+        gen.rewrite_lighthouserc(self.config, picks, overrides=[])
+        result = json.loads(self.config.read_text())
+        self.assertNotIn("assertMatrix", result["ci"]["assert"])
+
+    def test_mobile_writes_assertMatrix(self) -> None:
+        mobile = self.tmp / "lighthouserc.mobile.json"
+        mobile.write_text(json.dumps(MOBILE_SEED, indent=2), encoding="utf-8")
+        picks = {"page:essays:essays": "/essays/example-one/"}
+        overrides = [{"group": "page:essays:essays", "perf": 0.85}]
+        gen.rewrite_lighthouserc(mobile, picks, overrides=overrides)
+        result = json.loads(mobile.read_text())
+        matrix = result["ci"]["assert"]["assertMatrix"]
+        self.assertEqual(len(matrix), 1)
+        self.assertEqual(matrix[0]["matchingUrlPattern"], "/essays/example-one/$")
+
+    def test_idempotent(self) -> None:
+        picks = {"home::page": "/"}
+        gen.rewrite_lighthouserc(self.config, picks, overrides=[])
+        first = self.config.read_text()
+        gen.rewrite_lighthouserc(self.config, picks, overrides=[])
+        second = self.config.read_text()
+        self.assertEqual(first, second)
+
+
 if __name__ == "__main__":
     unittest.main()
