@@ -1,0 +1,6 @@
+{
+  "desktop": [],
+  "mobile": [
+    {"group": "page:essays:essays", "perf": 0.85}
+  ]
+}
