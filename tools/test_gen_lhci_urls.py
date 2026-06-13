@@ -291,5 +291,32 @@ class RunEndToEnd(unittest.TestCase):
         self.assertTrue(any("page:bogus:bogus" in e for e in errors))
 
 
+class DryRun(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp())
+        (self.tmp / "public").mkdir()
+        (self.tmp / "tools").mkdir()
+        (self.tmp / "public" / "lhci-pages.json").write_text(
+            json.dumps(SAMPLE_MANIFEST), encoding="utf-8"
+        )
+        (self.tmp / "lighthouserc.json").write_text(
+            json.dumps(DESKTOP_SEED, indent=2), encoding="utf-8"
+        )
+        (self.tmp / "lighthouserc.mobile.json").write_text(
+            json.dumps(MOBILE_SEED, indent=2), encoding="utf-8"
+        )
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.tmp)
+
+    def test_dry_run_does_not_modify_files(self) -> None:
+        before_desktop = (self.tmp / "lighthouserc.json").read_text()
+        before_mobile = (self.tmp / "lighthouserc.mobile.json").read_text()
+        rc, errors = gen.run(self.tmp, dry_run=True)
+        self.assertEqual((rc, errors), (0, []))
+        self.assertEqual(before_desktop, (self.tmp / "lighthouserc.json").read_text())
+        self.assertEqual(before_mobile, (self.tmp / "lighthouserc.mobile.json").read_text())
+
+
 if __name__ == "__main__":
     unittest.main()
