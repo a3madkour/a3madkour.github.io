@@ -185,6 +185,29 @@ woff2 files live in `static/fonts/` (latin + latin-ext subsets only; browsers do
 
 **LHCI URL list is CI-generated.** `tools/gen_lhci_urls.py` rewrites `lighthouserc.{json,mobile.json}` between `hugo --minify` and the LHCI steps, picking one representative URL per (kind, section, type) group alphabetically. Edit `tools/lhci-overrides.json` to change per-group assertion thresholds; don't hand-edit the lighthouserc files. `check_lhci_urls.py` (26th linter pair) stays as defense-in-depth.
 
+### Multi-target export templates
+
+`tools/templates/` hosts the assets the dotfiles D.2 orchestrator (`a3madkour-publish-multi-pdf.el`) copies into each PDF build dir. Layout:
+
+```
+tools/templates/
+  <class-name>/                # one subdir per LaTeX class — switched by #+LATEX_CLASS:
+    preamble.tex               # documentclass + usepackages + setup (becomes the org-latex-classes preamble)
+    <class-assets>             # .cls, .sty, .bst, logos — copied verbatim next to the generated .tex
+  reference.docx               # pandoc Word reference doc — flat, not per-class
+  d2-blocks.lua                # pandoc filter for D.1 semantic blocks — flat
+  test-fixtures/               # smoke .tex fixture
+```
+
+**Adding a new class** (e.g. an AAAI / ACM / IEEE submission template):
+
+1. Create `tools/templates/<class-name>/` with the conference's `.sty` / `.cls` / `.bst` files alongside any required logos.
+2. Write `preamble.tex` mirroring the conference's sample `.tex` preamble — everything from `\documentclass{...}` up to (but not including) `\begin{document}`. The orchestrator splices this as the second element of the `org-latex-classes` alist entry.
+3. Add `#+LATEX_CLASS: <class-name>` to the source org file. Add `#+LATEX_HEADER:` lines per-essay for class-specific commands the orchestrator can't infer (e.g. AAAI's `\affiliations{...}`).
+4. Fallback: when `#+LATEX_CLASS:` is missing, the orchestrator defaults to `madkour-paper`.
+
+Currently installed: `madkour-paper/` (article + amsthm + biblatex/biber; ships with the site), `aaai24/` (AAAI 2024 anonymous submission — article + aaai24.sty + natbib/bibtex).
+
 ### Anchor-link affordance
 
 Every `id`-bearing reading-flow element inside `<main>` (headings `<h2>`–`<h3>` plus elements whose class list contains a `block-` token — i.e., D.1 semantic blocks) carries a trailing `§` glyph that copies the absolute URL to the clipboard on click and surfaces a top-of-viewport status banner ("Link to *X* copied"). Source of truth is one partial — `layouts/partials/anchor-link.html` — called by the Goldmark heading render hook (`layouts/_default/_markup/render-heading.html`), the 12 D.1 semantic-block shortcodes, and 7 chrome partials (References, Recent paths, From this stream, Upcoming, library shelf headings, catalogue, Cite static fallback). Behavior in `assets/js/anchor-link.js` (~1 KB; site-wide entry; delegated `click` listener on `<main>`; Escape skipped when a `<dialog>` is open so the cite modal's native cancel wins). CSS §48. Per-element opt-out via `data-no-anchor-link` (applied to the Cite modal `<h2>`). Heading levels `<h4>`–`<h6>` intentionally omit the glyph to avoid visual density on deeply-nested subsections (roadmap row 2.4; render hook skips via `{{ if and $id (lt .Level 4) }}`; linter `_HEADING_TAGS` excludes `h4-h6`). 27th linter pair (`check_anchor_link.py`) gates the partial-emission invariant; smoke test asserts at least one `.anchor-link` on `/essays/example-five/`.
