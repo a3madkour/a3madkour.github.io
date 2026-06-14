@@ -29,6 +29,8 @@ CLAUDE.md "Multi-target export templates" section documents the contract.
 
 ## Dotfiles patch (`~/dotfiles/emacs-configs/custom/lisp/a3madkour-publish-multi-pdf.el`)
 
+> **Note (2026-06-13 amend):** the shipped module is now async — `compile-tex-async`, `convert-svgs-fan`, `multi-pdf/run` with `&key on-done`. The patch below targets that architecture. It also drops the load-time `with-eval-after-load 'ox-latex` registration (current lines 17–30) in favor of per-call `let`-binding inside `multi-pdf/run`.
+
 ### New helpers
 
 ```elisp
@@ -72,20 +74,104 @@ AAAI/ACM-style templates load natbib + bibtex; ours loads biblatex + biber."
     'bibtex))
 ```
 
-### Replace the hardcoded class entry in `multi-pdf/run`
-
-Current shape (per plan §742–769): `copy-file madkour-paper.cls`, hardcoded `org-latex-classes` registration of `madkour-paper`, hardcoded `org-latex-default-class`.
-
-New shape:
+### New defcustom + shared heading constant
 
 ```elisp
-(defun a3madkour-pub-multi-pdf/run (source-file slug bundle-dir templates-dir)
-  "Run the PDF backend for SOURCE-FILE / SLUG → BUNDLE-DIR/SLUG.pdf.
-TEMPLATES-DIR is the path to `tools/templates/'; per-class subdirs hold
-preamble.tex + the conference assets. Returns the absolute path of the
-placed PDF on success, nil on failure."
+(defcustom a3madkour-pub-multi-bibtex-command "bibtex"
+  "External `bibtex' command — used for non-biblatex classes (AAAI / ACM / IEEE)."
+  :type 'string :group 'a3madkour-pub-multi)
+
+(defconst a3madkour-pub-multi-pdf--default-class "madkour-paper"
+  "Fallback class name when `#+LATEX_CLASS:' is absent.")
+
+(defconst a3madkour-pub-multi-pdf--heading-format
+  '(("\\section{%s}" . "\\section*{%s}")
+    ("\\subsection{%s}" . "\\subsection*{%s}")
+    ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+    ("\\paragraph{%s}" . "\\paragraph*{%s}")
+    ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))
+  "Section heading templates shared by every D.2 class entry.")
+
+(defun a3madkour-pub-multi-pdf--build-class-entry (class-name preamble)
+  "Build an `org-latex-classes' entry from CLASS-NAME + PREAMBLE."
+  (cons class-name
+        (cons (concat preamble "\n[NO-DEFAULT-PACKAGES]\n[PACKAGES]\n[EXTRA]")
+              a3madkour-pub-multi-pdf--heading-format)))
+```
+
+### Drop the load-time `with-eval-after-load 'ox-latex` form
+
+Delete the entire block at lines 17–30 of the current module (the one that calls `setf (alist-get "madkour-paper" org-latex-classes ...)`). Per-call let-binding inside `multi-pdf/run` replaces it.
+
+### Update `--probe-tools` to also probe bibtex
+
+```elisp
+(defun a3madkour-pub-multi-pdf--probe-tools ()
+  "Return list of missing required commands, or nil if all present."
+  (let (missing)
+    (dolist (cmd (list a3madkour-pub-multi-xelatex-command
+                       a3madkour-pub-multi-biber-command
+                       a3madkour-pub-multi-bibtex-command
+                       a3madkour-pub-multi-rsvg-convert-command))
+      (unless (executable-find cmd)
+        (push cmd missing)))
+    (nreverse missing)))
+```
+
+### Engine-aware async compile chain
+
+Replace the `seq` list in `--compile-tex-async` to dispatch on engine. New signature: `&key engine on-done step-cb` (engine defaults to `'biber` for back-compat with the existing test).
+
+```elisp
+(cl-defun a3madkour-pub-multi-pdf--compile-tex-async (tex-path &key engine on-done step-cb)
+  "Async version of compile-tex.  Chains xelatex → ENGINE → xelatex → xelatex.
+ENGINE is `biber' (default) or `bibtex'."
+  (let* ((dir (file-name-directory tex-path))
+         (base (file-name-base tex-path))
+         (pdf-path (expand-file-name (concat base ".pdf") dir))
+         (engine (or engine 'biber))
+         (bib-command (pcase engine
+                        ('biber  a3madkour-pub-multi-biber-command)
+                        ('bibtex a3madkour-pub-multi-bibtex-command)
+                        (other (error "D.2: unknown bib engine %S" other))))
+         (seq (list (cons a3madkour-pub-multi-xelatex-command "pass 1/4")
+                    (cons bib-command (format "%s" engine))
+                    (cons a3madkour-pub-multi-xelatex-command "pass 3/4")
+                    (cons a3madkour-pub-multi-xelatex-command "pass 4/4"))))
+    (cl-labels
+        ((run-next (remaining)
+           (if (null remaining)
+               (when on-done (funcall on-done (file-exists-p pdf-path)))
+             (let* ((cmd-and-label (car remaining))
+                    (cmd (car cmd-and-label))
+                    (label (cdr cmd-and-label))
+                    (bib-cmd-p (or (string= cmd a3madkour-pub-multi-biber-command)
+                                   (string= cmd a3madkour-pub-multi-bibtex-command)))
+                    (arg (if bib-cmd-p base (concat base ".tex")))
+                    ;; bibtex chokes on -interaction=nonstopmode; only pass it to xelatex.
+                    (args (if bib-cmd-p (list arg)
+                            (list "-interaction=nonstopmode" arg))))
+               (a3-pub-async/run-process
+                cmd args
+                :name (format "pdf-%s" label)
+                :cwd dir
+                :on-done
+                (lambda (rc _tail)
+                  (when step-cb (funcall step-cb label rc))
+                  (run-next (cdr remaining))))))))
+      (run-next seq))))
+```
+
+### Refactor `multi-pdf/run` for pluggable class
+
+```elisp
+(cl-defun a3madkour-pub-multi-pdf/run (source-file slug bundle-dir templates-dir
+                                       &key run on-done)
+  "Async PDF backend.  Resolves #+LATEX_CLASS: against TEMPLATES-DIR (per-class
+subdir convention — preamble.tex + class assets).  Defaults to `madkour-paper'
+when the keyword is absent."
   (let* ((class-name (or (a3madkour-pub-multi-pdf--read-latex-class source-file)
-                         "madkour-paper"))
+                         a3madkour-pub-multi-pdf--default-class))
          (resolved (a3madkour-pub-multi-pdf--resolve-class class-name templates-dir))
          (preamble (car resolved))
          (class-dir (cdr resolved))
@@ -93,92 +179,92 @@ placed PDF on success, nil on failure."
          (work-dir (expand-file-name (format "multi-export-%s/" slug)
                                      temporary-file-directory))
          (fig-dir (expand-file-name "figures/" work-dir))
-         (tex-path (expand-file-name (concat slug ".tex") work-dir)))
+         (tex-path (expand-file-name (concat slug ".tex") work-dir))
+         (svgs (a3madkour-pub-multi-pdf--list-svg-figures source-file))
+         (svg-pairs (mapcar (lambda (svg)
+                              (list svg (expand-file-name
+                                         (concat (file-name-base svg) ".pdf")
+                                         fig-dir)))
+                            svgs)))
     (make-directory fig-dir t)
     (a3madkour-pub-multi-pdf--copy-class-assets class-dir work-dir)
-    (dolist (svg (a3madkour-pub-multi-pdf--list-svg-figures source-file))
-      (a3madkour-pub-multi-pdf--convert-svg
-       svg (expand-file-name (concat (file-name-base svg) ".pdf") fig-dir)))
-    (let* ((class-entry (list class-name
-                              preamble
-                              '("\\section{%s}" . "\\section*{%s}")
-                              '("\\subsection{%s}" . "\\subsection*{%s}")
-                              '("\\subsubsection{%s}" . "\\subsubsection*{%s}")
-                              '("\\paragraph{%s}" . "\\paragraph*{%s}")
-                              '("\\subparagraph{%s}" . "\\subparagraph*{%s}")))
-           (org-latex-classes (cons class-entry org-latex-classes))
-           (org-latex-default-class class-name)
-           (org-latex-with-hyperref t))
+    (when run (push work-dir (a3-pub-async-run-tmp-dirs run)))
+    ;; Phase 1: ox-latex export, with per-call class registration.
+    (let ((start (current-time))
+          (class-entry (a3madkour-pub-multi-pdf--build-class-entry class-name preamble)))
       (with-current-buffer (find-file-noselect source-file)
-        (org-latex-export-to-latex)))
+        (let ((org-latex-with-hyperref t)
+              (org-latex-classes (cons class-entry org-latex-classes))
+              (org-latex-default-class class-name)
+              (org-export-show-temporary-export-buffer nil))
+          (org-latex-export-to-latex)))
+      (when run
+        (a3-pub-async/log-step run "export" :ok
+                               :detail (format "org → latex (class=%s, engine=%s)"
+                                               class-name engine)
+                               :elapsed (float-time
+                                         (time-subtract (current-time) start)))))
+    ;; Move produced .tex into work dir.
     (let ((source-tex (expand-file-name (concat slug ".tex")
                                         (file-name-directory source-file))))
       (when (file-exists-p source-tex)
         (rename-file source-tex tex-path t)))
-    (when (a3madkour-pub-multi-pdf--compile-tex tex-path engine)
-      (let ((built-pdf (expand-file-name (concat slug ".pdf") work-dir))
-            (target (expand-file-name (concat slug ".pdf") bundle-dir)))
-        (when (file-exists-p built-pdf)
-          (rename-file built-pdf target t)
-          target)))))
+    ;; Phase 2: SVG fan → xelatex chain → place.
+    (a3madkour-pub-multi-pdf--convert-svgs-fan
+     svg-pairs
+     :on-done
+     (lambda (_svg-rcs)
+       (when run
+         (a3-pub-async/log-step run "svgs" :ok
+                                :detail (format "%d files" (length svg-pairs))))
+       (a3madkour-pub-multi-pdf--compile-tex-async
+        tex-path
+        :engine engine
+        :step-cb
+        (lambda (label rc)
+          (when run
+            (a3-pub-async/log-step run "xelatex" (if (zerop rc) :ok :err)
+                                   :detail label)))
+        :on-done
+        (lambda (ok)
+          (if (not ok)
+              (when on-done
+                (funcall on-done '(:status err :err-snippet "PDF not produced")))
+            (let ((built (expand-file-name (concat slug ".pdf") work-dir))
+                  (target (expand-file-name (concat slug ".pdf") bundle-dir)))
+              (if (file-exists-p built)
+                  (progn
+                    (rename-file built target t)
+                    (when run
+                      (a3-pub-async/log-step run "pdf" :ok :detail target))
+                    (when on-done
+                      (funcall on-done (list :status 'ok :path target))))
+                (when on-done
+                  (funcall on-done '(:status err :err-snippet "built PDF missing"))))))))))))
 ```
-
-### Engine-aware compile loop
-
-```elisp
-(defun a3madkour-pub-multi-pdf--compile-tex (tex-path engine)
-  "Run xelatex → ENGINE → xelatex → xelatex on TEX-PATH in its own directory.
-ENGINE is \\='biber or \\='bibtex. Returns t on full success, nil on non-zero exit."
-  (let* ((dir (file-name-directory tex-path))
-         (base (file-name-base tex-path))
-         (default-directory dir)
-         (bib-command (pcase engine
-                        ('biber  a3madkour-pub-multi-biber-command)
-                        ('bibtex a3madkour-pub-multi-bibtex-command)
-                        (other (error "D.2: unknown bib engine %S" other))))
-         (seq (list a3madkour-pub-multi-xelatex-command
-                    bib-command
-                    a3madkour-pub-multi-xelatex-command
-                    a3madkour-pub-multi-xelatex-command)))
-    (cl-loop for cmd in seq
-             for arg = (cond
-                        ((string= cmd a3madkour-pub-multi-biber-command) base)
-                        ((string= cmd a3madkour-pub-multi-bibtex-command) base)
-                        (t (concat base ".tex")))
-             for rc = (call-process cmd nil nil nil "-interaction=nonstopmode" arg)
-             unless (zerop rc) return nil
-             finally return t)))
-
-(defcustom a3madkour-pub-multi-bibtex-command "bibtex"
-  "Bibtex binary used for non-biblatex classes (AAAI / ACM / IEEE style)."
-  :type 'string
-  :group 'a3madkour-pub-multi)
-```
-
-Note: `bibtex` does not take `-interaction=nonstopmode` — it ignores unknown flags but emits a warning. If that warning annoys, split the `call-process` arg list per command. The simple form keeps the loop uniform.
-
-### Drop the existing class registration
-
-The post-ship bug-fix #1 commit (`90ad9e9`) added an `org-latex-classes` registration of `madkour-paper` at module load time. Remove it — the new `multi-pdf/run` registers per-call inside the let-binding.
 
 ---
 
 ## ert test list (add to `a3madkour-publish-multi-pdf-test.el`)
 
-1. `resolve-class-returns-preamble-and-dir` — happy path, fixture dir with `preamble.tex`.
-2. `resolve-class-errors-on-missing-subdir` — should-error.
-3. `resolve-class-errors-on-missing-preamble` — empty subdir, should-error.
-4. `read-latex-class-extracts-keyword` — org buffer with `#+LATEX_CLASS: aaai24` → "aaai24".
+Use the existing `with-a3-pub-async-sync` wrapper + `cl-letf` stubs (see the existing `compile-chain-runs-four-passes` test for the pattern).
+
+1. `resolve-class-returns-preamble-and-dir` — happy path, tmp fixture dir with `preamble.tex` whose body is `"\\documentclass{foo}\n"`. Assert car returned matches body, cdr is the dir.
+2. `resolve-class-errors-on-missing-subdir` — `should-error` on nonexistent class.
+3. `resolve-class-errors-on-missing-preamble` — tmp empty subdir, `should-error`.
+4. `read-latex-class-extracts-keyword` — tmp org file with `#+LATEX_CLASS: aaai24` → `"aaai24"`.
 5. `read-latex-class-returns-nil-when-absent`.
-6. `read-latex-class-case-insensitive` — `#+latex_class:`, `#+LaTeX_Class:` both resolve.
-7. `bib-engine-detects-biber-for-biblatex`.
-8. `bib-engine-detects-biber-with-options` — `\usepackage[backend=biber]{biblatex}`.
-9. `bib-engine-falls-back-to-bibtex` — natbib preamble.
-10. `copy-class-assets-skips-preamble-tex` — directory with `preamble.tex` + `aaai24.sty` → only `aaai24.sty` lands in work-dir.
-11. `copy-class-assets-skips-dotfiles` — `.DS_Store` not copied.
-12. `compile-tex-routes-bibtex-engine` — stub `call-process`, assert `a3madkour-pub-multi-bibtex-command` invoked at index 1.
-13. `compile-tex-routes-biber-engine` — stub `call-process`, assert biber at index 1.
-14. `run-defaults-to-madkour-paper-when-keyword-absent` — fixture with no `#+LATEX_CLASS:`, assert resolve called with "madkour-paper".
+6. `read-latex-class-case-insensitive` — `#+latex_class:`, `#+LATEX_CLASS:` both resolve. (Regex uses `case-fold-search`, which is t by default in `re-search-forward`.)
+7. `bib-engine-detects-biber-for-biblatex` — `"\\usepackage{biblatex}"` → `'biber`.
+8. `bib-engine-detects-biber-with-options` — `"\\usepackage[backend=biber]{biblatex}"` → `'biber`.
+9. `bib-engine-falls-back-to-bibtex` — `"\\usepackage{natbib}"` → `'bibtex`.
+10. `copy-class-assets-skips-preamble-tex` — tmp dir with `preamble.tex` + `aaai24.sty`; only `aaai24.sty` lands in work-dir.
+11. `copy-class-assets-skips-dotfiles` — `.DS_Store` not copied (directory-files regex `\\`[^.]` already filters).
+12. `compile-chain-routes-bibtex-engine` — stub `call-process` capturing cmd names; pass `:engine 'bibtex`; assert index-1 cmd equals `a3madkour-pub-multi-bibtex-command`.
+13. `compile-chain-routes-biber-engine-by-default` — no `:engine` arg; assert index-1 cmd equals `a3madkour-pub-multi-biber-command`.
+14. `run-defaults-to-madkour-paper-when-keyword-absent` — patch `--read-latex-class` to return nil; spy on `--resolve-class`; assert called with `"madkour-paper"`.
+
+Also update the existing `compile-chain-runs-four-passes` test: it now needs to pass `:engine 'biber` explicitly or rely on the default. The default keeps it green without changes.
 
 Suite delta: +14 tests. Run from `~/dotfiles`:
 
