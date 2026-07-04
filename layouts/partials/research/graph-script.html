@@ -1,2 +1,5 @@
-{{- $data := partialCached "research/graph-data.html" "research-graph" -}}
+{{- /* Context `.` is ignored by the data partial (it walks site.RegularPages);
+       "research-graph" is the explicit shared cache variant so multi-page
+       callers reuse one entry. */ -}}
+{{- $data := partialCached "research/graph-data.html" . "research-graph" -}}
 <script type="application/json" id="research-graph-data">{{- $data | jsonify | safeJS -}}</script>

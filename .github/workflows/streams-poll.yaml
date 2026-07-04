@@ -15,11 +15,12 @@ concurrency:
 jobs:
   poll:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           fetch-depth: 1
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: '3.x'
       - name: Run poller unit tests (regression guard)
@@ -28,7 +29,6 @@ jobs:
         env:
           TWITCH_CLIENT_ID:     ${{ secrets.TWITCH_CLIENT_ID }}
           TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
-          YOUTUBE_API_KEY:      ${{ secrets.YOUTUBE_API_KEY }}
           TWITCH_USER_LOGIN:    ${{ vars.TWITCH_USER_LOGIN }}
           YOUTUBE_CHANNEL_ID:   ${{ vars.YOUTUBE_CHANNEL_ID }}
         run: python3 tools/poll_streams.py

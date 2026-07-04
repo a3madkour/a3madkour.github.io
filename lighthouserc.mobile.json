@@ -30,7 +30,7 @@
         "http://localhost/works/poetry/",
         "http://localhost/works/poetry/example-poem-collected/"
       ],
-      "numberOfRuns": 1
+      "numberOfRuns": 3
     },
     "assert": {
       "assertions": {

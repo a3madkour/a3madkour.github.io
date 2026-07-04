@@ -99,7 +99,17 @@ separator "Production build (HUGO_ENVIRONMENT=production strips drafts; matches 
 pkill -f 'hugo server' 2>/dev/null || true
 
 rm -rf public
-HUGO_ENVIRONMENT=production hugo --minify
+HUGO_ENVIRONMENT=production hugo --gc --minify
+
+# Build the Pagefind index into public/pagefind/ — CI does this between the
+# Hugo build and the post-build checks (check_page_weights + LHCI run against
+# a site that HAS /pagefind/). Skip with a loud warning if the binary isn't
+# installed, so a local "green" doesn't silently omit the Pagefind path.
+if command -v pagefind >/dev/null 2>&1; then
+  pagefind --site public/ >/dev/null
+else
+  printf "\033[1;33m⚠ pagefind not on PATH — skipping index build; /pagefind/ 404s locally.\n  Install to exercise the full CI path (e.g. 'cargo install pagefind' or download the release binary).\033[0m\n"
+fi
 
 separator "Post-build linters + sibling tests"
 

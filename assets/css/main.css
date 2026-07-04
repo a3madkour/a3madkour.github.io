@@ -3921,7 +3921,8 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 }
 
 /* ===========================================================================
- * §43 Reading history — garden path-log retrieval surfaces
+ * §42a Reading history — garden path-log retrieval surfaces
+ *   (renumbered from a duplicate §43; canonical §43 is Citation export below)
  *
  * Widget on /garden/, popover on note pages, and /garden/history/ page.
  * All driven by assets/js/garden-history.js + the two mount modules.

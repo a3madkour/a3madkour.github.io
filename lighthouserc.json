@@ -33,7 +33,7 @@
       "settings": {
         "preset": "desktop"
       },
-      "numberOfRuns": 1
+      "numberOfRuns": 3
     },
     "assert": {
       "assertions": {

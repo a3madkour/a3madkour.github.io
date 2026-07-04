@@ -6,8 +6,10 @@ languages:
 title: Content for the Context gods
 module:
   hugoVersion:
+    # Real floor is 0.162.1 (0.162 tightened security.allowContent; CI pins
+    # HUGO_VERSION=0.162.1). Keep this in step with the CI pin.
     extended: true
-    min: "0.112.0"
+    min: "0.162.0"
 
 taxonomies:
   tag: tags
