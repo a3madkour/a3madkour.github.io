@@ -87,3 +87,10 @@ tools/.fetch-config.json
 
 # Pagefind index (regenerated in CI; see .github/workflows/hugo.yaml)
 public/pagefind/
+
+# Node artifacts — project is no-npm; these appear only from external tooling
+node_modules/
+
+# Claude Code runtime lock + stray tool worktrees dir
+.claude/scheduled_tasks.lock
+.claire/
