@@ -20,7 +20,9 @@ REQUIRED_FIELDS = {
 }
 ALLOWED_TILE_SIZE = {"large", "medium", "small"}
 
-FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
+# Trailing delimiter tolerates optional trailing whitespace and either a
+# newline or end-of-string (files whose closing `---` lacks a final newline).
+FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---[ \t]*(?:\n|$)", re.DOTALL)
 CITE_RE = re.compile(r'\{\{<\s*cite\s+"([^"]+)"\s*>\}\}')
 
 
@@ -36,6 +38,10 @@ def parse_frontmatter(text: str) -> dict[str, object] | None:
     anchors/aliases, or any other YAML feature beyond what the existing
     essay/garden/research fixtures need.
     """
+    # Normalize line endings so CRLF (and lone CR) frontmatter parses instead
+    # of returning None — otherwise the ~14 linters that skip on None silently
+    # ignore the file.
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
     m = FRONTMATTER_RE.match(text)
     if not m:
         return None
@@ -148,7 +154,9 @@ def parse_scalar(s: str) -> object:
         inner = s[1:-1].strip()
         if not inner:
             return []
-        items = [it.strip() for it in inner.split(",")]
+        # Split on top-level commas only — commas inside a quoted element
+        # (e.g. an author "Lastname, First") must not fragment the item.
+        items = _split_top_commas(inner)
         return [it.strip('"').strip("'") for it in items]
     if s.startswith('"') and s.endswith('"'):
         return s[1:-1]

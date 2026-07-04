@@ -241,5 +241,46 @@ class MultiExportValidationTest(unittest.TestCase):
         self.assertTrue(any("epub" in e for e in errors))
 
 
+class ParseScalarQuotedCommaTest(unittest.TestCase):
+    """R1.1: inline arrays must not split on commas inside quoted elements."""
+
+    def test_single_quoted_element_with_comma_stays_one_item(self):
+        # "Marquez, Gabriel" is ONE author, not two.
+        self.assertEqual(
+            lint.parse_scalar('["Marquez, Gabriel"]'),
+            ["Marquez, Gabriel"],
+        )
+
+    def test_two_quoted_elements_one_containing_comma(self):
+        self.assertEqual(
+            lint.parse_scalar('["Lastname, F.", "Other"]'),
+            ["Lastname, F.", "Other"],
+        )
+
+    def test_plain_unquoted_array_still_splits(self):
+        # Regression: the simple case must keep working.
+        self.assertEqual(lint.parse_scalar('["a", "b"]'), ["a", "b"])
+        self.assertEqual(lint.parse_scalar("[TODO, DRAFT]"), ["TODO", "DRAFT"])
+
+    def test_empty_array(self):
+        self.assertEqual(lint.parse_scalar("[]"), [])
+
+
+class ParseFrontmatterLineEndingTest(unittest.TestCase):
+    """R1.1: CRLF and trailing-newline-free frontmatter must still parse
+    (the ~14 linters that `if fm is None: continue` silently skip otherwise)."""
+
+    def test_crlf_frontmatter_parses(self):
+        fm = lint.parse_frontmatter("---\r\ntitle: X\r\ndraft: false\r\n---\r\nbody\r\n")
+        self.assertIsInstance(fm, dict)
+        self.assertEqual(fm.get("title"), "X")
+        self.assertEqual(fm.get("draft"), False)
+
+    def test_frontmatter_without_trailing_newline_parses(self):
+        fm = lint.parse_frontmatter("---\ntitle: X\ndraft: false\n---")
+        self.assertIsInstance(fm, dict)
+        self.assertEqual(fm.get("title"), "X")
+
+
 if __name__ == "__main__":
     unittest.main()
