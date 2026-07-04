@@ -138,10 +138,13 @@ def write_auto_stub(content_root: Path, title: str, started_at_iso: str) -> Path
     if path.exists():
         return path
     path.parent.mkdir(parents=True, exist_ok=True)
-    safe_title = title.replace('"', '\\"')
+    # json.dumps gives a fully-escaped YAML-safe double-quoted scalar — a title
+    # with newlines/quotes/backslashes can't inject frontmatter keys into this
+    # committed file (mirrors write_live_yaml). A bare .replace('"') did not
+    # escape newlines and was a YAML-injection vector on external Twitch titles.
     body = (
         "---\n"
-        f'title: "{safe_title}"\n'
+        f"title: {json.dumps(title)}\n"
         f"date: {started_at_iso}\n"
         "duration: \"\"\n"
         "platforms: [twitch, youtube]\n"

@@ -119,6 +119,24 @@ class AutoStubTests(unittest.TestCase):
         self.assertIn("platforms: [twitch, youtube]", text)
         self.assertIn('date: 2026-04-10T19:00:00', text)
 
+    def test_title_with_yaml_injection_is_escaped(self):
+        # R4.6: an external (Twitch) title containing newlines/quotes must not
+        # inject frontmatter keys into the committed stub.
+        ps.write_auto_stub(
+            content_root=self.tmp / "content",
+            title='Evil"\ndraft: false\narchive_status: live',
+            started_at_iso="2026-04-10T19:00:00Z",
+        )
+        files = list((self.tmp / "content" / "streams").rglob("index.md"))
+        self.assertEqual(len(files), 1)
+        lines = files[0].read_text().splitlines()
+        # The injected keys must NOT appear as real frontmatter lines — the whole
+        # title must be a single escaped string.
+        self.assertEqual([l for l in lines if l.strip().startswith("draft:")],
+                         ["draft: true"])
+        self.assertEqual([l for l in lines if l.strip().startswith("archive_status:")],
+                         ["archive_status: archived"])
+
     def test_idempotent_does_not_overwrite(self):
         path = self.tmp / "content" / "streams" / "2026-04-10-already-here" / "index.md"
         path.parent.mkdir(parents=True)
