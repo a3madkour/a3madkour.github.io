@@ -189,14 +189,14 @@ jobs:
       - name: Run gen_lhci_urls unit tests
         run: python3 -m unittest tools/test_gen_lhci_urls.py -v
       - name: Lighthouse CI (desktop)
-        uses: treosh/lighthouse-ci-action@v12
+        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # v12.6.2
         with:
           configPath: lighthouserc.json
           uploadArtifacts: true
           temporaryPublicStorage: true
           artifactName: lighthouse-results-desktop
       - name: Lighthouse CI (mobile)
-        uses: treosh/lighthouse-ci-action@v12
+        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # v12.6.2
         with:
           configPath: lighthouserc.mobile.json
           uploadArtifacts: true
