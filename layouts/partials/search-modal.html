@@ -15,6 +15,10 @@
       autocomplete="off"
       spellcheck="false"
       aria-label="Search query"
+      role="combobox"
+      aria-controls="search-modal-results-list"
+      aria-expanded="false"
+      aria-autocomplete="list"
     />
     <kbd class="search-modal-esc-hint">Esc</kbd>
   </form>
@@ -30,9 +34,9 @@
   <div
     class="search-modal-results"
     data-search-results
-    role="region"
-    aria-live="polite"
-    aria-atomic="false"
+    id="search-modal-results-list"
+    role="listbox"
+    aria-label="Search results"
   ></div>
   <footer class="search-modal-footer">
     <div class="search-modal-kbd-hints">

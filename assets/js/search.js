@@ -21,6 +21,7 @@ let currentSection = 'all';
 let debounceTimer = null;
 let resultRows = [];
 let activeRowIndex = -1;
+let searchInput = null; // set in init(); used to drive aria-activedescendant
 
 function loadPagefind() {
   if (pagefindLoadPromise) return pagefindLoadPromise;
@@ -80,24 +81,35 @@ function renderResults(resultsEl, statusEl, groups, totalMs, query) {
 
   const sections = SECTION_ORDER.filter((s) => groups[s] && groups[s].length > 0);
   let html = '';
+  let optIdx = 0; // running index so each option gets a unique id for aria-activedescendant
   for (const section of sections) {
-    html += `<section data-section="${section}"><h3>${SECTION_LABEL[section]}</h3><ol>`;
+    // section is a `group` inside the listbox; the <ol> is presentational so
+    // the listbox → group → option chain stays valid.
+    html += `<section data-section="${section}" role="group" aria-label="${SECTION_LABEL[section]}"><h3>${SECTION_LABEL[section]}</h3><ol role="presentation">`;
     for (const row of groups[section]) {
       const spoilers = parseInt(row.meta?.spoilers || '0', 10);
       const title = row.meta?.title || row.url;
+      // role="option" carries the selection; the inner <a> is taken out of the
+      // tab order (tabindex=-1) — arrow-key listbox nav drives it, Enter opens.
       html += `
-        <li class="search-modal-result" data-url="${escapeHtml(row.url)}">
-          <a href="${escapeHtml(row.url)}">
+        <li class="search-modal-result" id="search-opt-${optIdx}" role="option" aria-selected="false" data-url="${escapeHtml(row.url)}">
+          <a href="${escapeHtml(row.url)}" tabindex="-1">
             <div class="search-modal-result-title">${escapeHtml(title)}</div>
             <div class="search-modal-result-snippet">${row.excerpt}</div>
             ${spoilers > 0 ? `<div class="search-modal-result-spoilers">${spoilers} spoiler block${spoilers === 1 ? '' : 's'} hidden from search</div>` : ''}
           </a>
         </li>`;
+      optIdx += 1;
     }
     html += '</ol></section>';
   }
   resultsEl.innerHTML = html;
   resultRows = Array.from(resultsEl.querySelectorAll('.search-modal-result'));
+  activeRowIndex = -1;
+  if (searchInput) {
+    searchInput.removeAttribute('aria-activedescendant');
+    searchInput.setAttribute('aria-expanded', resultRows.length > 0 ? 'true' : 'false');
+  }
   statusEl.textContent = `${total} result${total === 1 ? '' : 's'} in ${totalMs}ms`;
 }
 
@@ -131,10 +143,16 @@ async function performSearch(query, resultsEl, statusEl) {
 
 function setActiveRow(idx) {
   if (resultRows.length === 0) return;
-  if (activeRowIndex >= 0) resultRows[activeRowIndex].classList.remove('is-active');
+  if (activeRowIndex >= 0) {
+    resultRows[activeRowIndex].classList.remove('is-active');
+    resultRows[activeRowIndex].setAttribute('aria-selected', 'false');
+  }
   activeRowIndex = Math.max(0, Math.min(resultRows.length - 1, idx));
-  resultRows[activeRowIndex].classList.add('is-active');
-  resultRows[activeRowIndex].scrollIntoView({ block: 'nearest' });
+  const active = resultRows[activeRowIndex];
+  active.classList.add('is-active');
+  active.setAttribute('aria-selected', 'true');
+  active.scrollIntoView({ block: 'nearest' });
+  if (searchInput && active.id) searchInput.setAttribute('aria-activedescendant', active.id);
 }
 
 function openActiveRow(newTab) {
@@ -150,6 +168,7 @@ function init() {
   const modal = document.querySelector('.search-modal');
   if (!modal) return;
   const input = modal.querySelector('[data-search-input]');
+  searchInput = input;
   const resultsEl = modal.querySelector('[data-search-results]');
   const statusEl = modal.querySelector('[data-search-status]');
   const chips = modal.querySelectorAll('[data-section]');
@@ -200,6 +219,8 @@ function init() {
   // Reset state on close
   modal.addEventListener('close', () => {
     input.value = '';
+    input.removeAttribute('aria-activedescendant');
+    input.setAttribute('aria-expanded', 'false');
     resultsEl.innerHTML = '';
     statusEl.textContent = '';
     activeRowIndex = -1;
