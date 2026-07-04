@@ -8,8 +8,3 @@
 # Documented deferral: poem-synced.js does not build a .poem-audio-pill element
 # yet (see main.css §45 note); kept for the future audio-pill runtime.
 poem-audio-pill
-
-# Unwired progressive-enhancement fallback: `html.no-js .essay-body .sidenote`
-# shows sidenotes inline when JS is off, but nothing sets `no-js` on <html> yet.
-# Latent gap tracked in the audit roadmap (R3.6) — wire it rather than delete.
-no-js

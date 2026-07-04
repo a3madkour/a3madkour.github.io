@@ -3,6 +3,11 @@
        from page bundle resources first, falls back to literal URL. */ -}}
 {{- $src := .Get "src" -}}
 {{- $alt := .Get "alt" | default "" -}}
+{{- /* R3.5: nudge authors to be explicit. An entirely-absent alt is likely an
+       oversight; an explicit alt="" is a deliberate decorative marker. */ -}}
+{{- if not (isset .Params "alt") -}}
+  {{- warnf "figure: missing alt on %s (src=%q) — add descriptive text, or alt=\"\" for a decorative image" .Page.RelPermalink $src -}}
+{{- end -}}
 {{- $caption := .Get "caption" -}}
 {{- $class := .Get "class" -}}
 {{- $resource := .Page.Resources.Get $src -}}

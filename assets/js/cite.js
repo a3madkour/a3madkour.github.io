@@ -68,7 +68,11 @@ function setActiveTab(format) {
     format = available.includes('bibtex') ? 'bibtex' : available[0];
   }
   modal.querySelectorAll('[role="tab"]').forEach((btn) => {
-    btn.setAttribute('aria-selected', btn.dataset.format === format ? 'true' : 'false');
+    const sel = btn.dataset.format === format;
+    btn.setAttribute('aria-selected', sel ? 'true' : 'false');
+    // Roving tabindex: only the selected tab is in the tab order (WAI-ARIA
+    // tabs pattern); Arrow keys move between the others — see onKeydown.
+    btn.tabIndex = sel ? 0 : -1;
   });
   const str = currentSource.formats[format];
   outputEl.textContent = str;
@@ -221,8 +225,25 @@ function onDocumentClick(e) {
 }
 
 function onKeydown(e) {
-  if (e.key === 'Escape' && modal && modal.hasAttribute('open')) {
+  if (!modal || !modal.hasAttribute('open')) return;
+  if (e.key === 'Escape') {
     closeModal();
+    return;
+  }
+  // WAI-ARIA tabs keyboard nav: Arrow/Home/End move + activate between tabs.
+  const focused = e.target.closest && e.target.closest('.cite-modal-tabs [role="tab"]');
+  if (!focused || !modal.contains(focused)) return;
+  const tabs = Array.from(modal.querySelectorAll('.cite-modal-tabs [role="tab"]'));
+  const i = tabs.indexOf(focused);
+  let next = -1;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (i + 1) % tabs.length;
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (i - 1 + tabs.length) % tabs.length;
+  else if (e.key === 'Home') next = 0;
+  else if (e.key === 'End') next = tabs.length - 1;
+  if (next >= 0) {
+    e.preventDefault();
+    setActiveTab(tabs[next].dataset.format);
+    tabs[next].focus();
   }
 }
 
