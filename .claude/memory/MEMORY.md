@@ -130,3 +130,4 @@
 - [Python 3.13 re.escape escapes hyphens](reference_python_re_escape_hyphen.md) — `re.escape('/a-b/')` → `'/a\\-b/'`; strip with `.replace(r'\-', '-')` when building regex from slug-like strings; bit Tier 7.1 LHCI URL patterns
 - [Post-audit remediation roadmap — active](project_audit_remediation_roadmap.md) — 2026-07-03 six-lens audit filed as tiered spec; Tier R1 closed, R2 is the queue head
 - [Audit remediation Tier R1 — shipped](project_audit_r1_complete.md) — 2026-07-03 `8ba3882..2422e81`; parse_scalar false-green fix + streams-poll write-gating + LHCI action SHA-pin; +9 tests
+- [Audit remediation Tier R2 + R4.3 — shipped](project_audit_r2_complete.md) — 2026-07-03 `d09d531..f5962ac`; math stub + dark-token & CSS-refs guard linters (30 pairs) + dead-CSS purge + LHCI floor + cite/video-sync fixes; R3 next
