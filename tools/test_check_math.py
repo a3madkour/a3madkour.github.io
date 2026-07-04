@@ -150,5 +150,20 @@ class MathCouplingTests(unittest.TestCase):
         self.assertEqual(errors, [])
 
 
+class CodeFenceStrippingTests(unittest.TestCase):
+    """R2.7: indented and ~~~ fences must also shield math markers."""
+
+    def test_math_in_indented_backtick_fence_ignored(self):
+        body = "prose\n\n    ```\n    \\(x^2\\)\n    ```\n\nmore prose\n"
+        self.assertFalse(lint._body_has_math(body))
+
+    def test_math_in_tilde_fence_ignored(self):
+        body = "prose\n\n~~~\n\\[y = mx + b\\]\n~~~\n\nmore prose\n"
+        self.assertFalse(lint._body_has_math(body))
+
+    def test_math_outside_fences_still_detected(self):
+        self.assertTrue(lint._body_has_math("some \\(z\\) inline math\n"))
+
+
 if __name__ == "__main__":
     unittest.main()

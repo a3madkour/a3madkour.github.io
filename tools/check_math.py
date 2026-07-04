@@ -42,7 +42,9 @@ MARKER_PATTERNS = [
 # requires a closing $ before end-of-line/whitespace.
 INLINE_DOLLAR = re.compile(r"\$[^\s\d$][^$\n]*\$")
 
-CODE_FENCE = re.compile(r"^```", re.MULTILINE)
+# Match ``` or ~~~ fences, including leading indentation (up to 3 spaces of
+# Markdown indent, or the deeper indent used inside list items).
+CODE_FENCE = re.compile(r"^[ \t]*(?:```|~~~)", re.MULTILINE)
 
 
 def _strip_code_fences(body: str) -> str:
