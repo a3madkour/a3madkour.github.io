@@ -275,8 +275,13 @@ def main(repo_root: Path | None = None, env: dict | None = None, now_iso: str | 
         except Exception as e:  # noqa: BLE001
             print(f"poll_streams: stub write failed (non-fatal): {e}", file=sys.stderr)
 
-    write_live_yaml(live_yaml, polled_at=now_iso,
-                    twitch=twitch_state, youtube=youtube_state)
+    # Only rewrite the file when the meaningful live-state actually changed.
+    # last_polled alone must not churn — otherwise the cron commits+pushes to
+    # master every 5 minutes (288/day) with no real content change.
+    changed = twitch_state != prior["twitch"] or youtube_state != prior["youtube"]
+    if changed or not live_yaml.exists():
+        write_live_yaml(live_yaml, polled_at=now_iso,
+                        twitch=twitch_state, youtube=youtube_state)
     return 0
 
 

@@ -278,3 +278,82 @@ class MainOrchestratorTests(unittest.TestCase):
     def test_missing_secret_exits_nonzero(self):
         rc = ps.main(repo_root=self.tmp, env={}, now_iso="2026-04-10T20:01:00Z")
         self.assertNotEqual(rc, 0)
+
+
+class WriteGatingTests(unittest.TestCase):
+    """R1.2: streams-live.yaml must only be rewritten when the meaningful
+    live-state changes — otherwise last_polled churns and the cron commits
+    every 5 minutes."""
+
+    IDLE_YAML = (
+        "last_polled: 2026-04-10T18:00:00Z\n"
+        "live:\n"
+        "  twitch:\n"
+        "    is_live: false\n"
+        '    title: ""\n'
+        '    started_at: ""\n'
+        '    url: ""\n'
+        "  youtube:\n"
+        "    is_live: false\n"
+        '    video_id: ""\n'
+        '    title: ""\n'
+        '    started_at: ""\n'
+        '    url: ""\n'
+    )
+    ENV = {
+        "TWITCH_CLIENT_ID": "cid", "TWITCH_CLIENT_SECRET": "csec",
+        "TWITCH_USER_LOGIN": "x", "YOUTUBE_CHANNEL_ID": "UC-y",
+    }
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        (self.tmp / "data").mkdir()
+        (self.tmp / "content").mkdir()
+        self.live = self.tmp / "data" / "streams-live.yaml"
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+
+    @patch("poll_streams.youtube_is_live")
+    @patch("poll_streams.twitch_live_state")
+    @patch("poll_streams.twitch_oauth")
+    def test_unchanged_state_does_not_rewrite_file(self, mock_oauth, mock_tw, mock_yt):
+        self.live.write_text(self.IDLE_YAML)
+        mock_oauth.return_value = "tok"
+        mock_tw.return_value = {"is_live": False, "title": "", "started_at": "", "url": ""}
+        mock_yt.return_value = False
+        # A LATER poll timestamp — if the file is rewritten, last_polled changes.
+        rc = ps.main(repo_root=self.tmp, env=self.ENV, now_iso="2026-04-10T23:59:00Z")
+        self.assertEqual(rc, 0)
+        self.assertEqual(self.live.read_text(), self.IDLE_YAML,
+                         msg="file was rewritten despite no state change")
+
+    @patch("poll_streams.youtube_is_live")
+    @patch("poll_streams.twitch_live_state")
+    @patch("poll_streams.twitch_oauth")
+    def test_changed_state_rewrites_file(self, mock_oauth, mock_tw, mock_yt):
+        self.live.write_text(self.IDLE_YAML)
+        mock_oauth.return_value = "tok"
+        mock_tw.return_value = {"is_live": True, "title": "Live now",
+                                "started_at": "2026-04-10T23:00:00Z", "url": "https://twitch.tv/x"}
+        mock_yt.return_value = False
+        rc = ps.main(repo_root=self.tmp, env=self.ENV, now_iso="2026-04-10T23:05:00Z")
+        self.assertEqual(rc, 0)
+        text = self.live.read_text()
+        self.assertIn("is_live: true", text)
+        self.assertIn("last_polled: 2026-04-10T23:05:00Z", text)
+
+    @patch("poll_streams.youtube_is_live")
+    @patch("poll_streams.twitch_live_state")
+    @patch("poll_streams.twitch_oauth")
+    def test_missing_file_is_created_even_when_idle(self, mock_oauth, mock_tw, mock_yt):
+        mock_oauth.return_value = "tok"
+        mock_tw.return_value = {"is_live": False, "title": "", "started_at": "", "url": ""}
+        mock_yt.return_value = False
+        rc = ps.main(repo_root=self.tmp, env=self.ENV, now_iso="2026-04-10T23:05:00Z")
+        self.assertEqual(rc, 0)
+        self.assertTrue(self.live.exists(), msg="idle first-run must still create the file")
+
+
+if __name__ == "__main__":
+    unittest.main()
