@@ -54,6 +54,8 @@ Lorem ipsum.
 
 \[\sum_{i=1}^{n} x_i = \bar{x}\,n\]
 
+Wrapped form: {{< math >}}\(a^2 + b^2 = c^2\){{< /math >}}
+
 {{< figure src="hero.svg" caption="Example figure one — placeholder caption." alt="" >}}
 
 {{< widget id="example-widget" label="Example widget" >}}

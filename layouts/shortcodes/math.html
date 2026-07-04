@@ -1,0 +1,7 @@
+{{- /* Math shortcode stub. A future KaTeX runtime will render the LaTeX in
+       .Inner; for now this emits the raw canonical \(...\) / \[...\] markup in a
+       data-pending container so the shortcode RESOLVES (Hugo hard-errors on an
+       unknown shortcode) and fixtures exercise the shape end-to-end. Paired
+       form: {{< math >}}\(x^2\){{< /math >}}. The inner markers still satisfy
+       tools/check_math.py's has_math coupling. */ -}}
+<span class="math-stub" data-pending>{{ .Inner | safeHTML }}</span>
