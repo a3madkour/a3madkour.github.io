@@ -1,0 +1,15 @@
+# check_css_refs.py allowlist — CSS classes with no static reference that are
+# deliberately kept. One bare class name per line; `#` comments allowed.
+#
+# Add here ONLY when a class is genuinely used but the reference is invisible to
+# a static scan (rare, since the linter already resolves Hugo `{{ }}` / printf /
+# JS `${}` interpolation prefixes), OR a documented deferral kept for round-trip.
+
+# Documented deferral: poem-synced.js does not build a .poem-audio-pill element
+# yet (see main.css §45 note); kept for the future audio-pill runtime.
+poem-audio-pill
+
+# Unwired progressive-enhancement fallback: `html.no-js .essay-body .sidenote`
+# shows sidenotes inline when JS is off, but nothing sets `no-js` on <html> yet.
+# Latent gap tracked in the audit roadmap (R3.6) — wire it rather than delete.
+no-js

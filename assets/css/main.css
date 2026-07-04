@@ -913,8 +913,7 @@ main { flex-grow: 1; }
 /* ------------------------------------------------------------------
  * 16. Filter chips (multi-dim, shared by essays + garden)
  * ------------------------------------------------------------------ */
-.filter-chips,
-.filter-strip {
+.filter-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 1.25rem;
@@ -2579,11 +2578,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   font-size: 0.62rem;
   color: var(--color-ink-soft);
 }
-.works-tile-tag.is-match {
-  background: var(--color-ink);
-  color: var(--color-stone);
-  border-color: var(--color-ink);
-}
 .works-tile-crossref {
   margin-top: 0.4rem;
   font-family: var(--font-ui);
@@ -3104,73 +3098,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   background: var(--color-rule);
 }
 
-/* Umbrella 2x2 grid */
-.library-umbrella-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-}
-.library-um-card {
-  border: 1px solid var(--color-rule);
-  background: var(--color-tile);
-  border-radius: 4px;
-  padding: 1.125rem;
-}
-.library-um-card-title {
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: var(--text-md);
-  margin: 0 0 0.4rem;
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-}
-.library-um-glyph {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.4rem;
-  height: 1.4rem;
-  color: var(--color-ink-soft);
-}
-.library-um-glyph svg { width: 100%; height: 100%; }
-.library-um-card-stats {
-  font-family: var(--font-ui);
-  font-size: var(--text-xs);
-  color: var(--color-ink-soft);
-  margin: 0 0 0.875rem;
-}
-.library-um-card-list {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 0.875rem;
-}
-.library-um-card-list li {
-  display: grid;
-  grid-template-columns: 1.125rem 1fr;
-  gap: 0.5rem;
-  padding: 0.5rem 0;
-  border-top: 1px solid color-mix(in srgb, var(--color-rule) 40%, transparent);
-  font-size: var(--text-sm);
-  align-items: center;
-}
-.library-um-card-list li:first-child { border-top: 0; }
-.library-um-card-list .ttl { font-style: italic; }
-.library-um-card-list .creator {
-  display: block;
-  font-family: var(--font-ui);
-  font-size: var(--text-xs);
-  color: var(--color-ink-soft);
-  margin-top: 0.125rem;
-  font-style: normal;
-}
-.library-um-card-link {
-  font-family: var(--font-ui);
-  font-size: var(--text-sm);
-  margin: 0;
-}
-.library-um-card-link a { color: var(--color-burgundy); text-decoration: none; border-bottom: 1px dotted var(--color-burgundy); }
-
 /* Status badge */
 .library-status-badge {
   display: inline-flex;
@@ -3403,7 +3330,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 
 /* Responsive */
 @media (max-width: 720px) {
-  .library-umbrella-grid { grid-template-columns: 1fr; }
   .library-currently[data-active-count="2"] .library-currently-grid,
   .library-currently[data-active-count="3"] .library-currently-grid { grid-template-columns: 1fr; }
 }
@@ -3537,10 +3463,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 }
 .home-strip-all:hover { text-decoration: underline; }
 
-.home-research-strip {
-  padding: 3rem 0 2.5rem;
-  border-bottom: 1px solid var(--color-rule);
-}
 .home-research-questions {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -3583,13 +3505,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   color: var(--color-ink-soft);
   max-width: 640px;
   margin: 0;
-}
-
-.home-two-col {
-  padding: 3rem 0 2.5rem;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
 }
 
 .home-garden-grid {

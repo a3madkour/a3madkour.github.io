@@ -21,6 +21,9 @@ python3 tools/check-contrast.py
 python3 tools/check_dark_tokens.py
 python3 -m unittest tools/test_check_dark_tokens.py -v 2>&1 | tail -3
 
+python3 tools/check_css_refs.py
+python3 -m unittest tools/test_check_css_refs.py -v 2>&1 | tail -3
+
 python3 tools/check_fixtures.py
 python3 -m unittest tools/test_check_fixtures.py -v 2>&1 | tail -3
 
