@@ -64,9 +64,10 @@
 - [Python 3.13 re.escape escapes hyphens](reference_python_re_escape_hyphen.md) — `re.escape('/a-b/')` → `/a\-b/`; strip when slug-regex
 
 ## Project — active queue
-- [Post-audit remediation roadmap — active](project_audit_remediation_roadmap.md) — 2026-07-03 six-lens audit; R1+R2 closed, **R3 is queue head**
+- [Post-audit remediation roadmap — active](project_audit_remediation_roadmap.md) — 2026-07-03 six-lens audit; R1+R2+R3 closed, **R4 is queue head**
 - [Audit R1 — shipped](project_audit_r1_complete.md) — 2026-07-03 `8ba3882..2422e81`; parse_scalar false-green + streams-poll + LHCI pin
 - [Audit R2 + R4.3 — shipped](project_audit_r2_complete.md) — 2026-07-03 `d09d531..f5962ac`; math stub + 2 guard linters (30 pairs) + dead-CSS purge + LHCI floor
+- [Audit R3 accessibility — shipped](project_audit_r3_complete.md) — 2026-07-03/04 `92a525b..3c3af9e`; AMS h4→p + graph-panel a11y + search listbox + cite tabs kbd + figure alt + no-js wiring; **R4 next**
 - [Polish/bugfix roadmap (sibling)](project_next_slice.md) — Tiers 1–8; all closed/deferred as of 2026-06-12
 - [Emacs publish-author helpers — queued](project_emacs_publish_helpers_followup.md) — dotfiles ergonomics; no spec/plan yet
 - [LHCI 4.3 fingerprint autodetect — queued](project_lhci_representative_pages_queued.md) — 4.1+4.2 shipped; 4.3 deferred
