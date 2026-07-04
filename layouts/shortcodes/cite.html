@@ -9,7 +9,15 @@
 {{- end -}}
 {{- $authors := slice -}}
 {{- range $entry.authors -}}
-  {{- $last := index (split . ",") 0 -}}
+  {{- /* Surname: "Lastname, First" → before the comma (canonical); a comma-less
+         "First Last" → the last whitespace-delimited token. */ -}}
+  {{- $last := "" -}}
+  {{- if strings.Contains . "," -}}
+    {{- $last = index (split . ",") 0 -}}
+  {{- else -}}
+    {{- $parts := split (trim . " ") " " -}}
+    {{- $last = index $parts (sub (len $parts) 1) -}}
+  {{- end -}}
   {{- $authors = $authors | append $last -}}
 {{- end -}}
 {{- $label := "" -}}

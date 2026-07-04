@@ -29,8 +29,10 @@
   {{- $maxModRaw := index $sortedMod 0 -}}
   {{- $maxMod := $maxModRaw -}}
   {{- if (strings.Contains (printf "%T" $maxModRaw) "string") -}}
-    {{- $extracted := (index (findRE "\\d{4}-\\d{2}-\\d{2}" (printf "%v" $maxModRaw)) 0) -}}
-    {{- $maxMod = (printf "%sT00:00:00Z" $extracted | time.AsTime) -}}
+    {{- $matches := findRE "\\d{4}-\\d{2}-\\d{2}" (printf "%v" $maxModRaw) -}}
+    {{- if $matches -}}
+      {{- $maxMod = (printf "%sT00:00:00Z" (index $matches 0) | time.AsTime) -}}
+    {{- end -}}
   {{- end -}}
 
 <section id="currently" class="home-currently" data-active-count="{{ len $rows }}">

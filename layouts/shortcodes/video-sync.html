@@ -1,1 +1,10 @@
-<div data-video-sync data-src="{{ .Get "src" }}"></div>
+{{- /* Video-sync shortcode stub. A future runtime will bind a synced video +
+       transcript to data-video-sync via timeupdate; for now this emits a
+       data-pending container with a visible fallback caption (mirrors the
+       widget/lyrics deferred-stub convention) so readers see an explicit
+       pending state instead of an invisible empty div. */ -}}
+{{- $src := .Get "src" -}}
+<div class="video-sync-stub" data-video-sync data-pending data-src="{{ $src }}"
+     role="figure" aria-label="Synced video (pending)">
+  <p class="widget-fallback">Synced video — pending runtime.{{ with $src }} Source: {{ . }}{{ end }}</p>
+</div>

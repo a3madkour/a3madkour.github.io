@@ -59,6 +59,14 @@ function saveFormatPref(format) {
 }
 
 function setActiveTab(format) {
+  // A stored format pref (or a ref) may lack this format — fall back to the
+  // first available one so we never render the literal string "undefined"
+  // (nor a `data:` download of "undefined").
+  if (!currentSource.formats || currentSource.formats[format] === undefined) {
+    const available = currentSource.formats ? Object.keys(currentSource.formats) : [];
+    if (available.length === 0) return;
+    format = available.includes('bibtex') ? 'bibtex' : available[0];
+  }
   modal.querySelectorAll('[role="tab"]').forEach((btn) => {
     btn.setAttribute('aria-selected', btn.dataset.format === format ? 'true' : 'false');
   });
