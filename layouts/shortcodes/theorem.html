@@ -7,9 +7,9 @@
 {{- $title := .Get "title" -}}
 {{- $id := .Get "id" -}}
 <div class="block-theorem block-strong"{{ with $id }} id="{{ . }}"{{ end }}>
-  <h4 class="block-header">
+  <p class="block-header">
     Theorem {{ $n }}{{ with $title }} (<span class="block-title">{{ . }}</span>){{ end }}.
-  </h4>
+  </p>
   {{- with $id -}}
     {{- $aria := printf "Theorem %d" $n -}}
     {{- $page.Scratch.Set (printf "block-label-%s" $id) $aria -}}

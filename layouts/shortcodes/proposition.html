@@ -5,9 +5,9 @@
 {{- $title := .Get "title" -}}
 {{- $id := .Get "id" -}}
 <div class="block-proposition block-strong"{{ with $id }} id="{{ . }}"{{ end }}>
-  <h4 class="block-header">
+  <p class="block-header">
     Proposition {{ $n }}{{ with $title }} (<span class="block-title">{{ . }}</span>){{ end }}.
-  </h4>
+  </p>
   {{- with $id -}}
     {{- $aria := printf "Proposition %d" $n -}}
     {{- $page.Scratch.Set (printf "block-label-%s" $id) $aria -}}

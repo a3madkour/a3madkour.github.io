@@ -65,8 +65,17 @@ STRUCTURAL_IDS_IGNORED = page(
     '<aside id="garden-graph-panel">panel</aside>'
 )
 
-# A reading-flow target with class="block-…" gets enforced.
+# A reading-flow target with class="block-…" gets enforced. The block-header is
+# a <p> label as of R3.1 (was <h4> — the h2→h4 skip); the linter is tag-agnostic.
 BLOCK_GOOD = page(
+    '<div class="block-theorem block-strong" id="thm-x">'
+    '<p class="block-header">Theorem 1.</p>'
+    '<a class="anchor-link" href="#thm-x">§</a>'
+    '<div class="block-body">body</div></div>'
+)
+
+# Legacy <h4> block-header must still be tolerated (backward-compat).
+BLOCK_GOOD_LEGACY_H4 = page(
     '<div class="block-theorem block-strong" id="thm-x">'
     '<h4 class="block-header">Theorem 1.</h4>'
     '<a class="anchor-link" href="#thm-x">§</a>'
@@ -77,7 +86,7 @@ BLOCK_GOOD = page(
 # should still fail (it's a real spec-coverage gap, not an "ignore me").
 BLOCK_MISSING = page(
     '<div class="block-theorem block-strong" id="thm-x">'
-    '<h4 class="block-header">Theorem 1.</h4>'
+    '<p class="block-header">Theorem 1.</p>'
     '<div class="block-body">body</div></div>'
 )
 
@@ -154,6 +163,11 @@ class CheckAnchorLinkTest(unittest.TestCase):
 
     def test_block_class_element_with_anchor_passes(self) -> None:
         self.t.write("essays/x/index.html", BLOCK_GOOD)
+        rc, errors = lint.run(self.t.public)
+        self.assertEqual(rc, 0, msg=f"unexpected errors: {errors}")
+
+    def test_block_header_legacy_h4_still_passes(self) -> None:
+        self.t.write("essays/x/index.html", BLOCK_GOOD_LEGACY_H4)
         rc, errors = lint.run(self.t.public)
         self.assertEqual(rc, 0, msg=f"unexpected errors: {errors}")
 

@@ -14,7 +14,7 @@ Reading-flow targets per spec §1 are exactly:
   - Elements whose class list contains a "block-" prefix token (D.1
     semantic blocks: block-theorem / block-soft / block-proof / etc.)
     The anchor-link is emitted as a direct child INSIDE the block div,
-    after the block-header <h4>. The linter scans any start-tag at
+    after the block-header (a <p> label as of R3.1). The linter scans any start-tag at
     depth-1 inside the block container until it finds the anchor-link
     or exits the block.
 
@@ -79,9 +79,9 @@ class _Linter(HTMLParser):
     BLOCK pending (self._pending_id set, self._block_depth >= 0):
       We're inside a block-* container div. Any start-tag at the direct
       child level (self._block_depth == 0 before descent) is a candidate.
-      The anchor-link may appear after the <h4 class="block-header">.
+      The anchor-link may appear after the <p class="block-header">.
       We scan until we find the anchor-link or a non-permitted start-tag
-      at depth-0 that is NOT the block-header <h4> or the anchor-link.
+      at depth-0 that is NOT the block-header (a <p> label as of R3.1) or the anchor-link.
       When we exit the block div (_block_depth goes to -1), if the anchor
       was never found we record an error.
     """
@@ -97,7 +97,7 @@ class _Linter(HTMLParser):
         # opening tag (incremented on start-tags, decremented on end-tags).
         # -1 means "not in block-pending mode".
         self._block_depth: int = -1
-        # Whether we've already scanned past the block-header <h4>.
+        # Whether we've already scanned past the block-header (a <p> label as of R3.1).
         self._block_header_seen: bool = False
 
     def _clear_pending(self) -> None:
@@ -128,10 +128,12 @@ class _Linter(HTMLParser):
                     # Found the anchor-link inside the block — success.
                     self._clear_pending()
                     return
-                elif tag == "h4" and "block-header" in cls and not self._block_header_seen:
-                    # The block-header <h4> is expected first — allow it.
+                elif "block-header" in cls and not self._block_header_seen:
+                    # The block-header (a <p> label — see R3.1; formerly <h4>) is
+                    # expected before the anchor-link. Tag-agnostic so a future
+                    # element change doesn't re-break this. Allow it.
                     self._block_header_seen = True
-                    # Don't track this <h4> as a new pending; fall through.
+                    # Don't track the block-header as a new pending; fall through.
                 elif not is_void:
                     # Unexpected direct child before anchor-link was found.
                     self.errors.append(

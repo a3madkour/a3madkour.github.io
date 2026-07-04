@@ -4,7 +4,7 @@
 {{- $of := .Get "of" -}}
 {{- $id := .Get "id" -}}
 <div class="block-proof"{{ with $id }} id="{{ . }}"{{ end }}>
-  <h4 class="block-header"><em>Proof{{ with $of }} of <span class="block-title">{{ . }}</span>{{ end }}.</em></h4>
+  <p class="block-header"><em>Proof{{ with $of }} of <span class="block-title">{{ . }}</span>{{ end }}.</em></p>
   {{- with $id -}}
     {{- $aria := "Proof" -}}
     {{- with $of -}}{{ $aria = printf "Proof of %s" . -}}{{- end -}}

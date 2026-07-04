@@ -5,9 +5,9 @@
 {{- $title := .Get "title" -}}
 {{- $id := .Get "id" -}}
 <div class="block-conjecture block-soft"{{ with $id }} id="{{ . }}"{{ end }}>
-  <h4 class="block-header">
+  <p class="block-header">
     Conjecture {{ $n }}{{ with $title }} (<span class="block-title">{{ . }}</span>){{ end }}.
-  </h4>
+  </p>
   {{- with $id -}}
     {{- $aria := printf "Conjecture %d" $n -}}
     {{- $page.Scratch.Set (printf "block-label-%s" $id) $aria -}}

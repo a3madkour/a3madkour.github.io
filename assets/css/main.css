@@ -5372,9 +5372,10 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 
 .block-header {
   /* `display: inline-block` lets the sibling .anchor-link sit on the
-     same baseline as the heading text instead of dropping to its own
+     same baseline as the label text instead of dropping to its own
      line below (the block-* container emits the anchor-link as a sibling
-     of <h4>, not a child — see check_anchor_link.py BLOCK pending mode).
+     of the <p class="block-header"> label — a <p>, not an <h4>, to avoid
+     an h2→h4 heading skip; R3.1 — see check_anchor_link.py BLOCK mode).
      The next .block-body div is block-level so it correctly starts a
      new line below the header + § pair. */
   display: inline-block;
