@@ -274,6 +274,26 @@ class RunEndToEnd(unittest.TestCase):
         # Without overrides, no assertMatrix
         self.assertNotIn("assertMatrix", mobile["ci"]["assert"])
 
+    def test_run_below_min_urls_floor_returns_rc1(self) -> None:
+        # R2.4: a manifest that yields fewer representative URLs than the
+        # configured floor means a section failed to render — fail loudly.
+        (self.tmp / "tools" / "lhci-overrides.json").write_text(
+            json.dumps({"desktop": [], "mobile": [], "min_urls": 100}),
+            encoding="utf-8",
+        )
+        rc, errors = gen.run(self.tmp)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("min_urls" in e or "floor" in e for e in errors),
+                        msg=f"expected a floor error, got {errors}")
+
+    def test_run_meets_min_urls_floor_passes(self) -> None:
+        (self.tmp / "tools" / "lhci-overrides.json").write_text(
+            json.dumps({"desktop": [], "mobile": [], "min_urls": 3}),
+            encoding="utf-8",
+        )
+        rc, errors = gen.run(self.tmp)
+        self.assertEqual((rc, errors), (0, []))
+
     def test_run_missing_lighthouserc_returns_rc1(self) -> None:
         (self.tmp / "lighthouserc.json").unlink()
         rc, errors = gen.run(self.tmp)

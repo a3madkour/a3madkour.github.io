@@ -184,6 +184,10 @@ jobs:
         run: python3 tools/check_explorables.py
       - name: Run explorables linter unit tests
         run: python3 -m unittest tools/test_check_explorables.py -v
+      - name: Regenerate LHCI URLs from sitemap manifest
+        run: python3 tools/gen_lhci_urls.py
+      - name: Run gen_lhci_urls unit tests
+        run: python3 -m unittest tools/test_gen_lhci_urls.py -v
       - name: Verify LHCI URLs resolve to built pages
         run: python3 tools/check_lhci_urls.py
       - name: Run LHCI URL linter unit tests
@@ -192,10 +196,6 @@ jobs:
         run: python3 tools/check_page_weights.py
       - name: Run page-weight linter unit tests
         run: cd tools && python3 -m unittest test_check_page_weights.py -v
-      - name: Regenerate LHCI URLs from sitemap manifest
-        run: python3 tools/gen_lhci_urls.py
-      - name: Run gen_lhci_urls unit tests
-        run: python3 -m unittest tools/test_gen_lhci_urls.py -v
       - name: Lighthouse CI (desktop)
         uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # v12.6.2
         with:

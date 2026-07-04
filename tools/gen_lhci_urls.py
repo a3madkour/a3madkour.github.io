@@ -134,6 +134,17 @@ def run(repo_root: Path, dry_run: bool = False) -> tuple[int, list[str]]:
 
     picks = pick_representative_urls(manifest)
 
+    # Floor: a manifest that renders fewer groups than expected (e.g. a section
+    # failed to build) would silently shrink LHCI coverage. `min_urls` in
+    # lhci-overrides.json guards against that; absent → no floor.
+    min_urls = overrides.get("min_urls")
+    if isinstance(min_urls, int) and len(picks) < min_urls:
+        return (1, [
+            f"manifest yielded {len(picks)} representative URL(s), below the "
+            f"min_urls floor of {min_urls} — a section likely failed to render "
+            f"(adjust min_urls in tools/lhci-overrides.json if intentional)"
+        ])
+
     configs = [
         (repo_root / "lighthouserc.json", overrides.get("desktop", [])),
         (repo_root / "lighthouserc.mobile.json", overrides.get("mobile", [])),
