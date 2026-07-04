@@ -49,6 +49,10 @@ jobs:
         uses: actions/configure-pages@v6
       - name: Verify CSS contrast (WCAG)
         run: python3 tools/check-contrast.py
+      - name: Verify dark-mode token blocks in sync
+        run: python3 tools/check_dark_tokens.py
+      - name: Run dark-token linter unit tests
+        run: python3 -m unittest tools/test_check_dark_tokens.py -v
       - name: Verify essay fixtures
         run: python3 tools/check_fixtures.py
       - name: Run essay linter unit tests
