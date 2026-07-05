@@ -4,9 +4,10 @@ Enforces the single-source-of-truth invariants from
 docs/superpowers/specs/2026-05-14-graph-view-consistency-design.md:
 
   1. No pruned per-section graph-control selector survives in main.css.
-  2. The 6 graph surfaces each include partials/graph-legend.html (directly
-     or transitively via the shared graph-panel.html partial) and do NOT
-     hand-roll a legend or per-section toolbar/legend class.
+  2. The 7 graph surfaces each include partials/graph-legend.html (directly
+     or transitively via the shared graph-panel.html partial — which is itself
+     a checked surface) and do NOT hand-roll a legend or per-section
+     toolbar/legend class.
 
 Sibling-less (no paired unit test): the logic is substring scans +
 file-presence checks, too thin to warrant pairing — same rationale as
@@ -40,6 +41,11 @@ FORBIDDEN_CSS = [
 # always calls graph-legend.html — so they satisfy the invariant
 # transitively via SHARED_PANEL_CALL rather than LEGEND_PARTIAL_CALL.
 SURFACES = [
+    # The shared panel partial the 3 wrappers delegate to. Guarded directly so
+    # the transitive legend link (wrapper → SHARED_PANEL_CALL → this file →
+    # LEGEND_PARTIAL_CALL) can't silently break: if this file ever drops its
+    # graph-legend.html call, this entry fails instead of a false-green.
+    Path("layouts/partials/graph-panel.html"),
     Path("layouts/partials/garden/graph-panel.html"),
     Path("layouts/partials/research/graph-panel.html"),
     Path("layouts/partials/works/graph-panel.html"),
