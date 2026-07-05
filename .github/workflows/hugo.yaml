@@ -31,7 +31,10 @@ jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # 30, not 20: the serial pipeline (linters → hugo → pagefind → E2E install +
+    # Playwright run → LHCI desktop + mobile at numberOfRuns:3) runs ~20-22 min.
+    # The 20-min cap cut off mobile LHCI on 2026-07-04. Headroom, not a fix for slowness.
+    timeout-minutes: 30
     env:
       HUGO_VERSION: 0.162.1
       PAGEFIND_VERSION: 1.5.2
