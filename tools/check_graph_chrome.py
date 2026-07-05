@@ -4,8 +4,9 @@ Enforces the single-source-of-truth invariants from
 docs/superpowers/specs/2026-05-14-graph-view-consistency-design.md:
 
   1. No pruned per-section graph-control selector survives in main.css.
-  2. The 6 graph surfaces each include partials/graph-legend.html and do
-     NOT hand-roll a legend or per-section toolbar/legend class.
+  2. The 6 graph surfaces each include partials/graph-legend.html (directly
+     or transitively via the shared graph-panel.html partial) and do NOT
+     hand-roll a legend or per-section toolbar/legend class.
 
 Sibling-less (no paired unit test): the logic is substring scans +
 file-presence checks, too thin to warrant pairing — same rationale as
@@ -31,8 +32,13 @@ FORBIDDEN_CSS = [
     ".graph-panel-toolbtn",
 ]
 
-# The 6 graph surfaces. Each must include the shared legend partial and
-# must not hand-roll a legend / per-section toolbar class.
+# The 6 graph surfaces. Each must include the shared legend partial
+# (directly or via the shared graph-panel.html wrapper) and must not
+# hand-roll a legend / per-section toolbar class.
+# After R5.3b: the three graph-panel.html files are thin wrappers that
+# delegate to the shared layouts/partials/graph-panel.html, which itself
+# always calls graph-legend.html — so they satisfy the invariant
+# transitively via SHARED_PANEL_CALL rather than LEGEND_PARTIAL_CALL.
 SURFACES = [
     Path("layouts/partials/garden/graph-panel.html"),
     Path("layouts/partials/research/graph-panel.html"),
@@ -42,6 +48,10 @@ SURFACES = [
     Path("layouts/works/graph.html"),
 ]
 LEGEND_PARTIAL_CALL = 'partial "graph-legend.html"'
+# After R5.3b the three graph-panel.html wrappers call the shared partial
+# instead of graph-legend.html directly; the shared partial always calls
+# graph-legend.html so transitive inclusion counts.
+SHARED_PANEL_CALL = 'partial "graph-panel.html"'
 FORBIDDEN_MARKUP = [
     "graph-panel-legend",
     "graph-page-legend",
@@ -87,8 +97,11 @@ def main() -> int:
             errors.append(f"missing surface file: {surface}")
             continue
         text = surface.read_text(encoding="utf-8")
-        if LEGEND_PARTIAL_CALL not in text:
-            errors.append(f"{surface}: does not include {LEGEND_PARTIAL_CALL}")
+        if LEGEND_PARTIAL_CALL not in text and SHARED_PANEL_CALL not in text:
+            errors.append(
+                f"{surface}: does not include {LEGEND_PARTIAL_CALL}"
+                f" (or {SHARED_PANEL_CALL})"
+            )
         for bad in FORBIDDEN_MARKUP:
             if bad in text:
                 errors.append(f"{surface}: still contains hand-rolled chrome: {bad!r}")
