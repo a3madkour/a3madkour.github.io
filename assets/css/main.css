@@ -50,6 +50,22 @@ img, svg { display: block; max-width: 100%; }
   --text-xl:   2rem;
   --text-2xl:  2.75rem;
   --text-3xl:  3.5rem;
+
+  /* Spacing scale (R6.1) — one density knob for gap/padding/margin.
+     Non-uniform literal ladder (preserves the site's established rhythm);
+     mode-independent, so defined ONCE here (not duplicated in the dark blocks). */
+  --space-3xs: 0.25rem;
+  --space-2xs: 0.4rem;
+  --space-xs:  0.5rem;
+  --space-sm:  0.6rem;
+  --space-md:  0.75rem;
+  --space-lg:  1rem;
+  --space-xl:  1.25rem;
+  --space-2xl: 1.5rem;
+  --space-3xl: 2rem;
+  --space-4xl: 2.5rem;
+  --space-5xl: 3rem;
+  --space-6xl: 4rem;
 }
 
 /* Dark mode — explicit override via attribute */
