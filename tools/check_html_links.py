@@ -38,7 +38,12 @@ class _LinkParser(HTMLParser):
                 self.ids.add(name)
             href = d.get("href")
             if href is not None:
-                self.hrefs.append(href)
+                # Skip intentionally-unresolved ref-block links — `ref-block-unresolved`
+                # is the site's documented marker for a ref-block whose target block
+                # renders after the reference (Hugo cannot second-pass shortcodes).
+                classes = (d.get("class") or "").split()
+                if "ref-block-unresolved" not in classes:
+                    self.hrefs.append(href)
 
 
 def parse_html(text: str) -> tuple[set[str], list[str]]:

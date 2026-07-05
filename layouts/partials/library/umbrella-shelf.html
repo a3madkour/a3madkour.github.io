@@ -26,7 +26,9 @@
 {{- $count := len $items -}}
 {{- $see_all := "" -}}
 {{- if $shelf.tag -}}
-  {{- $see_all = printf "/tags/%s/" (urlize $shelf.tag) -}}
+  {{- with site.GetPage (printf "/tags/%s" (urlize $shelf.tag)) -}}
+    {{- $see_all = printf "/tags/%s/" (urlize $shelf.tag) -}}
+  {{- end -}}
 {{- else if gt $count $cap -}}
   {{- $see_all = printf "/library/shelves/%s/" $shelf_slug -}}
 {{- end -}}

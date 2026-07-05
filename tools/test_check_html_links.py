@@ -29,6 +29,13 @@ class ParseTest(unittest.TestCase):
         _, hrefs = lint.parse_html('<a href="/a/">x</a><link href="/main.css">')
         self.assertEqual(hrefs, ["/a/"])
 
+    def test_ref_block_unresolved_href_skipped(self):
+        # the site's documented marker for an intentionally-unresolved ref-block
+        _, hrefs = lint.parse_html(
+            '<a class="ref-block ref-block-unresolved" href="#thm-nope">x</a>'
+        )
+        self.assertEqual(hrefs, [])
+
     def test_script_json_not_parsed_as_tags(self):
         # hrefs inside <script> JSON must not be extracted
         _, hrefs = lint.parse_html('<script>var x = "<a href=/nope/>";</script>')
