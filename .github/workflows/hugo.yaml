@@ -31,10 +31,10 @@ jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
-    # 30, not 20: the serial pipeline (linters → hugo → pagefind → E2E install +
-    # Playwright run → LHCI desktop + mobile at numberOfRuns:3) runs ~20-22 min.
-    # The 20-min cap cut off mobile LHCI on 2026-07-04. Headroom, not a fix for slowness.
-    timeout-minutes: 30
+    # LHCI (desktop + mobile, ~15 min each at numberOfRuns:3) now runs in the
+    # parallel lhci-* jobs, not here — this job is linters + hugo + pagefind +
+    # E2E (~5 min). See the lhci-desktop/lhci-mobile jobs below.
+    timeout-minutes: 15
     env:
       HUGO_VERSION: 0.162.1
       PAGEFIND_VERSION: 1.5.2
@@ -219,6 +219,37 @@ jobs:
         run: python3 tools/check_page_weights.py
       - name: Run page-weight linter unit tests
         run: cd tools && python3 -m unittest test_check_page_weights.py -v
+      - name: Upload built site for Lighthouse jobs
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: built-site
+          path: ./public
+          retention-days: 1
+          include-hidden-files: true
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
+        with:
+          path: ./public
+
+  # Lighthouse CI — desktop. Split into its own job (parallel with lhci-mobile)
+  # so the ~15-min desktop + ~15-min mobile runs no longer serialize inside
+  # `build` (that blew the deploy timeout on 2026-07-04). Consumes the built
+  # site via the `built-site` artifact; re-runs gen_lhci_urls so its URL list
+  # matches what `build` validated. Gates deploy.
+  lhci-desktop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - name: Download built site
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: built-site
+          path: public
+      - name: Regenerate LHCI URLs from sitemap manifest
+        run: python3 tools/gen_lhci_urls.py
       - name: Lighthouse CI (desktop)
         uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # v12.6.2
         with:
@@ -226,6 +257,22 @@ jobs:
           uploadArtifacts: true
           temporaryPublicStorage: true
           artifactName: lighthouse-results-desktop
+
+  # Lighthouse CI — mobile (parallel with lhci-desktop; same built-site artifact).
+  lhci-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - name: Download built site
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: built-site
+          path: public
+      - name: Regenerate LHCI URLs from sitemap manifest
+        run: python3 tools/gen_lhci_urls.py
       - name: Lighthouse CI (mobile)
         uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # v12.6.2
         with:
@@ -233,10 +280,6 @@ jobs:
           uploadArtifacts: true
           temporaryPublicStorage: true
           artifactName: lighthouse-results-mobile
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
-        with:
-          path: ./public
 
   # Deployment job
   deploy:
@@ -245,7 +288,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: build
+    needs: [build, lhci-desktop, lhci-mobile]
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
