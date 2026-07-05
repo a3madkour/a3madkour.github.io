@@ -19,8 +19,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from check_fixtures import parse_scalar  # noqa: E402
-from check_fixtures import parse_frontmatter  # noqa: E402
+from check_fixtures import parse_frontmatter, parse_citations_yaml  # noqa: E402
 
 
 ALLOWED_FIELDS = {
@@ -32,51 +31,6 @@ ALLOWED_FIELDS = {
 }
 REQUIRED_FIELDS = {"authors", "year", "title", "venue"}
 KEY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]*$")
-ENTRY_HEADER_RE = re.compile(r"^  ([^:\s]+):\s*$")
-FIELD_RE = re.compile(r"^    ([a-zA-Z_]+):\s*(.*)$")
-
-
-def parse_citations_yaml(text: str) -> dict[str, dict[str, object]]:
-    """Two-level parser for data/citations.yaml.
-
-    Format:
-        citations:
-          <key>:
-            <field>: <scalar-or-inline-array>
-            ...
-          <key>:
-            ...
-
-    Returns the parsed mapping. Lines that don't match expected indent
-    or shape are skipped — the validator below catches shape violations.
-    """
-    entries: dict[str, dict[str, object]] = {}
-    in_citations = False
-    current_key: str | None = None
-    for raw in text.splitlines():
-        if raw.startswith("#") or raw.strip() == "":
-            continue
-        if raw.startswith("citations:"):
-            in_citations = True
-            continue
-        if not in_citations:
-            continue
-        m = ENTRY_HEADER_RE.match(raw)
-        if m:
-            key = m.group(1)
-            current_key = key
-            entries[key] = {}
-            continue
-        m = FIELD_RE.match(raw)
-        if m and current_key is not None:
-            field, value = m.group(1), m.group(2).strip()
-            entries[current_key][field] = parse_scalar(value)
-            continue
-        # Anything else (e.g., top-level non-comment outside citations) ends the block.
-        if not raw.startswith(" "):
-            in_citations = False
-            current_key = None
-    return entries
 
 
 def _is_draft(fm: dict[str, object] | None) -> bool:

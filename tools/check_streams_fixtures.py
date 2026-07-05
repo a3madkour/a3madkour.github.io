@@ -83,6 +83,9 @@ def lint_file(md: Path) -> list[str]:
     return errs
 
 
+# NOTE (R5.4 item 3): this parses data/streams-*.yaml (live/schedule/cache data
+# files), NOT `---` frontmatter — a genuinely different shape, so it stays
+# separate from check_fixtures.parse_frontmatter.
 def _validate_data_yaml(repo_root: Path) -> list[str]:
     """Shape-check the three data/streams-*.yaml files (when present)."""
     errs: list[str] = []

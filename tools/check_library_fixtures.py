@@ -33,6 +33,9 @@ def _scalar(value: str) -> object:
     return parse_scalar(value)
 
 
+# NOTE (R5.4 item 3): this parses data/<medium>.yaml (a list-of-dicts data
+# file), NOT `---` frontmatter — a genuinely different shape, so it stays
+# separate from check_fixtures.parse_frontmatter.
 def parse_library_yaml(text: str) -> list[dict[str, object]]:
     """Parse a library data yaml file into a list of item dicts.
 

@@ -24,6 +24,8 @@ ALLOWED_TILE_SIZE = {"large", "medium", "small"}
 # newline or end-of-string (files whose closing `---` lacks a final newline).
 FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---[ \t]*(?:\n|$)", re.DOTALL)
 CITE_RE = re.compile(r'\{\{<\s*cite\s+"([^"]+)"\s*>\}\}')
+ENTRY_HEADER_RE = re.compile(r"^  ([^:\s]+):\s*$")
+FIELD_RE = re.compile(r"^    ([a-zA-Z_]+):\s*(.*)$")
 
 
 def parse_frontmatter(text: str) -> dict[str, object] | None:
@@ -170,26 +172,47 @@ def parse_scalar(s: str) -> object:
     return s
 
 
-def parse_citations_yaml(path: Path) -> set[str]:
-    """Pull cite keys from data/citations.yaml — looks for two-space-indented
-    keys directly under `citations:`."""
-    if not path.exists():
-        return set()
-    keys: set[str] = set()
+def parse_citations_yaml(text: str) -> dict[str, dict[str, object]]:
+    """Two-level parser for data/citations.yaml.
+
+    Format:
+        citations:
+          <key>:
+            <field>: <scalar-or-inline-array>
+            ...
+          <key>:
+            ...
+
+    Returns the parsed mapping. Lines that don't match expected indent
+    or shape are skipped — the validator below catches shape violations.
+    """
+    entries: dict[str, dict[str, object]] = {}
     in_citations = False
-    for raw in path.read_text().splitlines():
+    current_key: str | None = None
+    for raw in text.splitlines():
+        if raw.startswith("#") or raw.strip() == "":
+            continue
         if raw.startswith("citations:"):
             in_citations = True
             continue
         if not in_citations:
             continue
-        if raw and not raw.startswith(" "):
-            in_citations = False
-            continue
-        m = re.match(r"^  ([a-zA-Z0-9_\-]+):\s*$", raw)
+        m = ENTRY_HEADER_RE.match(raw)
         if m:
-            keys.add(m.group(1))
-    return keys
+            key = m.group(1)
+            current_key = key
+            entries[key] = {}
+            continue
+        m = FIELD_RE.match(raw)
+        if m and current_key is not None:
+            field, value = m.group(1), m.group(2).strip()
+            entries[current_key][field] = parse_scalar(value)
+            continue
+        # Anything else (e.g., top-level non-comment outside citations) ends the block.
+        if not raw.startswith(" "):
+            in_citations = False
+            current_key = None
+    return entries
 
 
 def lint_essay(essay_dir: Path, valid_cite_keys: set[str]) -> list[str]:
@@ -262,7 +285,7 @@ def lint_essay(essay_dir: Path, valid_cite_keys: set[str]) -> list[str]:
 def run(repo_root: Path) -> tuple[int, list[str]]:
     essays_dir = repo_root / "content" / "essays"
     citations_path = repo_root / "data" / "citations.yaml"
-    valid_keys = parse_citations_yaml(citations_path)
+    valid_keys = set(parse_citations_yaml(citations_path.read_text(encoding="utf-8"))) if citations_path.exists() else set()
 
     errors: list[str] = []
     if essays_dir.exists():

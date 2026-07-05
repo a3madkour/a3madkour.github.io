@@ -41,6 +41,9 @@ SECTION_RE = re.compile(r"^([A-Za-z][A-Za-z0-9_-]*):\s*$")
 KV_RE = re.compile(r"^\s{2}([A-Za-z_][A-Za-z0-9_]*):\s*(.*)$")
 
 
+# NOTE (R5.4 item 3): this parses data/filter-chips.yaml (a section-keyed data
+# file), NOT `---` frontmatter — a genuinely different shape, so it stays
+# separate from check_fixtures.parse_frontmatter.
 def parse_config(text: str) -> tuple[dict[str, dict[str, object]], list[str]]:
     """Parse the data/filter-chips.yaml subset we accept.
 
