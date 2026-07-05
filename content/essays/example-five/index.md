@@ -49,3 +49,5 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Demonstration essay for
 ## Section three — cross-reference
 
 By the [Intermediate Value Theorem](#thm-ivt), the equation `f(x) = c` has a solution in `[a, b]`. The visible link text "Intermediate Value Theorem" is author-typed (V1 does not auto-format cross-references; see D.x follow-ups).
+
+Lorem ipsum — see also the [related note on Bayesian priors](/garden/bayesian-statistics/#tldr) for the placeholder background context.

@@ -7,4 +7,4 @@ title: "Bayesian Statistics"
 ---
 ## TLDR {#tldr}
 
-&lt;TODO&gt; This is an index note
+&lt;TODO&gt; This is an index note. Lorem ipsum — see also the [example essay on AMS blocks](/essays/example-five/) for cross-section placeholder context.
