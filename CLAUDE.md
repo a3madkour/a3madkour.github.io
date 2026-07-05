@@ -35,10 +35,10 @@ No npm **for the shipped site** — Python tooling is stdlib-only and nothing in
 | `js/index.js` | `core.<hash>.js` (~1.4 KB) | every page | `toggle-theme.js` + `nav.js` |
 | `js/entry-anchor-link.js` | `anchor-link.<hash>.js` (~1 KB) | every page | `anchor-link.js` — click-to-clipboard §-glyph runtime; self-guards on `<main>` presence (shipped 2026-06-07 with Tier 2.1 anchor-affordance) |
 | `js/entry-essay.js` | `essay.<hash>.js` (~4.8 KB) | `.Section == "essays"` | imports `filter-chips.js` + `citation-card.js` |
-| `js/entry-garden.js` | `garden.<hash>.js` (~117 KB) | `.Section == "garden"` | `garden.js` + `garden-stack.js` + `garden-graph.js` + ~95 KB vendored d3 modules |
-| `js/entry-research.js` | `research.<hash>.js` (~107 KB) | `/research/` and `/research/graph/` only | `research-graph.js` (copy + trim of `garden-graph.js`); page-narrow predicate over section-wide |
+| `js/entry-garden.js` | `garden.<hash>.js` (~117 KB) | `.Section == "garden"` | `garden.js` + `garden-stack.js` + `garden-graph.js` (adapter over `graph-core.js`) + ~95 KB vendored d3 modules |
+| `js/entry-research.js` | `research.<hash>.js` (~107 KB) | `/research/` and `/research/graph/` only | `research-graph.js` (adapter over `graph-core.js`); page-narrow predicate over section-wide |
 | `js/entry-works.js` | `works.<hash>.js` (~4 KB) | `.Section == "works"` AND NOT `/works/`-or-`/works/graph/` | imports `filter-chips.js`; per-item pages only |
-| `js/entry-works-umbrella.js` | `works-umbrella.<hash>.js` (~112 KB) | `/works/` and `/works/graph/` only | `works.js` + `works-graph.js` (copy + trim of `research-graph.js`) + vendored d3 modules |
+| `js/entry-works-umbrella.js` | `works-umbrella.<hash>.js` (~112 KB) | `/works/` and `/works/graph/` only | `works.js` + `works-graph.js` (adapter over `graph-core.js`) + vendored d3 modules |
 | `js/entry-library.js` | `library.<hash>.js` (~5 KB) | `.Section == "library"` | imports `filter-chips.js` + `library-shelf-nav.js`; per-leaf pages AND umbrella |
 | `js/entry-search.js` | `search.<hash>.js` (~4 KB) | every page | search modal open/close logic; lazy-loads `/pagefind/pagefind.js` on first open |
 | `js/entry-cite.js` | `cite.<hash>.js` (~2.5 KB) | `.Section in {essays, garden, research, works}` AND `.Kind == "page"` | `cite.js` — citation modal runtime (parse #cite-data blob, open `<dialog>`, tab/copy/download, Half B inline copy) |
@@ -48,7 +48,9 @@ No npm **for the shipped site** — Python tooling is stdlib-only and nothing in
 
 **Why multi-entry, not `splitting: true`?** esbuild requires `outdir` for code splitting, but Hugo's `js.Build` is `outfile`-only. `splitting: true` on a single entry silently inlines dynamic imports rather than emitting chunks. Confirmed with a minimal repro. `filter-chips.js` is duplicated into essay/garden/works bundles (~8 KB).
 
-d3-force / d3-zoom / d3-drag / d3-selection are **vendored** under `assets/js/vendor/` (no npm). `garden-graph.js` dynamically imports all four — they inline into the garden bundle. `research-graph.js` is an independent copy + trim (drops stack-coordination + N-hop local mode); the two graphs share CSS scaffolding (§27) but not JS code. Each page module guards on its own selector and bails on irrelevant pages.
+**Shared graph runtime (`assets/js/graph-core.js`, R5.2).** The three force-directed graphs share one core: `graph-core.js` exports `createGraph(adapter)` and owns all the infrastructure (cache/drag/zoom/settle loop/SVG scaffold/panel open-close on `inert`/panel-resize/chip primitives), parameterized by the adapter's `classPrefix`. `garden-graph.js` / `research-graph.js` / `works-graph.js` are thin adapters supplying the divergent surface — `parseData` / `applyFilters` / `filterCacheKey` / `nodeRadius` / `renderNode` / `edgeClass` / `svgAria` / `forceParams` / `onNodeClick` / `buildToolbar` plus optional `onSvgCreate` / `onRenderComplete` / `onOpenPanel` hooks. Garden-only features (stack-coordination, N-hop local mode, dynamic JS legend) live entirely in garden's adapter via those hooks; works was normalized to the garden/research conventions (JS-built toolbar, `inert` panel, `<div>` canvas). **`graph-core.js` must stay at `assets/js/` depth** — its `./vendor/d3-*` dynamic import is relative to the compiled bundle. The per-section node base class is emitted as `` `${classPrefix}-graph-node` `` (allowlisted in `tools/css-refs-allowlist.txt` since the static scan can't see the leading interpolation).
+
+d3-force / d3-zoom / d3-drag / d3-selection are **vendored** under `assets/js/vendor/` (no npm). `graph-core.js` dynamically imports all four — they inline into each graph bundle (garden / research / works-umbrella); the core source is bundled into each entry (source-level share, like `filter-chips.js`). The three graphs share CSS scaffolding (§27). Each page module guards on its own selector and bails on irrelevant pages.
 
 ### Theme toggle
 

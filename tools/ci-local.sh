@@ -107,8 +107,14 @@ HUGO_ENVIRONMENT=production hugo --gc --minify
 # installed, so a local "green" doesn't silently omit the Pagefind path.
 if command -v pagefind >/dev/null 2>&1; then
   pagefind --site public/ >/dev/null
+elif command -v npx >/dev/null 2>&1; then
+  # No pagefind binary, but npx is available — build the index via the pinned
+  # release so the Playwright search spec (and pagefind-meta checks) exercise
+  # the real /pagefind/ path instead of 404ing.
+  printf "\033[1;33m⚠ pagefind not on PATH — building index via 'npx pagefind@1.5.2'.\033[0m\n"
+  npx --yes pagefind@1.5.2 --site public/ >/dev/null
 else
-  printf "\033[1;33m⚠ pagefind not on PATH — skipping index build; /pagefind/ 404s locally.\n  Install to exercise the full CI path (e.g. 'cargo install pagefind' or download the release binary).\033[0m\n"
+  printf "\033[1;33m⚠ neither pagefind nor npx on PATH — skipping index build; /pagefind/ 404s locally.\n  Install to exercise the full CI path (e.g. 'cargo install pagefind' or download the release binary).\033[0m\n"
 fi
 
 separator "Post-build linters + sibling tests"
