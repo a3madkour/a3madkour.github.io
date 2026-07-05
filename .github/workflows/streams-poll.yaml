@@ -1,8 +1,12 @@
 name: streams poll
 
 on:
-  schedule:
-    - cron: '*/5 * * * *'     # every 5 min (GitHub's minimum)
+  # Schedule disabled until real streaming credentials exist: the streams
+  # section is fixture-only, so with TWITCH_*/YOUTUBE_* secrets+vars unset the
+  # poller correctly exits non-zero and every 5-min run just records a failure.
+  # Re-enable this trigger once the secrets are wired.
+  # schedule:
+  #   - cron: '*/5 * * * *'     # every 5 min (GitHub's minimum)
   workflow_dispatch:           # manual trigger for bootstrap + ad-hoc testing
 
 permissions:
