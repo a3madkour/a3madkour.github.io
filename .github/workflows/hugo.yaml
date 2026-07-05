@@ -69,6 +69,10 @@ jobs:
         run: python3 tools/check_spacing_tokens.py
       - name: Run spacing-token linter unit tests
         run: python3 -m unittest tools/test_check_spacing_tokens.py -v
+      - name: Verify breakpoint discipline
+        run: python3 tools/check_breakpoints.py
+      - name: Run breakpoint linter unit tests
+        run: python3 -m unittest tools/test_check_breakpoints.py -v
       - name: Verify essay fixtures
         run: python3 tools/check_fixtures.py
       - name: Run essay linter unit tests
