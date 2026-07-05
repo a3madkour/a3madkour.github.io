@@ -1,0 +1,11 @@
+{{- /* Shared graph-panel skeleton (R5.3b). The ONLY place a graph side-panel is
+       constructed. Params: dict "id" "title" "ariaLabel" "section". */ -}}
+<aside class="graph-panel" id="{{ .id }}" role="region" aria-label="{{ .ariaLabel }}" aria-hidden="true" inert>
+  <header class="graph-panel-header">
+    <span class="graph-panel-title">{{ .title }}</span>
+    <button type="button" class="graph-panel-close" aria-controls="{{ .id }}" aria-label="Close graph panel">×</button>
+  </header>
+  <div class="graph-toolbar graph-toolbar--panel" aria-label="Graph filters"></div>
+  <div class="graph-panel-canvas"></div>
+  {{ partial "graph-legend.html" (dict "section" .section "variant" "panel") }}
+</aside>
