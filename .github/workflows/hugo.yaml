@@ -65,6 +65,10 @@ jobs:
         run: python3 tools/check_css_refs.py
       - name: Run CSS-refs linter unit tests
         run: python3 -m unittest tools/test_check_css_refs.py -v
+      - name: Verify CSS spacing tokens
+        run: python3 tools/check_spacing_tokens.py
+      - name: Run spacing-token linter unit tests
+        run: python3 -m unittest tools/test_check_spacing_tokens.py -v
       - name: Verify essay fixtures
         run: python3 tools/check_fixtures.py
       - name: Run essay linter unit tests
