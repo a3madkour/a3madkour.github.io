@@ -31,13 +31,14 @@ class _LinkParser(HTMLParser):
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         d = dict(attrs)
-        if d.get("id"):
-            self.ids.add(d["id"])
+        if elem_id := d.get("id"):
+            self.ids.add(elem_id)
         if tag == "a":
-            if d.get("name"):
-                self.ids.add(d["name"])
-            if d.get("href") is not None:
-                self.hrefs.append(d["href"])
+            if name := d.get("name"):
+                self.ids.add(name)
+            href = d.get("href")
+            if href is not None:
+                self.hrefs.append(href)
 
 
 def parse_html(text: str) -> tuple[set[str], list[str]]:
