@@ -25,10 +25,16 @@ from pathlib import Path
 ALLOWLIST: set[float] = {0.02, 0.05, 0.0625, 0.1, 0.12, 0.125, 0.15}
 
 COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
-# In-scope property at a declaration position: `<prop>:`
+# In-scope property at a declaration position: `<prop>:`. Covers the modern
+# gap family + its legacy `grid-*` aliases (drift-prevention — none exist in the
+# file today, but a future `grid-gap: 0.3rem` should still be flagged), and
+# padding/margin incl. per-side + logical (block/inline start/end) forms.
+# DELIBERATELY EXCLUDED (positioning, not layout rhythm — out of scope per spec):
+# `scroll-margin*` / `scroll-padding*` / `inset` / `top`/`left`/etc. The `(?<![\w-])`
+# lookbehind is what keeps `scroll-padding` from matching the `padding` alternative.
 IN_SCOPE_PROP_RE = re.compile(
     r"(?<![\w-])"
-    r"(gap|row-gap|column-gap|"
+    r"(gap|row-gap|column-gap|grid-gap|grid-row-gap|grid-column-gap|"
     r"padding(?:-(?:top|right|bottom|left|block|inline)(?:-(?:start|end))?)?|"
     r"margin(?:-(?:top|right|bottom|left|block|inline)(?:-(?:start|end))?)?)"
     r"\s*:\s*([^;{}]*)"

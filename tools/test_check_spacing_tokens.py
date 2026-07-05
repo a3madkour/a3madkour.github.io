@@ -49,9 +49,16 @@ class FindViolationsTest(unittest.TestCase):
         self.assertEqual(lint.find_violations(css), [])
 
     def test_per_side_props_in_scope(self):
-        for prop in ("padding-top", "margin-left", "row-gap", "column-gap"):
+        for prop in ("padding-top", "margin-left", "row-gap", "column-gap",
+                     "grid-gap", "grid-row-gap", "grid-column-gap", "margin-block"):
             css = f".a {{ {prop}: 0.7rem; }}\n"
             self.assertEqual(len(lint.find_violations(css)), 1, msg=prop)
+
+    def test_scroll_insets_out_of_scope(self):
+        # scroll-margin/scroll-padding are positioning, deliberately not flagged
+        for prop in ("scroll-margin-top", "scroll-padding", "inset", "top"):
+            css = f".a {{ {prop}: 0.7rem; }}\n"
+            self.assertEqual(lint.find_violations(css), [], msg=prop)
 
     def test_zero_and_nonrem_ignored(self):
         css = ".a { margin: 0 auto; padding: 8px 50%; gap: 2ch; }\n"
