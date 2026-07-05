@@ -8,6 +8,8 @@
 import { setupFilterChips } from './filter-chips.js';
 import { setupCitationCards } from './citation-card.js';
 
+// Canonical 'xl' breakpoint (rail / sidenote toggle); mirrors the CSS
+// breakpoint scale — kept in sync by tools/check_breakpoints.py.
 const RAIL_BREAKPOINT = 1100;
 
 function reducedMotion() {

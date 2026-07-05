@@ -3,6 +3,8 @@
 //
 // Guards on .essay-body + at least one .citation; bails otherwise.
 
+// Canonical 'md' breakpoint (mobile line); mirrors the CSS breakpoint scale —
+// kept in sync by tools/check_breakpoints.py.
 const MOBILE_BREAKPOINT = 720;
 const HOVER_OPEN_DELAY_MS = 150;
 const HOVER_CLOSE_DELAY_MS = 200;

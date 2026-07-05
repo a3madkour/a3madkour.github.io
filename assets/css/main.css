@@ -4,6 +4,23 @@
  */
 
 /* ------------------------------------------------------------------
+   Breakpoint scale (R6.2) — canonical responsive widths.
+   CSS @media cannot read var(), so this is a *documented* scale enforced by
+   tools/check_breakpoints.py, not runtime tokens.
+
+   Canonical:  480 · 600 · 720 (mobile)  |  960 · 1100 · 1280 (desktop)
+     720   primary mobile/tablet line (also JS MOBILE_BREAKPOINT / matchMedia)
+     960   narrow desktop / half-screen tier
+     1100  rail + sidenote margin toggle (also JS RAIL_BREAKPOINT); seam at 1099
+     1280  wide desktop
+   Per-component exceptions (allowlisted, kept literal):
+     800 .home-hero   900 .essay-grid   1140 .essay-figure.wide   1219 .page-sidebar
+
+   New @media widths must use the canonical scale or gain a documented allowlist
+   entry in check_breakpoints.py. JS breakpoints must be canonical.
+   ------------------------------------------------------------------ */
+
+/* ------------------------------------------------------------------
  * 1. Reset
  * ------------------------------------------------------------------ */
 *, *::before, *::after { box-sizing: border-box; }
