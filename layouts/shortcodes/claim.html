@@ -1,18 +1,1 @@
-{{- /* AMS-style block: claim. Own counter; soft tier. */ -}}
-{{- $page := .Page -}}
-{{- $n := add (int ($page.Scratch.Get "claim-counter" | default 0)) 1 -}}
-{{- $page.Scratch.Set "claim-counter" $n -}}
-{{- $title := .Get "title" -}}
-{{- $id := .Get "id" -}}
-<div class="block-claim block-soft"{{ with $id }} id="{{ . }}"{{ end }}>
-  <p class="block-header">
-    Claim {{ $n }}{{ with $title }} (<span class="block-title">{{ . }}</span>){{ end }}.
-  </p>
-  {{- with $id -}}
-    {{- $aria := printf "Claim %d" $n -}}
-    {{- $page.Scratch.Set (printf "block-label-%s" $id) $aria -}}
-    {{- with $title -}}{{ $aria = printf "Claim %d (%s)" $n . -}}{{- end -}}
-    {{ partial "anchor-link.html" (dict "id" $id "title" $aria) }}
-  {{- end -}}
-  <div class="block-body">{{ .Inner | markdownify }}</div>
-</div>
+{{- partial "ams-block.html" (dict "ctx" . "kind" "Claim" "class" "block-claim" "tier" "block-soft" "counter" "claim-counter" "inner" .Inner) -}}

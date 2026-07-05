@@ -1,18 +1,1 @@
-{{- /* AMS-style block: axiom. Own counter; soft tier. */ -}}
-{{- $page := .Page -}}
-{{- $n := add (int ($page.Scratch.Get "axiom-counter" | default 0)) 1 -}}
-{{- $page.Scratch.Set "axiom-counter" $n -}}
-{{- $title := .Get "title" -}}
-{{- $id := .Get "id" -}}
-<div class="block-axiom block-soft"{{ with $id }} id="{{ . }}"{{ end }}>
-  <p class="block-header">
-    Axiom {{ $n }}{{ with $title }} (<span class="block-title">{{ . }}</span>){{ end }}.
-  </p>
-  {{- with $id -}}
-    {{- $aria := printf "Axiom %d" $n -}}
-    {{- $page.Scratch.Set (printf "block-label-%s" $id) $aria -}}
-    {{- with $title -}}{{ $aria = printf "Axiom %d (%s)" $n . -}}{{- end -}}
-    {{ partial "anchor-link.html" (dict "id" $id "title" $aria) }}
-  {{- end -}}
-  <div class="block-body">{{ .Inner | markdownify }}</div>
-</div>
+{{- partial "ams-block.html" (dict "ctx" . "kind" "Axiom" "class" "block-axiom" "tier" "block-soft" "counter" "axiom-counter" "inner" .Inner) -}}

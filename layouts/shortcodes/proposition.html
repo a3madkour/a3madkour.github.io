@@ -1,18 +1,1 @@
-{{- /* AMS-style block: proposition. Shares counter "theorem-family". */ -}}
-{{- $page := .Page -}}
-{{- $n := add (int ($page.Scratch.Get "theorem-family" | default 0)) 1 -}}
-{{- $page.Scratch.Set "theorem-family" $n -}}
-{{- $title := .Get "title" -}}
-{{- $id := .Get "id" -}}
-<div class="block-proposition block-strong"{{ with $id }} id="{{ . }}"{{ end }}>
-  <p class="block-header">
-    Proposition {{ $n }}{{ with $title }} (<span class="block-title">{{ . }}</span>){{ end }}.
-  </p>
-  {{- with $id -}}
-    {{- $aria := printf "Proposition %d" $n -}}
-    {{- $page.Scratch.Set (printf "block-label-%s" $id) $aria -}}
-    {{- with $title -}}{{ $aria = printf "Proposition %d (%s)" $n . -}}{{- end -}}
-    {{ partial "anchor-link.html" (dict "id" $id "title" $aria) }}
-  {{- end -}}
-  <div class="block-body">{{ .Inner | markdownify }}</div>
-</div>
+{{- partial "ams-block.html" (dict "ctx" . "kind" "Proposition" "class" "block-proposition" "tier" "block-strong" "counter" "theorem-family" "inner" .Inner) -}}

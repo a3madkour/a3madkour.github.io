@@ -1,0 +1,26 @@
+{{- /* Shared AMS numbered-block renderer (R5.3a). Params:
+       ctx     — the calling shortcode (.Page / .Get / .Inner)
+       kind    — display label, e.g. "Theorem"
+       class   — block class, e.g. "block-theorem"
+       tier    — "block-strong" | "block-soft"
+       counter — $page.Scratch counter key, e.g. "theorem-family"
+       proof.html stays bespoke (unnumbered). Spec:
+       docs/superpowers/specs/2026-07-05-r5.3a-ams-block-consolidation-design.md */ -}}
+{{- $ctx := .ctx -}}
+{{- $page := $ctx.Page -}}
+{{- $n := add (int ($page.Scratch.Get .counter | default 0)) 1 -}}
+{{- $page.Scratch.Set .counter $n -}}
+{{- $title := $ctx.Get "title" -}}
+{{- $id := $ctx.Get "id" -}}
+<div class="{{ .class }} {{ .tier }}"{{ with $id }} id="{{ . }}"{{ end }}>
+  <p class="block-header">
+    {{ $.kind }} {{ $n }}{{ with $title }} (<span class="block-title">{{ . }}</span>){{ end }}.
+  </p>
+  {{- with $id -}}
+    {{- $aria := printf "%s %d" $.kind $n -}}
+    {{- $page.Scratch.Set (printf "block-label-%s" $id) $aria -}}
+    {{- with $title -}}{{ $aria = printf "%s %d (%s)" $.kind $n . -}}{{- end -}}
+    {{ partial "anchor-link.html" (dict "id" $id "title" $aria) }}
+  {{- end -}}
+  <div class="block-body">{{ $ctx.Inner | markdownify }}</div>
+</div>

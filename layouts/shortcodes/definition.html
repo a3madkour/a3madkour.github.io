@@ -1,18 +1,1 @@
-{{- /* AMS-style block: definition. Own counter; strong tier. */ -}}
-{{- $page := .Page -}}
-{{- $n := add (int ($page.Scratch.Get "definition-counter" | default 0)) 1 -}}
-{{- $page.Scratch.Set "definition-counter" $n -}}
-{{- $title := .Get "title" -}}
-{{- $id := .Get "id" -}}
-<div class="block-definition block-strong"{{ with $id }} id="{{ . }}"{{ end }}>
-  <p class="block-header">
-    Definition {{ $n }}{{ with $title }} (<span class="block-title">{{ . }}</span>){{ end }}.
-  </p>
-  {{- with $id -}}
-    {{- $aria := printf "Definition %d" $n -}}
-    {{- $page.Scratch.Set (printf "block-label-%s" $id) $aria -}}
-    {{- with $title -}}{{ $aria = printf "Definition %d (%s)" $n . -}}{{- end -}}
-    {{ partial "anchor-link.html" (dict "id" $id "title" $aria) }}
-  {{- end -}}
-  <div class="block-body">{{ .Inner | markdownify }}</div>
-</div>
+{{- partial "ams-block.html" (dict "ctx" . "kind" "Definition" "class" "block-definition" "tier" "block-strong" "counter" "definition-counter" "inner" .Inner) -}}

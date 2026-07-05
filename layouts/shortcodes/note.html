@@ -1,18 +1,1 @@
-{{- /* AMS-style block: note. Own counter; soft tier. */ -}}
-{{- $page := .Page -}}
-{{- $n := add (int ($page.Scratch.Get "note-counter" | default 0)) 1 -}}
-{{- $page.Scratch.Set "note-counter" $n -}}
-{{- $title := .Get "title" -}}
-{{- $id := .Get "id" -}}
-<div class="block-note block-soft"{{ with $id }} id="{{ . }}"{{ end }}>
-  <p class="block-header">
-    Note {{ $n }}{{ with $title }} (<span class="block-title">{{ . }}</span>){{ end }}.
-  </p>
-  {{- with $id -}}
-    {{- $aria := printf "Note %d" $n -}}
-    {{- $page.Scratch.Set (printf "block-label-%s" $id) $aria -}}
-    {{- with $title -}}{{ $aria = printf "Note %d (%s)" $n . -}}{{- end -}}
-    {{ partial "anchor-link.html" (dict "id" $id "title" $aria) }}
-  {{- end -}}
-  <div class="block-body">{{ .Inner | markdownify }}</div>
-</div>
+{{- partial "ams-block.html" (dict "ctx" . "kind" "Note" "class" "block-note" "tier" "block-soft" "counter" "note-counter" "inner" .Inner) -}}

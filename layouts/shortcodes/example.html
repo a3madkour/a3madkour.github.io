@@ -1,18 +1,1 @@
-{{- /* AMS-style block: example. Own counter; soft tier. */ -}}
-{{- $page := .Page -}}
-{{- $n := add (int ($page.Scratch.Get "example-counter" | default 0)) 1 -}}
-{{- $page.Scratch.Set "example-counter" $n -}}
-{{- $title := .Get "title" -}}
-{{- $id := .Get "id" -}}
-<div class="block-example block-soft"{{ with $id }} id="{{ . }}"{{ end }}>
-  <p class="block-header">
-    Example {{ $n }}{{ with $title }} (<span class="block-title">{{ . }}</span>){{ end }}.
-  </p>
-  {{- with $id -}}
-    {{- $aria := printf "Example %d" $n -}}
-    {{- $page.Scratch.Set (printf "block-label-%s" $id) $aria -}}
-    {{- with $title -}}{{ $aria = printf "Example %d (%s)" $n . -}}{{- end -}}
-    {{ partial "anchor-link.html" (dict "id" $id "title" $aria) }}
-  {{- end -}}
-  <div class="block-body">{{ .Inner | markdownify }}</div>
-</div>
+{{- partial "ams-block.html" (dict "ctx" . "kind" "Example" "class" "block-example" "tier" "block-soft" "counter" "example-counter" "inner" .Inner) -}}
