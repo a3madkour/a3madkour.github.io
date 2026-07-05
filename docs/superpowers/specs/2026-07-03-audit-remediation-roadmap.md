@@ -112,7 +112,7 @@
 |---|---|---|---|
 | R6.1 | ☑ **CSS spacing scale.** No spacing tokens — `gap` alone uses ~20 distinct raw rem values (0.2…1.75, incl. px-conversion artifacts like 0.625/0.875). A `--space-*` scale would give one density knob and fix asymmetric rhythm. | Low | `assets/css/main.css`. Introduce a token scale; migrate incrementally. |
 | R6.2 | ☑ **Breakpoint tokens.** Desktop breakpoints are 8 one-off values (`800/900/960/1099/1140/1219` max, `960/1100/1280` min) with a `1099/1100` off-by-one seam; JS mirrors magic breakpoints (`RAIL_BREAKPOINT=1100`, `MOBILE_BREAKPOINT=720`) that must hand-sync with CSS. Mobile side is already disciplined. | Low | Document a 3-tier scale (or `--bp-*` custom properties for the JS side); reconcile the half-screen (~960px) tier the author actually tests at. |
-| R6.3 | ☐ **Built-HTML link-integrity crawl.** Link linters validate frontmatter-declared refs pre-build; nothing crawls rendered `public/` for broken `<a href>`s. Adequate for a fixture-only site; becomes a gap once real interlinked content lands. | Low (trigger-gated) | Open when real content volume makes it worthwhile. |
+| R6.3 | ☑ **Built-HTML link-integrity crawl.** Link linters validate frontmatter-declared refs pre-build; nothing crawls rendered `public/` for broken `<a href>`s. Adequate for a fixture-only site; becomes a gap once real interlinked content lands. | Low (trigger-gated) | Open when real content volume makes it worthwhile. |
 
 ---
 

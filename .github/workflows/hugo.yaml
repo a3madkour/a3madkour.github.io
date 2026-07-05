@@ -211,6 +211,10 @@ jobs:
         run: python3 tools/check_anchor_link.py
       - name: Run anchor-link linter unit tests
         run: python3 -m unittest tools/test_check_anchor_link.py -v
+      - name: Verify built-HTML link integrity
+        run: python3 tools/check_html_links.py
+      - name: Run HTML-link linter unit tests
+        run: python3 -m unittest tools/test_check_html_links.py -v
       - name: Verify explorables coupling
         run: python3 tools/check_explorables.py
       - name: Run explorables linter unit tests
