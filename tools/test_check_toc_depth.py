@@ -1,14 +1,13 @@
 """Tests for check_toc_depth.py — run with: python3 -m unittest tools/test_check_toc_depth.py -v"""
 from __future__ import annotations
 
-import shutil
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import check_toc_depth as lint  # noqa: E402  # pyright: ignore[reportMissingImports]
+from test_helpers import TempRepo as _TempRepo  # noqa: E402
 
 
 def essay(draft: bool, body: str) -> str:
@@ -29,18 +28,13 @@ FENCED_FAKE_DEPTH = essay(
 )
 
 
-class TempRepo:
+class TempRepo(_TempRepo):
     def __init__(self) -> None:
-        self.root = Path(tempfile.mkdtemp())
+        super().__init__()
         (self.root / "content" / "essays").mkdir(parents=True)
 
     def write_essay(self, slug: str, text: str) -> None:
-        d = self.root / "content" / "essays" / slug
-        d.mkdir(exist_ok=True)
-        (d / "index.md").write_text(text)
-
-    def cleanup(self) -> None:
-        shutil.rmtree(self.root)
+        self.write(f"content/essays/{slug}/index.md", text)
 
 
 class CheckTocDepthTest(unittest.TestCase):

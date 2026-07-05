@@ -3,14 +3,13 @@
 """
 from __future__ import annotations
 
-import shutil
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import check_filter_chips_config as lint  # noqa: E402
+from test_helpers import TempRepo as _TempRepo  # noqa: E402
 
 
 GARDEN_NOTE = """\
@@ -105,9 +104,9 @@ items:
 """
 
 
-class TempRepo:
+class TempRepo(_TempRepo):
     def __init__(self) -> None:
-        self.root = Path(tempfile.mkdtemp())
+        super().__init__()
         (self.root / "content" / "garden").mkdir(parents=True)
         (self.root / "content" / "essays").mkdir(parents=True)
         (self.root / "content" / "works" / "games").mkdir(parents=True)
@@ -116,39 +115,26 @@ class TempRepo:
         (self.root / "data").mkdir(parents=True)
 
     def write_garden(self, slug: str, body: str = GARDEN_NOTE) -> None:
-        d = self.root / "content" / "garden" / slug
-        d.mkdir(exist_ok=True)
-        (d / "index.md").write_text(body)
+        self.write(f"content/garden/{slug}/index.md", body)
 
     def write_essay(self, slug: str, body: str = ESSAY_NOTE) -> None:
-        d = self.root / "content" / "essays" / slug
-        d.mkdir(exist_ok=True)
-        (d / "index.md").write_text(body)
+        self.write(f"content/essays/{slug}/index.md", body)
 
     def write_game(self, slug: str, body: str = GAME_NOTE) -> None:
-        d = self.root / "content" / "works" / "games" / slug
-        d.mkdir(exist_ok=True)
-        (d / "index.md").write_text(body)
+        self.write(f"content/works/games/{slug}/index.md", body)
 
     def write_music(self, slug: str, body: str = MUSIC_NOTE) -> None:
-        d = self.root / "content" / "works" / "music" / slug
-        d.mkdir(exist_ok=True)
-        (d / "index.md").write_text(body)
+        self.write(f"content/works/music/{slug}/index.md", body)
 
     def write_poem(self, slug: str, body: str = POEM_NOTE) -> None:
-        d = self.root / "content" / "works" / "poetry" / slug
-        d.mkdir(exist_ok=True)
-        (d / "index.md").write_text(body)
+        self.write(f"content/works/poetry/{slug}/index.md", body)
 
     def write_config(self, content: str) -> None:
-        (self.root / "data" / "filter-chips.yaml").write_text(content)
+        self.write("data/filter-chips.yaml", content)
 
     def write_library_yaml(self, fname: str, body: str = READING_YAML_ITEM) -> None:
         """Write a library data yaml file (e.g., 'reading.yaml') under data/."""
-        (self.root / "data" / fname).write_text(body)
-
-    def cleanup(self) -> None:
-        shutil.rmtree(self.root)
+        self.write(f"data/{fname}", body)
 
 
 class FilterChipsLinterTest(unittest.TestCase):

@@ -1,14 +1,13 @@
 """Tests for check_fixtures.py — run with: python3 -m unittest tools/test_check_fixtures.py -v"""
 from __future__ import annotations
 
-import shutil
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import check_fixtures as lint  # noqa: E402  # pyright: ignore[reportMissingImports]
+from test_helpers import TempRepo as _TempRepo  # noqa: E402
 
 
 VALID_FRONTMATTER = """\
@@ -48,25 +47,20 @@ citations:
 """
 
 
-class TempRepo:
+class TempRepo(_TempRepo):
     """Minimal repo skeleton for testing the linter."""
     def __init__(self) -> None:
-        self.root = Path(tempfile.mkdtemp())
+        super().__init__()
         (self.root / "data").mkdir()
         (self.root / "content" / "essays").mkdir(parents=True)
 
     def write_essay(self, slug: str, frontmatter_body: str, hero: bool = False) -> None:
-        d = self.root / "content" / "essays" / slug
-        d.mkdir(exist_ok=True)
-        (d / "index.md").write_text(frontmatter_body)
+        self.write(f"content/essays/{slug}/index.md", frontmatter_body)
         if hero:
-            (d / "hero.svg").write_text("<svg/>")
+            self.write(f"content/essays/{slug}/hero.svg", "<svg/>")
 
     def write_citations(self, body: str) -> None:
-        (self.root / "data" / "citations.yaml").write_text(body)
-
-    def cleanup(self) -> None:
-        shutil.rmtree(self.root)
+        self.write("data/citations.yaml", body)
 
 
 class CheckFixturesTest(unittest.TestCase):

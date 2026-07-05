@@ -3,14 +3,13 @@
 """
 from __future__ import annotations
 
-import shutil
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import check_poetry_synced as lint  # noqa: E402  # pyright: ignore[reportMissingImports]
+from test_helpers import TempRepo as _TempRepo  # noqa: E402
 
 
 def poem(body: str, *, audio_url: str | None = None, draft: bool = False) -> str:
@@ -32,21 +31,12 @@ HAPPY = poem("[00:01]Lorem ipsum dolor\n[00:04]sit amet consectetur\n")
 MIDLINE = poem("[00:01]Sed do [00:02]eiusmod [00:03]tempor\nincididunt ut labore\n")
 
 
-class TempRepo:
-    def __init__(self) -> None:
-        self.root = Path(tempfile.mkdtemp())
-
-    def write(self, slug: str, text: str, *, asset: str | None = None) -> Path:
-        d = self.root / "content" / "works" / "poetry" / slug
-        d.mkdir(parents=True)
-        p = d / "index.md"
-        p.write_text(text)
+class TempRepo(_TempRepo):
+    def write(self, slug: str, text: str, *, asset: str | None = None) -> Path:  # type: ignore[override]
+        p = super().write(f"content/works/poetry/{slug}/index.md", text)
         if asset is not None:
-            (d / asset).write_bytes(b"\x00")
+            (p.parent / asset).write_bytes(b"\x00")
         return p
-
-    def cleanup(self) -> None:
-        shutil.rmtree(self.root)
 
 
 class CheckPoetrySyncedTest(unittest.TestCase):

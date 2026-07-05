@@ -3,14 +3,13 @@
 """
 from __future__ import annotations
 
-import shutil
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import check_garden_fixtures as lint  # noqa: E402
+from test_helpers import TempRepo as _TempRepo  # noqa: E402
 
 
 CONCEPT_NOTE = """\
@@ -74,18 +73,13 @@ Body.
 """
 
 
-class TempRepo:
+class TempRepo(_TempRepo):
     def __init__(self) -> None:
-        self.root = Path(tempfile.mkdtemp())
+        super().__init__()
         (self.root / "content" / "garden").mkdir(parents=True)
 
     def write_note(self, slug: str, body: str) -> None:
-        d = self.root / "content" / "garden" / slug
-        d.mkdir(exist_ok=True)
-        (d / "index.md").write_text(body)
-
-    def cleanup(self) -> None:
-        shutil.rmtree(self.root)
+        self.write(f"content/garden/{slug}/index.md", body)
 
 
 class GardenLinterTest(unittest.TestCase):
