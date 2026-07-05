@@ -13,21 +13,13 @@
     <p class="page-description">Force-directed map of every work. Solid edges = shared tags. Dashed edges = explicit cross-medium references.</p>
   </header>
 
-  <div class="graph-toolbar graph-toolbar--page">
-    <span class="label works-graph-summary" id="works-graph-summary"></span>
-    <button type="button" class="graph-chip" data-dim="medium" data-key="all" aria-pressed="true">All</button>
-    <button type="button" class="graph-chip" data-dim="medium" data-key="game" aria-pressed="false">Games</button>
-    <button type="button" class="graph-chip" data-dim="medium" data-key="music" aria-pressed="false">Music</button>
-    <button type="button" class="graph-chip" data-dim="medium" data-key="poetry" aria-pressed="false">Poetry</button>
-    <span class="graph-toolbar-divider" aria-hidden="true"></span>
-    <button type="button" class="graph-action" data-action="reset-view">Reset view</button>
-    <button type="button" class="graph-action" data-action="reset-positions">Reset positions</button>
-    <span class="graph-hint" aria-hidden="true"><kbd>Shift</kbd>+drag to pin</span>
-  </div>
+  {{/* Toolbar is JS-built by works-graph.js (parity with garden/research). */}}
+  <div class="graph-toolbar graph-toolbar--page"></div>
 
   <a href="#works-graph-skip" class="graph-skip-link">Skip past graph</a>
 
-  <svg class="graph-page-canvas works-graph-canvas" id="works-graph-canvas" role="img" aria-label="Constellation of works"></svg>
+  {{/* Canvas is a <div>; graph-core.js creates the <svg> inside it. */}}
+  <div class="graph-page-canvas works-graph-canvas" id="works-graph-canvas" role="img" aria-label="Constellation of works"></div>
 
   {{ partial "graph-legend.html" (dict "section" "works" "variant" "page") }}
 

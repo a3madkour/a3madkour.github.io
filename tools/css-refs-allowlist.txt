@@ -8,3 +8,11 @@
 # Documented deferral: poem-synced.js does not build a .poem-audio-pill element
 # yet (see main.css §45 note); kept for the future audio-pill runtime.
 poem-audio-pill
+
+# R5.2 graph-core: the per-section node base class is emitted as
+# `${adapter.classPrefix}-graph-node` in assets/js/graph-core.js (leading JS
+# interpolation — the static scan resolves prefixes, not suffixes). Genuinely
+# rendered on every graph node; verified by tests/e2e/*-graph.spec.ts.
+# (garden-graph-node keeps a literal ref via garden-graph.js updateInStackMarkers.)
+research-graph-node
+works-graph-node
