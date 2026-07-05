@@ -139,6 +139,19 @@ python3 -m unittest tools/test_gen_lhci_urls.py -v 2>&1 | tail -3
 python3 tools/check_lhci_urls.py
 (cd tools && python3 -m unittest test_check_lhci_urls.py -v 2>&1 | tail -3)
 
+separator "Playwright E2E (built site)"
+
+# Dev-only browser E2E over ./public. Needs Node (npx) + the Playwright
+# chromium browser. Loud-skip if Node is absent so a local "green" still tells
+# the truth about what ran (mirrors the LHCI need_lhci_dep preflight pattern).
+if command -v npx >/dev/null 2>&1; then
+  [ -d node_modules ] || npm ci
+  npx playwright install chromium >/dev/null 2>&1 || true
+  npx playwright test
+else
+  printf "\033[1;33m⚠ npx not found — skipping Playwright E2E. Install Node.js to run it (mirrors CI).\033[0m\n"
+fi
+
 separator "Lighthouse CI (desktop + mobile)"
 
 # LHCI is the only CI gate that lives outside Python+Hugo. Catches things the
