@@ -106,7 +106,7 @@ Math content is authored in org-mode and validated **before publish**, not after
 
 ### Semantic blocks (AMS-style)
 
-Essays can use 12 AMS-style block shortcodes for rigorous prose: `theorem`, `lemma`, `corollary`, `proposition`, `definition`, `proof`, `remark`, `example`, `note`, `claim`, `conjecture`, `axiom`. Each is a Hugo shortcode in `layouts/shortcodes/` with per-page auto-numbering via `$page.Scratch`.
+Essays can use 12 AMS-style block shortcodes for rigorous prose: `theorem`, `lemma`, `corollary`, `proposition`, `definition`, `proof`, `remark`, `example`, `note`, `claim`, `conjecture`, `axiom`. Each is a Hugo shortcode in `layouts/shortcodes/` with per-page auto-numbering via `$page.Scratch`. The 11 numbered blocks (theorem-family + definition + the six soft blocks) now render through `layouts/partials/ams-block.html` (`dict` params: `ctx`/`kind`/`class`/`tier`/`counter`); each numbered shortcode is a one-line wrapper that also passes `"inner" .Inner` (a Hugo paired-shortcode parser hint so the closing tag is accepted; the partial reads `$ctx.Inner`). `proof.html` stays bespoke (unnumbered + ∎ tombstone).
 
 Authors write `#+begin_theorem` blocks in org, with optional `#+attr_shortcode: :title <name> :id <slug>` header line for title and cross-reference ID. ox-hugo's `org-hugo-paired-shortcodes` config (in `a3madkour-publish-export.el`) emits the matching `{{< theorem title="…" id="…" >}}…{{< /theorem >}}` markdown.
 
