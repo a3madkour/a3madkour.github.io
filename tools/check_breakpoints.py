@@ -12,6 +12,10 @@ Scope: only width features INSIDE `@media` preludes are breakpoints — element
 `matchMedia` width literals must be canonical (JS must not reference the CSS-only
 per-component allowlist values).
 
+By design the CSS scan matches only `min-width`/`max-width` in `px`; exact
+`(width: Npx)`, MQ4 range syntax (`width >= Npx`), and non-px units are outside
+scope (none exist in this codebase). Extend the regex if that changes.
+
 Stdlib only. Exits 0 when every breakpoint is canonical / allowlisted / a seam,
 1 otherwise.
 """
