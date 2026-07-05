@@ -22,16 +22,17 @@ class FindViolationsTest(unittest.TestCase):
         self.assertEqual(lint.find_violations(".a { gap: var(--space-xs); }\n"), [])
 
     def test_allowlisted_micro_nudge_ok(self):
-        # 0.02/0.05/0.1/0.125/0.15 stay literal
-        for v in ("0.02", "0.05", "0.1", "0.125", "0.15"):
+        # sub-0.25rem hairlines stay literal (incl. 0.0625=1px and 0.12=~1.9px)
+        for v in ("0.02", "0.05", "0.0625", "0.1", "0.12", "0.125", "0.15"):
             self.assertEqual(
                 lint.find_violations(f".a {{ padding: {v}rem; }}\n"), [],
                 msg=f"{v}rem should be allowlisted",
             )
 
-    def test_point_two_is_not_allowlisted(self):
-        # 0.2 snaps to --space-3xs; a bare 0.2rem is a violation
+    def test_point_two_and_point_three_not_allowlisted(self):
+        # 0.2 and 0.3 both snap to --space-3xs; bare literals are violations
         self.assertEqual(len(lint.find_violations(".a { margin: 0.2rem; }\n")), 1)
+        self.assertEqual(len(lint.find_violations(".a { margin: 0.3rem; }\n")), 1)
 
     def test_shorthand_flags_each_bare_component(self):
         # one tokenized + one bare → one violation for the bare one

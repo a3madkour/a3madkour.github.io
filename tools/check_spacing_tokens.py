@@ -19,8 +19,10 @@ import re
 import sys
 from pathlib import Path
 
-# Sub-0.25rem micro-nudges that stay literal (see spec R6.1).
-ALLOWLIST: set[float] = {0.02, 0.05, 0.1, 0.125, 0.15}
+# Sub-0.25rem micro-nudges (hairline border/alignment tweaks, ≤ ~2.4px) that
+# stay literal — the design's "leave micro-nudges alone" rule (see spec R6.1).
+# 0.0625rem (1px) and 0.12rem (~1.9px) are the same class as 0.125rem.
+ALLOWLIST: set[float] = {0.02, 0.05, 0.0625, 0.1, 0.12, 0.125, 0.15}
 
 COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
 # In-scope property at a declaration position: `<prop>:`
