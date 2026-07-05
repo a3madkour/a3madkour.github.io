@@ -91,6 +91,11 @@ public/pagefind/
 # Node artifacts — project is no-npm; these appear only from external tooling
 node_modules/
 
+# Playwright E2E harness output (dev-only; node_modules already covered above)
+test-results/
+playwright-report/
+/playwright/.cache/
+
 # Claude Code runtime lock + stray tool worktrees dir
 .claude/scheduled_tasks.lock
 .claire/
