@@ -72,8 +72,17 @@ def lint_icon_attribution(project_root: Path) -> list[str]:
     return errors
 
 
-if __name__ == "__main__":
-    errors = lint_icon_attribution(Path(__file__).resolve().parent.parent)
+def run(repo_root: Path) -> tuple[int, list[str]]:
+    errors = lint_icon_attribution(repo_root)
+    return (1 if errors else 0, errors)
+
+
+def main() -> int:
+    rc, errors = run(Path(__file__).resolve().parent.parent)
     for e in errors:
         print(e)
-    sys.exit(1 if errors else 0)
+    return rc
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -104,27 +104,31 @@ def check_url(public: Path, url: str) -> list:
     return errors
 
 
+def run(repo_root: Path) -> tuple[int, list[str]]:
+    public = repo_root / "public"
+    all_errors: list[str] = []
+    for url in URLS + ANCHOR_LINK_REQUIRED_URLS + [EXPLORABLES_URL]:
+        all_errors.extend(check_url(public, url))
+    return (1 if all_errors else 0, all_errors)
+
+
 def main() -> int:
-    public = Path("public")
+    repo_root = Path(__file__).resolve().parent.parent
+    public = repo_root / "public"
     if not public.is_dir():
         print(
             "check_smoke: public/ not found. Run `hugo --minify` first.",
             file=sys.stderr,
         )
         return 2
-
-    all_errors = []
-    for url in URLS + ANCHOR_LINK_REQUIRED_URLS + [EXPLORABLES_URL]:
-        all_errors.extend(check_url(public, url))
-
-    if all_errors:
-        print(f"check_smoke: {len(all_errors)} issue(s):", file=sys.stderr)
-        for e in all_errors:
+    rc, errors = run(repo_root)
+    if errors:
+        print(f"check_smoke: {len(errors)} issue(s):", file=sys.stderr)
+        for e in errors:
             print(f"  - {e}", file=sys.stderr)
-        return 1
-
-    print(f"check_smoke: OK ({len(URLS) + len(ANCHOR_LINK_REQUIRED_URLS) + 1} URLs)")
-    return 0
+    if rc == 0:
+        print(f"check_smoke: OK ({len(URLS) + len(ANCHOR_LINK_REQUIRED_URLS) + 1} URLs)")
+    return rc
 
 
 if __name__ == "__main__":

@@ -149,17 +149,9 @@ def validate_unique_theme_weights(themes: list[dict]) -> list[str]:
     return errors
 
 
-def main() -> int:
-    repo_root = Path(__file__).resolve().parent.parent
+def run(repo_root: Path) -> tuple[int, list[str]]:
     themes_dir = repo_root / "content" / "research" / "themes"
     questions_dir = repo_root / "content" / "research" / "questions"
-
-    if not themes_dir.is_dir() or not questions_dir.is_dir():
-        print(
-            f"error: missing {themes_dir} or {questions_dir}", file=sys.stderr
-        )
-        return 1
-
     errors: list[str] = []
     themes: list[dict] = []
     for d in sorted(themes_dir.iterdir()):
@@ -177,15 +169,26 @@ def main() -> int:
         if not d.is_dir() or d.name.startswith("_"):
             continue
         errors.extend(lint_question(d))
+    return (1 if errors else 0, errors)
 
+
+def main() -> int:
+    repo_root = Path(__file__).resolve().parent.parent
+    themes_dir = repo_root / "content" / "research" / "themes"
+    questions_dir = repo_root / "content" / "research" / "questions"
+    if not themes_dir.is_dir() or not questions_dir.is_dir():
+        print(
+            f"error: missing {themes_dir} or {questions_dir}", file=sys.stderr
+        )
+        return 1
+    rc, errors = run(repo_root)
     if errors:
         for e in errors:
             print(f"error: {e}", file=sys.stderr)
         print(f"\n{len(errors)} problem(s).", file=sys.stderr)
-        return 1
-
-    print("All research fixtures pass linter.")
-    return 0
+    if rc == 0:
+        print("All research fixtures pass linter.")
+    return rc
 
 
 if __name__ == "__main__":

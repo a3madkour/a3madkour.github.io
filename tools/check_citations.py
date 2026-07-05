@@ -125,19 +125,22 @@ def lint_citations(citations_yaml: Path, garden_dir: Path) -> list[str]:
     return errors
 
 
-def main() -> int:
-    repo_root = Path(__file__).resolve().parent.parent
+def run(repo_root: Path) -> tuple[int, list[str]]:
     citations_yaml = repo_root / "data" / "citations.yaml"
     garden_dir = repo_root / "content" / "garden"
-
     errors = lint_citations(citations_yaml, garden_dir)
+    return (1 if errors else 0, errors)
+
+
+def main() -> int:
+    rc, errors = run(Path(__file__).resolve().parent.parent)
     if errors:
         for e in errors:
             print(f"error: {e}", file=sys.stderr)
         print(f"\n{len(errors)} citation issue(s).", file=sys.stderr)
-        return 1
-    print("OK — citations.yaml validates.")
-    return 0
+    if rc == 0:
+        print("OK — citations.yaml validates.")
+    return rc
 
 
 if __name__ == "__main__":

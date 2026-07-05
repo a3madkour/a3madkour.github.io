@@ -94,16 +94,20 @@ def lint_garden_history(project_root: Path) -> list[str]:
     return errors
 
 
+def run(repo_root: Path) -> tuple[int, list[str]]:
+    errors = lint_garden_history(repo_root)
+    return (1 if errors else 0, errors)
+
+
 def main() -> int:
-    project = Path(__file__).resolve().parent.parent
-    errors = lint_garden_history(project)
+    rc, errors = run(Path(__file__).resolve().parent.parent)
     if errors:
         print(f"check_garden_history: {len(errors)} issue(s):", file=sys.stderr)
         for e in errors:
             print(f"  - {e}", file=sys.stderr)
-        return 1
-    print("check_garden_history: OK")
-    return 0
+    if rc == 0:
+        print("check_garden_history: OK")
+    return rc
 
 
 if __name__ == "__main__":

@@ -110,20 +110,24 @@ def lint_rss_xsl(
     return errors
 
 
-def main() -> int:
-    project = Path(__file__).resolve().parent.parent
+def run(repo_root: Path) -> tuple[int, list[str]]:
     errors = lint_rss_xsl(
-        xsl_path=project / "assets" / "feed" / "feed.xsl",
-        essays_rss_path=project / "layouts" / "essays" / "rss.xml",
-        garden_rss_path=project / "layouts" / "garden" / "rss.xml",
+        xsl_path=repo_root / "assets" / "feed" / "feed.xsl",
+        essays_rss_path=repo_root / "layouts" / "essays" / "rss.xml",
+        garden_rss_path=repo_root / "layouts" / "garden" / "rss.xml",
     )
+    return (1 if errors else 0, errors)
+
+
+def main() -> int:
+    rc, errors = run(Path(__file__).resolve().parent.parent)
     if errors:
         print(f"check_rss_xsl: {len(errors)} issue(s):", file=sys.stderr)
         for e in errors:
             print(f"  - {e}", file=sys.stderr)
-        return 1
-    print("check_rss_xsl: OK")
-    return 0
+    if rc == 0:
+        print("check_rss_xsl: OK")
+    return rc
 
 
 if __name__ == "__main__":

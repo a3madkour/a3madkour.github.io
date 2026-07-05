@@ -155,16 +155,11 @@ def lint_bundle(bundle: Path, static_notes_shared: Path) -> tuple[list[str], lis
     return errors, warnings
 
 
-def main() -> int:
-    repo_root = Path(__file__).resolve().parent.parent
+def run(repo_root: Path) -> tuple[int, list[str]]:
     content_dir = repo_root / "content"
     static_notes_shared = repo_root / "static" / "notes-shared"
-    if not content_dir.is_dir():
-        print(f"error: {content_dir} not found", file=sys.stderr)
-        return 1
     errors: list[str] = []
     warnings: list[str] = []
-    bundle_count = 0
     for section in sorted(content_dir.iterdir()):
         if not section.is_dir():
             continue
@@ -173,20 +168,34 @@ def main() -> int:
                 continue
             if not (entry / "index.md").exists():
                 continue
-            bundle_count += 1
             e, w = lint_bundle(entry, static_notes_shared)
             errors.extend(e)
             warnings.extend(w)
     for w in warnings:
         print(f"warning: {w}", file=sys.stderr)
+    return (1 if errors else 0, errors)
+
+
+def main() -> int:
+    repo_root = Path(__file__).resolve().parent.parent
+    content_dir = repo_root / "content"
+    if not content_dir.is_dir():
+        print(f"error: {content_dir} not found", file=sys.stderr)
+        return 1
+    rc, errors = run(repo_root)
+    bundle_count = sum(
+        1 for section in sorted(content_dir.iterdir()) if section.is_dir()
+        for entry in sorted(section.iterdir())
+        if entry.is_dir() and (entry / "index.md").exists()
+    )
     if errors:
         for e in errors:
             print(f"error: {e}", file=sys.stderr)
         print(f"\n{len(errors)} asset-ref issue(s) across {bundle_count} bundle(s).",
               file=sys.stderr)
-        return 1
-    print(f"OK — verified {bundle_count} bundle(s).")
-    return 0
+    if rc == 0:
+        print(f"OK — verified {bundle_count} bundle(s).")
+    return rc
 
 
 if __name__ == "__main__":

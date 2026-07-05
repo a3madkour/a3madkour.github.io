@@ -151,27 +151,31 @@ def validate_page(file: Path, public: Path) -> list:
     return errors
 
 
+def run(repo_root: Path) -> tuple[int, list[str]]:
+    public = repo_root / "public"
+    all_errors: list[str] = []
+    for html_file in public.rglob("index.html"):
+        all_errors.extend(validate_page(html_file, public))
+    return (1 if all_errors else 0, all_errors)
+
+
 def main() -> int:
-    public = Path("public")
+    repo_root = Path(__file__).resolve().parent.parent
+    public = repo_root / "public"
     if not public.is_dir():
         print(
             "check_pagefind_meta: public/ not found. Run `hugo --minify` first.",
             file=sys.stderr,
         )
         return 2
-
-    all_errors = []
-    for html_file in public.rglob("index.html"):
-        all_errors.extend(validate_page(html_file, public))
-
-    if all_errors:
-        print(f"check_pagefind_meta: {len(all_errors)} issue(s):", file=sys.stderr)
-        for e in all_errors:
+    rc, errors = run(repo_root)
+    if errors:
+        print(f"check_pagefind_meta: {len(errors)} issue(s):", file=sys.stderr)
+        for e in errors:
             print(f"  - {e}", file=sys.stderr)
-        return 1
-
-    print("check_pagefind_meta: OK")
-    return 0
+    if rc == 0:
+        print("check_pagefind_meta: OK")
+    return rc
 
 
 if __name__ == "__main__":

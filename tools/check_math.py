@@ -90,17 +90,21 @@ def lint_math(essays_dir: Path) -> list[str]:
     return errors
 
 
-def main() -> int:
-    repo_root = Path(__file__).resolve().parent.parent
+def run(repo_root: Path) -> tuple[int, list[str]]:
     essays_dir = repo_root / "content" / "essays"
     errors = lint_math(essays_dir)
+    return (1 if errors else 0, errors)
+
+
+def main() -> int:
+    rc, errors = run(Path(__file__).resolve().parent.parent)
     if errors:
         for e in errors:
             print(f"error: {e}", file=sys.stderr)
         print(f"\n{len(errors)} math coupling issue(s).", file=sys.stderr)
-        return 1
-    print("OK — math frontmatter coupling validates.")
-    return 0
+    if rc == 0:
+        print("OK — math frontmatter coupling validates.")
+    return rc
 
 
 if __name__ == "__main__":

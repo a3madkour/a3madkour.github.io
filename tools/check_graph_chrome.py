@@ -17,8 +17,6 @@ tools/check_smoke.py (spec §3.1).
 import sys
 from pathlib import Path
 
-CSS = Path("assets/css/main.css")
-
 # Selectors that must not reappear once the refactor lands.
 FORBIDDEN_CSS = [
     ".works-umbrella-toolbar .graph-toggle",
@@ -87,56 +85,67 @@ ITEM_SURFACES = {
 }
 
 
-def main() -> int:
-    errors = []
+def run(repo_root: Path) -> tuple[int, list[str]]:
+    errors: list[str] = []
 
-    if not CSS.is_file():
+    css_path = repo_root / "assets" / "css" / "main.css"
+    if not css_path.is_file():
         print("check_graph_chrome: assets/css/main.css missing", file=sys.stderr)
-        return 2
-    css = CSS.read_text(encoding="utf-8")
+        return 2, []
+    css = css_path.read_text(encoding="utf-8")
     for sel in FORBIDDEN_CSS:
         if sel in css:
             errors.append(f"main.css still contains forbidden selector: {sel}")
 
-    for surface in SURFACES:
+    surfaces = [repo_root / p for p in SURFACES]
+    for surface in surfaces:
         if not surface.is_file():
-            errors.append(f"missing surface file: {surface}")
+            errors.append(f"missing surface file: {surface.relative_to(repo_root)}")
             continue
         text = surface.read_text(encoding="utf-8")
+        rel = surface.relative_to(repo_root)
         if LEGEND_PARTIAL_CALL not in text and SHARED_PANEL_CALL not in text:
             errors.append(
-                f"{surface}: does not include {LEGEND_PARTIAL_CALL}"
+                f"{rel}: does not include {LEGEND_PARTIAL_CALL}"
                 f" (or {SHARED_PANEL_CALL})"
             )
         for bad in FORBIDDEN_MARKUP:
             if bad in text:
-                errors.append(f"{surface}: still contains hand-rolled chrome: {bad!r}")
+                errors.append(f"{rel}: still contains hand-rolled chrome: {bad!r}")
 
-    for surface, section in ITEM_SURFACES.items():
+    for surface_rel, section in ITEM_SURFACES.items():
+        surface = repo_root / surface_rel
         if not surface.is_file():
-            errors.append(f"missing item surface file: {surface}")
+            errors.append(f"missing item surface file: {surface.relative_to(repo_root)}")
             continue
         text = surface.read_text(encoding="utf-8")
+        rel = surface.relative_to(repo_root)
         if LAUNCHER_BAR_CALL not in text:
-            errors.append(f"{surface}: does not include {LAUNCHER_BAR_CALL}")
+            errors.append(f"{rel}: does not include {LAUNCHER_BAR_CALL}")
         panel_call = f'partial "{section}/graph-panel.html"'
         script_call = f'partial "{section}/graph-script.html"'
         if panel_call not in text:
-            errors.append(f"{surface}: does not include {panel_call}")
+            errors.append(f"{rel}: does not include {panel_call}")
         if script_call not in text:
-            errors.append(f"{surface}: does not include {script_call}")
+            errors.append(f"{rel}: does not include {script_call}")
 
+    return (1 if errors else 0, errors)
+
+
+def main() -> int:
+    rc, errors = run(Path(__file__).resolve().parent.parent)
+    if rc == 2:
+        return rc
     if errors:
         print(f"check_graph_chrome: {len(errors)} issue(s):", file=sys.stderr)
         for e in errors:
             print(f"  - {e}", file=sys.stderr)
-        return 1
-
-    print(
-        f"check_graph_chrome: OK ({len(SURFACES)} graph surfaces, "
-        f"{len(ITEM_SURFACES)} item surfaces)"
-    )
-    return 0
+    if rc == 0:
+        print(
+            f"check_graph_chrome: OK ({len(SURFACES)} graph surfaces, "
+            f"{len(ITEM_SURFACES)} item surfaces)"
+        )
+    return rc
 
 
 if __name__ == "__main__":

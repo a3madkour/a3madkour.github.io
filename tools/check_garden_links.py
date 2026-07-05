@@ -87,26 +87,28 @@ def lint_garden_links(garden_dir: Path) -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
+def run(repo_root: Path) -> tuple[int, list[str]]:
+    garden_dir = repo_root / "content" / "garden"
+    errors, warnings = lint_garden_links(garden_dir)
+    for w in warnings:
+        print(f"warning: {w}", file=sys.stderr)
+    return (1 if errors else 0, errors)
+
+
 def main() -> int:
     repo_root = Path(__file__).resolve().parent.parent
     garden_dir = repo_root / "content" / "garden"
     if not garden_dir.is_dir():
         print(f"error: {garden_dir} not found", file=sys.stderr)
         return 1
-
-    errors, warnings = lint_garden_links(garden_dir)
-
-    for w in warnings:
-        print(f"warning: {w}", file=sys.stderr)
-
+    rc, errors = run(repo_root)
     if errors:
         for e in errors:
             print(f"error: {e}", file=sys.stderr)
         print(f"\n{len(errors)} broken link(s).", file=sys.stderr)
-        return 1
-
-    print(f"OK — verified {len([1 for d in garden_dir.iterdir() if d.is_dir()])} note(s).")
-    return 0
+    if rc == 0:
+        print(f"OK — verified {len([1 for d in garden_dir.iterdir() if d.is_dir()])} note(s).")
+    return rc
 
 
 if __name__ == "__main__":

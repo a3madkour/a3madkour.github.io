@@ -21,7 +21,6 @@ import sys
 from html.parser import HTMLParser
 from pathlib import Path
 
-PUBLIC = Path('public')
 
 REQUIRED_META = [
     'citation_title',
@@ -155,10 +154,11 @@ def inspect_html(html: str, citations: dict) -> list[str]:
     return issues
 
 
-def load_citations() -> dict:
+def load_citations(path: Path | None = None) -> dict:
     """Stdlib-only YAML key extraction. Returns {key: {}} for each
     top-level entry under `citations:` in data/citations.yaml."""
-    path = Path('data/citations.yaml')
+    if path is None:
+        path = Path('data/citations.yaml')
     text = path.read_text()
     keys = set()
     in_citations = False
@@ -173,13 +173,12 @@ def load_citations() -> dict:
     return {k: {} for k in keys}
 
 
-def main() -> int:
-    if not PUBLIC.exists():
-        print('public/ not found — run `hugo --minify` first.', file=sys.stderr)
-        return 2
-    citations = load_citations()
+def run(repo_root: Path) -> tuple[int, list[str]]:
+    public = repo_root / "public"
+    citations = load_citations(repo_root / "data" / "citations.yaml")
     failures = 0
-    for html_path in PUBLIC.rglob('*.html'):
+    errors: list[str] = []
+    for html_path in public.rglob('*.html'):
         rel = str(html_path).replace('\\', '/')
         if not is_citable_path(rel):
             continue
@@ -187,17 +186,31 @@ def main() -> int:
         issues = inspect_html(html, citations=citations)
         if issues:
             failures += 1
-            print(f'{rel}:')
+            errors.append(f'{rel}:')
             for issue in issues:
-                print(f'  - {issue}')
-    if failures:
+                errors.append(f'  - {issue}')
+    return (1 if failures else 0), errors
+
+
+def main() -> int:
+    repo_root = Path(__file__).resolve().parent.parent
+    public = repo_root / "public"
+    if not public.exists():
+        print('public/ not found — run `hugo --minify` first.', file=sys.stderr)
+        return 2
+    rc, errors = run(repo_root)
+    # Per-page failures go to stdout (matching existing behaviour)
+    for e in errors:
+        print(e)
+    if errors:
+        failures = sum(1 for e in errors if not e.startswith('  '))
         print(
             f'\n{failures} citable page(s) failed cite-meta validation.',
             file=sys.stderr,
         )
-        return 1
-    print('cite-meta: OK')
-    return 0
+    if rc == 0:
+        print('cite-meta: OK')
+    return rc
 
 
 if __name__ == '__main__':

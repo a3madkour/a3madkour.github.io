@@ -157,15 +157,8 @@ def audit_page(file: Path, public: Path) -> PageAudit:
     )
 
 
-def main() -> int:
-    public = Path("public")
-    if not public.is_dir():
-        print(
-            "check_page_weights: public/ not found. Run `hugo --minify` first.",
-            file=sys.stderr,
-        )
-        return 2
-
+def run(repo_root: Path) -> tuple[int, list[str]]:
+    public = repo_root / "public"
     failures: list[PageAudit] = []
     audited = 0
     for f in sorted(public.rglob("index.html")):
@@ -176,21 +169,38 @@ def main() -> int:
         result = audit_page(f, public)
         if result.over_budget:
             failures.append(result)
-
     if failures:
-        print(f"check_page_weights: {len(failures)} page(s) over budget:", file=sys.stderr)
         header = f"{'PAGE':<48} {'BUDGET':>10} {'ACTUAL':>10} {'HTML':>8} {'CSS':>8} {'JS':>8} {'IMG':>8}"
-        print(header, file=sys.stderr)
+        errors = [f"check_page_weights: {len(failures)} page(s) over budget:", header]
         for r in failures:
-            print(
+            errors.append(
                 f"{r.url:<48} {r.budget:>10,} {r.total:>10,} "
-                f"{r.html_bytes:>8,} {r.css_bytes:>8,} {r.js_bytes:>8,} {r.img_bytes:>8,}",
-                file=sys.stderr,
+                f"{r.html_bytes:>8,} {r.css_bytes:>8,} {r.js_bytes:>8,} {r.img_bytes:>8,}"
             )
-        return 1
+        return 1, errors
+    return 0, []
 
-    print(f"check_page_weights: OK ({audited} pages audited)")
-    return 0
+
+def main() -> int:
+    repo_root = Path(__file__).resolve().parent.parent
+    public = repo_root / "public"
+    if not public.is_dir():
+        print(
+            "check_page_weights: public/ not found. Run `hugo --minify` first.",
+            file=sys.stderr,
+        )
+        return 2
+    rc, errors = run(repo_root)
+    if errors:
+        for e in errors:
+            print(e, file=sys.stderr)
+    if rc == 0:
+        audited = sum(
+            1 for f in sorted(public.rglob("index.html"))
+            if not should_skip(url_from_file(f, public))
+        )
+        print(f"check_page_weights: OK ({audited} pages audited)")
+    return rc
 
 
 if __name__ == "__main__":

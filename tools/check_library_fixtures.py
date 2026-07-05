@@ -296,7 +296,7 @@ def lint_yaml_file(file_name: str, text: str) -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
-def run(repo_root: Path) -> tuple[int, list[str], list[str]]:
+def run(repo_root: Path) -> tuple[int, list[str]]:
     all_errs: list[str] = []
     all_warns: list[str] = []
     data_dir = repo_root / "data"
@@ -307,16 +307,16 @@ def run(repo_root: Path) -> tuple[int, list[str], list[str]]:
         errs, warns = lint_yaml_file(fname, path.read_text())
         all_errs.extend(errs)
         all_warns.extend(warns)
-    return (1 if all_errs else 0), all_errs, all_warns
+    for w in all_warns:
+        print(f"warning: {w}", file=sys.stderr)
+    return (1 if all_errs else 0), all_errs
 
 
 def main() -> int:
     repo_root = Path(__file__).resolve().parent.parent
-    rc, errs, warns = run(repo_root)
+    rc, errs = run(repo_root)
     for e in errs:
         print(e, file=sys.stderr)
-    for w in warns:
-        print(f"warning: {w}", file=sys.stderr)
     if rc == 0:
         print("check_library_fixtures: OK")
     return rc

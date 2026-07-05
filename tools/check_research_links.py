@@ -119,32 +119,36 @@ def lint_research_links(
     return errors
 
 
-def main() -> int:
-    repo_root = Path(__file__).resolve().parent.parent
+def run(repo_root: Path) -> tuple[int, list[str]]:
     themes_dir = repo_root / "content" / "research" / "themes"
     questions_dir = repo_root / "content" / "research" / "questions"
     garden_dir = repo_root / "content" / "garden"
     essays_dir = repo_root / "content" / "essays"
+    errors = lint_research_links(themes_dir, questions_dir, garden_dir, essays_dir)
+    return (1 if errors else 0, errors)
 
+
+def main() -> int:
+    repo_root = Path(__file__).resolve().parent.parent
+    themes_dir = repo_root / "content" / "research" / "themes"
+    questions_dir = repo_root / "content" / "research" / "questions"
     if not themes_dir.is_dir() or not questions_dir.is_dir():
         print(
             f"error: missing {themes_dir} or {questions_dir}", file=sys.stderr
         )
         return 1
-
-    errors = lint_research_links(themes_dir, questions_dir, garden_dir, essays_dir)
+    rc, errors = run(repo_root)
     if errors:
         for e in errors:
             print(f"error: {e}", file=sys.stderr)
         print(f"\n{len(errors)} broken reference(s).", file=sys.stderr)
-        return 1
-
-    n_themes = len([d for d in themes_dir.iterdir() if d.is_dir() and not d.name.startswith("_")])
-    n_questions = len(
-        [d for d in questions_dir.iterdir() if d.is_dir() and not d.name.startswith("_")]
-    )
-    print(f"OK — verified {n_themes} theme(s), {n_questions} question(s).")
-    return 0
+    if rc == 0:
+        n_themes = len([d for d in themes_dir.iterdir() if d.is_dir() and not d.name.startswith("_")])
+        n_questions = len(
+            [d for d in questions_dir.iterdir() if d.is_dir() and not d.name.startswith("_")]
+        )
+        print(f"OK — verified {n_themes} theme(s), {n_questions} question(s).")
+    return rc
 
 
 if __name__ == "__main__":
