@@ -5743,12 +5743,12 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   color: var(--color-burgundy);
   border: 1px solid var(--color-burgundy);
   border-radius: 6px;
-  padding: 3px 9px;
+  padding: var(--space-3xs) var(--space-sm);
   text-decoration: none;
   white-space: nowrap;
 }
 .recipe-dl:hover {
-  background: color-mix(in srgb, var(--color-burgundy) 8%, transparent);
+  background: var(--color-stone);
 }
 
 /* Two-column flex layout */
@@ -5799,7 +5799,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 
 .recipe-stp {
   border: 1px solid var(--color-rule);
-  background: #fff;
+  background: var(--color-paper);
   border-radius: 7px;
   display: inline-flex;
   align-items: center;
@@ -5810,27 +5810,27 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   border: none;
   background: none;
   color: var(--color-burgundy);
-  font-size: 1.0625rem;
+  font-size: var(--text-base);
   line-height: 1;
   cursor: pointer;
-  padding: 4px var(--space-sm);
+  padding: var(--space-3xs) var(--space-sm);
   font-family: var(--font-ui);
 }
 .recipe-stp button:hover {
-  background: #f2ece9;
+  background: var(--color-stone);
 }
 
 .numin {
   font-family: var(--font-body);
-  font-size: 1rem;
+  font-size: var(--text-base);
   font-weight: 600;
   width: 42px;
   text-align: center;
   border: none;
   border-left: 1px solid var(--color-rule);
   border-right: 1px solid var(--color-rule);
-  padding: 5px 2px;
-  background: #fff;
+  padding: var(--space-3xs) 2px;
+  background: var(--color-paper);
   color: var(--color-ink);
   -moz-appearance: textfield;
 }
@@ -5841,7 +5841,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 }
 .numin:focus {
   outline: none;
-  background: #fbf7f5;
+  background: var(--color-stone);
 }
 
 /* Multiplier field — dashed-underline, pushed right */
