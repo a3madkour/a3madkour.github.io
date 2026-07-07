@@ -15,7 +15,12 @@
   </div>
   <h2 class="recipe-sec">Ingredients</h2>
   <ul class="recipe-ing">
+    {{ $sc := newScratch }}
     {{ range $i, $ing := .Params.ingredients }}
+      {{ if and $ing.group (ne ($sc.Get "g") $ing.group) }}
+        <li class="recipe-ing-group">{{ $ing.group }}</li>
+        {{ $sc.Set "g" $ing.group }}
+      {{ end }}
       <li data-i="{{ $i }}">
         {{ with $ing.qty }}<span class="q">{{ . }}{{ with $ing.unit }} {{ . }}{{ end }}</span> {{ end }}
         {{ $ing.item }}{{ with $ing.note }}, <span class="alt">{{ . }}</span>{{ end }}{{ with $ing.alt }} <span class="alt">(or {{ . }})</span>{{ end }}

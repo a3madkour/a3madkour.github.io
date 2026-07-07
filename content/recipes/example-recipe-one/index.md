@@ -12,6 +12,7 @@ yield_unit: "servings"
 prep_minutes: 10
 cook_minutes: 25
 video: "dQw4w9WgXcQ"
+image: "hero.svg"
 sources:
   - { name: "Example Cooking — Lorem", url: "https://example.com/lorem", note: "adapted" }
   - { name: "Example notebook" }

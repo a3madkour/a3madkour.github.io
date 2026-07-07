@@ -66,6 +66,6 @@
   {{- end -}}
 
   {{- if and (eq .Section "recipes") .IsPage -}}
-<script type="application/ld+json">{{ partial "recipes/schema-recipe.html" . | safeJS }}</script>
+  <script type="application/ld+json">{{ partial "recipes/schema-recipe.html" . | safeJS }}</script>
   {{- end -}}
 </head>

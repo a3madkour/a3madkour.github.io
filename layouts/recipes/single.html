@@ -14,7 +14,7 @@
       {{ with .Params.cook_minutes }}Cook {{ . }}&nbsp;min · {{ end }}
       Total {{ $total }}&nbsp;min
       {{ with .OutputFormats.Get "RECIPE" }}
-        · <a class="recipe-dl" href="{{ .RelPermalink }}" download>⬇ Download recipe (.json)</a>
+        · <a class="recipe-dl" href="{{ .RelPermalink }}" download><span aria-hidden="true">⬇</span> Download recipe (.json)</a>
       {{ end }}
     </div>
   </header>

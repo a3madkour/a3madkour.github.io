@@ -29,18 +29,19 @@
     "@context" "https://schema.org"
     "@type" "Recipe"
     "name" $p.Title
-    "description" $p.Params.summary
     "datePublished" ($p.Date.Format "2006-01-02")
     "recipeYield" (printf "%v %s" $p.Params.servings (default "servings" $p.Params.yield_unit))
     "prepTime" (printf "PT%dM" (int (default 0 $p.Params.prep_minutes)))
     "cookTime" (printf "PT%dM" (int (default 0 $p.Params.cook_minutes)))
     "totalTime" (printf "PT%dM" (int $total))
-    "recipeCuisine" $p.Params.cuisine
-    "recipeCategory" $p.Params.category
-    "keywords" (delimit $p.Params.tags ", ")
     "recipeIngredient" $ingText
     "recipeInstructions" $steps
     "x-ingredients" $p.Params.ingredients
 -}}
+{{- with $p.Params.summary }}{{- $obj = merge $obj (dict "description" .) -}}{{- end -}}
+{{- with $p.Params.cuisine }}{{- $obj = merge $obj (dict "recipeCuisine" .) -}}{{- end -}}
+{{- with $p.Params.category }}{{- $obj = merge $obj (dict "recipeCategory" .) -}}{{- end -}}
+{{- with $p.Params.tags }}{{- $obj = merge $obj (dict "keywords" (delimit . ", ")) -}}{{- end -}}
+{{- with $p.Params.image }}{{- $obj = merge $obj (dict "image" (printf "%s%s" $p.Permalink .)) -}}{{- end -}}
 {{- with $based }}{{- $obj = merge $obj (dict "isBasedOn" .) -}}{{- end -}}
 {{- $obj | jsonify -}}

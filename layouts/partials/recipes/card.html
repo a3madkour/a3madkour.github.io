@@ -7,7 +7,7 @@
   <h3>{{ .Title }}</h3>
   <p class="recipe-card-sum">{{ .Params.summary }}</p>
   <div class="recipe-card-foot">
-    <span class="recipe-card-time">⏱ {{ $total }}&nbsp;min</span>
+    <span class="recipe-card-time"><span aria-hidden="true">⏱</span> {{ $total }}&nbsp;min</span>
     <span class="recipe-card-serves">{{ .Params.servings }} {{ default "servings" .Params.yield_unit }}</span>
   </div>
 </a>

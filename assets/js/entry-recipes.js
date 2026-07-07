@@ -29,6 +29,7 @@ function initScaler(rail) {
   function fromServings() {
     let s = parseFloat(serves.value);
     if (!(s > 0)) s = base;
+    s = Math.min(99, s);
     const r = s / base;
     mult.value = clean(r);
     apply(r);
