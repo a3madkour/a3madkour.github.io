@@ -167,7 +167,7 @@ separator "Playwright E2E (built site)"
 # the truth about what ran (mirrors the LHCI need_lhci_dep preflight pattern).
 if command -v npx >/dev/null 2>&1; then
   [ -d node_modules ] || npm ci
-  node --test tests/unit/
+  node --test tests/unit/*.test.mjs
   npx playwright install chromium >/dev/null 2>&1 || true
   npx playwright test
 else

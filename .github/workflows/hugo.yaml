@@ -210,7 +210,7 @@ jobs:
       - name: Install E2E dependencies
         run: npm ci
       - name: JS unit tests
-        run: node --test tests/unit/
+        run: node --test tests/unit/*.test.mjs
       - name: Install Playwright browser (chromium)
         run: npx playwright install --with-deps chromium
       - name: Run Playwright E2E over built site
