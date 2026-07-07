@@ -64,4 +64,8 @@
     {{/* No-JS users see the static <details> fallback; JS users get the modal. */}}
     <noscript><style>.cite-static{display:block}</style></noscript>
   {{- end -}}
+
+  {{- if and (eq .Section "recipes") .IsPage -}}
+<script type="application/ld+json">{{ partial "recipes/schema-recipe.html" . | safeJS }}</script>
+  {{- end -}}
 </head>

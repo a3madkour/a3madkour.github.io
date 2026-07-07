@@ -1,0 +1,46 @@
+{{- /* schema-recipe.html — builds a schema.org/Recipe dict and returns jsonify.
+       Called by: layouts/recipes/single.recipe.json (RECIPE output format)
+                  layouts/partials/head.html (JSON-LD <script> on recipe pages)
+       Both call this partial — keep the object-building logic here, DRY.
+*/ -}}
+{{- $p := . -}}
+{{- $total := or $p.Params.total_minutes (add (default 0 $p.Params.prep_minutes) (default 0 $p.Params.cook_minutes)) -}}
+{{- $ingText := slice -}}
+{{- range $p.Params.ingredients -}}
+  {{- $q := "" -}}
+  {{- with .qty }}{{- $q = printf "%v " . -}}{{- end -}}
+  {{- $u := "" -}}
+  {{- with .unit }}{{- $u = printf "%s " . -}}{{- end -}}
+  {{- $line := printf "%s%s%s" $q $u .item -}}
+  {{- with .note }}{{- $line = printf "%s, %s" $line . -}}{{- end -}}
+  {{- $ingText = $ingText | append (trim $line " ") -}}
+{{- end -}}
+{{- $steps := slice -}}
+{{- range $p.Params.steps -}}
+  {{- $t := replaceRE `^\[\d{1,2}:[0-5]\d(?:\.\d{1,2})?\]\s*` "" . -}}
+  {{- $steps = $steps | append (dict "@type" "HowToStep" "text" $t) -}}
+{{- end -}}
+{{- $based := slice -}}
+{{- range $p.Params.sources -}}
+  {{- $srcName := .name -}}
+  {{- with .url }}{{- $based = $based | append (dict "@type" "CreativeWork" "name" $srcName "url" .) -}}{{- end -}}
+{{- end -}}
+{{- $obj := dict
+    "@context" "https://schema.org"
+    "@type" "Recipe"
+    "name" $p.Title
+    "description" $p.Params.summary
+    "datePublished" ($p.Date.Format "2006-01-02")
+    "recipeYield" (printf "%v %s" $p.Params.servings (default "servings" $p.Params.yield_unit))
+    "prepTime" (printf "PT%dM" (int (default 0 $p.Params.prep_minutes)))
+    "cookTime" (printf "PT%dM" (int (default 0 $p.Params.cook_minutes)))
+    "totalTime" (printf "PT%dM" (int $total))
+    "recipeCuisine" $p.Params.cuisine
+    "recipeCategory" $p.Params.category
+    "keywords" (delimit $p.Params.tags ", ")
+    "recipeIngredient" $ingText
+    "recipeInstructions" $steps
+    "x-ingredients" $p.Params.ingredients
+-}}
+{{- with $based }}{{- $obj = merge $obj (dict "isBasedOn" .) -}}{{- end -}}
+{{- $obj | jsonify -}}

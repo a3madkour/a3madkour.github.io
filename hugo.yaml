@@ -27,10 +27,19 @@ outputs:
 # Tier 7.1: LHCI URL manifest. Generates public/lhci-pages.json with
 # {url, kind, section, type} per page. Consumed by tools/gen_lhci_urls.py
 # to regenerate lighthouserc.{json,mobile.json} in CI.
+mediaTypes:
+  application/ld+json:
+    suffixes: ["json"]
+
 outputFormats:
   LHCI-PAGES:
     mediaType: application/json
     baseName: lhci-pages
+    isPlainText: true
+    notAlternative: true
+  RECIPE:
+    mediaType: application/ld+json
+    baseName: index
     isPlainText: true
     notAlternative: true
 
