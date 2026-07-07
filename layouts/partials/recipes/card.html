@@ -1,0 +1,13 @@
+{{- $total := or .Params.total_minutes (add (default 0 .Params.prep_minutes) (default 0 .Params.cook_minutes)) -}}
+<a class="recipe-card" href="{{ .RelPermalink }}"
+   data-cuisine="{{ .Params.cuisine }}"
+   data-category="{{ .Params.category }}"
+   data-tags="{{ delimit .Params.tags " " }}">
+  <div class="recipe-card-kicker">{{ .Params.cuisine }}{{ with .Params.category }} · {{ . }}{{ end }}</div>
+  <h3>{{ .Title }}</h3>
+  <p class="recipe-card-sum">{{ .Params.summary }}</p>
+  <div class="recipe-card-foot">
+    <span class="recipe-card-time">⏱ {{ $total }}&nbsp;min</span>
+    <span class="recipe-card-serves">{{ .Params.servings }} {{ default "servings" .Params.yield_unit }}</span>
+  </div>
+</a>

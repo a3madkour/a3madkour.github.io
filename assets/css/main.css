@@ -5973,3 +5973,105 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
     width: 100%;
   }
 }
+
+/* §50b — Recipes index + card */
+
+.recipe-index {
+  max-width: var(--reading-column);
+  margin: 0 auto;
+  padding: var(--space-3xl) 0 var(--space-6xl);
+}
+
+.recipe-index h1 {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-2xl);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--space-xs);
+}
+
+.recipe-lede {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+  margin: 0 0 var(--space-xl);
+  max-width: 56ch;
+}
+
+.recipe-lede p {
+  margin: 0;
+}
+
+.recipe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-lg);
+  margin-top: var(--space-xl);
+}
+
+.recipe-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-tile);
+  border: 1px solid var(--color-rule);
+  border-radius: 8px;
+  padding: var(--space-md) var(--space-lg) var(--space-md);
+  text-decoration: none;
+  color: var(--color-ink);
+  transition: border-color 0.12s;
+}
+
+.recipe-card:hover {
+  border-color: var(--color-burgundy);
+}
+
+.recipe-card[hidden] {
+  display: none;
+}
+
+.recipe-card-kicker {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-ink-fade);
+  margin-bottom: var(--space-2xs);
+}
+
+.recipe-card h3 {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-md);
+  line-height: 1.2;
+  margin: 0 0 var(--space-xs);
+}
+
+.recipe-card-sum {
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--color-ink-soft);
+  margin: 0 0 var(--space-md);
+  flex: 1;
+}
+
+.recipe-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-fade);
+  border-top: 1px solid var(--color-rule);
+  padding-top: var(--space-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.recipe-empty {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-ink-fade);
+  margin-top: var(--space-xl);
+  text-align: center;
+}

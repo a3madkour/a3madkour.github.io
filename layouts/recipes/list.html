@@ -1,0 +1,52 @@
+{{ define "main" }}
+{{- $pages := .Pages.ByDate.Reverse -}}
+
+{{- /* Collect unique cuisine and category values, plus tag counts. */ -}}
+{{- $cuisines := slice -}}
+{{- $categories := slice -}}
+{{- $tagCounts := dict -}}
+{{- range $pages -}}
+  {{- if and .Params.cuisine (not (in $cuisines .Params.cuisine)) -}}
+    {{- $cuisines = $cuisines | append .Params.cuisine -}}
+  {{- end -}}
+  {{- if and .Params.category (not (in $categories .Params.category)) -}}
+    {{- $categories = $categories | append .Params.category -}}
+  {{- end -}}
+  {{- range .Params.tags -}}
+    {{- $cur := index $tagCounts . | default 0 -}}
+    {{- $tagCounts = merge $tagCounts (dict . (add $cur 1)) -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* Tags ranked by count desc, alphabetical for ties. */ -}}
+{{- $tagPairs := slice -}}
+{{- range $name, $count := $tagCounts -}}
+  {{- $tagPairs = $tagPairs | append (dict "name" $name "count" $count) -}}
+{{- end -}}
+{{- $tags := slice -}}
+{{- range (sort (sort $tagPairs "name" "asc") "count" "desc") -}}
+  {{- $tags = $tags | append .name -}}
+{{- end -}}
+
+{{- /* Build filter dimensions — only include if ≥2 distinct values. */ -}}
+{{- $dims := slice -}}
+{{- if ge (len $cuisines) 2 -}}
+  {{- $dims = $dims | append (dict "key" "cuisine" "label" "Cuisine" "values" $cuisines) -}}
+{{- end -}}
+{{- if ge (len $categories) 2 -}}
+  {{- $dims = $dims | append (dict "key" "category" "label" "Course" "values" $categories) -}}
+{{- end -}}
+{{- if ge (len $tags) 2 -}}
+  {{- $dims = $dims | append (dict "key" "tag" "label" "Tag" "values" $tags) -}}
+{{- end -}}
+
+<div class="recipe-index">
+  <h1>{{ .Title }}</h1>
+  {{ with .Content }}<div class="recipe-lede">{{ . }}</div>{{ end }}
+  {{ partial "filter-chips.html" (dict "dimensions" $dims "section" "recipes") }}
+  <div class="recipe-grid" id="recipe-grid">
+    {{ range $pages }}{{ partial "recipes/card.html" . }}{{ end }}
+  </div>
+  <p class="recipe-empty" id="recipe-empty" hidden>No recipes match the current filters.</p>
+</div>
+{{ end }}

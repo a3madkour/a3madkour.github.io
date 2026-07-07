@@ -1,5 +1,9 @@
 {{ define "main" }}
 {{ $total := or .Params.total_minutes (add (default 0 .Params.prep_minutes) (default 0 .Params.cook_minutes)) }}
+<span data-pagefind-meta="section:recipes" hidden></span>
+<span data-pagefind-filter="section:recipes" hidden></span>
+{{ with .Params.cuisine }}<span data-pagefind-meta="cuisine:{{ . }}" hidden></span>{{ end }}
+{{ with .Params.category }}<span data-pagefind-meta="category:{{ . }}" hidden></span>{{ end }}
 <article class="recipe">
   <header class="recipe-head">
     <div class="recipe-kicker">{{ .Params.cuisine }}{{ with .Params.category }} · {{ . }}{{ end }}</div>
