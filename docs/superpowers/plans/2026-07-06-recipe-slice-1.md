@@ -35,12 +35,12 @@
 
 - [ ] **Step 1: Write the section index**
 
-`content/recipes/_index.md`:
+`content/recipes/_index.md` (the `outputs` cascade is added in Task 5, once the
+`RECIPE` output format exists — adding it here would fail the build with "unknown
+output format"):
 ```markdown
 ---
 title: "Recipes"
-cascade:
-  outputs: ["HTML", "RECIPE"]
 ---
 
 Things worth cooking twice — with sources, scalable portions, and a clean download.
@@ -650,6 +650,7 @@ git commit -m "feat(recipes): pure unit-aware quantity scaling + node --test uni
 - Create: `layouts/partials/recipes/schema-recipe.html`
 - Create: `layouts/recipes/single.recipe.json` (RECIPE output template)
 - Modify: `hugo.yaml` (add `RECIPE` output format + `RECIPE` media type)
+- Modify: `content/recipes/_index.md` (add the `outputs` cascade — deferred from Task 1)
 - Modify: `layouts/partials/head.html` (emit JSON-LD on recipe pages)
 - Modify: `tools/check_smoke.py` (assert built recipe emits ld+json + .json)
 
@@ -719,12 +720,28 @@ mediaTypes:
 ```
 Note: `.name` inside the sources `range` refers to the source's name; if Hugo scoping needs it, use `.name`/`$.name` as the build dictates — the verification step catches mis-scoping.
 
-- [ ] **Step 3: Write the RECIPE output template**
+- [ ] **Step 3: Write the RECIPE output template + enable it on recipe pages**
 
 `layouts/recipes/single.recipe.json`:
 ```go-html-template
 {{- partial "recipes/schema-recipe.html" . -}}
 ```
+
+Then add the output cascade to `content/recipes/_index.md` (now that `RECIPE`
+exists), so every recipe page emits the download `.json`:
+```yaml
+---
+title: "Recipes"
+cascade:
+  outputs: ["HTML", "RECIPE"]
+---
+
+Things worth cooking twice — with sources, scalable portions, and a clean download.
+```
+Verify the cascade actually propagates `outputs` to the single pages (build Step 5
+checks the `.json` exists). If this Hugo version does not cascade `outputs`, the
+documented fallback is per-recipe frontmatter `outputs: ["HTML", "RECIPE"]` (already
+an allowed optional field in `check_recipes_fixtures.py`).
 
 - [ ] **Step 4: Emit JSON-LD in `<head>` for recipe pages**
 
