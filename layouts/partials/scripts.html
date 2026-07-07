@@ -106,6 +106,15 @@
 <script src="{{ $streams.RelPermalink }}" integrity="{{ $streams.Data.Integrity }}" defer></script>
 {{- end }}
 
+{{- /* Recipes runtime: index (filter chips) + single pages (scaler DOM binding).
+       entry-recipes.js self-guards each half on its own DOM anchor so loading
+       on either page type no-ops cleanly when the other runtime doesn't apply. */ -}}
+{{- if eq .Section "recipes" }}
+{{- $recipesOpts := dict "targetPath" "js/recipes.js" "minify" true -}}
+{{- $recipes := resources.Get "js/entry-recipes.js" | js.Build $recipesOpts | fingerprint }}
+<script src="{{ $recipes.RelPermalink }}" integrity="{{ $recipes.Data.Integrity }}" defer></script>
+{{- end }}
+
 {{- /* Explorables: per-essay bundle. Each essay with has_widgets:true gets a
        dedicated js.Build entry from assets/js/explorables/<slug>/index.js.
        The <script> tag emits page-narrowly — only when the current page's
