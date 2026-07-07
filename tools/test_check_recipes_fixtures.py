@@ -61,8 +61,14 @@ class T(unittest.TestCase):
     def test_servings_non_positive(self):
         self.repo.write("content/recipes/ex/index.md",
                         VALID.replace('servings: 4', 'servings: 0'))
-        rc, errs = mod.run(self.repo.root)
+        rc, _ = mod.run(self.repo.root)
         self.assertEqual(rc, 1)
+
+    def test_servings_float_string(self):
+        self.repo.write("content/recipes/ex/index.md",
+                        VALID.replace('servings: 4', 'servings: 1.5'))
+        rc, errs = mod.run(self.repo.root)
+        self.assertEqual(rc, 0, errs)
 
     def test_source_missing_name(self):
         bad = VALID.replace('{ name: "Example", url: "https://example.com/x" }',
@@ -75,7 +81,7 @@ class T(unittest.TestCase):
     def test_bad_timecode(self):
         bad = VALID.replace('"Do the thing."', '"[99:99] bad marker step."')
         self.repo.write("content/recipes/ex/index.md", bad)
-        rc, errs = mod.run(self.repo.root)
+        rc, _ = mod.run(self.repo.root)
         self.assertEqual(rc, 1)
 
 

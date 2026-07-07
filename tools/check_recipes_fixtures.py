@@ -51,7 +51,7 @@ def lint_file(md: Path) -> list[str]:
         errs.append(f"{md}: unknown field '{f}'")
 
     sv = fm.get("servings")
-    if sv is not None and not (_is_num(sv) and sv > 0):
+    if sv is not None and not (_is_num(sv) and float(str(sv)) > 0):
         errs.append(f"{md}: servings must be a number > 0")
 
     for key in ("prep_minutes", "cook_minutes", "total_minutes"):
