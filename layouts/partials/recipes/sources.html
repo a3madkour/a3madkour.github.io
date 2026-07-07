@@ -1,0 +1,11 @@
+{{ with .Params.sources }}
+<section class="recipe-sources">
+  <h2 class="recipe-sec">Sources</h2>
+  <ul>
+    {{ range . }}
+      {{ $n := .name }}
+      <li>{{ with .url }}<a href="{{ . }}">{{ $n }}</a>{{ else }}{{ $n }}{{ end }}{{ with .note }} <span class="alt">· {{ . }}</span>{{ end }}</li>
+    {{ end }}
+  </ul>
+</section>
+{{ end }}

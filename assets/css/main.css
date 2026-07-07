@@ -5681,3 +5681,295 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   overflow-y: hidden;
   padding: var(--space-1) 0;
 }
+
+/* ============================================================
+ * §51 — Recipes
+ *
+ * Two-column reading layout: sticky ingredients rail (left) +
+ * steps column (right). Collapses to single column at 720px.
+ * DOM contract: .recipe-rail[data-base-servings] contains the
+ * .recipe-data JSON island, .recipe-serves/.recipe-mult inputs,
+ * .recipe-minus/.recipe-plus buttons, and .recipe-ing list.
+ * ============================================================ */
+
+.recipe {
+  max-width: var(--reading-column);
+  margin: 0 auto;
+  padding: var(--space-3xl) 0 var(--space-6xl);
+}
+
+.recipe-head {
+  margin-bottom: var(--space-2xl);
+}
+
+.recipe-kicker {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-ink-fade);
+  margin-bottom: var(--space-2xs);
+}
+
+.recipe-head h1 {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-2xl);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--space-xs);
+}
+
+.recipe-note {
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  color: var(--color-ink-soft);
+  font-style: italic;
+  margin: 0 0 var(--space-sm);
+  max-width: 52ch;
+}
+
+.recipe-meta {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-fade);
+  margin: 0;
+}
+
+.recipe-dl {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-burgundy);
+  border: 1px solid var(--color-burgundy);
+  border-radius: 6px;
+  padding: 3px 9px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.recipe-dl:hover {
+  background: color-mix(in srgb, var(--color-burgundy) 8%, transparent);
+}
+
+/* Two-column flex layout */
+.recipe-body {
+  display: flex;
+  gap: var(--space-2xl);
+  align-items: flex-start;
+}
+
+.recipe-rail {
+  flex: 0 0 42%;
+  position: sticky;
+  top: var(--space-lg);
+  background: var(--color-tile);
+  border: 1px solid var(--color-rule);
+  border-radius: 8px;
+  padding: var(--space-md) var(--space-lg) var(--space-lg);
+}
+
+.recipe-steps-col {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Section headings (Ingredients / Steps / Sources) */
+.recipe-sec {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-md);
+  margin: var(--space-xl) 0 var(--space-xs);
+  padding-bottom: var(--space-2xs);
+  border-bottom: 1px solid var(--color-rule);
+}
+.recipe-rail .recipe-sec {
+  margin-top: var(--space-md);
+  font-size: var(--text-sm);
+}
+
+/* Scaler row: Serves stepper + multiplier pushed right */
+.recipe-scaler {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+}
+
+.recipe-stp {
+  border: 1px solid var(--color-rule);
+  background: #fff;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.recipe-stp button {
+  border: none;
+  background: none;
+  color: var(--color-burgundy);
+  font-size: 1.0625rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px var(--space-sm);
+  font-family: var(--font-ui);
+}
+.recipe-stp button:hover {
+  background: #f2ece9;
+}
+
+.numin {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  width: 42px;
+  text-align: center;
+  border: none;
+  border-left: 1px solid var(--color-rule);
+  border-right: 1px solid var(--color-rule);
+  padding: 5px 2px;
+  background: #fff;
+  color: var(--color-ink);
+  -moz-appearance: textfield;
+}
+.numin::-webkit-outer-spin-button,
+.numin::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.numin:focus {
+  outline: none;
+  background: #fbf7f5;
+}
+
+/* Multiplier field — dashed-underline, pushed right */
+.recipe-mult-wrap {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 1px;
+  color: var(--color-ink-fade);
+}
+
+.recipe-mult {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  width: 40px;
+  text-align: right;
+  color: var(--color-ink-soft);
+  border: none;
+  border-bottom: 1px dashed var(--color-rule);
+  background: transparent;
+  padding: 1px 2px;
+  -moz-appearance: textfield;
+}
+.recipe-mult::-webkit-outer-spin-button,
+.recipe-mult::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.recipe-mult:focus {
+  outline: none;
+  border-bottom-color: var(--color-burgundy);
+  color: var(--color-ink);
+}
+
+.recipe-x {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 500;
+}
+
+/* Ingredients list */
+.recipe-ing {
+  margin: 0;
+  padding-left: var(--space-xl);
+}
+.recipe-ing li {
+  font-size: var(--text-sm);
+  line-height: 1.85;
+}
+
+.q {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.q.changed {
+  color: var(--color-burgundy);
+}
+
+.alt {
+  color: var(--color-ink-fade);
+  font-style: italic;
+}
+
+/* Steps list — burgundy circle counters */
+.recipe-steps {
+  margin: 0;
+  padding-left: 0;
+  counter-reset: recipe-step;
+  list-style: none;
+}
+.recipe-steps li {
+  counter-increment: recipe-step;
+  position: relative;
+  padding-left: var(--space-4xl);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  margin: var(--space-sm) 0;
+}
+.recipe-steps li::before {
+  content: counter(recipe-step);
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  border: 1px solid var(--color-burgundy);
+  color: var(--color-burgundy);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-align: center;
+  line-height: 21px;
+}
+
+/* Headnote (body content below steps) */
+.recipe-headnote {
+  margin-top: var(--space-xl);
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+  border-top: 1px solid var(--color-rule);
+  padding-top: var(--space-md);
+}
+
+/* Sources */
+.recipe-sources {
+  margin-top: var(--space-2xl);
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+}
+.recipe-sources ul {
+  margin: 0;
+  padding-left: var(--space-xl);
+}
+.recipe-sources a {
+  color: var(--color-burgundy);
+  text-underline-offset: 3px;
+}
+
+/* Collapse to single column on mobile */
+@media (max-width: 720px) {
+  .recipe-body {
+    flex-direction: column;
+  }
+  .recipe-rail {
+    position: static;
+    flex-basis: auto;
+    width: 100%;
+  }
+}
