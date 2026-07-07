@@ -18,10 +18,12 @@ def lint_file(md: Path) -> list[str]:
     fm = parse_frontmatter(md.read_text())
     if fm is None:
         return []
-    for i, s in enumerate(fm.get("sources") or []):
-        if isinstance(s, dict) and s.get("url"):
-            if not URL_RE.match(str(s["url"])):
-                errs.append(f"{md}: sources[{i}] url is not a well-formed http(s) URL")
+    sources = fm.get("sources")
+    if isinstance(sources, list):
+        for i, s in enumerate(sources):
+            if isinstance(s, dict) and s.get("url"):
+                if not URL_RE.match(str(s["url"])):
+                    errs.append(f"{md}: sources[{i}] url is not a well-formed http(s) URL")
     vid = fm.get("video")
     if vid:
         if not VIDEO_RE.match(str(vid)):
