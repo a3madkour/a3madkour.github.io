@@ -1,4 +1,6 @@
 {{ define "main" }}
+<span data-pagefind-meta="section:recipes" hidden></span>
+<span data-pagefind-filter="section:recipes" hidden></span>
 {{- $pages := .Pages.ByDate.Reverse -}}
 
 {{- /* Collect unique cuisine and category values, plus tag counts. */ -}}
