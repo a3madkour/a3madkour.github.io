@@ -64,9 +64,13 @@ recipe and renders it minimally in the house style:
 - **Fixtures = hand-authored dummy recipes** in the standard format (obviously-dummy
   per the site's fixture rule) — Slice 1 does not depend on Slice 2 shipping.
 
-### Slice 2 — Org authoring + lint + clean export  · *brainstorm-later, research-gated*
-How a recipe is authored in org and exported to the standard format. **This is the
-follow-up the author explicitly asked to defer.** Before designing:
+### Slice 2 — Org authoring + lint + clean export  · **SHIPPED 2026-07-10**
+How a recipe is authored in org and exported to the standard format. **This was the
+follow-up the author explicitly asked to defer.** Superseded by the full design +
+plan, both shipped: `docs/superpowers/specs/2026-07-09-recipe-slice-2-org-authoring-design.md`
+(handler `a3madkour-publish-recipes.el` + linter `a3madkour-recipe-lint.el`, both
+dotfiles) and `docs/superpowers/plans/2026-07-09-recipe-slice-2.md`. Original framing
+below, kept for history:
 - **Research task:** survey what org offers out of the box for recipes — org tables,
   structured property drawers, any existing org recipe packages, Cooklang-for-org,
   etc. There may be prior art to build on rather than inventing syntax.
