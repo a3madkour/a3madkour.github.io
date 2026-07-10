@@ -59,8 +59,10 @@ slug → `content/recipes/<slug>/index.md`.
 
 ```org
 #+TITLE: Shakshuka
+#+HUGO_SECTION: recipes
+#+DATE: 2026-07-09
 #+FILETAGS: :example:one-pan:
-#+SUMMARY: Eggs poached in a spiced tomato sauce — a fast one-pan dish.
+#+HUGO_SUMMARY: Eggs poached in a spiced tomato sauce — a fast one-pan dish.
 :PROPERTIES:
 :servings:    4
 :yield-unit:  servings
@@ -115,9 +117,10 @@ prep_minutes, cook_minutes, total_minutes, image, video, outputs`.
 
 | Frontmatter key | Source in org | Notes |
 |---|---|---|
-| `title` | `#+TITLE:` | required |
-| `tags` | `#+FILETAGS:` | optional; org standard tag syntax → list |
-| `summary` | `#+SUMMARY:` | required — a keyword, not a drawer prop |
+| `title` | `#+TITLE:` | required; ox-hugo native |
+| `date` | `#+DATE:` | required; ox-hugo native; normalize defaults to `lastmod` if absent |
+| `tags` | `#+FILETAGS:` | optional; ox-hugo maps filetags → `tags` list |
+| `summary` | `#+HUGO_SUMMARY:` | required; read directly (ox-hugo has no native summary keyword — same as essays) |
 | `servings` | `:servings:` | required; int > 0 |
 | `yield_unit` | `:yield-unit:` | optional; default `"servings"` |
 | `prep_minutes` | `:prep-time:` | optional int (org-chef spelling; value = minutes) |
@@ -127,9 +130,14 @@ prep_minutes, cook_minutes, total_minutes, image, video, outputs`.
 | `category` | `:category:` | optional |
 | `video` | `:video:` | optional; bare YouTube id |
 | `image` | `:image:` | optional; asset filename in the bundle |
-| `date` | first-publish date | garden convention (history/mtime) |
-| `lastmod` | mtime/history | garden P2.14 stable-date pattern |
-| `draft` | publish state | living/deliberate publish state |
+| `lastmod` | `last-modified-cascade` | drawer → keyword → git-mtime → prior-recorded → fs-mtime → today (essays/P2.14 machinery) |
+| `draft` | `#+HUGO_DRAFT:` / publish state | coerced to bool, default false (essays convention) |
+
+**Standard fields (`title`/`date`/`lastmod`/`draft`/`summary`/`tags`) reuse the
+essays normalize machinery** via a new `recipes` branch in
+`a3madkour-publish-frontmatter.el`; the handler then **injects** the
+recipe-specific keys (servings, ingredients, steps, sources, …) into the
+normalized alist — exactly as the research handler injects `outputs`.
 | `ingredients` | `** Ingredients` table | see below |
 | `steps` | `** Steps` ordered list | see below |
 | `sources` | `** Sources` list | see below |
@@ -177,19 +185,23 @@ so `** Sources` with at least one item is mandatory.
 Per-file handler, structural peer of `a3madkour-publish-garden.el`. Entry point
 `a3madkour-pub-recipes/publish-recipe-file (file run &key on-done)`:
 
-1. **Parse** the source with `org-element` — metadata (drawer props + keywords),
-   then the `** Ingredients` / `** Steps` / `** Sources` subtrees' structured data.
-2. **Export body** — export only the headnote (content before the first `**`
-   subheading) via `a3madkour-pub-export/export-file`, so the three data subtrees
-   never reach the body. (Implementation: strip the three subtrees from a temp
-   copy before ox-hugo sees it, reusing the rewrite-to-tmp-file pattern.)
-3. **Build the frontmatter alist**; render via
-   `a3madkour-pub-yaml/render-frontmatter` with a **`key-hook`** that emits the
-   flow-style block sequences for `ingredients` / `sources` / `steps` verbatim
-   (the same mechanism the research handler uses for `outputs`). A small
-   handler-local flow-object renderer produces `{ k: v, ... }` lines.
-4. `a3madkour-pub/asset-validate-and-copy` the `:image:` into the bundle.
-5. `write-if-different` → `record-publish` (state + stable `lastmod`).
+1. **Lint** the source via `a3madkour-recipe-lint/lint-file` (unless disabled);
+   abort the file's publish on errors.
+2. **Parse** the source with `org-element` — drawer/keyword metadata, then the
+   `** Ingredients` / `** Steps` / `** Sources` subtrees' structured data.
+3. **Export body** — strip the three data subtrees from a temp copy (reusing the
+   `rewrite-to-tmp-file` pattern), then `a3madkour-pub-export/export-file` so only
+   the headnote reaches the body.
+4. **Normalize + inject** — run the standard fields through
+   `a3madkour-pub-frontmatter/normalize 'recipes` (date/lastmod/draft/summary/tags),
+   then inject the recipe-specific keys (servings, `ingredients`, `steps`,
+   `sources`, …) into the normalized alist.
+5. **Render** via a recipe `--render-frontmatter` wrapper: a **`key-hook`** emits
+   the flow-style block sequences for `ingredients` / `sources` / `steps` verbatim
+   (the mechanism the research handler uses for `outputs`); a handler-local
+   flow-object renderer produces the `{ k: v, ... }` lines.
+6. `a3madkour-pub/asset-validate-and-copy` the `:image:` → `write-if-different` →
+   `record-publish` (state + stable `lastmod`).
 
 Registration: add a `recipes` entry to the living-publish handler table
 (`a3madkour-publish-living`) and `-l a3madkour-publish-recipes` to `a3-pub.sh`
@@ -210,7 +222,7 @@ Rules (each reports file:line):
 3. Every ingredient row: `qty` numeric-or-empty; `item` non-empty.
 4. Every step timecode (if present) matches `TIMECODE_RE`.
 5. `:video:` (if present) is a bare YouTube-id shape (`[A-Za-z0-9_-]{11}`).
-6. Required metadata present: `#+TITLE:`, `#+SUMMARY:`, `:servings:` (int > 0).
+6. Required metadata present: `#+TITLE:`, `#+HUGO_SUMMARY:`, `:servings:` (int > 0).
 
 Non-goals for the linter: it validates authorability, not schema.org semantics —
 the emitted-YAML shape is still backstopped by `check_recipes_fixtures.py` /
