@@ -26,3 +26,13 @@ test('wrapped {{< math >}} shortcode renders and stub is gone', async ({ page })
   // example-one has three math spots; all three render as KaTeX.
   expect(await page.locator('.katex').count()).toBeGreaterThanOrEqual(3);
 });
+
+test('math nested in AMS blocks renders on example-five', async ({ page }) => {
+  await page.goto('/essays/example-five/');
+  // Definition block contains rendered math (was bare \(x_0\)).
+  await expect(page.locator('.block-definition .katex').first()).toBeVisible();
+  // Proof block contains rendered math (was bare \(\alpha + \beta = \gamma\)).
+  await expect(page.locator('.block-proof .katex').first()).toBeVisible();
+  // No raw delimiter leaks anywhere in the body.
+  await expect(page.locator('main')).not.toContainText('\\(');
+});
