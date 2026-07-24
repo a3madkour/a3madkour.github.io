@@ -42,6 +42,18 @@ markup:
             # and shows `<!-- raw HTML omitted -->` in their place.  All site
             # content is author-controlled (no user submissions), so unsafe is fine.
             unsafe: true
+        extensions:
+            # Build-time math: capture the two canonical delimiter pairs
+            # (ox-hugo / org-math-lint output) and hand them to the
+            # render-passthrough hook -> transform.ToMath. Single-$ is
+            # deliberately NOT enabled (would clobber prose dollar signs).
+            passthrough:
+                enable: true
+                delimiters:
+                    block:
+                        - ['\[', '\]']
+                    inline:
+                        - ['\(', '\)']
     highlight:
         style: dracula
     tableOfContents:
