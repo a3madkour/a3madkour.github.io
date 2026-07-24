@@ -16,3 +16,14 @@ poem-audio-pill
 # (garden-graph-node keeps a literal ref via garden-graph.js updateInStackMarkers.)
 research-graph-node
 works-graph-node
+
+# Math pipeline: `.katex` / `.katex-display` are emitted by Hugo's built-in
+# KaTeX renderer (transform.ToMath, invoked from the math passthrough render
+# hook + math.html shortcode) at build time — the markup never appears as a
+# literal string in layouts/content/js, so the static scan can't see it.
+# `.katex` happens to pass today only by coincidence (head.html's `$katex`
+# Hugo variable substring-matches the bare class name); listing both here
+# makes the exemption explicit and future-proof. Genuinely rendered on every
+# math page; verified by tests/e2e/math.spec.ts.
+katex
+katex-display

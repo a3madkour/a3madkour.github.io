@@ -36,3 +36,17 @@ test('math nested in AMS blocks renders on example-five', async ({ page }) => {
   // No raw delimiter leaks anywhere in the body.
   await expect(page.locator('main')).not.toContainText('\\(');
 });
+
+test('katex stylesheet loads on math pages only', async ({ page }) => {
+  await page.goto('/essays/example-one/');
+  await expect(page.locator('link[rel="stylesheet"][href*="katex"]')).toHaveCount(1);
+  // Rendered math is actually styled: KaTeX applies a KaTeX font-family.
+  const ff = await page.locator('.katex').first().evaluate(
+    (el) => getComputedStyle(el).fontFamily,
+  );
+  expect(ff.toLowerCase()).toContain('katex');
+
+  // Non-math page (homepage) must NOT pull the katex stylesheet.
+  await page.goto('/');
+  await expect(page.locator('link[rel="stylesheet"][href*="katex"]')).toHaveCount(0);
+});

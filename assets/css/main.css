@@ -5667,3 +5667,17 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 [data-widget-id]:not([data-widget-fallback]) .widget-fallback {
   display: none;
 }
+
+/* ============================================================
+ * §50 Math (KaTeX overrides)
+ * Vendored KaTeX CSS (assets/css/katex.css) does the heavy lifting;
+ * these are the only hand-rolled tweaks. KaTeX inherits currentColor,
+ * so math tracks the theme ink automatically — this just guarantees it
+ * and lets wide display math scroll inside its own box.
+ * ============================================================ */
+.katex { color: var(--color-ink); }
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: var(--space-1) 0;
+}
