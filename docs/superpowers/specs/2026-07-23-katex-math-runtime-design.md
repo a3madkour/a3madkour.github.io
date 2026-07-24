@@ -20,8 +20,11 @@ pipeline section, which predated Hugo's native math support.
 ## Goals
 
 - Essay body math (`\(...\)`, `\[...\]`) renders as typeset math in the built site.
-- Math wrapped in the existing `{{< math >}}` shortcode renders identically — this is the
-  authoring path for math nested inside other shortcodes (e.g. inside `{{< definition >}}`).
+- Bare math nested inside AMS block shortcodes (e.g. inside `{{< definition >}}` /
+  `{{< proof >}}`) also renders, with **no wrapper required** — `layouts/partials/ams-block.html`
+  and `proof.html` pipe their `.Inner` through `markdownify`, which re-runs Goldmark (passthrough
+  extension + render hook included) over the nested content. The `{{< math >}}` shortcode
+  remains only as an escape hatch for any shortcode that emits `.Inner` raw (not markdownified).
 - Accessible by default: KaTeX `htmlAndMathml` output ships visual HTML **and** MathML.
 - No npm, no CDN, no client JS. Self-hosted CSS + fonts, matching the existing font policy.
 - Non-math pages pay zero added weight (LHCI gates every representative page).
@@ -38,14 +41,16 @@ pipeline section, which predated Hugo's native math support.
 
 ## Architecture
 
-Two rendering paths cover the two positions math appears in:
+One rendering mechanism covers essay body math, and it also covers math nested inside AMS
+block shortcodes for free — `{{< math >}}` is a narrow escape hatch, not a separate path:
 
 | Position | Mechanism |
 |---|---|
 | Essay **body** — bare `\(...\)` / `\[...\]` | goldmark **passthrough** extension + a `render-passthrough.html` render hook calling `transform.ToMath` |
-| **Inside another shortcode** — `{{< math >}}...{{< /math >}}` | the **`math` shortcode**, promoted from `data-pending` stub to a real `transform.ToMath` renderer |
+| **Nested inside AMS block shortcodes** (`{{< definition >}}`, `{{< proof >}}`, etc.) — bare `\(...\)` / `\[...\]`, no wrapper | the same passthrough render hook, invoked a second time because `layouts/partials/ams-block.html` (and `proof.html`) pipe `.Inner` through `markdownify`, re-running Goldmark over the nested content |
+| **Inside a shortcode that emits `.Inner` raw** (not markdownified) — `{{< math >}}...{{< /math >}}` | the **`math` shortcode**, promoted from `data-pending` stub to a real `transform.ToMath` renderer; escape hatch only, needed when there is no markdownify pass to ride on |
 
-Both call the same underlying `transform.ToMath`, so output is identical regardless of path.
+All three call the same underlying `transform.ToMath`, so output is identical regardless of path.
 
 ### Components
 
@@ -68,7 +73,11 @@ Both call the same underlying `transform.ToMath`, so output is identical regardl
    from `.Inner`, detects display vs inline by which marker is present (`\[` → display,
    `\(` → inline), and calls `transform.ToMath` with the matching `displayMode`. Emits the
    rendered KaTeX HTML (via `safeHTML`). Retains the paired-shortcode form so
-   `check_math.py`'s coupling still sees the inner markers pre-render.
+   `check_math.py`'s coupling still sees the inner markers pre-render. **Escape hatch only:**
+   most content — including math nested inside AMS blocks — never needs this shortcode,
+   because it renders via the passthrough render hook directly (body) or via a second
+   Goldmark pass triggered by `markdownify` (AMS blocks). It exists for the narrower case of
+   a shortcode that emits its `.Inner` as raw HTML with no markdownify step in between.
 
 4. **Vendored KaTeX assets**
    - `assets/css/katex.css` — the vendored KaTeX stylesheet, with `@font-face` `src` URLs
@@ -108,15 +117,21 @@ essays-only today and enforced as a non-goal above.
 
 ## Authoring contract
 
-- **Body math:** bare delimiters — `\(x\)`, `\[ ... \]`.
-- **Math inside another shortcode:** wrap in `{{< math >}}\(x\){{< /math >}}`.
+- **Write bare `\(...\)` / `\[...\]` anywhere in essay content** — body text and inside AMS
+  block shortcodes (`{{< definition >}}`, `{{< proof >}}`, etc.) alike. No wrapper needed for
+  either case; both render via the same passthrough render hook (directly for body text, via
+  a second Goldmark pass for markdownified block inner content).
+- **`{{< math >}}...{{< /math >}}`** is reserved for the narrow case of a shortcode that emits
+  `.Inner` raw, with no markdownify step to carry the passthrough hook along. None of the
+  existing AMS block shortcodes need it.
 
-Fixtures modelling both:
+Fixtures modelling this:
 - `content/essays/example-one/` — already exercises bare inline, bare display, and the
-  wrapped form. No change beyond confirming it renders.
-- `content/essays/example-five/` — currently has **bare** math inside `{{< definition >}}`
-  and `{{< proof >}}`. Update those to the wrapped `{{< math >}}` form so nested block math
-  renders and the fixture models the contract.
+  wrapped `{{< math >}}` form (escape-hatch case). No change beyond confirming it renders.
+- `content/essays/example-five/` — has **bare** math inside `{{< definition >}}` and
+  `{{< proof >}}`, unchanged. The Task 3 addition is a new E2E regression test
+  (`tests/e2e/math.spec.ts`, "math nested in AMS blocks renders on example-five") asserting
+  this bare-nested-math mechanism actually renders — the fixture itself needed no edit.
 
 Fixture math stays obviously-dummy (existing `\(E = mc^2\)`, `\(\alpha + \beta = \gamma\)`,
 etc.) — no authored prose.
@@ -128,7 +143,11 @@ etc.) — no authored prose.
   - assert at least one `.katex` element is present (body math rendered);
   - assert a `.katex-display` element is present (the `\[...\]` display formula);
   - assert a MathML node (`.katex-mathml` / `<math>`) is present (a11y output);
-  - assert no `.math-stub[data-pending]` remains and no raw `\(` text is visible.
+  - assert no `.math-stub[data-pending]` remains and no raw `\(` text is visible;
+  - `goto('/essays/example-five/')` — regression case guarding the bare-nested-math
+    mechanism: assert `.block-definition .katex` and `.block-proof .katex` both render
+    (unwrapped `\(x_0\)` / `\(\alpha + \beta = \gamma\)` inside AMS blocks) and no raw `\(`
+    leaks into `main`.
 - **Existing** `tools/check_math.py` + `tools/test_check_math.py` — unchanged; the
   `has_math` ↔ body-marker coupling now additionally guards correct CSS loading.
 - **Page weight:** after fonts land, measure `example-one`; bump only that page's budget in

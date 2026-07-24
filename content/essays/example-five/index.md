@@ -20,11 +20,11 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Demonstration essay for
 
 ## Section one — definitions and theorems
 
-{{< definition title="Continuity" >}}A function `f` is continuous at {{< math >}}\(x_0\){{< /math >}} if for every `ε > 0` there exists `δ > 0` such that `|x - x_0| < δ` implies `|f(x) - f(x_0)| < ε`.{{< /definition >}}
+{{< definition title="Continuity" >}}A function `f` is continuous at \(x_0\) if for every `ε > 0` there exists `δ > 0` such that `|x - x_0| < δ` implies `|f(x) - f(x_0)| < ε`.{{< /definition >}}
 
 {{< theorem title="Intermediate Value" id="thm-ivt" >}}If `f` is continuous on the closed interval `[a, b]` and `c` is any value between `f(a)` and `f(b)`, then there exists `x ∈ [a, b]` with `f(x) = c`.{{< /theorem >}}
 
-{{< proof of="Intermediate Value" >}}Suppose without loss of generality that `f(a) < c < f(b)`. Lorem ipsum proof sketch {{< math >}}\(\alpha + \beta = \gamma\){{< /math >}}.{{< /proof >}}
+{{< proof of="Intermediate Value" >}}Suppose without loss of generality that `f(a) < c < f(b)`. Lorem ipsum proof sketch \(\alpha + \beta = \gamma\).{{< /proof >}}
 
 {{< lemma >}}Lemma without a title — shares the theorem-family counter with theorem above.{{< /lemma >}}
 
