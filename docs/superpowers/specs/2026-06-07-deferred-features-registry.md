@@ -24,7 +24,6 @@
 
 | Capability | Trigger | Fixture / current state |
 |---|---|---|
-| **KaTeX math rendering** | First essay author actually wants math rendered (not just `has_math` body lint). | Essay fixture #2 has `has_math: true`; `tools/check_math.py` enforces the source/body coupling; no client-side render yet. |
 | **Scroll-synced video runtime** | First essay needs video that progresses with prose scroll. | Essay fixture #4 has `has_video_sync: true`; `video-sync` shortcode is a stub. |
 | **Per-page interactive widgets + per-page JS bundle convention** | Sub-project E (explorables) brainstorm. See roadmap Tier 8 #29. | Essay fixture #5 has `has_widgets: true`; `widget` shortcode stub emits `data-pending`. |
 | **Game iframe embed** (itch / Bitsy / WebGL) | First game fixture has a real `embed_url`. | Game fixture #1 carries `embed_url`; `works-embed-stub` anchor exists. |
@@ -77,7 +76,7 @@ These were on the deferred list but the user prioritized them into the active ti
 
 ## Items that SHIPPED (stay here for history; with shipped-pointer)
 
-(Empty at registry birth — populate as deferrals ship.)
+- **KaTeX math rendering** — build-time, server-side via Hugo's native `transform.ToMath`; bare `\(...\)` / `\[...\]` render everywhere in essay content (body + nested inside AMS-block shortcodes via their `markdownify` pipe), zero client JS. Design: [`2026-07-23-katex-math-runtime-design.md`](2026-07-23-katex-math-runtime-design.md); plan: [`2026-07-23-katex-math-runtime.md`](../plans/2026-07-23-katex-math-runtime.md); memory: `project_katex_math_runtime_complete.md`.
 
 ---
 
