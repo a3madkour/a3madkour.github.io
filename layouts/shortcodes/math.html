@@ -1,7 +1,21 @@
-{{- /* Math shortcode stub. A future KaTeX runtime will render the LaTeX in
-       .Inner; for now this emits the raw canonical \(...\) / \[...\] markup in a
-       data-pending container so the shortcode RESOLVES (Hugo hard-errors on an
-       unknown shortcode) and fixtures exercise the shape end-to-end. Paired
-       form: {{< math >}}\(x^2\){{< /math >}}. The inner markers still satisfy
-       tools/check_math.py's has_math coupling. */ -}}
-<span class="math-stub" data-pending>{{ .Inner | safeHTML }}</span>
+{{- /* Math shortcode. Renders math nested inside other shortcodes (the wrapped
+       authoring form, e.g. inside the definition shortcode). .Inner carries the
+       delimiters; strip them, detect display vs inline from the marker, and
+       render server-side via transform.ToMath (embedded KaTeX). Body-level math
+       goes through the passthrough render hook instead. */ -}}
+{{- $raw := .Inner | strings.TrimSpace -}}
+{{- $display := hasPrefix $raw "\\[" -}}
+{{- $inner := $raw -}}
+{{- if $display -}}
+  {{- $inner = strings.TrimSuffix "\\]" (strings.TrimPrefix "\\[" $raw) -}}
+{{- else -}}
+  {{- $inner = strings.TrimSuffix "\\)" (strings.TrimPrefix "\\(" $raw) -}}
+{{- end -}}
+{{- $opts := dict "displayMode" $display "throwOnError" true "output" "htmlAndMathml" -}}
+{{- with try (transform.ToMath $inner $opts) -}}
+  {{- with .Err -}}
+    {{- errorf "math shortcode: cannot render %q: %s" $inner . -}}
+  {{- else -}}
+    {{- .Value -}}
+  {{- end -}}
+{{- end -}}

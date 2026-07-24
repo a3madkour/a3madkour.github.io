@@ -18,3 +18,11 @@ test('essay body inline + display math renders to KaTeX', async ({ page }) => {
   });
   expect(leaksRawDelimiter).toBe(false);
 });
+
+test('wrapped {{< math >}} shortcode renders and stub is gone', async ({ page }) => {
+  await page.goto('/essays/example-one/');
+  // The stub container must no longer exist anywhere.
+  await expect(page.locator('.math-stub[data-pending]')).toHaveCount(0);
+  // example-one has three math spots; all three render as KaTeX.
+  expect(await page.locator('.katex').count()).toBeGreaterThanOrEqual(3);
+});
