@@ -34,7 +34,10 @@ pipeline section, which predated Hugo's native math support.
 - **Math outside essays.** Rendering is technically global (passthrough is site-wide markup
   config), but the KaTeX stylesheet loads only where `has_math` is set, and `has_math` lives
   only on the essay schema today. Garden/research/works math is out of scope; extending it
-  means adding `has_math` to those schemas + linters — a separate slice.
+  means adding `has_math` to those schemas + dropping the section from `check_math.py`'s
+  `SCOPE_SKIP` — a separate slice. The out-of-scope state is **enforced**, not merely
+  documented: `check_math.py`'s scope check fails CI if rendered-math markers appear outside
+  `content/essays/`, so unstyled non-essay math can never ship.
 - **Single-`$` delimiters.** Only the two canonical backslash forms are enabled, to avoid
   clobbering prose dollar signs (consistent with `check_math.py`'s conservative dollar rule).
 - **Client-side re-rendering / interactivity.** Static typeset output only.
@@ -61,25 +64,35 @@ All three call the same underlying `transform.ToMath`, so output is identical re
 
    Single-`$` and `$$` are **not** enabled.
 
-2. **`layouts/_default/_markup/render-passthrough.html`** — the passthrough render hook.
-   For each captured passthrough node:
-   ```
-   {{ transform.ToMath .Inner (dict "displayMode" (eq .Type "block")) }}
-   ```
-   Non-math passthrough (there is none configured beyond math) falls through as raw `.Inner`.
-   `transform.ToMath` default `output` is `htmlAndMathml` — keep the default.
+2. **`layouts/_default/_markup/render-passthrough.html`** — the passthrough render hook. It
+   delegates to a shared `partials/render-math.html` (the single place the `transform.ToMath`
+   + `throwOnError` + error-reporting dance lives), passing `inner`, `display` (`eq .Type
+   "block"`), and `page`. Rendering is **unconditional** (every captured passthrough node is
+   rendered): the hook cannot gate on the page's `has_math`, because when an AMS block pipes
+   its `.Inner` through `markdownify`, the hook's `.Page`/`.PageInner` resolve to the home
+   page, not the essay, so the flag reads empty there. The essays-only invariant is instead
+   enforced by `check_math.py`'s scope check (see §Non-goals). `transform.ToMath` output is
+   `htmlAndMathml` (visual + screen-reader MathML). `throwOnError: true` makes invalid LaTeX
+   fail the build — the build is the authoritative validity gate in this repo (org-math-lint
+   is a pre-publish guard in the authoring pipeline, not part of site CI).
 
-3. **`layouts/shortcodes/math.html`** — replaces the stub. Strips the wrapping delimiter
-   from `.Inner`, detects display vs inline by which marker is present (`\[` → display,
-   `\(` → inline), and calls `transform.ToMath` with the matching `displayMode`. Emits the
-   rendered KaTeX HTML (via `safeHTML`). Retains the paired-shortcode form so
-   `check_math.py`'s coupling still sees the inner markers pre-render. **Escape hatch only:**
+3. **`partials/render-math.html`** — shared render helper. Params (dict): `inner` (LaTeX,
+   delimiters stripped), `display` (bool), `page` (for the error message). Calls
+   `transform.ToMath` with `throwOnError` and emits its `.Value` directly (ToMath returns
+   already-safe `template.HTML`; no `safeHTML` wrapper needed). Both the render hook and the
+   `math` shortcode call this, so the error message and options live in one place.
+
+4. **`layouts/shortcodes/math.html`** — replaces the stub. Requires a canonical delimiter
+   pair in `.Inner` (`errorf`s otherwise), strips it, detects display vs inline by which
+   marker is present (`\[` → display, `\(` → inline), and delegates to `render-math.html`.
+   Retains the paired-shortcode form so `check_math.py`'s coupling still sees the inner
+   markers pre-render. **Escape hatch only:**
    most content — including math nested inside AMS blocks — never needs this shortcode,
    because it renders via the passthrough render hook directly (body) or via a second
    Goldmark pass triggered by `markdownify` (AMS blocks). It exists for the narrower case of
    a shortcode that emits its `.Inner` as raw HTML with no markdownify step in between.
 
-4. **Vendored KaTeX assets**
+5. **Vendored KaTeX assets**
    - `assets/css/katex.css` — the vendored KaTeX stylesheet, with `@font-face` `src` URLs
      rewritten to a local path (`/fonts/katex/…`).
    - `static/fonts/katex/*.woff2` — the KaTeX woff2 font files (woff2 only, matching the
@@ -91,7 +104,7 @@ All three call the same underlying `transform.ToMath`, so output is identical re
      + upstream source URL in a provenance comment at the top of `katex.css` (sets the
      provenance convention the d3 vendor dir lacks).
 
-5. **`assets/css/main.css` §50 "Math (KaTeX overrides)"** — a *small* hand-rolled block:
+6. **`assets/css/main.css` §50 "Math (KaTeX overrides)"** — a *small* hand-rolled block:
    - dark-mode-aware math color, driven by existing `--color-ink` / theme tokens
      (KaTeX defaults to `currentColor`, so this is mostly ensuring inheritance is correct);
    - `.katex-display { overflow-x: auto; }` so wide display math scrolls inside its own box
@@ -112,8 +125,11 @@ All three call the same underlying `transform.ToMath`, so output is identical re
   convention, justified by the two points above.
 
 Because rendering is global but the stylesheet is `has_math`-gated (essays-only), authoring
-math outside essays would produce unstyled output — acceptable because math authoring is
-essays-only today and enforced as a non-goal above.
+math outside essays *would* produce unstyled output — so it is disallowed and enforced:
+`check_math.py`'s scope check fails CI if rendered-math markers (`\(...\)`, `\[...\]`, or
+`{{< math >}}`) appear anywhere outside `content/essays/`. Unpaired look-alikes such as the
+poems' `\[00:99]` synced-lyric timestamps are not flagged (no matching `\]`, so passthrough
+never captures them as math — the check mirrors the renderer by requiring matched delimiters).
 
 ## Authoring contract
 
@@ -143,13 +159,17 @@ etc.) — no authored prose.
   - assert at least one `.katex` element is present (body math rendered);
   - assert a `.katex-display` element is present (the `\[...\]` display formula);
   - assert a MathML node (`.katex-mathml` / `<math>`) is present (a11y output);
-  - assert no `.math-stub[data-pending]` remains and no raw `\(` text is visible;
+  - assert no `.math-stub[data-pending]` remains (stub fully promoted) and no raw `\(` / `\[`
+    text is visible;
   - `goto('/essays/example-five/')` — regression case guarding the bare-nested-math
     mechanism: assert `.block-definition .katex` and `.block-proof .katex` both render
     (unwrapped `\(x_0\)` / `\(\alpha + \beta = \gamma\)` inside AMS blocks) and no raw `\(`
     leaks into `main`.
-- **Existing** `tools/check_math.py` + `tools/test_check_math.py` — unchanged; the
-  `has_math` ↔ body-marker coupling now additionally guards correct CSS loading.
+- **`tools/check_math.py` + `tools/test_check_math.py`** — the `has_math` ↔ body-marker
+  coupling (essays) now uses matched-delimiter detection (mirroring the renderer; `$$` / `$`
+  / bare `\begin{}` dropped since none are enabled delimiters), **plus** a new scope check
+  that fails CI on rendered-math markers outside `content/essays/`. Both guard correct CSS
+  loading.
 - **Page weight:** after fonts land, measure `example-one`; bump only that page's budget in
   the page-weight linter if the KaTeX woff2 subset pushes it over (recipe slice set the
   precedent for a per-page budget entry).

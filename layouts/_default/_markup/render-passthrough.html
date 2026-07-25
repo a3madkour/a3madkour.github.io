@@ -1,13 +1,16 @@
 {{- /* Build-time math render hook. .Inner is the math source with delimiters
        already stripped by the passthrough extension; .Type is "inline" or
-       "block". transform.ToMath (embedded KaTeX) renders it server-side.
-       throwOnError fails the build on invalid LaTeX (org-math-lint should
-       have caught it pre-publish; this is the backstop). */ -}}
-{{- $opts := dict "displayMode" (eq .Type "block") "throwOnError" true "output" "htmlAndMathml" -}}
-{{- with try (transform.ToMath .Inner $opts) -}}
-  {{- with .Err -}}
-    {{- errorf "render-passthrough: cannot render math in %q: %s" $.Page.File.Path . -}}
-  {{- else -}}
-    {{- .Value -}}
-  {{- end -}}
-{{- end -}}
+       "block". Renders via the shared render-math partial (embedded KaTeX).
+
+       Math is an essays-only feature — the KaTeX stylesheet loads only on pages
+       with has_math (head.html), which only the essays schema carries. The
+       passthrough extension is enabled site-wide, though, so this hook COULD
+       fire on any section. Rendering is intentionally unconditional here: gating
+       on the page's has_math is not possible, because when a shortcode pipes its
+       .Inner through markdownify (how nested math in AMS blocks renders), the
+       hook's .Page / .PageInner resolve to the home page, not the essay, so the
+       flag reads empty. The essays-only invariant is enforced by tools/
+       check_math.py, which fails CI if math markers appear outside essays (so
+       no unstyled non-essay math can ship). transform.ToMath's throwOnError is
+       the build-time LaTeX-validity backstop. */ -}}
+{{- partial "render-math.html" (dict "inner" .Inner "display" (eq .Type "block") "page" .Page) -}}

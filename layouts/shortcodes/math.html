@@ -1,21 +1,19 @@
 {{- /* Math shortcode. Renders math nested inside other shortcodes (the wrapped
-       authoring form, e.g. inside the definition shortcode). .Inner carries the
-       delimiters; strip them, detect display vs inline from the marker, and
-       render server-side via transform.ToMath (embedded KaTeX). Body-level math
-       goes through the passthrough render hook instead. */ -}}
+       authoring form, e.g. inside the definition shortcode). .Inner must carry
+       a canonical delimiter pair — \(...\) inline or \[...\] display; strip it,
+       detect display vs inline from the marker, and render server-side via the
+       shared render-math partial (embedded KaTeX). Body-level math goes through
+       the passthrough render hook instead. */ -}}
 {{- $raw := .Inner | strings.TrimSpace -}}
 {{- $display := hasPrefix $raw "\\[" -}}
+{{- $inline := hasPrefix $raw "\\(" -}}
+{{- if not (or $display $inline) -}}
+  {{- errorf "math shortcode on page %q: .Inner must be wrapped in \\(...\\) or \\[...\\], got %q" $.Page.RelPermalink $raw -}}
+{{- end -}}
 {{- $inner := $raw -}}
 {{- if $display -}}
   {{- $inner = strings.TrimSuffix "\\]" (strings.TrimPrefix "\\[" $raw) -}}
 {{- else -}}
   {{- $inner = strings.TrimSuffix "\\)" (strings.TrimPrefix "\\(" $raw) -}}
 {{- end -}}
-{{- $opts := dict "displayMode" $display "throwOnError" true "output" "htmlAndMathml" -}}
-{{- with try (transform.ToMath $inner $opts) -}}
-  {{- with .Err -}}
-    {{- errorf "math shortcode: cannot render %q: %s" $inner . -}}
-  {{- else -}}
-    {{- .Value -}}
-  {{- end -}}
-{{- end -}}
+{{- partial "render-math.html" (dict "inner" $inner "display" $display "page" .Page) -}}

@@ -1,0 +1,17 @@
+{{- /* Render one math fragment via embedded KaTeX (transform.ToMath), the
+       single place that dance lives. Params (dict):
+         inner   — LaTeX source with delimiters already stripped
+         display — bool; true = display block (\[...\]), false = inline (\(...\))
+         page    — the owning Page, for the error message
+       throwOnError fails the build on invalid LaTeX. org-math-lint is a
+       pre-publish guard in the authoring pipeline (dotfiles), NOT part of this
+       repo's CI, so this build-time error is the authoritative validity gate
+       here. Callers: render-passthrough.html (body math), math.html (nested). */ -}}
+{{- $opts := dict "displayMode" .display "throwOnError" true "output" "htmlAndMathml" -}}
+{{- with try (transform.ToMath .inner $opts) -}}
+  {{- with .Err -}}
+    {{- errorf "render-math: cannot render %q on page %q: %s" $.inner $.page.RelPermalink . -}}
+  {{- else -}}
+    {{- .Value -}}
+  {{- end -}}
+{{- end -}}

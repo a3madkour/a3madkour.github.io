@@ -8,13 +8,10 @@ test('essay body inline + display math renders to KaTeX', async ({ page }) => {
   await expect(page.locator('.katex-display').first()).toBeVisible();
   // MathML is emitted for assistive tech (htmlAndMathml output).
   await expect(page.locator('.katex-mathml, math').first()).toBeAttached();
-  // No raw delimiter leaks into the visible body text, outside of the
-  // `{{< math >}}` wrapped-form stub — that's still `.math-stub[data-pending]`
-  // pending Task 2 (shortcode promotion), out of scope for this render hook.
+  // No raw delimiter leaks into the visible body text — everything, including
+  // the wrapped {{< math >}} form, renders to KaTeX (no pending stubs remain).
   const leaksRawDelimiter = await page.locator('main').evaluate((main) => {
-    const clone = main.cloneNode(true) as HTMLElement;
-    clone.querySelectorAll('.math-stub').forEach((el) => el.remove());
-    return /\\\(|\\\[/.test(clone.textContent || '');
+    return /\\\(|\\\[/.test(main.textContent || '');
   });
   expect(leaksRawDelimiter).toBe(false);
 });

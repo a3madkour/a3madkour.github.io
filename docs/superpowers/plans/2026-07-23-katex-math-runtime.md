@@ -222,81 +222,66 @@ git commit -m "feat(math): promote math shortcode from stub to transform.ToMath 
 
 ---
 
-### Task 3: Wrap example-five nested block math (authoring contract)
+### Task 3: Guard nested block math renders bare (authoring contract)
+
+> **SUPERSEDED IN-FLIGHT (commit `c64f97f`).** This task originally wrapped the
+> example-five nested formulas in `{{< math >}}` (commit `8d2d839`). That proved
+> unnecessary and was reverted: the 11 numbered AMS-block shortcodes and
+> `proof.html` pipe their `.Inner` through `markdownify`, which re-runs goldmark
+> — including the passthrough extension — over the nested content, so bare
+> `\(...\)` / `\[...\]` inside a `theorem`/`proof`/etc. block renders with no
+> wrapper. The fixture stays bare; this task is a pure E2E regression guard for
+> the markdownify-passthrough path. `{{< math >}}` remains only as an escape
+> hatch for the rare shortcode that emits `.Inner` raw (not markdownified).
 
 **Files:**
-- Modify: `content/essays/example-five/index.md:23,27`
-- Test: `tests/e2e/math.spec.ts` (add a case)
+- Test only: `tests/e2e/math.spec.ts` (add a case). No fixture edit.
 
 **Interfaces:**
-- Consumes: the `math` shortcode from Task 2.
-- Produces: rendered math inside `.block-definition` and `.block-proof` on `/essays/example-five/`.
+- Consumes: the site-wide passthrough render hook (Task 1), re-run over nested
+  content by each AMS block's `markdownify`.
+- Produces: rendered math inside `.block-definition` and `.block-proof` on
+  `/essays/example-five/`, from the fixture's **bare** `\(...\)`.
 
-- [ ] **Step 1: Write the failing test case**
+- [ ] **Step 1: Add the regression test**
 
 Append to `tests/e2e/math.spec.ts`:
 
 ```typescript
 test('math nested in AMS blocks renders on example-five', async ({ page }) => {
   await page.goto('/essays/example-five/');
-  // Definition block contains rendered math (was bare \(x_0\)).
+  // Definition block contains rendered math (bare \(x_0\) in the fixture).
   await expect(page.locator('.block-definition .katex').first()).toBeVisible();
-  // Proof block contains rendered math (was bare \(\alpha + \beta = \gamma\)).
+  // Proof block contains rendered math (bare \(\alpha + \beta = \gamma\)).
   await expect(page.locator('.block-proof .katex').first()).toBeVisible();
   // No raw delimiter leaks anywhere in the body.
   await expect(page.locator('main')).not.toContainText('\\(');
 });
 ```
 
-- [ ] **Step 2: Build and run to verify it fails**
+- [ ] **Step 2: Build and run to verify it passes**
 
 Run:
 ```bash
 rm -rf public && hugo --minify && npx playwright test math.spec.ts
 ```
-Expected: FAIL — bare `\(x_0\)` inside the definition is emitted as raw HTML by `ams-block.html`, so passthrough never sees it; `.block-definition .katex` does not exist.
+Expected: PASS — the fixture's bare nested `\(...\)` renders because each AMS
+block markdownifies its `.Inner`, which re-runs the passthrough hook.
 
-- [ ] **Step 3: Wrap the nested math in the fixture**
-
-In `content/essays/example-five/index.md`, line 23, change:
-```
-{{< definition title="Continuity" >}}A function `f` is continuous at \(x_0\) if for every `ε > 0` there exists `δ > 0` such that `|x - x_0| < δ` implies `|f(x) - f(x_0)| < ε`.{{< /definition >}}
-```
-to:
-```
-{{< definition title="Continuity" >}}A function `f` is continuous at {{< math >}}\(x_0\){{< /math >}} if for every `ε > 0` there exists `δ > 0` such that `|x - x_0| < δ` implies `|f(x) - f(x_0)| < ε`.{{< /definition >}}
-```
-
-And line 27, change:
-```
-{{< proof of="Intermediate Value" >}}Suppose without loss of generality that `f(a) < c < f(b)`. Lorem ipsum proof sketch \(\alpha + \beta = \gamma\).{{< /proof >}}
-```
-to:
-```
-{{< proof of="Intermediate Value" >}}Suppose without loss of generality that `f(a) < c < f(b)`. Lorem ipsum proof sketch {{< math >}}\(\alpha + \beta = \gamma\){{< /math >}}.{{< /proof >}}
-```
-
-- [ ] **Step 4: Rebuild and run to verify it passes**
-
-Run:
-```bash
-rm -rf public && hugo --minify && npx playwright test math.spec.ts
-```
-Expected: PASS — both block-nested formulas render; no raw delimiters.
-
-- [ ] **Step 5: Confirm fixture + coupling linters still pass**
+- [ ] **Step 3: Confirm math + fixture linters still pass**
 
 Run:
 ```bash
 python3 tools/check_math.py && python3 tools/check_fixtures.py
 ```
-Expected: both OK (`has_math: true` still matches the `\(` markers now inside the shortcode).
+Expected: both OK (`has_math: true` matches the bare `\(` markers; scope check
+sees no math outside essays).
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add content/essays/example-five/index.md tests/e2e/math.spec.ts
-git commit -m "feat(math): wrap example-five block-nested math in math shortcode"
+git add tests/e2e/math.spec.ts
+git commit -m "test(math): guard nested AMS-block math renders bare via markdownify"
 ```
 
 ---
