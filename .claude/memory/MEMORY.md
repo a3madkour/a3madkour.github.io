@@ -36,6 +36,7 @@
 - [Library covers in static/library/covers/](reference_library_covers_static_path.md) — `cover_file:` only, never `cover_url:` hotlinks
 - [Hugo section dirs trip note-linters](reference_hugo_section_dir_note_linter.md) — `_index.md` false-fails `check_*_fixtures.py`; 5-line skip
 - [Don't run hugo --minify with dev server](reference_hugo_dev_server_gotcha.md) — poisons dev output (CSS MIME); kill/clean/restart
+- [Dev server leaves stale drafts → false page-weight fail](reference_dev_server_stale_draft_page_weights.md) — clean public/ before local check_page_weights
 - [Sticky fails paint on horizontal overflow](reference_sticky_horizontal_overflow_gotcha.md) — Firefox; `html{overflow-x:clip}` backstop
 - [Hugo js.Build can't code-split single entry](reference_hugo_js_build_splitting.md) — use multi-entry
 - [filter-chips.js data-tags space-delimited](reference_filter_chips_data_tags_space_delimited.md) — comma → single token, matches nothing
@@ -62,9 +63,26 @@
 - [finish-publish clears manifest snapshot](reference_finish_publish_snapshot_lifecycle.md) — nil after finish-publish; fall back to disk read
 - [BBT titles need brace stripping](reference_bbt_brace_protection.md) — Better-BibTeX `{{ }}` case protection; normalize strips braces
 - [Python 3.13 re.escape escapes hyphens](reference_python_re_escape_hyphen.md) — `re.escape('/a-b/')` → `/a\-b/`; strip when slug-regex
+- [check_css_refs resolves prefixes not leading interp](reference_css_refs_leading_interpolation.md) — `${prefix}-graph-node` reads orphaned; allowlist it
+- [Paired shortcode → partial needs literal .Inner](reference_hugo_paired_shortcode_partial_inner.md) — pass `"inner" .Inner` hint or Hugo rejects the closing tag
+- [Verify template refactors against minified build](reference_verify_template_refactor_minified.md) — raw over-flags cosmetic whitespace/attr-order the minifier erases
+- [org-element file-level :PROPERTIES: needs to be first element](reference_org_element_file_property_drawer_position.md) — keywords-first → generic `drawer`, property-drawer map returns nil; scan interpreted text
 
 ## Project — active queue
-- [Post-audit remediation roadmap — active](project_audit_remediation_roadmap.md) — 2026-07-03 six-lens audit; R1–R4 closed, **R5 is queue head (start R5.1)**
+- [KaTeX math — SHIPPED, merged to main](project_katex_math_runtime_complete.md) — build-time transform.ToMath; audit+review+remediation done; master→main renamed, remote push/default-branch/delete-origin-master still manual
+- [Recipe section — Slice 1 SHIPPED](project_recipe_section.md) — 2026-07-06 brainstorm; standard=schema.org/Recipe JSON. **Slice 1 (site render+download+scaling) MERGED to master `6d8cf4a` 2026-07-07 (NOT pushed — push = live deploy), 20 commits all green**; Slice 2 (org authoring+lint+export) research-gated brainstorm-later, Slice 3 (meal-prep planner) deferred separate project; specs `bcb156d`/`50a0673`, plan `fa2d65f`
+- [Recipe Slice 2 — IMPLEMENTED + full ox-hugo E2E verified, unpushed](project_recipe_slice_2_complete.md) — 2026-07-09/10; org→lint→export handler+linter+normalize branch (dotfiles `main` `7161d59..2d6ac4a`, 17 commits, 780/780), SDD-executed; 5 bugs caught (drawer-position, source em-dash, missing `recipes` section allow-list, `:image:` copy, ox-hugo drawer body-leak); FULL E2E: real publish-recipe-file→ox-hugo→site linters clean→Hugo renders page (JSON-LD+scaler+download); REMAINING = publish via real org-roam + push (both repos unpushed); Slice 3 still deferred
+- [Publish-pipeline audit (dotfiles elisp)](project_publish_pipeline_audit.md) — 2026-07-05/06 six-lens audit **FULLY CLOSED**; P1+P2+P2.14 + P3.1/P3.3/P3.7 + P4 + **P5 (7161d59, 751 green)** SHIPPED (8 commits on main); P3.2/P3.5/P3.6/P3.8 + P4.5 + P5.2 assessed+flagged; **only P3.4 (library slug NFD/NFKD) left = deferred user decision**; roadmap in dotfiles docs
+- [Audit roadmap FULLY CLOSED — R1–R6.3 ALL SHIPPED](project_r6_kickoff.md) — nothing left in the audit queue (R6.3 built too, not deferred).
+- [Audit R6.3 — shipped, CLOSES WHOLE ROADMAP](project_audit_r6_3_complete.md) — 2026-07-05 `da7a7a5..f8f0e1b`; built-HTML link crawler (33rd pair, html.parser over public/); caught a real /tags/fiction/ 404; E2E 9/9, opus READY
+- [Audit R6.1 — shipped](project_audit_r6_1_complete.md) — 2026-07-05 `5795280..996bfbf`; 12-step `--space-*` scale + 31st linter pair; codemod migration (533 rewrites), E2E 9/9, opus review READY
+- [Audit R6.2 — shipped, CLOSES ROADMAP](project_audit_r6_2_complete.md) — 2026-07-05 `b1fc2d6..3e61b81`; breakpoint scale + 32nd linter pair (B1 document+guard, zero layout change); CSS↔JS anti-drift; only deferred R6.3 left
+- [Post-audit remediation roadmap — active](project_audit_remediation_roadmap.md) — 2026-07-03 six-lens audit; R1–R5.2 closed (R5.1 pushed; R5.2 local), **R5.3 AMS-block + graph-panel single-partial is queue head**
+- [Audit R5.1 — shipped](project_audit_r5_1_complete.md) — 2026-07-04 `e9b6d95..fd714af`; Playwright E2E harness (6 smoke specs), CI-gated, first client-side test layer; guards R5.2–R5.4
+- [Audit R5.2 — shipped](project_audit_r5_2_complete.md) — 2026-07-04 `d1e214c..d0ee5b0`; graph-core extraction (2280→1316 LOC), createGraph(adapter)+3 adapters, works normalized; inline execution
+- [Audit R5.3a — shipped](project_audit_r5_3a_complete.md) — 2026-07-05 `da48e80..b651784`; 11 AMS shortcodes → thin wrappers over ams-block.html (proof bespoke); byte-identical diff gate
+- [Audit R5.3b — shipped](project_audit_r5_3b_complete.md) — 2026-07-05 `4775888..0cd0819`; 3 graph-panels → shared graph-panel.html; closes R3.2
+- [Audit R5.4 — shipped, CLOSES Tier R5](project_audit_r5_4_complete.md) — 2026-07-05 `6d638d9..6ded6cb`; Python tooling dedup (test_helpers, canonical citation parser, run() seam); whole audit roadmap done, only R6 optional
 - [Audit R1 — shipped](project_audit_r1_complete.md) — 2026-07-03 `8ba3882..2422e81`; parse_scalar false-green + streams-poll + LHCI pin
 - [Audit R2 + R4.3 — shipped](project_audit_r2_complete.md) — 2026-07-03 `d09d531..f5962ac`; math stub + 2 guard linters (30 pairs) + dead-CSS purge + LHCI floor
 - [Audit R3 accessibility — shipped](project_audit_r3_complete.md) — 2026-07-03/04 `92a525b..3c3af9e`; AMS h4→p + graph-panel a11y + search listbox + cite tabs kbd + figure alt + no-js wiring
