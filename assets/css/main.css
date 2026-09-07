@@ -5986,7 +5986,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   }
 }
 
-/* §50b — Recipes index + card */
+/* §51b — Recipes index + card */
 
 .recipe-index {
   max-width: var(--reading-column);
