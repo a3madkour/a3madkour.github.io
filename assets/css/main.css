@@ -375,6 +375,19 @@ main { flex-grow: 1; }
 .site-nav a:hover { color: var(--color-burgundy); text-decoration: underline; }
 .site-nav a[aria-current="page"] { color: var(--color-burgundy); }
 
+/* RC3.1 — the nav carries 8 items plus three icon buttons. Below the canonical
+   1100px tier, step type and gap down one notch so the row still fits well
+   below 960px (the half-screen width used for manual checks) instead of
+   wrapping the icon buttons onto a second row on every page. 1099 is the
+   documented seam for the 1100 tier (see the breakpoint index above), so the
+   nav steps down in lockstep with the rail rather than one pixel early. */
+@media (max-width: 1099px) {
+  .site-nav {
+    gap: var(--space-md);
+    font-size: var(--text-xs);
+  }
+}
+
 .icon-button {
   display: inline-flex;
   align-items: center;
