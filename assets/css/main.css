@@ -46,6 +46,7 @@ img, svg { display: block; max-width: 100%; }
   --color-paper:    #fdfcf8;
   --color-burgundy: #6b1f2c;
   --color-rss:      #b85614;
+  --color-live:     #b22222;
   --color-steel:    #1e4060;
   --color-green:      #2d5a3d;
   --color-green-mid:  #3a624a;
@@ -97,6 +98,7 @@ img, svg { display: block; max-width: 100%; }
   --color-paper:    #2a2a2a;
   --color-burgundy: #de6f7d;
   --color-rss:      #ee7e2c;
+  --color-live:     #d43535;
   --color-steel:    #7eafd0;
   --color-green:      #86c099;
   --color-green-mid:  #9ecaab;
@@ -117,6 +119,7 @@ img, svg { display: block; max-width: 100%; }
     --color-paper:    #2a2a2a;
     --color-burgundy: #de6f7d;
   --color-rss:      #ee7e2c;
+  --color-live:     #d43535;
     --color-steel:    #7eafd0;
     --color-green:      #86c099;
     --color-green-mid:  #9ecaab;
@@ -5153,7 +5156,11 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #b22222;
+  /* Tokenized so the contrast gate can see it. The dot is aria-hidden and
+   * sits beside a visible LIVE label, so SC 1.4.11 does not strictly apply —
+   * but a pulsing indicator at 2.66:1 on dark stone is one nobody can see.
+   * Dark lightens to clear 3:1 with headroom; light is unchanged. */
+  background: var(--color-live);
   animation: live-pulse 1.6s ease-in-out infinite;
 }
 @keyframes live-pulse {

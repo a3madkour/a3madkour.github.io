@@ -32,6 +32,7 @@ PAIRINGS = [
     # is SC 1.4.11's 3:1 rather than 4.5 — but the chosen stops clear it with
     # headroom (4.12 light / 6.47 dark) rather than sitting on the line.
     ("color-rss",      "color-stone", 3.0, "RSS icon glyph on background"),
+    ("color-live",     "color-stone", 3.0, "live-stream indicator dot on background"),
     ("color-ink",      "color-tile", 7.0, "body text on tile/rail surface"),
     ("color-burgundy", "color-tile", 4.5, "rescaled-quantity accent on rail surface"),
     ("color-ink-fade", "color-tile", 4.5, "ingredient qualifier text on rail surface"),

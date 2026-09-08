@@ -80,5 +80,10 @@
 
   {{- if and (eq .Section "recipes") .IsPage -}}
   <script type="application/ld+json">{{ partial "recipes/schema-recipe.html" . | safeJS }}</script>
+  {{/* With JS off the portion scaler is chrome that cannot do anything, and the
+       status region can never be written to. Hidden here rather than in the rail
+       partial: <style> is only conforming inside <head>, and this is where the
+       sibling .cite-static rule already lives (RF3.2). */}}
+  <noscript><style>.recipe-scaler,.recipe-scale-status{display:none}</style></noscript>
   {{- end -}}
 </head>
