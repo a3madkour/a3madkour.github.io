@@ -28,6 +28,10 @@ PAIRINGS = [
     ("color-green-soft", "color-stone", 4.5, "garden seedling stage glyph on background"),
     ("color-warn",     "color-stone", 4.5, "warn pill text on background"),
     ("color-stone",    "color-warn",  4.5, "stone on warn pill background"),
+    # Graphical object (the RSS icon strokes with currentColor), so the bar
+    # is SC 1.4.11's 3:1 rather than 4.5 — but the chosen stops clear it with
+    # headroom (4.12 light / 6.47 dark) rather than sitting on the line.
+    ("color-rss",      "color-stone", 3.0, "RSS icon glyph on background"),
     ("color-ink",      "color-tile", 7.0, "body text on tile/rail surface"),
     ("color-burgundy", "color-tile", 4.5, "rescaled-quantity accent on rail surface"),
     ("color-ink-fade", "color-tile", 4.5, "ingredient qualifier text on rail surface"),

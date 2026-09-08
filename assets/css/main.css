@@ -45,6 +45,7 @@ img, svg { display: block; max-width: 100%; }
   --color-tile:     #fdfcf8;
   --color-paper:    #fdfcf8;
   --color-burgundy: #6b1f2c;
+  --color-rss:      #b85614;
   --color-steel:    #1e4060;
   --color-green:      #2d5a3d;
   --color-green-mid:  #3a624a;
@@ -95,6 +96,7 @@ img, svg { display: block; max-width: 100%; }
   --color-tile:     #2a2a2a;
   --color-paper:    #2a2a2a;
   --color-burgundy: #de6f7d;
+  --color-rss:      #ee7e2c;
   --color-steel:    #7eafd0;
   --color-green:      #86c099;
   --color-green-mid:  #9ecaab;
@@ -114,6 +116,7 @@ img, svg { display: block; max-width: 100%; }
     --color-tile:     #2a2a2a;
     --color-paper:    #2a2a2a;
     --color-burgundy: #de6f7d;
+  --color-rss:      #ee7e2c;
     --color-steel:    #7eafd0;
     --color-green:      #86c099;
     --color-green-mid:  #9ecaab;
@@ -404,8 +407,12 @@ main { flex-grow: 1; }
 .icon-button:hover { color: var(--color-burgundy); }
 .icon-button svg { width: 1.25rem; height: 1.25rem; }
 
-.rss-link { color: #ee7e2c; }
-.rss-link:hover { color: #ee7e2c; filter: brightness(1.1); }
+/* RSS brand orange, tokenized so the contrast gate can see it (RF1.2). The
+ * icon is stroke="currentColor", i.e. a graphical object under WCAG 1.4.11,
+ * so the bar is 3:1 — the untokenized #ee7e2c was 2.36:1 on light stone and
+ * failed it on every page. Dark mode keeps the brand value (6.47:1). */
+.rss-link { color: var(--color-rss); }
+.rss-link:hover { color: var(--color-rss); filter: brightness(1.1); }
 
 /* ------------------------------------------------------------------
  * 6. Site footer
