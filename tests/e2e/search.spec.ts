@@ -42,6 +42,9 @@ test('recipes filter returns visible results, not an empty pane (RC2.1)', async 
   const reported = Number((status || '').match(/^(\d+)/)?.[1]);
   expect(reported).toBe(await results.count());
 
-  // The group heading is labelled, not rendered under a fallback bucket.
-  await expect(page.locator('section[data-section="recipes"][role="group"]')).toBeVisible();
+  // The group carries its real SECTION_LABEL, not a fallback bucket and not the
+  // `undefined` that a missing SECTION_LABEL entry interpolates (RC5.3).
+  const group = page.locator('section[data-section="recipes"][role="group"]');
+  await expect(group).toHaveAttribute('aria-label', 'Recipes');
+  await expect(group.locator('h3')).toHaveText('Recipes');
 });
