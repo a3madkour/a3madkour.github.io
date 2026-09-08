@@ -152,6 +152,8 @@ python3 -m unittest tools/test_check_anchor_link.py -v 2>&1 | tail -3
 
 python3 tools/check_html_links.py
 python3 -m unittest tools/test_check_html_links.py -v 2>&1 | tail -3
+python3 tools/check_meta_description.py
+python3 -m unittest tools/test_check_meta_description.py -v 2>&1 | tail -3
 python3 tools/check_search_sections.py
 python3 -m unittest tools/test_check_search_sections.py -v 2>&1 | tail -3
 
