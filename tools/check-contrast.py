@@ -102,8 +102,21 @@ def contrast_ratio(fg: str, bg: str) -> float:
     return (light + 0.05) / (dark + 0.05)
 
 
-def check(palette_name: str, palette: dict[str, str]) -> list[str]:
+# Margin below which a passing pairing is reported in the closing summary.
+# Purely informational — it never fails the run. The point is that the palette's
+# thinnest pairings should be visible to whoever is about to nudge a token,
+# rather than recorded in a document they will not open. Any threshold here is
+# arbitrary; this one is set to surface roughly the tightest quarter.
+TIGHT_MARGIN = 0.25
+
+
+def check(
+    palette_name: str, palette: dict[str, str]
+) -> tuple[list[str], list[tuple[float, float, float, str, str, str]]]:
+    """Print one palette's table. Returns (failures, rows) where each row is
+    (margin, ratio, min_ratio, palette_name, fg_name, bg_name)."""
     failures: list[str] = []
+    rows: list[tuple[float, float, float, str, str, str]] = []
     print(f"\n{palette_name}:")
     for fg_name, bg_name, min_ratio, role in PAIRINGS:
         fg = palette.get(fg_name)
@@ -121,11 +134,26 @@ def check(palette_name: str, palette: dict[str, str]) -> list[str]:
                 f"  FAIL {fg_name} ({fg}) on {bg_name} ({bg}): "
                 f"{ratio:.2f}:1 < {min_ratio:.1f}:1 ({role})"
             )
+        rows.append((ratio - min_ratio, ratio, min_ratio, palette_name, fg_name, bg_name))
         print(
             f"  {status} {fg_name:16s} on {bg_name:14s} "
-            f"{ratio:5.2f}:1  (min {min_ratio}, {role})"
+            f"{ratio:5.2f}:1  ({ratio - min_ratio:+.2f} over {min_ratio}, {role})"
         )
-    return failures
+    return failures, rows
+
+
+def report_margins(rows: list[tuple[float, float, float, str, str, str]]) -> None:
+    tight = sorted(r for r in rows if 0 <= r[0] < TIGHT_MARGIN)
+    if not tight:
+        return
+    print(f"\nThinnest margins (passing, but within {TIGHT_MARGIN:.2f} of the bar):")
+    for margin, ratio, min_ratio, palette_name, fg_name, bg_name in tight:
+        mode = palette_name.split()[0].lower()
+        print(
+            f"  {margin:+.2f}  {ratio:5.2f}:1 vs {min_ratio:.1f}  "
+            f"{mode:5s} {fg_name} on {bg_name}"
+        )
+    print("  These break first when the palette moves. Not a failure.")
 
 
 def main() -> int:
@@ -133,8 +161,11 @@ def main() -> int:
         sys.exit(f"ERROR: {CSS_PATH} not found")
     css = CSS_PATH.read_text()
     light, dark = parse_palette(css)
-    failures = check("Light mode (:root)", light)
-    failures += check('Dark mode (:root[data-theme="dark"])', dark)
+    failures, rows = check("Light mode (:root)", light)
+    dark_failures, dark_rows = check('Dark mode (:root[data-theme="dark"])', dark)
+    failures += dark_failures
+    rows += dark_rows
+    report_margins(rows)
     if failures:
         print("\nFAILURES:")
         for line in failures:
