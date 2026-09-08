@@ -40,7 +40,7 @@ img, svg { display: block; max-width: 100%; }
   --color-stone:    #eeeeea;
   --color-ink:      #1c1a17;
   --color-ink-soft: #5a564f;
-  --color-ink-fade: #9a958e;
+  --color-ink-fade: #78746d;
   --color-rule:     #d4d3cd;
   --color-tile:     #fdfcf8;
   --color-paper:    #fdfcf8;
@@ -90,11 +90,11 @@ img, svg { display: block; max-width: 100%; }
   --color-stone:    #181818;
   --color-ink:      #e2e2dd;
   --color-ink-soft: #b0aca0;
-  --color-ink-fade: #7a7770;
+  --color-ink-fade: #9b978e;
   --color-rule:     #333333;
   --color-tile:     #2a2a2a;
   --color-paper:    #2a2a2a;
-  --color-burgundy: #d65a6a;
+  --color-burgundy: #de6f7d;
   --color-steel:    #7eafd0;
   --color-green:      #86c099;
   --color-green-mid:  #9ecaab;
@@ -109,11 +109,11 @@ img, svg { display: block; max-width: 100%; }
     --color-stone:    #181818;
     --color-ink:      #e2e2dd;
     --color-ink-soft: #b0aca0;
-    --color-ink-fade: #7a7770;
+    --color-ink-fade: #9b978e;
     --color-rule:     #333333;
     --color-tile:     #2a2a2a;
     --color-paper:    #2a2a2a;
-    --color-burgundy: #d65a6a;
+    --color-burgundy: #de6f7d;
     --color-steel:    #7eafd0;
     --color-green:      #86c099;
     --color-green-mid:  #9ecaab;
