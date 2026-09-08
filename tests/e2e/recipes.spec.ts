@@ -116,3 +116,47 @@ test('a recipe with no times renders no time chrome anywhere', async ({ page }) 
   await expect(minimal).toHaveCount(1);
   await expect(minimal.locator('.recipe-card-time')).toHaveCount(0);
 });
+test('every scaler control shows a focus ring (RC3.3)', async ({ page }) => {
+  await page.goto('/recipes/example-recipe-one/');
+  for (const sel of ['.recipe-minus', '.recipe-serves', '.recipe-plus', '.recipe-mult']) {
+    await page.locator(sel).focus();
+    const outline = await page.locator(sel).evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { width: s.outlineWidth, style: s.outlineStyle };
+    });
+    expect(outline.style, `${sel} outline-style`).not.toBe('none');
+    expect(parseFloat(outline.width), `${sel} outline-width`).toBeGreaterThan(0);
+  }
+  // The stepper wrapper must not clip its children's rings.
+  const overflow = await page.locator('.recipe-stp')
+    .evaluate((el) => getComputedStyle(el).overflow);
+  expect(overflow).not.toBe('hidden');
+});
+// RC2.6. The two inputs declare independent bounds (servings 1–99, multiplier
+// 0.1–20). Before the fix, fromServings clamped only the arithmetic and left
+// the field showing the unclamped number, while fromMult ignored min/max
+// entirely. Both paths now share one normalize() and write the clamped value
+// back into BOTH fields on `change`.
+test('both scaler inputs honour their own declared bounds', async ({ page }) => {
+  await page.goto('/recipes/example-recipe-one/');
+  const serves = page.locator('.recipe-serves');
+  const mult = page.locator('.recipe-mult');
+
+  // Servings above max clamp, and the clamp is written back to the field.
+  await serves.fill('100');
+  await serves.blur();
+  await expect(serves).toHaveValue('80');   // base 4 x mult max 20
+  await expect(mult).toHaveValue('20');
+
+  // Multiplier above max clamps too, instead of scaling x1000.
+  await mult.fill('1000');
+  await mult.blur();
+  await expect(mult).toHaveValue('20');
+  await expect(serves).toHaveValue('80');
+
+  // Zero / junk falls back to the base rather than leaving the field lying.
+  await serves.fill('0');
+  await serves.blur();
+  await expect(serves).toHaveValue('4');
+  await expect(mult).toHaveValue('1');
+});
