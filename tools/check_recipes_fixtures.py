@@ -12,7 +12,11 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from check_fixtures import parse_frontmatter  # noqa: E402
+from check_fixtures import (  # noqa: E402
+    FRONTMATTER_RE,
+    _split_top_commas,
+    parse_frontmatter,
+)
 
 REQUIRED = {"title", "date", "lastmod", "draft", "summary",
             "servings", "sources", "ingredients", "steps"}
@@ -24,26 +28,108 @@ FIELDS = REQUIRED | OPTIONAL
 TIMECODE_RE = re.compile(r"^\[(\d{1,2}):([0-5]\d)(?:\.\d{1,2})?\]")
 
 
+# A YAML 1.1/1.2 plain scalar Hugo will read as a number. Deliberately narrower
+# than float(): Python accepts "1_0", "inf", and "nan", none of which Hugo does.
+_NUM_RE = re.compile(r"^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$")
+
+# Zero-padded integers are the repo's documented Hugo octal gotcha: `010` is
+# parsed by Hugo as 8, and `08` is invalid octal so Hugo keeps it a string and
+# the next arithmetic op aborts the build. parse_scalar() converts "010" -> 10,
+# so the padding survives only in the raw frontmatter text — but it must be read
+# there *positionally*: scanned as a bare substring it also fires on body prose,
+# on fenced YAML in the body, and on quoted strings that merely contain
+# "qty: 08". Hence _padded_errors() below, which walks the frontmatter block
+# only and tests the value slot of the keys it cares about.
+_PADDED_VALUE_RE = re.compile(r"^-?0\d")
+_PADDED_NUMERIC_KEYS = frozenset(
+    {"servings", "prep_minutes", "cook_minutes", "total_minutes"})
+
+# YAML's null resolution is exactly these four spellings plus the empty scalar
+# (yaml.org/type/null.html; goYAML, which Hugo uses, matches). Deliberately a
+# set and not a .lower() test: goYAML reads "nULL" as the string "nULL".
+_NULL_SPELLINGS = frozenset({"~", "null", "Null", "NULL"})
+
+
+def _absent(v) -> bool:
+    """True when a value is missing, or is a YAML null spelling.
+
+    parse_scalar() has no null handling, so an explicit `item: null` arrives as
+    the *truthy* string 'null' and silently passes a `str(...).strip()` check.
+    """
+    return v is None or (isinstance(v, str) and v.strip() in _NULL_SPELLINGS)
+
+
+def _frontmatter_text(raw: str) -> str:
+    """The frontmatter block only, delimited exactly as check_fixtures does.
+
+    Reuses that module's FRONTMATTER_RE (and its CRLF normalization) rather
+    than re-deriving the delimiters, so the two cannot drift apart.
+    """
+    text = raw.replace("\r\n", "\n").replace("\r", "\n")
+    m = FRONTMATTER_RE.match(text)
+    return m.group(1) if m else ""
+
+
+def _flow_has_padded_qty(inner: str) -> bool:
+    """True when a flow mapping's `qty` *value* is zero-padded.
+
+    Splits with check_fixtures._split_top_commas, which is quote- and
+    brace-aware, so `note: "was qty: 08"` stays one piece keyed on `note`.
+    """
+    for piece in _split_top_commas(inner):
+        key, sep, value = piece.partition(":")
+        if sep and key.strip() == "qty" and _PADDED_VALUE_RE.match(value.strip()):
+            return True
+    return False
+
+
+def _padded_errors(md: Path, raw: str) -> list[str]:
+    """Zero-padding diagnostics, read from value positions in frontmatter."""
+    errs: list[str] = []
+    qty_padded = False
+    for line in _frontmatter_text(raw).splitlines():
+        top_level = bool(line) and not line[0].isspace()
+        s = line.strip()
+        if not s or s.startswith("#"):
+            continue
+        if s.startswith("-"):
+            s = s[1:].strip()
+        if s.startswith("{") and s.endswith("}"):
+            qty_padded = qty_padded or _flow_has_padded_qty(s[1:-1])
+            continue
+        key, sep, value = s.partition(":")
+        if not sep:
+            continue
+        key, value = key.strip(), value.strip()
+        if value.startswith("{") and value.endswith("}"):
+            qty_padded = qty_padded or _flow_has_padded_qty(value[1:-1])
+            continue
+        if (top_level and key in _PADDED_NUMERIC_KEYS
+                and _PADDED_VALUE_RE.match(value)):
+            errs.append(f"{md}: {key} is zero-padded — Hugo parses it as octal")
+    if qty_padded:
+        errs.append(f"{md}: an ingredient qty is zero-padded — Hugo parses it as octal")
+    return errs
+
+
 def _is_num(v) -> bool:
     if isinstance(v, bool):
         return False
     if isinstance(v, (int, float)):
         return True
-    # Handle string representations of numbers (due to parse_scalar limitations)
     if isinstance(v, str):
-        try:
-            float(v)
-            return True
-        except ValueError:
-            return False
+        return bool(_NUM_RE.match(v.strip()))
     return False
 
 
 def lint_file(md: Path) -> list[str]:
     errs: list[str] = []
-    fm = parse_frontmatter(md.read_text())
+    raw = md.read_text()
+    fm = parse_frontmatter(raw)
     if fm is None:
         return [f"{md}: no frontmatter"]
+
+    errs.extend(_padded_errors(md, raw))
 
     for f in sorted(REQUIRED - fm.keys()):
         errs.append(f"{md}: missing required field '{f}'")
@@ -68,11 +154,11 @@ def lint_file(md: Path) -> list[str]:
                 if not isinstance(ing, dict):
                     errs.append(f"{md}: ingredients[{i}] must be a flow mapping {{...}}")
                     continue
-                if not str(ing.get("item", "")).strip():
+                if _absent(ing.get("item")) or not str(ing.get("item", "")).strip():
                     errs.append(f"{md}: ingredients[{i}] missing 'item'")
                 q = ing.get("qty")
-                if q not in (None, "null") and not _is_num(q):
-                    errs.append(f"{md}: ingredients[{i}] qty must be a number or null")
+                if not _absent(q) and not (_is_num(q) and float(str(q)) > 0):
+                    errs.append(f"{md}: ingredients[{i}] qty must be a positive number or null")
                 extra = set(ing.keys()) - {"qty", "unit", "item", "alt", "note", "group"}
                 for k in sorted(extra):
                     errs.append(f"{md}: ingredients[{i}] unknown key '{k}'")
@@ -86,7 +172,7 @@ def lint_file(md: Path) -> list[str]:
                 if not isinstance(s, dict):
                     errs.append(f"{md}: sources[{i}] must be a flow mapping {{...}}")
                     continue
-                if not str(s.get("name", "")).strip():
+                if _absent(s.get("name")) or not str(s.get("name", "")).strip():
                     errs.append(f"{md}: sources[{i}] missing 'name'")
 
     steps = fm.get("steps")
