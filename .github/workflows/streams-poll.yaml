@@ -43,6 +43,6 @@ jobs:
           if git status --porcelain | grep -q .; then
             git add data/streams-live.yaml data/streams-twitch-cache.yaml content/streams/
             git commit -m "chore(streams): poll @ $(date -u +%FT%TZ)"
-            git pull --rebase origin master
-            git push origin master
+            git pull --rebase origin main
+            git push origin main
           fi
