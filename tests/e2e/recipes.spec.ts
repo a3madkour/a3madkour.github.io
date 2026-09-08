@@ -103,3 +103,32 @@ test('the scaler writes no quantity at load, only on a change', async ({ page })
   const afterChange = await page.evaluate(() => (window as unknown as { __qWrites: string[] }).__qWrites);
   expect(afterChange.length).toBeGreaterThan(0);
 });
+
+// RC2.6. The two inputs declare independent bounds (servings 1–99, multiplier
+// 0.1–20). Before the fix, fromServings clamped only the arithmetic and left
+// the field showing the unclamped number, while fromMult ignored min/max
+// entirely. Both paths now share one normalize() and write the clamped value
+// back into BOTH fields on `change`.
+test('both scaler inputs honour their own declared bounds', async ({ page }) => {
+  await page.goto('/recipes/example-recipe-one/');
+  const serves = page.locator('.recipe-serves');
+  const mult = page.locator('.recipe-mult');
+
+  // Servings above max clamp, and the clamp is written back to the field.
+  await serves.fill('100');
+  await serves.blur();
+  await expect(serves).toHaveValue('80');   // base 4 x mult max 20
+  await expect(mult).toHaveValue('20');
+
+  // Multiplier above max clamps too, instead of scaling x1000.
+  await mult.fill('1000');
+  await mult.blur();
+  await expect(mult).toHaveValue('20');
+  await expect(serves).toHaveValue('80');
+
+  // Zero / junk falls back to the base rather than leaving the field lying.
+  await serves.fill('0');
+  await serves.blur();
+  await expect(serves).toHaveValue('4');
+  await expect(mult).toHaveValue('1');
+});

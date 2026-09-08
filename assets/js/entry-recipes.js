@@ -36,33 +36,58 @@ function initScaler(rail) {
     });
   }
 
+  // Both controls declare their own bounds in rail.html; the JS must respect
+  // BOTH of them on BOTH paths or the two fields can disagree about what is
+  // currently on screen.
+  const SERVES_MIN = 1;
+  const SERVES_MAX = 99;
+  const MULT_MIN = 0.1;
+  const MULT_MAX = 20;
+
   const clean = (n) => (Math.round(n * 100) / 100).toString();
 
-  function fromServings() {
-    let s = parseFloat(serves.value);
-    if (!(s > 0)) s = base;
-    s = Math.min(99, s);
-    const r = s / base;
+  // Servings is the source of truth; the ratio is derived, then both are
+  // clamped against BOTH controls' declared bounds so the two can never
+  // disagree about what is currently displayed.
+  function normalize(rawServings) {
+    let s = Math.min(SERVES_MAX, Math.max(SERVES_MIN, rawServings));
+    let r = s / base;
+    if (r > MULT_MAX) { r = MULT_MAX; s = base * r; }
+    if (r < MULT_MIN) { r = MULT_MIN; s = base * r; }
+    return { s, r };
+  }
+
+  function fromServings(writeBack) {
+    let raw = parseFloat(serves.value);
+    if (!(raw > 0)) raw = base;
+    const { s, r } = normalize(raw);
     mult.value = clean(r);
+    if (writeBack) serves.value = clean(s);
     apply(r);
   }
 
-  function fromMult() {
-    let r = parseFloat(mult.value);
-    if (!(r > 0)) r = 1;
-    serves.value = clean(base * r);
+  function fromMult(writeBack) {
+    let raw = parseFloat(mult.value);
+    if (!(raw > 0)) raw = 1;
+    const { s, r } = normalize(base * raw);
+    serves.value = clean(s);
+    if (writeBack) mult.value = clean(r);
     apply(r);
   }
 
-  serves.addEventListener('input', fromServings);
-  mult.addEventListener('input', fromMult);
+  // `input` tracks as you type without fighting the caret; `change` (blur or
+  // Enter) is where the clamped value is written back into the field.
+  serves.addEventListener('input', () => fromServings(false));
+  serves.addEventListener('change', () => fromServings(true));
+  mult.addEventListener('input', () => fromMult(false));
+  mult.addEventListener('change', () => fromMult(true));
   rail.querySelector('.recipe-minus').addEventListener('click', () => {
-    serves.value = Math.max(1, (parseFloat(serves.value) || base) - 1);
-    fromServings();
+    serves.value = Math.max(SERVES_MIN, (parseFloat(serves.value) || base) - 1);
+    fromServings(true);
   });
   rail.querySelector('.recipe-plus').addEventListener('click', () => {
-    serves.value = Math.min(99, (parseFloat(serves.value) || base) + 1);
-    fromServings();
+    serves.value = Math.min(SERVES_MAX, (parseFloat(serves.value) || base) + 1);
+    fromServings(true);
   });
 }
 
