@@ -1,5 +1,6 @@
 {{ define "main" }}
 {{ $total := or .Params.total_minutes (add (default 0 .Params.prep_minutes) (default 0 .Params.cook_minutes)) }}
+{{ $hasTime := or .Params.prep_minutes .Params.cook_minutes .Params.total_minutes }}
 <span data-pagefind-meta="section:recipes" hidden></span>
 <span data-pagefind-filter="section:recipes" hidden></span>
 {{ with .Params.cuisine }}<span data-pagefind-meta="cuisine:{{ . }}" hidden></span>{{ end }}
@@ -12,9 +13,9 @@
     <div class="recipe-meta">
       {{ with .Params.prep_minutes }}Prep {{ . }}&nbsp;min · {{ end }}
       {{ with .Params.cook_minutes }}Cook {{ . }}&nbsp;min · {{ end }}
-      Total {{ $total }}&nbsp;min
+      {{ if $hasTime }}Total {{ $total }}&nbsp;min{{ end }}
       {{ with .OutputFormats.Get "RECIPE" }}
-        · <a class="recipe-dl" href="{{ .RelPermalink }}" download><span aria-hidden="true">⬇</span> Download recipe (.json)</a>
+        {{ if $hasTime }} · {{ end }}<a class="recipe-dl" href="{{ .RelPermalink }}" download><span aria-hidden="true">⬇</span> Download recipe (.json)</a>
       {{ end }}
     </div>
   </header>

@@ -894,8 +894,12 @@ function fmtFrac(v) {
 export function formatQuantity(value, unit) {
   switch (unitMode(unit)) {
     case 'whole': {
+      // NOTE (corrected during execution): the condition is `value < 1`, NOT
+      // `Math.round(value) === 0`. Math.round(0.5) is 1, so the rounded-to-zero
+      // test would let formatQuantity(0.5,'g') return '1' — which Step 2 lists
+      // as a failure this task must fix. Caught by node N9.
       const r = Math.round(value);
-      return r === 0 && value > 0 ? sig2(value) : String(r);
+      return value > 0 && value < 1 ? sig2(value) : String(r);
     }
     case 'decimal': {
       const r = Math.round(value * 10) / 10;
@@ -913,6 +917,15 @@ Run: `node --no-experimental-detect-module --test tests/unit/*.test.mjs`
 Expected: PASS.
 
 - [ ] **Step 5: Write the failing E2E for the load-time rewrite**
+
+> **NOTE (corrected during execution):** the test below **passes against the
+> unfixed scaler** — every quantity in every current fixture round-trips through
+> `formatQuantity` unchanged (`800 g` → `800 g`), and the `0.5 tsp` → `½ tsp`
+> case it was written for exists in no fixture. Keep it, but it is not the
+> guard. Node N9 added `'the scaler writes no quantity at load, only on a
+> change'`, which patches `Node.prototype.textContent`'s setter via
+> `addInitScript` and asserts zero `.q` writes at rest — that one goes RED
+> pre-fix. Caught by node N9.
 
 Append to `tests/e2e/recipes.spec.ts`:
 

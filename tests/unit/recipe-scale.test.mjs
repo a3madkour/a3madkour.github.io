@@ -23,3 +23,21 @@ test('spoons and counts use eighths fractions', () => {
   assert.equal(formatQuantity(0.25, 'tsp'), '¼');
   assert.equal(formatQuantity(2.75, null), '2¾');
 });
+
+test('a positive quantity never formats to zero', () => {
+  assert.equal(formatQuantity(0.25, 'g'), '0.25');
+  assert.equal(formatQuantity(0.04, 'kg'), '0.04');
+  assert.equal(formatQuantity(0.05, null), '0.05');
+  assert.equal(formatQuantity(0.5, 'g'), '0.5');
+});
+
+test('zero stays zero', () => {
+  assert.equal(formatQuantity(0, 'g'), '0');
+  assert.equal(formatQuantity(0, null), '0');
+});
+
+test('values above the floor are unchanged', () => {
+  assert.equal(formatQuantity(1200, 'g'), '1200');
+  assert.equal(formatQuantity(2.25, 'kg'), '2.3');
+  assert.equal(formatQuantity(1.5, null), '1½');
+});

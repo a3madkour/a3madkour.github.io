@@ -40,7 +40,7 @@ img, svg { display: block; max-width: 100%; }
   --color-stone:    #eeeeea;
   --color-ink:      #1c1a17;
   --color-ink-soft: #5a564f;
-  --color-ink-fade: #9a958e;
+  --color-ink-fade: #6e6a64;
   --color-rule:     #d4d3cd;
   --color-tile:     #fdfcf8;
   --color-paper:    #fdfcf8;
@@ -90,11 +90,11 @@ img, svg { display: block; max-width: 100%; }
   --color-stone:    #181818;
   --color-ink:      #e2e2dd;
   --color-ink-soft: #b0aca0;
-  --color-ink-fade: #7a7770;
+  --color-ink-fade: #9b978e;
   --color-rule:     #333333;
   --color-tile:     #2a2a2a;
   --color-paper:    #2a2a2a;
-  --color-burgundy: #d65a6a;
+  --color-burgundy: #de6f7d;
   --color-steel:    #7eafd0;
   --color-green:      #86c099;
   --color-green-mid:  #9ecaab;
@@ -109,11 +109,11 @@ img, svg { display: block; max-width: 100%; }
     --color-stone:    #181818;
     --color-ink:      #e2e2dd;
     --color-ink-soft: #b0aca0;
-    --color-ink-fade: #7a7770;
+    --color-ink-fade: #9b978e;
     --color-rule:     #333333;
     --color-tile:     #2a2a2a;
     --color-paper:    #2a2a2a;
-    --color-burgundy: #d65a6a;
+    --color-burgundy: #de6f7d;
     --color-steel:    #7eafd0;
     --color-green:      #86c099;
     --color-green-mid:  #9ecaab;
@@ -374,6 +374,19 @@ main { flex-grow: 1; }
 }
 .site-nav a:hover { color: var(--color-burgundy); text-decoration: underline; }
 .site-nav a[aria-current="page"] { color: var(--color-burgundy); }
+
+/* RC3.1 — the nav carries 8 items plus three icon buttons. Below the canonical
+   1100px tier, step type and gap down one notch so the row still fits well
+   below 960px (the half-screen width used for manual checks) instead of
+   wrapping the icon buttons onto a second row on every page. 1099 is the
+   documented seam for the 1100 tier (see the breakpoint index above), so the
+   nav steps down in lockstep with the rail rather than one pixel early. */
+@media (max-width: 1099px) {
+  .site-nav {
+    gap: var(--space-md);
+    font-size: var(--text-xs);
+  }
+}
 
 .icon-button {
   display: inline-flex;
@@ -1918,7 +1931,8 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
  * italic + dotted underline so a visitor reads the page as
  * mid-build, not broken. --color-ink-soft was chosen for AA
  * contrast against --color-stone (6.27:1 light / 7.83:1 dark);
- * --color-ink-fade fails AA in light mode.
+ * --color-ink-fade now clears AA too (4.62:1 light / 6.10:1 dark)
+ * but reads too faint for prose at this weight.
  * ------------------------------------------------------------------ */
 
 .about-page {
@@ -5034,7 +5048,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   cursor: pointer;
 }
 .poem-player-btn--primary {
-  background: var(--color-burgundy); color: white;
+  background: var(--color-burgundy); color: var(--color-stone);
   border-color: var(--color-burgundy);
   width: 34px; height: 34px;
 }
@@ -5077,7 +5091,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   font-size: 0.7rem;
 }
 .poem-player-show-all.is-active {
-  background: var(--color-burgundy); color: white;
+  background: var(--color-burgundy); color: var(--color-stone);
   border-color: var(--color-burgundy);
 }
 
@@ -5803,7 +5817,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   border-radius: 7px;
   display: inline-flex;
   align-items: center;
-  overflow: hidden;
 }
 
 .recipe-stp button {
@@ -5818,6 +5831,12 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 }
 .recipe-stp button:hover {
   background: var(--color-stone);
+}
+.recipe-stp button:first-child { border-radius: 6px 0 0 6px; }
+.recipe-stp button:last-child  { border-radius: 0 6px 6px 0; }
+.recipe-stp button:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: -2px;
 }
 
 .numin {
@@ -5839,9 +5858,10 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   -webkit-appearance: none;
   margin: 0;
 }
-.numin:focus {
-  outline: none;
-  background: var(--color-stone);
+.numin:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: -2px;
+  background: var(--color-paper);
 }
 
 /* Multiplier field — dashed-underline, pushed right */
@@ -5871,8 +5891,9 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   -webkit-appearance: none;
   margin: 0;
 }
-.recipe-mult:focus {
-  outline: none;
+.recipe-mult:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
   border-bottom-color: var(--color-burgundy);
   color: var(--color-ink);
 }
@@ -5987,6 +6008,11 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   .recipe-rail {
     position: static;
     flex-basis: auto;
+    width: 100%;
+  }
+  /* align-items: flex-start cross-sizes column children to fit-content;
+     flex: 1 only governs the (now vertical) main axis. */
+  .recipe-steps-col {
     width: 100%;
   }
 }

@@ -20,10 +20,14 @@
   {{- $t := replaceRE `^\[\d{1,2}:[0-5]\d(?:\.\d{1,2})?\]\s*` "" . -}}
   {{- $steps = $steps | append (dict "@type" "HowToStep" "text" $t) -}}
 {{- end -}}
+{{- /* A CreativeWork is valid with `name` alone — a url-less source (a book,
+       a notebook) must still reach isBasedOn, so append unconditionally and
+       merge `url` only when the source carries one. */ -}}
 {{- $based := slice -}}
 {{- range $p.Params.sources -}}
-  {{- $srcName := .name -}}
-  {{- with .url }}{{- $based = $based | append (dict "@type" "CreativeWork" "name" $srcName "url" .) -}}{{- end -}}
+  {{- $cw := dict "@type" "CreativeWork" "name" .name -}}
+  {{- with .url }}{{- $cw = merge $cw (dict "url" .) -}}{{- end -}}
+  {{- $based = $based | append $cw -}}
 {{- end -}}
 {{- $obj := dict
     "@context" "https://schema.org"
@@ -31,17 +35,35 @@
     "name" $p.Title
     "datePublished" ($p.Date.Format "2006-01-02")
     "recipeYield" (printf "%v %s" $p.Params.servings (default "servings" $p.Params.yield_unit))
-    "prepTime" (printf "PT%dM" (int (default 0 $p.Params.prep_minutes)))
-    "cookTime" (printf "PT%dM" (int (default 0 $p.Params.cook_minutes)))
-    "totalTime" (printf "PT%dM" (int $total))
     "recipeIngredient" $ingText
     "recipeInstructions" $steps
-    "x-ingredients" $p.Params.ingredients
 -}}
+{{- /* Time keys are presence-gated so the minimal recipe emits none (no PT0M).
+       KNOWN GAP (unfixed, no fixture): a recipe with prep_minutes but no
+       cook_minutes emits prepTime alone, which Google's Recipe rich-result
+       spec does not accept — it wants prepTime and cookTime together. */ -}}
+{{- with $p.Params.prep_minutes }}{{- $obj = merge $obj (dict "prepTime" (printf "PT%dM" (int .))) -}}{{- end -}}
+{{- with $p.Params.cook_minutes }}{{- $obj = merge $obj (dict "cookTime" (printf "PT%dM" (int .))) -}}{{- end -}}
+{{- if or $p.Params.total_minutes (and $p.Params.prep_minutes $p.Params.cook_minutes) -}}
+  {{- $obj = merge $obj (dict "totalTime" (printf "PT%dM" (int $total))) -}}
+{{- end -}}
 {{- with $p.Params.summary }}{{- $obj = merge $obj (dict "description" .) -}}{{- end -}}
 {{- with $p.Params.cuisine }}{{- $obj = merge $obj (dict "recipeCuisine" .) -}}{{- end -}}
 {{- with $p.Params.category }}{{- $obj = merge $obj (dict "recipeCategory" .) -}}{{- end -}}
 {{- with $p.Params.tags }}{{- $obj = merge $obj (dict "keywords" (delimit . ", ")) -}}{{- end -}}
-{{- with $p.Params.image }}{{- $obj = merge $obj (dict "image" (printf "%s%s" $p.Permalink .)) -}}{{- end -}}
+{{- /* Three accepted `image` shapes (mirrored by tools/check_recipes_links.py):
+       absolute http(s) URL — pass through; root-relative "/…" resolving under
+       static/ — absURL; anything else — a file in the page bundle, prefixed
+       with the permalink. Prefixing blindly broke the first two. */ -}}
+{{- with $p.Params.image -}}
+  {{- $img := . -}}
+  {{- if or (hasPrefix $img "http://") (hasPrefix $img "https://") -}}
+  {{- else if hasPrefix $img "/" -}}
+    {{- $img = absURL $img -}}
+  {{- else -}}
+    {{- $img = printf "%s%s" $p.Permalink $img -}}
+  {{- end -}}
+  {{- $obj = merge $obj (dict "image" $img) -}}
+{{- end -}}
 {{- with $based }}{{- $obj = merge $obj (dict "isBasedOn" .) -}}{{- end -}}
 {{- $obj | jsonify -}}
