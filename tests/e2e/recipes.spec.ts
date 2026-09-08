@@ -41,3 +41,12 @@ test('an ungrouped ingredient does not inherit the previous group heading', asyn
   await expect(page.locator('li.recipe-ing-group')).toHaveCount(0);
   await expect(page.locator('h3.recipe-ing-group')).toHaveCount(2);
 });
+
+test('clicking the "Serves" label focuses the input and does not rescale', async ({ page }) => {
+  await page.goto('/recipes/example-recipe-one/');
+  const oil = page.locator('.recipe-ing li', { hasText: 'olive oil' }).locator('.q');
+  await expect(oil).toHaveText('2 tbsp');
+  await page.getByText('Serves', { exact: true }).click();
+  await expect(oil).toHaveText('2 tbsp');
+  await expect(page.locator('.recipe-serves')).toBeFocused();
+});
