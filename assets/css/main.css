@@ -5925,12 +5925,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   padding-top: var(--space-2xs);
 }
 
-/* Consecutive ingredient lists read as one column, not stacked blocks. */
-.recipe-ing + .recipe-ing,
-.recipe-ing-group + .recipe-ing {
-  margin-top: 0;
-}
-
 .q {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
