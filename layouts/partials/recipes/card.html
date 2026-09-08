@@ -1,13 +1,14 @@
 {{- $total := or .Params.total_minutes (add (default 0 .Params.prep_minutes) (default 0 .Params.cook_minutes)) -}}
+{{- $hasTime := or .Params.total_minutes .Params.prep_minutes .Params.cook_minutes -}}
 <a class="recipe-card" href="{{ .RelPermalink }}"
    data-cuisine="{{ .Params.cuisine }}"
    data-category="{{ .Params.category }}"
-   data-tags="{{ delimit .Params.tags " " }}">
+   data-tags="{{ delimit (.Params.tags | default slice) " " }}">
   <div class="recipe-card-kicker">{{ .Params.cuisine }}{{ with .Params.category }} · {{ . }}{{ end }}</div>
   <h3>{{ .Title }}</h3>
   <p class="recipe-card-sum">{{ .Params.summary }}</p>
   <div class="recipe-card-foot">
-    <span class="recipe-card-time"><span aria-hidden="true">⏱</span> {{ $total }}&nbsp;min</span>
+    {{ if $hasTime }}<span class="recipe-card-time"><span aria-hidden="true">⏱</span> {{ $total }}&nbsp;min</span>{{ end }}
     <span class="recipe-card-serves">{{ .Params.servings }} {{ default "servings" .Params.yield_unit }}</span>
   </div>
 </a>

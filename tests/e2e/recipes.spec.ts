@@ -41,3 +41,14 @@ test('an ungrouped ingredient does not inherit the previous group heading', asyn
   await expect(page.locator('li.recipe-ing-group')).toHaveCount(0);
   await expect(page.locator('h3.recipe-ing-group')).toHaveCount(2);
 });
+
+test('a recipe with no times renders no time chrome anywhere', async ({ page }) => {
+  // example-recipe-three is the minimal fixture: REQUIRED fields only.
+  await page.goto('/recipes/example-recipe-three/');
+  await expect(page.locator('.recipe-meta')).not.toContainText('Total');
+  await expect(page.locator('.recipe-dl')).toBeVisible();
+
+  await page.goto('/recipes/');
+  const minimal = page.locator('.recipe-card[href="/recipes/example-recipe-three/"]');
+  await expect(minimal.locator('.recipe-card-time')).toHaveCount(0);
+});
