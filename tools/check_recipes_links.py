@@ -28,6 +28,22 @@ def lint_file(md: Path) -> list[str]:
     if vid:
         if not VIDEO_RE.match(str(vid)):
             errs.append(f"{md}: video '{vid}' is not an 11-char YouTube id")
+    # `image` reaches only the JSON-LD blob, never a rendered <img>, so a broken
+    # path is invisible to every other check (the built-HTML link crawler included).
+    img = fm.get("image")
+    if img and str(img).strip() not in ("", "null"):
+        val = str(img).strip()
+        if val.startswith(("http://", "https://")):
+            if not URL_RE.match(val):
+                errs.append(f"{md}: image is not a well-formed http(s) URL")
+        elif val.startswith("/"):
+            # md is <repo>/content/recipes/<slug>/index.md -> four parents is the repo root.
+            target = md.parent.parent.parent.parent / "static" / val.lstrip("/")
+            if not target.exists():
+                errs.append(f"{md}: image '{val}' not found under static/")
+        else:
+            if not (md.parent / val).exists():
+                errs.append(f"{md}: image '{val}' not found in the page bundle")
     return errs
 
 
