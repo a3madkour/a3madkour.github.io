@@ -4,7 +4,10 @@ import { defineConfig, devices } from '@playwright/test';
 // module scripts, and Pagefind fetch all require a real origin, not file://).
 // Nothing here ships — see CLAUDE.md "No npm" note.
 
-const PORT = 8080;
+// Port is env-overridable so concurrent checkouts (e.g. parallel agent
+// worktrees) each serve their own ./public. Without this, reuseExistingServer
+// below would silently hand a second run the FIRST run's build.
+const PORT = Number(process.env.E2E_PORT) || 8080;
 
 export default defineConfig({
   testDir: './tests/e2e',
