@@ -33,10 +33,21 @@ value-identity assertion. An identity assertion would have been actively wrong:
 the two tokens are documented as semantically distinct and are allowed to
 diverge — gating paper directly is what makes divergence safe. 17 → 21 pairings.
 
-**Still open:** RF3.4 (informational — two pairings sit ~0.1 over the AA bar,
-now gated rather than silent) and Slice 3 (meal-prep planner, deferred by
-design). The org pipeline has still never run against the real org-roam corpus —
-see [[project_recipe_slice_2_complete]]. That is the last unproven link.
+**RF3.4 closed 2026-09-08, both halves — and it too was understated.** A full
+sweep put the thinnest pair at `warn`/`stone` **4.55:1**, tighter than either
+pairing the row named and unmentioned by it. Reporting half: the gate now prints
+each pairing's margin and closes with the sub-`TIGHT_MARGIN` set, so the sweep
+is recomputed every run instead of living in a document that was wrong about it.
+Palette half: three hue-preserving nudges (light `--color-warn` `#9c5719`, light
+`--color-ink-fade` `#6c6862`, dark `--color-burgundy` `#df7481` in *both* dark
+blocks) lift the floor from +0.05 to +0.25/+0.26. `TIGHT_MARGIN` is then set
+*below* the palette's target (0.20 vs 0.25) so an empty report means clear-of-
+the-line rather than on-it.
+
+**The follow-ups document is now fully closed.** Remaining recipe work: Slice 3
+(meal-prep planner, deferred by design) and the org pipeline, which has still
+never run against the real org-roam corpus — see
+[[project_recipe_slice_2_complete]]. That is the last unproven link.
 
 **Corrections worth keeping:** RF2.5 (duplicate ids) was a **false positive** —
 `grep -o 'id=[a-zA-Z0-9_-]*'` matches a bare `id=` with an empty capture, and
