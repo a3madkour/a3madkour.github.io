@@ -292,3 +292,41 @@ test('the scale status states the committed yield, pluralised (RC4.8)', async ({
   await expect(page.locator('.recipe-scale-status'))
     .toHaveText('Scaled ×0.13 — amounts shown for 1 cookie');
 });
+
+// RC4.5. The scaler is JS-only chrome: with scripting off the stepper and the
+// multiplier are dead controls, so `rail.html` ships a <noscript><style> that
+// removes them. Nothing else in the suite runs with JS disabled, so this is the
+// only assertion that the fallback exists at all — and it must also prove the
+// ingredients survive, or "hidden" would be indistinguishable from a page that
+// failed to render. test.use() is what inherits baseURL; browser.newContext()
+// would not.
+test.describe('scripting disabled', () => {
+  test.use({ javaScriptEnabled: false });
+
+  test('the scaler is hidden rather than left as inert chrome (RC4.5)', async ({ page }) => {
+    await page.goto('/recipes/example-recipe-one/');
+    await expect(page.locator('.recipe-scaler')).toBeHidden();
+    await expect(page.locator('.recipe-scale-status')).toBeHidden();
+    // The content the scaler decorates is still fully served.
+    await expect(page.locator('.recipe-ing li').first()).toBeVisible();
+    await expect(page.locator('.recipe-steps li')).toHaveCount(4);
+    await expect(page.locator('.recipe-ing li', { hasText: 'olive oil' }).locator('.q'))
+      .toHaveText('2 tbsp');
+  });
+});
+
+// RC1.2 class. `cuisine` and `category` are both optional; the kicker is the
+// element that concatenates them. The minimal fixture declares neither, so the
+// wrapper must not render at all — an empty <div> with a separator dot in it is
+// the failure this guards. Asserted against both fixtures so a template change
+// that dropped the kicker everywhere cannot pass.
+test('the kicker renders only when cuisine or category is present', async ({ page }) => {
+  await page.goto('/recipes/example-recipe-three/');
+  await expect(page.locator('.recipe-kicker')).toHaveCount(0);
+
+  await page.goto('/recipes/example-recipe-one/');
+  const kicker = page.locator('.recipe-kicker');
+  await expect(kicker).toHaveCount(1);
+  await expect(kicker).not.toHaveText('');
+  await expect(kicker).toBeVisible();
+});
