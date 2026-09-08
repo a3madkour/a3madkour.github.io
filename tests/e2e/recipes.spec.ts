@@ -41,3 +41,11 @@ test('an ungrouped ingredient does not inherit the previous group heading', asyn
   await expect(page.locator('li.recipe-ing-group')).toHaveCount(0);
   await expect(page.locator('h3.recipe-ing-group')).toHaveCount(2);
 });
+
+test('steps column fills the width when the layout collapses (RC3.2)', async ({ page }) => {
+  await page.setViewportSize({ width: 700, height: 1000 });
+  await page.goto('/recipes/example-recipe-one/');
+  const rail = await page.locator('.recipe-rail').boundingBox();
+  const steps = await page.locator('.recipe-steps-col').boundingBox();
+  expect(Math.abs(rail!.width - steps!.width)).toBeLessThan(2);
+});
