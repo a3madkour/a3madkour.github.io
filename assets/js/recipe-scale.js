@@ -37,8 +37,11 @@ export function formatQuantity(value, unit) {
       return String(Math.round(value));
     }
     case 'decimal': {
-      const r = Math.round(value * 10) / 10;
-      return r === 0 && value > 0 ? sig2(value) : r.toString();
+      // Symmetric with the whole branch: one-decimal rounding is only safe
+      // once the value can survive it. Under 0.1 kg/l it inflates rather than
+      // zeroes (0.05 -> "0.1" is a 100% error), so keep two sig digits there.
+      if (value > 0 && value < 0.1) return sig2(value);
+      return (Math.round(value * 10) / 10).toString();
     }
     default:
       return fmtFrac(value);
