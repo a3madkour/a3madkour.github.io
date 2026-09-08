@@ -58,3 +58,48 @@ test('steps column fills the width when the layout collapses (RC3.2)', async ({ 
   const steps = await page.locator('.recipe-steps-col').boundingBox();
   expect(Math.abs(rail!.width - steps!.width)).toBeLessThan(2);
 });
+test('the server-rendered quantity is not rewritten at rest', async ({ page }) => {
+  await page.goto('/recipes/example-recipe-one/');
+  const tomatoes = page.locator('.recipe-ing li', { hasText: 'canned tomatoes' }).locator('.q');
+  await expect(tomatoes).toHaveText('800 g');
+  // Scale up, then back to the base: the authored string must return verbatim.
+  await page.fill('.recipe-serves', '8');
+  await expect(tomatoes).toHaveText('1600 g');
+  await page.fill('.recipe-serves', '4');
+  await expect(tomatoes).toHaveText('800 g');
+  await expect(tomatoes).not.toHaveClass(/recipe-q-changed|changed/);
+});
+
+// The test above cannot fail while every fixture quantity happens to survive a
+// round-trip through formatQuantity ("800 g" -> "800 g"). This one asserts the
+// stronger property directly: at rest the scaler writes no quantity at all, so
+// an authored string that the formatter *would* alter (e.g. "0.5 tsp") is safe.
+// Node.textContent's setter is only reachable from script — HTML parsing does
+// not use it — so a non-empty log means the load-time rewrite came back.
+test('the scaler writes no quantity at load, only on a change', async ({ page }) => {
+  await page.addInitScript(() => {
+    const desc = Object.getOwnPropertyDescriptor(Node.prototype, 'textContent')!;
+    (window as unknown as { __qWrites: string[] }).__qWrites = [];
+    Object.defineProperty(Node.prototype, 'textContent', {
+      ...desc,
+      set(this: Node, v: string) {
+        const el = this as Element;
+        if (el.classList && el.classList.contains('q')) {
+          (window as unknown as { __qWrites: string[] }).__qWrites.push(String(v));
+        }
+        desc.set!.call(this, v);
+      },
+    });
+  });
+  await page.goto('/recipes/example-recipe-one/');
+  await expect(page.locator('.recipe-ing li').first()).toBeVisible();
+  const atRest = await page.evaluate(() => (window as unknown as { __qWrites: string[] }).__qWrites);
+  expect(atRest).toEqual([]);
+
+  // A real change still writes.
+  await page.fill('.recipe-serves', '8');
+  await expect(page.locator('.recipe-ing li', { hasText: 'canned tomatoes' }).locator('.q'))
+    .toHaveText('1600 g');
+  const afterChange = await page.evaluate(() => (window as unknown as { __qWrites: string[] }).__qWrites);
+  expect(afterChange.length).toBeGreaterThan(0);
+});

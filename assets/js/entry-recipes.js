@@ -11,16 +11,28 @@ function initScaler(rail) {
   const data = JSON.parse(rail.querySelector('.recipe-data').textContent);
   const serves = rail.querySelector('.recipe-serves');
   const mult = rail.querySelector('.recipe-mult');
+  // Rail-scoped, and spans every <ul> in the rail (one per run of ingredients).
   const items = rail.querySelectorAll('.recipe-ing li');
 
+  // The server render is authoritative at rest. Capture the authored strings so
+  // returning to ratio 1 restores them verbatim rather than re-formatting them
+  // through a second, lossy formatter (which flipped "0.5 tsp" to "½ tsp").
+  const originals = new Map();
+  items.forEach((li) => {
+    const q = li.querySelector('.q');
+    if (q) originals.set(q, q.textContent);
+  });
+
   function apply(r) {
+    const isBase = Math.abs(r - 1) <= 1e-9;
     items.forEach((li) => {
       const ing = data[+li.dataset.i];
       const q = li.querySelector('.q');
       if (!q || ing.qty == null) return;
-      const val = ing.qty * r;
-      q.textContent = formatQuantity(val, ing.unit) + (ing.unit ? ' ' + ing.unit : '');
-      q.classList.toggle('changed', Math.abs(r - 1) > 1e-9);
+      q.textContent = isBase
+        ? originals.get(q)
+        : formatQuantity(ing.qty * r, ing.unit) + (ing.unit ? ' ' + ing.unit : '');
+      q.classList.toggle('changed', !isBase);
     });
   }
 
@@ -52,8 +64,6 @@ function initScaler(rail) {
     serves.value = Math.min(99, (parseFloat(serves.value) || base) + 1);
     fromServings();
   });
-
-  fromServings();
 }
 
 document.querySelectorAll('.recipe-rail').forEach(initScaler);
