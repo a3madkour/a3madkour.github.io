@@ -168,6 +168,10 @@ test('index heading order has no skipped level (axe heading-order)', async ({ pa
   expect(await page.locator('.recipe-card').count()).toBeGreaterThan(0);
   const levels = await page.locator('h1, h2, h3, h4, h5, h6')
     .evaluateAll((els) => els.map((e) => Number(e.tagName.slice(1))));
+  // Anchor the headings themselves, not just the cards: with cards present but
+  // headingless, levels would be [1], the loop below would no-op, and this test
+  // would pass while guarding nothing.
+  expect(levels.length).toBeGreaterThan(1);
   expect(levels[0]).toBe(1);
   for (let i = 1; i < levels.length; i++) {
     expect(levels[i] - levels[i - 1]).toBeLessThanOrEqual(1);
