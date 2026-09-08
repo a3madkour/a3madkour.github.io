@@ -5034,7 +5034,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   cursor: pointer;
 }
 .poem-player-btn--primary {
-  background: var(--color-burgundy); color: white;
+  background: var(--color-burgundy); color: var(--color-stone);
   border-color: var(--color-burgundy);
   width: 34px; height: 34px;
 }
@@ -5077,7 +5077,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   font-size: 0.7rem;
 }
 .poem-player-show-all.is-active {
-  background: var(--color-burgundy); color: white;
+  background: var(--color-burgundy); color: var(--color-stone);
   border-color: var(--color-burgundy);
 }
 

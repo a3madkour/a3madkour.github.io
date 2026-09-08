@@ -31,6 +31,7 @@ PAIRINGS = [
     ("color-ink",      "color-tile", 7.0, "body text on tile/rail surface"),
     ("color-burgundy", "color-tile", 4.5, "rescaled-quantity accent on rail surface"),
     ("color-ink-fade", "color-tile", 4.5, "ingredient qualifier text on rail surface"),
+    ("color-stone",    "color-burgundy", 4.5, "stone on burgundy accent background"),
 ]
 
 
