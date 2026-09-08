@@ -33,8 +33,8 @@ why several rows below went unseen for months:
 1. **A gate that reads tokens cannot see a literal.** `check-contrast.py` parses
    the `:root` blocks. Three colours in `main.css` are hardcoded hexes outside
    those blocks, so they are structurally invisible to the only accessibility
-   gate in CI (RF1.2, RF3.1). Two more tokens are checked only by
-   value-coincidence with a sibling (RF3.3).
+   gate in CI (RF1.2, RF3.1). Two more tokens were checked only by
+   value-coincidence with a sibling until RF3.3 closed that.
 2. **Coupling recorded in a comment is coupling that is not enforced.** RF2.1 is
    a template and a linter that must agree on a three-branch shape ladder, with
    nothing but a `{{- /* mirrored by … */ -}}` note holding them together. The
@@ -70,8 +70,9 @@ why several rows below went unseen for months:
 |---|---|---|---|
 | RF3.1 | **`.header-live-pill-dot` is under the 3:1 non-text bar in dark mode.** `assets/css/main.css:5149` — `background: #b22222`, another hardcoded hex outside the token blocks and therefore invisible to `check-contrast.py`. | Computed against the dark `--color-stone` (`#181818`): **2.66:1**. Light mode is 5.74:1. | Materially mitigated: the dot sits inside a pill that carries the literal text "LIVE", so the colour is not the only channel and SC 1.4.11's "meaningful" test is arguable. Fix alongside RF1.2 — same root cause (untokenized literal), same one-line remedy, and the pairing then joins the gate. |
 | RF3.2 | **`<noscript><style>` sits in `<body>`.** `layouts/partials/recipes/rail.html:2`. `<style>` is metadata content; its content model places it in `<head>`, with the HTML spec's body-allowance being a parser concession rather than a conformance one. The precedent it cites — `layouts/partials/head.html:65`, the `.cite-static` no-JS rule — is inside `<head>`, where it conforms. | In the built page the block renders at byte offset 4697, against `<body` at 2336 and `</head>` at 2329. Every browser honours it (RF's own new E2E guard depends on that), and no validator runs in CI, so nothing catches it. | Move the rule into `head.html` gated on `.Section == "recipes"`, matching the `.cite-static` pattern one line above it. Zero behavioural change; it is purely about not carrying a second, weaker precedent. |
-| RF3.3 | **`--color-paper` is in the contrast gate only by value-coincidence.** The token is a real surface — the search-modal panel, used at `main.css:3772`, `:4140`, `:4168`, `:4303`, `:4314` — but `check-contrast.py` never names it. It is currently safe only because it happens to be byte-identical to `--color-tile`, which *is* checked. | Light: `--color-paper: #fdfcf8`, `--color-tile: #fdfcf8`. Dark: both `#2a2a2a`. Nothing enforces the equality; the moment either is nudged, `--color-paper` drops out of the gate with no failure anywhere. | Add explicit `ink on paper` / `ink-soft on paper` pairings to `check-contrast.py`. Two lines, and it converts a coincidence into a checked invariant. |
-| RF3.4 | **Two checked pairings sit ~0.1 above the AA bar.** `color-ink-fade on color-stone` **4.62:1** (light) and `color-burgundy on color-tile` / `color-tile on color-burgundy` **4.56:1** (dark), against a 4.5 minimum. | Full output of `python3 tools/check-contrast.py` — 15 pairings per mode, 30 lines, all PASS. | No action. Recorded because these are the first things any future palette nudge will break, and the gate will catch it *loudly* rather than silently — which is the intended behaviour, not a defect. Stated here so a future palette change knows where the margin is. |
+| RF3.3 | ~~**`--color-paper` is in the contrast gate only by value-coincidence.**~~ **CLOSED.** Four pairings added to `check-contrast.py`: `ink`/`ink-soft`/`burgundy` **on** paper, and paper **on** burgundy. Both directions render, so both are gated — burgundy text on a paper control (`.reenable-tracking`, `.recipe-stp button`) and paper text on a burgundy fill (`.search-modal-chip.is-active`, `.download-link:hover`). `ink-fade` on paper was considered and rejected: `.recipe-mult` is `background: transparent`, so that text sits on the rail, not on a panel — gating it would gate a hypothetical. A value-identity assertion (paper == tile) was also considered and rejected: the two tokens are documented as semantically distinct and are *allowed* to diverge; asserting equality would forbid the very change the gate exists to make safe. | Mutation-proven in both directions rather than observed passing: with the pairings absent, nudging light `--color-paper` to `#6e6a64` (ink at 3.23:1) still exits **0** — the gap. With them present, the same mutation exits **1** naming all four paper pairings, and an equivalent dark-mode nudge (`#7a7a7a`, applied to both dark blocks so `check_dark_tokens` stays green) also exits 1. Clean tree: 21 pairings x 2 modes, all PASS. | Done — `tools/check-contrast.py`, `CLAUDE.md` prose. |
+
+| RF3.4 | **Two checked pairings sit ~0.1 above the AA bar.** `color-ink-fade on color-stone` **4.62:1** (light) and `color-burgundy on color-tile` / `color-tile on color-burgundy` — and, since RF3.3, the paper pair at the identical value — **4.56:1** (dark), against a 4.5 minimum. | Full output of `python3 tools/check-contrast.py` — as of RF3.3, 21 pairings per mode, all PASS. | No action. Recorded because these are the first things any future palette nudge will break, and the gate will catch it *loudly* rather than silently — which is the intended behaviour, not a defect. Stated here so a future palette change knows where the margin is. |
 
 ---
 
@@ -79,11 +80,12 @@ why several rows below went unseen for months:
 
 Recorded so a later pass does not re-litigate them:
 
-- **`grep -c '^\s*- name:' .github/workflows/hugo.yaml` → 97**, matching the
-  number documented in `CLAUDE.md`. No drift.
+- **`grep -c '^\s*- name:' .github/workflows/hugo.yaml` → 103**, matching the
+  number documented in `CLAUDE.md`. No drift. (This line read `97` when first
+  written — a miscount, not drift; re-verified 2026-09-07.)
 - **`--color-paper` / `--color-tile` semantics** are distinct and correctly
-  documented in `CLAUDE.md`; only the *gate* coverage is thin (RF3.3), not the
-  palette.
+  documented in `CLAUDE.md`; the *gate* coverage was the thin part, and RF3.3 closed it; the
+  palette was never wrong.
 - **The other two hardcoded literals in `main.css`** (`#000` at `:5165`, the
   YouTube embed letterbox; the `rgba(178,34,34,…)` pill background at
   `:5135-5136`) are decorative backgrounds behind opaque content, not
