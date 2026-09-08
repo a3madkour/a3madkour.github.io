@@ -16,6 +16,20 @@ VIDEO_RE = re.compile(r"^[A-Za-z0-9_-]{11}$")
 SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.\-]*:")
 
 
+
+def _exists(path) -> bool:
+    """Path.exists() that survives an unusable path.
+
+    pathlib swallows a fixed set of errnos and re-raises the rest, and
+    ENAMETOOLONG is not in that set — so a >255-byte component raises OSError
+    and turns a clean rejection into a traceback (RF2.2). Any path the OS
+    refuses to stat is, for our purposes, a path that does not resolve.
+    """
+    try:
+        return path.exists()
+    except OSError:
+        return False
+
 def lint_file(md: Path) -> list[str]:
     errs: list[str] = []
     fm = parse_frontmatter(md.read_text())
@@ -70,10 +84,10 @@ def lint_file(md: Path) -> list[str]:
                 # allowed, this arithmetic breaks silently and every root-relative
                 # image starts resolving against the wrong tree. Fix both together.
                 target = md.parent.parent.parent.parent / "static" / path.lstrip("/")
-                if not target.exists():
+                if not _exists(target):
                     errs.append(f"{md}: image '{val}' not found under static/")
             else:
-                if not (md.parent / path).exists():
+                if not _exists(md.parent / path):
                     errs.append(f"{md}: image '{val}' not found in the page bundle")
     return errs
 

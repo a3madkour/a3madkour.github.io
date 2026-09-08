@@ -4,7 +4,7 @@
     <label class="recipe-serves-label" for="recipe-serves">Serves</label>
     <span class="recipe-stp">
       <button type="button" class="recipe-minus" aria-label="fewer servings">–</button>
-      <input id="recipe-serves" class="recipe-serves numin" type="number" min="1" max="99"
+      <input id="recipe-serves" class="recipe-serves numin" type="number" min="1" max="99" step="any"
              value="{{ .Params.servings }}" inputmode="decimal">
       <button type="button" class="recipe-plus" aria-label="more servings">+</button>
     </span>

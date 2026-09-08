@@ -155,6 +155,24 @@ class T(unittest.TestCase):
         # The Python repr must not reach the author.
         self.assertFalse(any("['hero.svg'" in e for e in errs), errs)
 
+    def test_overlong_bundle_path_rejects_cleanly_not_crashes(self):
+        """A >255-byte component makes Path.exists() raise OSError (ENAMETOOLONG).
+
+        pathlib swallows a fixed errno set and re-raises the rest, so this used
+        to surface as a traceback rather than the clean rejection the linter
+        gives at 250 chars — the least diagnosable possible output (RF2.2).
+        """
+        self.repo.write("content/recipes/ex/index.md", self._with_image("a" * 300 + ".png"))
+        rc, errs = mod.run(self.repo.root)   # must not raise
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("not found in the page bundle" in e for e in errs), errs)
+
+    def test_overlong_root_relative_path_rejects_cleanly_not_crashes(self):
+        self.repo.write("content/recipes/ex/index.md", self._with_image("/" + "a" * 300 + ".png"))
+        rc, errs = mod.run(self.repo.root)   # must not raise
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("not found under static/" in e for e in errs), errs)
+
 
 if __name__ == "__main__":
     unittest.main()

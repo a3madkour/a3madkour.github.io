@@ -334,3 +334,28 @@ test('the kicker renders only when cuisine or category is present', async ({ pag
   await expect(kicker).not.toHaveText('');
   await expect(kicker).toBeVisible();
 });
+
+test('both scaler inputs stay constraint-valid under write-back (RF2.4)', async ({ page }) => {
+  await page.goto('/recipes/example-recipe-one/');
+  const serves = page.locator('.recipe-serves');
+  const mult = page.locator('.recipe-mult');
+
+  // fromMult writes a derived servings value, which is routinely fractional:
+  // base 4 x 0.3 = 1.2. Without step="any" the implied step is 1, so the field
+  // reports stepMismatch and sits in :invalid while displaying a value the
+  // scaler itself produced.
+  await mult.fill('0.3');
+  await mult.blur();
+  const state = await page.evaluate(() => {
+    const s = document.querySelector('.recipe-serves') as HTMLInputElement;
+    const m = document.querySelector('.recipe-mult') as HTMLInputElement;
+    return {
+      servesValue: s.value, servesMismatch: s.validity.stepMismatch, servesValid: s.validity.valid,
+      multValue: m.value, multMismatch: m.validity.stepMismatch, multValid: m.validity.valid,
+    };
+  });
+  expect(state.servesMismatch, `serves="${state.servesValue}" reported stepMismatch`).toBe(false);
+  expect(state.servesValid).toBe(true);
+  expect(state.multMismatch).toBe(false);
+  expect(state.multValid).toBe(true);
+});
