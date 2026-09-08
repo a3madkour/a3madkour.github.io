@@ -2,7 +2,11 @@
   "name": "a3madkour-site-e2e",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "description": "Dev-only Playwright E2E harness. NOT shipped — see CLAUDE.md 'No npm' note. devDependencies only; adds zero bytes to the built site.",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "test:e2e": "playwright test"
   },
