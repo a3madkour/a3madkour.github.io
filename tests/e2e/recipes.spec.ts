@@ -41,3 +41,20 @@ test('an ungrouped ingredient does not inherit the previous group heading', asyn
   await expect(page.locator('li.recipe-ing-group')).toHaveCount(0);
   await expect(page.locator('h3.recipe-ing-group')).toHaveCount(2);
 });
+
+test('every scaler control shows a focus ring (RC3.3)', async ({ page }) => {
+  await page.goto('/recipes/example-recipe-one/');
+  for (const sel of ['.recipe-minus', '.recipe-serves', '.recipe-plus', '.recipe-mult']) {
+    await page.locator(sel).focus();
+    const outline = await page.locator(sel).evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { width: s.outlineWidth, style: s.outlineStyle };
+    });
+    expect(outline.style, `${sel} outline-style`).not.toBe('none');
+    expect(parseFloat(outline.width), `${sel} outline-width`).toBeGreaterThan(0);
+  }
+  // The stepper wrapper must not clip its children's rings.
+  const overflow = await page.locator('.recipe-stp')
+    .evaluate((el) => getComputedStyle(el).overflow);
+  expect(overflow).not.toBe('hidden');
+});

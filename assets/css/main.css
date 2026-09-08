@@ -5803,7 +5803,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   border-radius: 7px;
   display: inline-flex;
   align-items: center;
-  overflow: hidden;
 }
 
 .recipe-stp button {
@@ -5818,6 +5817,12 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 }
 .recipe-stp button:hover {
   background: var(--color-stone);
+}
+.recipe-stp button:first-child { border-radius: 6px 0 0 6px; }
+.recipe-stp button:last-child  { border-radius: 0 6px 6px 0; }
+.recipe-stp button:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: -2px;
 }
 
 .numin {
@@ -5839,9 +5844,10 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   -webkit-appearance: none;
   margin: 0;
 }
-.numin:focus {
-  outline: none;
-  background: var(--color-stone);
+.numin:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: -2px;
+  background: var(--color-paper);
 }
 
 /* Multiplier field — dashed-underline, pushed right */
@@ -5871,8 +5877,9 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   -webkit-appearance: none;
   margin: 0;
 }
-.recipe-mult:focus {
-  outline: none;
+.recipe-mult:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
   border-bottom-color: var(--color-burgundy);
   color: var(--color-ink);
 }
