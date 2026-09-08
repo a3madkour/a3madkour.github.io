@@ -6075,7 +6075,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   margin-bottom: var(--space-2xs);
 }
 
-.recipe-card h3 {
+.recipe-card h2 {
   font-family: var(--font-body);
   font-weight: 700;
   font-size: var(--text-md);

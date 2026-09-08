@@ -5,7 +5,7 @@
    data-category="{{ .Params.category }}"
    data-tags="{{ delimit (.Params.tags | default slice) " " }}">
   <div class="recipe-card-kicker">{{ .Params.cuisine }}{{ with .Params.category }} · {{ . }}{{ end }}</div>
-  <h3>{{ .Title }}</h3>
+  <h2>{{ .Title }}</h2>
   <p class="recipe-card-sum">{{ .Params.summary }}</p>
   <div class="recipe-card-foot">
     {{ if $hasTime }}<span class="recipe-card-time"><span aria-hidden="true">⏱</span> {{ $total }}&nbsp;min</span>{{ end }}
