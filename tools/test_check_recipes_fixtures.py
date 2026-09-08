@@ -135,6 +135,60 @@ class T(unittest.TestCase):
         self.assertEqual(rc, 1)
         self.assertTrue(any("missing 'name'" in e for e in errs), errs)
 
+    # --- Fix round 1: the padded-numeric scan must be frontmatter-scoped and
+    # value-positional, and _absent must know every YAML null spelling. ---
+
+    def test_body_line_with_padded_key_ignored(self):
+        self.repo.write("content/recipes/ex/index.md",
+                        VALID + "\nservings: 010\n")
+        rc, errs = mod.run(self.repo.root)
+        self.assertEqual(rc, 0, errs)
+
+    def test_body_prose_with_qty_substring_ignored(self):
+        self.repo.write("content/recipes/ex/index.md",
+                        VALID + "\nEarlier drafts said qty: 08 which was a typo.\n")
+        rc, errs = mod.run(self.repo.root)
+        self.assertEqual(rc, 0, errs)
+
+    def test_body_fenced_yaml_block_ignored(self):
+        doc = VALID + (
+            "\n```yaml\n"
+            "servings: 010\n"
+            "prep_minutes: 08\n"
+            "ingredients:\n"
+            "  - { qty: 08, unit: tbsp, item: \"oil\" }\n"
+            "```\n"
+        )
+        self.repo.write("content/recipes/ex/index.md", doc)
+        rc, errs = mod.run(self.repo.root)
+        self.assertEqual(rc, 0, errs)
+
+    def test_quoted_value_containing_padded_qty_ignored(self):
+        self.repo.write("content/recipes/ex/index.md",
+                        VALID.replace('note: "to taste"',
+                                      'note: "was qty: 08 in the source"'))
+        rc, errs = mod.run(self.repo.root)
+        self.assertEqual(rc, 0, errs)
+
+    def test_null_spellings_reject_missing_item(self):
+        for spelling in ("~", "Null", "NULL", "null"):
+            with self.subTest(spelling=spelling):
+                self.repo.write("content/recipes/ex/index.md",
+                                VALID.replace('item: "olive oil"',
+                                              f"item: {spelling}"))
+                rc, errs = mod.run(self.repo.root)
+                self.assertEqual(rc, 1, f"item: {spelling} should be rejected")
+                self.assertTrue(any("missing 'item'" in e for e in errs), errs)
+
+    def test_null_spellings_accepted_for_qty(self):
+        for spelling in ("~", "Null", "NULL", "null"):
+            with self.subTest(spelling=spelling):
+                self.repo.write("content/recipes/ex/index.md",
+                                VALID.replace("{ qty: 2, unit: tbsp",
+                                              f"{{ qty: {spelling}, unit: tbsp"))
+                rc, errs = mod.run(self.repo.root)
+                self.assertEqual(rc, 0, f"qty: {spelling} is legal YAML null: {errs}")
+
 
 if __name__ == "__main__":
     unittest.main()
