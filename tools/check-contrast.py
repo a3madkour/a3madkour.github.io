@@ -39,6 +39,17 @@ PAIRINGS = [
     ("color-stone",    "color-burgundy", 4.5, "stone on burgundy accent background"),
     ("color-ink-fade", "color-stone", 4.5, "de-emphasised meta text on background"),
     ("color-tile",     "color-burgundy", 4.5, "tile surface on burgundy accent background"),
+    # --color-paper is the floating-panel surface (search modal, cite modal,
+    # path-log popover, the recipe stepper field). It is a distinct token from
+    # --color-tile that merely happens to share its value today; gating it in
+    # its own right is what lets the two diverge without dropping out of the
+    # gate. Both directions of the burgundy pairing render: burgundy text on a
+    # paper control (.reenable-tracking, .recipe-stp button) and paper text on
+    # a burgundy fill (.search-modal-chip.is-active, .download-link:hover).
+    ("color-ink",      "color-paper", 7.0, "body text on floating panel surface"),
+    ("color-ink-soft", "color-paper", 4.5, "secondary text on floating panel surface"),
+    ("color-burgundy", "color-paper", 4.5, "accent control text on floating panel surface"),
+    ("color-paper",    "color-burgundy", 4.5, "panel surface on burgundy accent background"),
 ]
 
 
