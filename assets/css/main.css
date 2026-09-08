@@ -5941,7 +5941,7 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 }
 
 /* Second, non-colour channel: states the ratio and the resulting yield, and is
-   announced (role=status). Hidden — genuinely not rendered — at ratio 1. */
+   announced (role=status). */
 .recipe-scale-status {
   font-family: var(--font-ui);
   font-size: var(--text-xs);
@@ -5950,7 +5950,16 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   padding-top: var(--space-2xs);
   border-top: 1px dashed var(--color-rule);
 }
-.recipe-scale-status[hidden] { display: none; }
+/* Empty at rest, but NEVER display:none / [hidden]. A live region has to be in
+   the accessibility tree before its text changes — a region that appears with
+   its content already present is the known-unreliable pattern that NVDA, JAWS
+   and VoiceOver routinely fail to announce. :empty collapses the box to zero
+   height and drops the separator instead, so the region persists unseen. */
+.recipe-scale-status:empty {
+  margin: 0;
+  padding: 0;
+  border-top: none;
+}
 
 .alt {
   color: var(--color-ink-fade);

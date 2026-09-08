@@ -163,26 +163,119 @@ test('both scaler inputs honour their own declared bounds', async ({ page }) => 
 // RC3.4 + RC4.8. Burgundy text was the only signal a quantity had been
 // rescaled: colour-only meaning, and silent to a screen reader. Two channels
 // now: a dotted underline on each moved .q, and a role=status line stating the
-// ratio and the resulting yield. Both are absent at rest.
+// ratio and the resulting yield.
 test('a rescaled quantity signals in two channels (RC3.4)', async ({ page }) => {
   await page.goto('/recipes/example-recipe-one/');
   const oil = page.locator('.recipe-ing li', { hasText: 'olive oil' }).locator('.q');
   const status = page.locator('.recipe-scale-status');
 
-  await expect(status).toBeHidden();
-
-  await page.fill('.recipe-serves', '6');
-  await expect(oil).toHaveClass(/recipe-q-changed/);
-  // Channel 2: a non-colour, announced signal.
-  await expect(status).toBeVisible();
+  // At rest the region exists and is empty — it must NOT be display:none, or it
+  // is absent from the a11y tree until the moment it gains text, which is the
+  // pattern screen readers routinely fail to announce.
   await expect(status).toHaveAttribute('role', 'status');
+  await expect(status).toHaveText('');
+  const rest = await status.evaluate((el) => {
+    const s = getComputedStyle(el);
+    return { display: s.display, height: el.getBoundingClientRect().height, border: s.borderTopStyle };
+  });
+  expect(rest.display).not.toBe('none');
+  expect(rest.height).toBe(0);          // :empty collapses the visual footprint
+  expect(rest.border).toBe('none');
+  // The .q underline is likewise absent until a value actually moves.
+  expect(await oil.evaluate((el) => getComputedStyle(el).borderBottomStyle)).toBe('none');
+
+  // fill() dispatches `input` only; `change` is the commit point, so blur.
+  await page.fill('.recipe-serves', '6');
+  await expect(oil).toHaveClass(/recipe-q-changed/);   // channel 1 tracks input
+  await page.locator('.recipe-serves').blur();
+
+  // Channel 2: announced, and says by how much.
+  await expect(status).toBeVisible();
   await expect(status).toContainText('1.5');
   await expect(status).toContainText('6');
-  // Channel 1: not colour alone — the underline is a second visual channel.
-  const decoration = await oil.evaluate((el) => getComputedStyle(el).textDecorationLine
-    + ' ' + getComputedStyle(el).borderBottomStyle);
-  expect(decoration).toMatch(/underline|dotted/);
 
+  // Channel 1 pinned to the mechanism actually implemented — a dotted bottom
+  // border in currentColor. A weaker regex would pass on an inherited
+  // underline the rescale had nothing to do with.
+  const rule = await oil.evaluate((el) => {
+    const s = getComputedStyle(el);
+    return { style: s.borderBottomStyle, width: parseFloat(s.borderBottomWidth), color: s.borderBottomColor, ink: s.color };
+  });
+  expect(rule.style).toBe('dotted');
+  expect(rule.width).toBeGreaterThan(0);
+  expect(rule.color).toBe(rule.ink);    // currentColor, so it tracks the theme
+
+  // Back to base: the text empties, but the region stays in the document.
   await page.fill('.recipe-serves', '4');
-  await expect(status).toBeHidden();
+  await page.locator('.recipe-serves').blur();
+  await expect(status).toHaveText('');
+  await expect(status).toBeAttached();
+  expect(await status.evaluate((el) => getComputedStyle(el).display)).not.toBe('none');
+  expect(await oil.evaluate((el) => getComputedStyle(el).borderBottomStyle)).toBe('none');
+});
+
+// RC4.8. The blocking half: a live region inserted into the a11y tree in the
+// same task that populates it is unreliably announced. Assert via CDP that the
+// region is already there, un-ignored, before any interaction.
+test('the scale status is a live region present from load (RC4.8)', async ({ page }) => {
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Accessibility.enable');
+  await page.goto('/recipes/example-recipe-one/');
+
+  const liveRegions = async () => {
+    const { nodes } = (await cdp.send('Accessibility.getFullAXTree')) as {
+      nodes: { role?: { value?: string }; ignored?: boolean;
+               properties?: { name: string; value: { value?: unknown } }[] }[];
+    };
+    return nodes.filter((n) => !n.ignored && (n.properties || [])
+      .some((p) => p.name === 'live' && p.value.value && p.value.value !== 'off'));
+  };
+
+  const atLoad = await liveRegions();
+  expect(atLoad.length, 'live region must exist before any change').toBe(1);
+  expect(atLoad[0].role?.value).toBe('status');
+
+  await page.fill('.recipe-serves', '6');
+  await page.locator('.recipe-serves').blur();
+  await expect(page.locator('.recipe-scale-status')).toContainText('1.5');
+  const afterChange = await liveRegions();
+  expect(afterChange.length).toBe(1);
+  expect(afterChange[0].role?.value).toBe('status');
+});
+
+// RC4.8. The announcement follows N10's commit discipline (`change`, where the
+// clamped value is written back) and reads as English at a yield of 1.
+test('the scale status states the committed yield, pluralised (RC4.8)', async ({ page }) => {
+  await page.goto('/recipes/example-recipe-one/');
+  const serves = page.locator('.recipe-serves');
+  const status = page.locator('.recipe-scale-status');
+
+  // A clamped value is announced as clamped, not as the number typed.
+  await serves.fill('100');
+  await serves.blur();
+  await expect(status).toHaveText('Scaled ×20 — amounts shown for 80 servings');
+
+  // Singular at a yield of exactly 1 — not "1 servings".
+  await serves.fill('1');
+  await serves.blur();
+  await expect(status).toHaveText('Scaled ×0.25 — amounts shown for 1 serving');
+
+  // Typing alone (input, no change) must not re-announce per keystroke: the
+  // region holds the last committed sentence until the value is committed.
+  await serves.fill('12');
+  await expect(status).toHaveText('Scaled ×0.25 — amounts shown for 1 serving');
+  await serves.blur();
+  await expect(status).toHaveText('Scaled ×3 — amounts shown for 12 servings');
+
+  // The unit comes from data-yield-unit, and is singularised generically.
+  await page.goto('/recipes/example-recipe-two/');
+  const s2 = page.locator('.recipe-serves');
+  await s2.fill('12');
+  await s2.blur();
+  await expect(page.locator('.recipe-scale-status'))
+    .toHaveText('Scaled ×1.5 — amounts shown for 12 cookies');
+  await s2.fill('1');
+  await s2.blur();
+  await expect(page.locator('.recipe-scale-status'))
+    .toHaveText('Scaled ×0.13 — amounts shown for 1 cookie');
 });
