@@ -1,21 +1,18 @@
 ---
 title: "Example Recipe Three"
-date: 2026-07-04
-lastmod: 2026-07-04
+date: 2026-07-08
+lastmod: 2026-07-08
 draft: false
-summary: "A quick twenty-minute dummy example."
-tags: [example, quick]
-cuisine: "Example North"
-category: "Side"
-servings: 3
-prep_minutes: 5
-cook_minutes: 15
+summary: "Lorem ipsum with nothing optional — the minimal legal recipe."
+servings: 2
 sources:
-  - { name: "Example Weeknight", url: "https://example.com/weeknight" }
+  - { name: "Example Book of Dummies" }
 ingredients:
-  - { qty: 400, unit: g, item: "beans" }
-  - { qty: 2, unit: tsp, item: "cumin" }
+  - { qty: 1, unit: null, item: "lorem" }
+  - { qty: null, unit: null, item: "ipsum", note: "to taste" }
 steps:
-  - "Warm the beans with the spice."
+  - "Combine the lorem and the ipsum."
   - "Serve."
 ---
+
+An obviously-dummy headnote for the minimal case.

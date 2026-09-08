@@ -103,3 +103,16 @@ test('the scaler writes no quantity at load, only on a change', async ({ page })
   const afterChange = await page.evaluate(() => (window as unknown as { __qWrites: string[] }).__qWrites);
   expect(afterChange.length).toBeGreaterThan(0);
 });
+test('a recipe with no times renders no time chrome anywhere', async ({ page }) => {
+  // example-recipe-three is the minimal fixture: REQUIRED fields only.
+  await page.goto('/recipes/example-recipe-three/');
+  await expect(page.locator('.recipe-meta')).not.toContainText('Total');
+  await expect(page.locator('.recipe-dl')).toBeVisible();
+
+  await page.goto('/recipes/');
+  const minimal = page.locator('.recipe-card[href="/recipes/example-recipe-three/"]');
+  // Assert the parent exists first: toHaveCount(0) on a child of a locator that
+  // matches nothing passes trivially, so without this the next line has no teeth.
+  await expect(minimal).toHaveCount(1);
+  await expect(minimal.locator('.recipe-card-time')).toHaveCount(0);
+});
