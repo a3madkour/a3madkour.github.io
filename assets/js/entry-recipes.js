@@ -11,6 +11,8 @@ function initScaler(rail) {
   const data = JSON.parse(rail.querySelector('.recipe-data').textContent);
   const serves = rail.querySelector('.recipe-serves');
   const mult = rail.querySelector('.recipe-mult');
+  const status = rail.querySelector('.recipe-scale-status');
+  const yieldUnit = rail.dataset.yieldUnit || 'servings';
   // Rail-scoped, and spans every <ul> in the rail (one per run of ingredients).
   const items = rail.querySelectorAll('.recipe-ing li');
 
@@ -32,8 +34,32 @@ function initScaler(rail) {
       q.textContent = isBase
         ? originals.get(q)
         : formatQuantity(ing.qty * r, ing.unit) + (ing.unit ? ' ' + ing.unit : '');
-      q.classList.toggle('changed', !isBase);
+      q.classList.toggle('recipe-q-changed', !isBase);
     });
+  }
+
+  // data-yield-unit is authored plural ("servings", "cookies"), so a yield of
+  // exactly 1 needs the singular or the region announces "1 servings". Covers
+  // the regular English plurals an author will write; anything unrecognised is
+  // returned untouched (irregulars like "loaves" are a known limitation).
+  function unitFor(n) {
+    if (n !== 1) return yieldUnit;
+    if (/(ch|sh|s|x|z)es$/i.test(yieldUnit)) return yieldUnit.slice(0, -2);
+    if (/[^s]s$/i.test(yieldUnit)) return yieldUnit.slice(0, -1);
+    return yieldUnit;
+  }
+
+  // Second channel: says by how much, and announces it. .recipe-q-changed says
+  // which values moved; colour alone would carry the whole meaning otherwise.
+  // Only the TEXT changes here — never `hidden`, never display. The element is
+  // in the accessibility tree from the server render onward, because a live
+  // region that is inserted already carrying its content is the pattern screen
+  // readers routinely fail to announce. Emptying it is how it goes quiet.
+  function updateStatus(s, r) {
+    if (!status) return;
+    status.textContent = Math.abs(r - 1) <= 1e-9
+      ? ''
+      : `Scaled ×${clean(r)} — amounts shown for ${clean(s)} ${unitFor(s)}`;
   }
 
   // Both controls declare their own bounds in rail.html; the JS must respect
@@ -64,6 +90,13 @@ function initScaler(rail) {
     mult.value = clean(r);
     if (writeBack) serves.value = clean(s);
     apply(r);
+    // Announce on `change` only — same commit point N10 uses for write-back.
+    // On `input` the field still holds the raw, un-clamped number, so a status
+    // line derived from it would contradict the control it describes; and a
+    // polite region re-firing per keystroke ("×0.25…" then "×3…" while
+    // typing "12") is noise. Sighted feedback during typing is unaffected:
+    // apply() has already moved the quantities and drawn their dotted rule.
+    if (writeBack) updateStatus(s, r);
   }
 
   function fromMult(writeBack) {
@@ -73,6 +106,7 @@ function initScaler(rail) {
     serves.value = clean(s);
     if (writeBack) mult.value = clean(r);
     apply(r);
+    if (writeBack) updateStatus(s, r);
   }
 
   // `input` tracks as you type without fighting the caret; `change` (blur or

@@ -1,4 +1,4 @@
-<aside class="recipe-rail" data-base-servings="{{ .Params.servings }}">
+<aside class="recipe-rail" data-base-servings="{{ .Params.servings }}" data-yield-unit="{{ default "servings" .Params.yield_unit }}">
   <div class="recipe-scaler">
     <label class="recipe-serves-label" for="recipe-serves">Serves</label>
     <span class="recipe-stp">
@@ -12,6 +12,7 @@
              value="1" inputmode="decimal" aria-label="multiplier"><span class="recipe-x">×</span>
     </span>
   </div>
+  <p class="recipe-scale-status" role="status"></p>
   <h2 class="recipe-sec">Ingredients</h2>
   {{- $sc := newScratch -}}
   {{- $sc.Set "g" "\x00init" -}}
