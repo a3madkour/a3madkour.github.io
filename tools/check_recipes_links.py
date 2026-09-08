@@ -11,6 +11,9 @@ from check_fixtures import parse_frontmatter  # noqa: E402
 
 URL_RE = re.compile(r"^https?://\S+$")
 VIDEO_RE = re.compile(r"^[A-Za-z0-9_-]{11}$")
+# Any URI scheme; used to reject the ones the template cannot resolve
+# (uppercase HTTPS://, data:, ftp:) with a message that names the cause.
+SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.\-]*:")
 
 
 def lint_file(md: Path) -> list[str]:
@@ -30,20 +33,48 @@ def lint_file(md: Path) -> list[str]:
             errs.append(f"{md}: video '{vid}' is not an 11-char YouTube id")
     # `image` reaches only the JSON-LD blob, never a rendered <img>, so a broken
     # path is invisible to every other check (the built-HTML link crawler included).
+    # The branch keys below mirror layouts/partials/recipes/schema-recipe.html
+    # exactly — http(s) prefix, then "/" prefix, then bundle-relative. Keep the two
+    # in lockstep: a shape the template resolves but this rejects is safe (a loud
+    # CI failure); the reverse ships a silently broken URL into the JSON-LD.
     img = fm.get("image")
-    if img and str(img).strip() not in ("", "null"):
-        val = str(img).strip()
-        if val.startswith(("http://", "https://")):
-            if not URL_RE.match(val):
-                errs.append(f"{md}: image is not a well-formed http(s) URL")
-        elif val.startswith("/"):
-            # md is <repo>/content/recipes/<slug>/index.md -> four parents is the repo root.
-            target = md.parent.parent.parent.parent / "static" / val.lstrip("/")
-            if not target.exists():
-                errs.append(f"{md}: image '{val}' not found under static/")
-        else:
-            if not (md.parent / val).exists():
-                errs.append(f"{md}: image '{val}' not found in the page bundle")
+    if img:  # "" / null / [] are falsy here and in the template's `with`.
+        if not isinstance(img, str):
+            # schema-recipe.html renders one value (`hasPrefix` on a slice breaks
+            # the build), so a list is rejected outright rather than checked
+            # element-wise. The value is deliberately not interpolated: a Python
+            # repr in the error text is not something an author can act on.
+            errs.append(f"{md}: image must be a single string path or URL, "
+                        f"not a {type(img).__name__}")
+        elif img.strip() not in ("", "null"):
+            val = img.strip()
+            # A query string or fragment is a legitimate cache-buster that the
+            # template resolves fine; strip it before touching the filesystem.
+            path = val.split("#", 1)[0].split("?", 1)[0]
+            if val.startswith(("http://", "https://")):
+                if not URL_RE.match(val):
+                    errs.append(f"{md}: image is not a well-formed http(s) URL")
+            elif val.startswith("//"):
+                errs.append(f"{md}: image '{val}' is protocol-relative; "
+                            f"use an absolute https:// URL")
+            elif SCHEME_RE.match(val):
+                errs.append(f"{md}: image '{val}' uses an unsupported URI scheme; "
+                            f"use an absolute http(s) URL, a root-relative /path, "
+                            f"or a file in the page bundle")
+            elif not path.strip("/"):
+                errs.append(f"{md}: image '{val}' has no path to resolve")
+            elif val.startswith("/"):
+                # md is <repo>/content/recipes/<slug>/index.md, so four parents up
+                # is the repo root. This depth is coupled to run() walking ONLY the
+                # direct children of content/recipes/ — if nested bundles are ever
+                # allowed, this arithmetic breaks silently and every root-relative
+                # image starts resolving against the wrong tree. Fix both together.
+                target = md.parent.parent.parent.parent / "static" / path.lstrip("/")
+                if not target.exists():
+                    errs.append(f"{md}: image '{val}' not found under static/")
+            else:
+                if not (md.parent / path).exists():
+                    errs.append(f"{md}: image '{val}' not found in the page bundle")
     return errs
 
 
