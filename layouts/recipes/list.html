@@ -49,6 +49,6 @@
   <div class="recipe-grid" id="recipe-grid">
     {{ range $pages }}{{ partial "recipes/card.html" . }}{{ end }}
   </div>
-  <p class="recipe-empty" id="recipe-empty" hidden>No recipes match the current filters.</p>
+  <p class="recipe-empty" id="recipe-empty" role="status" hidden>No recipes match the current filters.</p>
 </div>
 {{ end }}

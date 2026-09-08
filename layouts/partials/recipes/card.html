@@ -4,7 +4,7 @@
    data-cuisine="{{ .Params.cuisine }}"
    data-category="{{ .Params.category }}"
    data-tags="{{ delimit (.Params.tags | default slice) " " }}">
-  <div class="recipe-card-kicker">{{ .Params.cuisine }}{{ with .Params.category }} · {{ . }}{{ end }}</div>
+  {{ if or .Params.cuisine .Params.category }}<div class="recipe-card-kicker">{{ .Params.cuisine }}{{ if and .Params.cuisine .Params.category }} · {{ end }}{{ .Params.category }}</div>{{ end }}
   <h2>{{ .Title }}</h2>
   <p class="recipe-card-sum">{{ .Params.summary }}</p>
   <div class="recipe-card-foot">

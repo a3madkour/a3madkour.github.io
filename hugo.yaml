@@ -27,10 +27,6 @@ outputs:
 # Tier 7.1: LHCI URL manifest. Generates public/lhci-pages.json with
 # {url, kind, section, type} per page. Consumed by tools/gen_lhci_urls.py
 # to regenerate lighthouserc.{json,mobile.json} in CI.
-mediaTypes:
-  application/ld+json:
-    suffixes: ["json"]
-
 outputFormats:
   LHCI-PAGES:
     mediaType: application/json
@@ -38,7 +34,12 @@ outputFormats:
     isPlainText: true
     notAlternative: true
   RECIPE:
-    mediaType: application/ld+json
+    # RC4.1: use the built-in application/json type. Registering a custom
+    # application/ld+json that claims suffixes: ["json"] rebinds the global
+    # suffix -> media-type lookup, so EVERY .json output (including
+    # /lhci-pages.json) gets served as application/ld+json. The emitted
+    # bytes and filename are identical either way.
+    mediaType: application/json
     baseName: index
     isPlainText: true
     notAlternative: true
