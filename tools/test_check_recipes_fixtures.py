@@ -84,6 +84,57 @@ class T(unittest.TestCase):
         rc, _ = mod.run(self.repo.root)
         self.assertEqual(rc, 1)
 
+    def test_zero_padded_minutes_rejected(self):
+        self.repo.write("content/recipes/ex/index.md",
+                        VALID.replace("servings: 4", "servings: 4\nprep_minutes: 010"))
+        rc, errs = mod.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("zero-padded" in e for e in errs), errs)
+
+    def test_zero_padded_servings_rejected(self):
+        self.repo.write("content/recipes/ex/index.md",
+                        VALID.replace("servings: 4", "servings: 08"))
+        rc, errs = mod.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("zero-padded" in e for e in errs), errs)
+
+    def test_zero_padded_qty_rejected(self):
+        self.repo.write("content/recipes/ex/index.md",
+                        VALID.replace("{ qty: 2, unit: tbsp", "{ qty: 08, unit: tbsp"))
+        rc, errs = mod.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("zero-padded" in e for e in errs), errs)
+
+    def test_underscore_and_inf_rejected(self):
+        for bad in ("1_0", "inf", "nan"):
+            with self.subTest(bad=bad):
+                self.repo.write("content/recipes/ex/index.md",
+                                VALID.replace("servings: 4", f"servings: {bad}"))
+                rc, errs = mod.run(self.repo.root)
+                self.assertEqual(rc, 1, f"{bad} should be rejected")
+
+    def test_zero_qty_rejected(self):
+        self.repo.write("content/recipes/ex/index.md",
+                        VALID.replace("{ qty: 2, unit: tbsp", "{ qty: 0, unit: tbsp"))
+        rc, errs = mod.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("qty" in e for e in errs), errs)
+
+    def test_explicit_null_item_rejected(self):
+        self.repo.write("content/recipes/ex/index.md",
+                        VALID.replace('item: "olive oil"', "item: null"))
+        rc, errs = mod.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("missing 'item'" in e for e in errs), errs)
+
+    def test_explicit_null_source_name_rejected(self):
+        self.repo.write("content/recipes/ex/index.md",
+                        VALID.replace('{ name: "Example", url: "https://example.com/x" }',
+                                      '{ name: null, url: "https://example.com/x" }'))
+        rc, errs = mod.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("missing 'name'" in e for e in errs), errs)
+
 
 if __name__ == "__main__":
     unittest.main()

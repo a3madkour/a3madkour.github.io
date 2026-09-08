@@ -24,26 +24,49 @@ FIELDS = REQUIRED | OPTIONAL
 TIMECODE_RE = re.compile(r"^\[(\d{1,2}):([0-5]\d)(?:\.\d{1,2})?\]")
 
 
+# A YAML 1.1/1.2 plain scalar Hugo will read as a number. Deliberately narrower
+# than float(): Python accepts "1_0", "inf", and "nan", none of which Hugo does.
+_NUM_RE = re.compile(r"^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$")
+
+# Zero-padded integers are the repo's documented Hugo octal gotcha: `010` is
+# parsed by Hugo as 8, and `08` is invalid octal so Hugo keeps it a string and
+# the next arithmetic op aborts the build. parse_scalar() converts "010" -> 10,
+# so the padding survives only in the raw frontmatter text.
+_PADDED_TOP_RE = re.compile(
+    r"^(servings|prep_minutes|cook_minutes|total_minutes):[ \t]*-?0\d", re.M)
+_PADDED_QTY_RE = re.compile(r"qty:[ \t]*-?0\d")
+
+
+def _absent(v) -> bool:
+    """True when a value is missing, or is the literal string 'null'.
+
+    parse_scalar() has no null handling, so an explicit `item: null` arrives as
+    the *truthy* string 'null' and silently passes a `str(...).strip()` check.
+    """
+    return v is None or (isinstance(v, str) and v.strip() == "null")
+
+
 def _is_num(v) -> bool:
     if isinstance(v, bool):
         return False
     if isinstance(v, (int, float)):
         return True
-    # Handle string representations of numbers (due to parse_scalar limitations)
     if isinstance(v, str):
-        try:
-            float(v)
-            return True
-        except ValueError:
-            return False
+        return bool(_NUM_RE.match(v.strip()))
     return False
 
 
 def lint_file(md: Path) -> list[str]:
     errs: list[str] = []
-    fm = parse_frontmatter(md.read_text())
+    raw = md.read_text()
+    fm = parse_frontmatter(raw)
     if fm is None:
         return [f"{md}: no frontmatter"]
+
+    for m in _PADDED_TOP_RE.finditer(raw):
+        errs.append(f"{md}: {m.group(1)} is zero-padded — Hugo parses it as octal")
+    if _PADDED_QTY_RE.search(raw):
+        errs.append(f"{md}: an ingredient qty is zero-padded — Hugo parses it as octal")
 
     for f in sorted(REQUIRED - fm.keys()):
         errs.append(f"{md}: missing required field '{f}'")
@@ -68,11 +91,11 @@ def lint_file(md: Path) -> list[str]:
                 if not isinstance(ing, dict):
                     errs.append(f"{md}: ingredients[{i}] must be a flow mapping {{...}}")
                     continue
-                if not str(ing.get("item", "")).strip():
+                if _absent(ing.get("item")) or not str(ing.get("item", "")).strip():
                     errs.append(f"{md}: ingredients[{i}] missing 'item'")
                 q = ing.get("qty")
-                if q not in (None, "null") and not _is_num(q):
-                    errs.append(f"{md}: ingredients[{i}] qty must be a number or null")
+                if not _absent(q) and not (_is_num(q) and float(str(q)) > 0):
+                    errs.append(f"{md}: ingredients[{i}] qty must be a positive number or null")
                 extra = set(ing.keys()) - {"qty", "unit", "item", "alt", "note", "group"}
                 for k in sorted(extra):
                     errs.append(f"{md}: ingredients[{i}] unknown key '{k}'")
@@ -86,7 +109,7 @@ def lint_file(md: Path) -> list[str]:
                 if not isinstance(s, dict):
                     errs.append(f"{md}: sources[{i}] must be a flow mapping {{...}}")
                     continue
-                if not str(s.get("name", "")).strip():
+                if _absent(s.get("name")) or not str(s.get("name", "")).strip():
                     errs.append(f"{md}: sources[{i}] missing 'name'")
 
     steps = fm.get("steps")
