@@ -5989,6 +5989,11 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
     flex-basis: auto;
     width: 100%;
   }
+  /* align-items: flex-start cross-sizes column children to fit-content;
+     flex: 1 only governs the (now vertical) main axis. */
+  .recipe-steps-col {
+    width: 100%;
+  }
 }
 
 /* §51b — Recipes index + card */

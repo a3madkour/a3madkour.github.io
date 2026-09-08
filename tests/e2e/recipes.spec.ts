@@ -49,4 +49,10 @@ test('clicking the "Serves" label focuses the input and does not rescale', async
   await page.getByText('Serves', { exact: true }).click();
   await expect(oil).toHaveText('2 tbsp');
   await expect(page.locator('.recipe-serves')).toBeFocused();
+test('steps column fills the width when the layout collapses (RC3.2)', async ({ page }) => {
+  await page.setViewportSize({ width: 700, height: 1000 });
+  await page.goto('/recipes/example-recipe-one/');
+  const rail = await page.locator('.recipe-rail').boundingBox();
+  const steps = await page.locator('.recipe-steps-col').boundingBox();
+  expect(Math.abs(rail!.width - steps!.width)).toBeLessThan(2);
 });
