@@ -40,7 +40,7 @@ img, svg { display: block; max-width: 100%; }
   --color-stone:    #eeeeea;
   --color-ink:      #1c1a17;
   --color-ink-soft: #5a564f;
-  --color-ink-fade: #6e6a64;
+  --color-ink-fade: #6c6862;
   --color-rule:     #d4d3cd;
   --color-tile:     #fdfcf8;
   --color-paper:    #fdfcf8;
@@ -51,7 +51,7 @@ img, svg { display: block; max-width: 100%; }
   --color-green:      #2d5a3d;
   --color-green-mid:  #3a624a;
   --color-green-soft: #4f7058;
-  --color-warn:     #a05a1a;
+  --color-warn:     #9c5719;
   --color-violet:   #5d4a8a;
 
   --font-body: "Petrona", Georgia, serif;
@@ -96,7 +96,7 @@ img, svg { display: block; max-width: 100%; }
   --color-rule:     #333333;
   --color-tile:     #2a2a2a;
   --color-paper:    #2a2a2a;
-  --color-burgundy: #de6f7d;
+  --color-burgundy: #df7481;
   --color-rss:      #ee7e2c;
   --color-live:     #d43535;
   --color-steel:    #7eafd0;
@@ -117,7 +117,7 @@ img, svg { display: block; max-width: 100%; }
     --color-rule:     #333333;
     --color-tile:     #2a2a2a;
     --color-paper:    #2a2a2a;
-    --color-burgundy: #de6f7d;
+    --color-burgundy: #df7481;
   --color-rss:      #ee7e2c;
   --color-live:     #d43535;
     --color-steel:    #7eafd0;

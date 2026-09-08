@@ -105,9 +105,14 @@ def contrast_ratio(fg: str, bg: str) -> float:
 # Margin below which a passing pairing is reported in the closing summary.
 # Purely informational — it never fails the run. The point is that the palette's
 # thinnest pairings should be visible to whoever is about to nudge a token,
-# rather than recorded in a document they will not open. Any threshold here is
-# arbitrary; this one is set to surface roughly the tightest quarter.
-TIGHT_MARGIN = 0.25
+# rather than recorded in a document they will not open.
+#
+# This sits deliberately *below* the margin the palette is tuned to (0.25 as of
+# 2026-09-08, RF3.4). If the two were equal, pairings tuned to exactly the
+# target would fall in or out of the report on a third-decimal rounding, and an
+# empty report would mean "on the line" rather than "clear of it". The gap is
+# the slack that makes an empty report a real statement.
+TIGHT_MARGIN = 0.20
 
 
 def check(
