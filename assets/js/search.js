@@ -3,7 +3,7 @@
    Lazy-loads /pagefind/pagefind.js on first open.
 */
 
-const SECTION_ORDER = ['essays', 'garden', 'research', 'works', 'library', 'streams', 'home', 'about'];
+const SECTION_ORDER = ['essays', 'garden', 'research', 'works', 'library', 'streams', 'recipes', 'home', 'about'];
 const SECTION_LABEL = {
   essays:   'Essays',
   garden:   'Garden',
@@ -11,6 +11,7 @@ const SECTION_LABEL = {
   works:    'Works',
   library:  'Library',
   streams:  'Streams',
+  recipes:  'Recipes',
   home:     'Home',
   about:    'About',
 };

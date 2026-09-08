@@ -25,3 +25,23 @@ test('search modal: open, results as options, ArrowDown sets aria-activedescenda
   expect(activeId).toBeTruthy();
   await expect(page.locator(`#${activeId}`)).toHaveAttribute('aria-selected', 'true');
 });
+
+test('recipes filter returns visible results, not an empty pane (RC2.1)', async ({ page }) => {
+  await page.goto('/');
+  await page.click('[data-search-toggle]');
+  await page.click('.search-modal-chip[data-section="recipes"]');
+  await page.fill('[data-search-input]', 'example');
+
+  const results = page.locator('.search-modal-result');
+  await expect(results.first()).toBeVisible({ timeout: 10000 });
+  expect(await results.count()).toBeGreaterThan(0);
+
+  // The reported count must match what is actually rendered — the defect was a
+  // nonzero status line over an empty pane (SECTION_ORDER dropped the group).
+  const status = await page.locator('[data-search-status]').textContent();
+  const reported = Number((status || '').match(/^(\d+)/)?.[1]);
+  expect(reported).toBe(await results.count());
+
+  // The group heading is labelled, not rendered under a fallback bucket.
+  await expect(page.locator('section[data-section="recipes"][role="group"]')).toBeVisible();
+});
