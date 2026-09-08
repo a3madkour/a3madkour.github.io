@@ -30,3 +30,14 @@ test('index shows 3 recipe cards', async ({ page }) => {
   await page.goto('/recipes/');
   await expect(page.locator('.recipe-card')).toHaveCount(3);
 });
+
+test('an ungrouped ingredient does not inherit the previous group heading', async ({ page }) => {
+  await page.goto('/recipes/example-recipe-one/');
+  // `salt` carries no group; it must not sit inside the "For the sauce" list.
+  const saltList = page.locator('.recipe-ing').filter({ hasText: 'salt' });
+  await expect(saltList).toHaveCount(1);
+  await expect(saltList).not.toContainText('canned tomatoes');
+  // Group labels are headings, not list items.
+  await expect(page.locator('li.recipe-ing-group')).toHaveCount(0);
+  await expect(page.locator('h3.recipe-ing-group')).toHaveCount(2);
+});

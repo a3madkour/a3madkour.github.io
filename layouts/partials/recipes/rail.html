@@ -14,18 +14,21 @@
     </span>
   </div>
   <h2 class="recipe-sec">Ingredients</h2>
-  <ul class="recipe-ing">
-    {{ $sc := newScratch }}
-    {{ range $i, $ing := .Params.ingredients }}
-      {{ if and $ing.group (ne ($sc.Get "g") $ing.group) }}
-        <li class="recipe-ing-group">{{ $ing.group }}</li>
-        {{ $sc.Set "g" $ing.group }}
-      {{ end }}
+  {{- $sc := newScratch -}}
+  {{- $sc.Set "g" "\x00init" -}}
+  {{- range $i, $ing := .Params.ingredients -}}
+    {{- $g := $ing.group | default "" -}}
+    {{- if ne ($sc.Get "g") $g -}}
+      {{- if ne ($sc.Get "g") "\x00init" -}}</ul>{{- end -}}
+      {{- with $g }}<h3 class="recipe-ing-group">{{ . }}</h3>{{- end -}}
+      <ul class="recipe-ing">
+      {{- $sc.Set "g" $g -}}
+    {{- end -}}
       <li data-i="{{ $i }}">
         {{ with $ing.qty }}<span class="q">{{ . }}{{ with $ing.unit }} {{ . }}{{ end }}</span> {{ end }}
         {{ $ing.item }}{{ with $ing.note }}, <span class="alt">{{ . }}</span>{{ end }}{{ with $ing.alt }} <span class="alt">(or {{ . }})</span>{{ end }}
       </li>
-    {{ end }}
-  </ul>
+  {{- end -}}
+  {{- if ne ($sc.Get "g") "\x00init" -}}</ul>{{- end -}}
   <script type="application/json" class="recipe-data">{{ .Params.ingredients | jsonify | safeJS }}</script>
 </aside>
