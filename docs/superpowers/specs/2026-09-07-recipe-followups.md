@@ -1,0 +1,90 @@
+# Recipe run follow-ups — deliberately deferred
+
+**Date:** 2026-09-07
+**Branch:** `dag/N19` (final node of the 19-node recipe-remediation graph)
+**Trigger:** the 19-node remediation run that closed all 29 `RC` rows of
+`2026-09-07-recipe-audit-remediation-design.md`. Reviewers on individual nodes
+surfaced defects outside their row's scope; the final node verified each one and
+recorded it here rather than widening the diff.
+**Predecessors:** `2026-09-07-recipe-audit-remediation-design.md` (RC1–RC5, all
+closed), `2026-07-03-audit-remediation-roadmap.md` (R1–R6.3, all closed). Same
+row-ID convention, `RF` prefix.
+
+**Nothing in this document is fixed.** Every row below reproduces on the merged
+tree at the commit that closed the run.
+
+---
+
+## 1. Why this exists
+
+The remediation run's charter was the 29 `RC` rows. Four late findings were
+folded into the last node because they were cheap and squarely inside the recipe
+surface: the `formatQuantity` decimal floor, a dead `.recipe-ing` margin rule,
+two missing E2E guards, and the stale test counts in `CLAUDE.md`. Everything
+else that surfaced falls into one of three buckets — outside the recipe surface,
+requiring a design call, or pre-existing — and lands here instead.
+
+Three of these (RF1.1, RF1.2, RF1.3) are live defects on the deployed site today.
+They are not recipe defects; the recipe work is what made them visible.
+
+Two structural observations are worth carrying forward, because they explain
+why several rows below went unseen for months:
+
+1. **A gate that reads tokens cannot see a literal.** `check-contrast.py` parses
+   the `:root` blocks. Three colours in `main.css` are hardcoded hexes outside
+   those blocks, so they are structurally invisible to the only accessibility
+   gate in CI (RF1.2, RF3.1). Two more tokens are checked only by
+   value-coincidence with a sibling (RF3.3).
+2. **Coupling recorded in a comment is coupling that is not enforced.** RF2.1 is
+   a template and a linter that must agree on a three-branch shape ladder, with
+   nothing but a `{{- /* mirrored by … */ -}}` note holding them together. The
+   N17 review failure is the existence proof that this drifts and survives
+   review.
+
+---
+
+## 2. Rows
+
+### T1 — Live defects on the deployed site
+
+| # | Row | Evidence | Where to start |
+|---|---|---|---|
+| RF1.1 | **Search silently drops every result outside the chip vocabulary.** `assets/js/search.js:6` — `SECTION_ORDER` lists `essays garden research works library streams recipes home about`. `performSearch` groups by `d.meta.section \|\| 'other'` (`:137`), `renderResults` computes `total` from *all* groups (`:76`) but iterates only `SECTION_ORDER` (`:83`). Any section not in that array is counted in the status line and never rendered — as is the `'other'` fallback bucket the grouping itself creates. | Sections present in the built index but absent from `SECTION_ORDER`: `tags` 50 pages, `series` 2, `credits` 1, `blog` 1 (`grep -rlo 'data-pagefind-filter=section:<s>' public --include='*.html' \| wc -l`). Reproduced in a headless browser against the built `public/`, default All chip: query `example` → status `"30 results in 185ms"`, `.search-modal-result` count **25**, rendered groups `[essays, research, works, streams, recipes]`. Query `one` → 30 / 23. Query `a` → 30 / 27. | Needs a design call, which is why it is not fixed here: give `tags`/`series`/`credits`/`blog` their own groups, or add a rendered `Other` bucket, or exclude them from the index. Whichever is chosen, `renderResults` should also render `groups.other` or assert it is empty — today it can never be reached. |
+| RF1.2 | **`.rss-link` fails the non-text contrast bar on every page in light mode.** `assets/css/main.css:407-408` — `.rss-link { color: #ee7e2c; }`. This is the header RSS icon, present in the site chrome on all pages. WCAG 2.1 SC 1.4.11 sets 3:1 for meaningful non-text content; this is below it. Invisible to `tools/check-contrast.py` because the value is a hardcoded hex, not a `--color-*` token, and the gate only parses the `:root` blocks. | Computed against the light `--color-stone` (`#eeeeea`): **2.36:1**. Dark mode is fine at 6.47:1, so the failure is light-mode-only. | Tokenize as `--color-rss` in all three token blocks (`:root`, `:root[data-theme="dark"]`, and the `prefers-color-scheme` block — they must stay identical or `check_dark_tokens.py` fails), darken the light value to clear 3:1, and add the pairing to `check-contrast.py` so the gate can see it. Darkening alone leaves the class of defect open. |
+| RF1.3 | **The streams cron has been failing to push since the default-branch rename.** `.github/workflows/streams-poll.yaml:46-47` still runs `git pull --rebase origin master` / `git push origin master`. The repo's default branch was renamed `master` → `main` and `origin/master` deleted (see `75afdbe ci(deploy): trigger Pages deploy on main`). The workflow runs every 5 minutes and cannot have committed anything since. | `data/streams-live.yaml` is action-authored and rewritten on every poll; it still reads `last_polled: 2026-05-19T00:00:00Z` with both `is_live: false`. That is the stuck live-pill state, and it is the direct consequence. | Two-line change to `main` in both commands. Worth also checking the workflow's run history for the accumulated failures, and whether any other workflow or script still names `master` (`grep -rn 'origin/master\|origin master' .github/ tools/`). |
+
+### T2 — Correctness and guard gaps, not currently user-visible
+
+| # | Row | Evidence | Where to start |
+|---|---|---|---|
+| RF2.1 | **The `image` shape ladder is coupled to its linter by a comment only.** `layouts/partials/recipes/schema-recipe.html:54-67` branches three ways (absolute http(s) → pass through; root-relative `/…` → `absURL`; anything else → prefix with `.Permalink`). `tools/check_recipes_links.py:40-77` validates the same three shapes and must stay identical. The only thing binding them is the comment `mirrored by tools/check_recipes_links.py`. Drift reintroduces a shape the linter certifies and the template mangles — a class no other check can see, since a mangled-but-well-formed URL passes `check_html_links.py` too. | Only **one** of the three branches is exercised by a fixture: `content/recipes/example-recipe-one/index.md:15` declares `image: "hero.svg"` (the bundle branch). No fixture declares an absolute or a root-relative image, so two of three branches have zero coverage in the build *and* in the linter's fixtures. The N17 review failure occurred in exactly this ladder. | Cheap and mechanical: add one recipe fixture per shape (or one fixture cycling all three across a test matrix in `tools/test_check_recipes_links.py`), then assert that for each, the linter accepts it *and* the emitted `"image"` in `public/recipes/<slug>/index.json` equals the expected absolute URL. That single assertion is what makes the two implementations one contract. |
+| RF2.2 | **`ENAMETOOLONG` turns a clean rejection into a traceback.** `tools/check_recipes_links.py:73` and `:76` call `Path.exists()` on a path built from author-supplied frontmatter. `exists()` swallows `ENOENT` but propagates other `OSError`s, so a path component over 255 bytes crashes the linter instead of reporting a bad `image`. | `Path('static/' + 'x'*300 + '.jpg').exists()` → `OSError [Errno 63] File name too long`. The linter's own control flow expects a boolean here. | One-line `try/except OSError: return False` helper wrapping both call sites, plus a unit test in `tools/test_check_recipes_links.py` asserting the over-long path is reported as a normal "not found" error rather than raising. Worth grepping the other 34 linters for bare `.exists()` on author-supplied paths. |
+| RF2.3 | **`unitFor` mishandles irregular plurals.** `assets/js/entry-recipes.js:45-50` singularises `yield_unit` at a yield of exactly 1 with two regexes. `/[^s]s$/` strips one character from anything ending in a non-`s` plus `s`, which includes `-ves` plurals. | Evaluated directly: `loaves` → `loave`. (`cookies`→`cookie`, `servings`→`serving`, `boxes`→`box`, `biscuits`→`biscuit` are all correct.) `yield_unit` is free-form: `tools/check_recipes_fixtures.py:23` lists it in `OPTIONAL` with no value constraint, so any noun can reach this code. | Either constrain `yield_unit` to a small enum in the linter (which also gives the exporter something to validate against), or add an irregular-plural map to `unitFor` for the `-ves` / `-ies` / invariant cases. The enum is the smaller surface. Announcing the plural form at yield 1 would be a third option — worse copy, no code. |
+| RF2.4 | **`#recipe-serves` declares no `step`, and the multiplier path writes fractional values into it.** `layouts/partials/recipes/rail.html:7` — `type="number" min="1" max="99"` with no `step`, so the implied step is 1. `fromMult`'s write-back puts the computed servings into that field. This is the same defect class RC2.6 removed from the sibling input, which gained `step="any"`. | Driven in a real browser on `/recipes/example-recipe-one/`: setting `.recipe-mult` to `0.3` and blurring leaves `#recipe-serves` at `{"value":"1.2","step":null,"stepMismatch":true,"valid":false}`. | Inert today: no `:invalid` styling targets it and it is not inside a `<form>`, so nothing surfaces the invalid state. Fix is `step="any"` to match the multiplier, or round the write-back. Left alone because deciding *which* is a behavioural call about whether fractional servings are legal at all. |
+| RF2.5 | **Five pages ship duplicate `id` attributes.** Pre-existing, unrelated to recipes; found while scanning the built output. Duplicate ids break fragment navigation deterministically (first match wins) and are an HTML validity error. | Scan of every `public/**/index.html`: `essays/example-multi` → `universal-section`, `thm-example`, `web-only`; `garden/bayesian-statistics` → `tldr`; `garden/bias-vs-variance` → `classic-trade-off`; `garden/cellular-automata-are-visual-rule-based-systems` → (its own slug); `garden/maximum-a-posteriori-map` → `tldr`. 5 pages total. | The `example-multi` cases look like the multi-target export emitting the same block twice under different output conditions; the garden ones look like a heading id colliding with a bundle-level id. Worth a linter: `check_html_links.py` already parses every built page with `html.parser` and is the natural host — a duplicate-id check there costs one dict. |
+| RF2.6 | **The search status line reports a ceiling, not a count.** `assets/js/search.js:133` — `search.results.slice(0, 30)`; `total` is then computed from the 30 fetched, so the line reads `"30 results"` for any query matching 30 or more. | Four different queries (`example`, `lorem`, `one`, `a`) all report exactly `30 results`, with 25/29/23/27 rows rendered. `search.results.length` — the true total — is available and discarded. | Report `search.results.length` in the status line and say the pane is showing the top 30, or paginate. Interacts with RF1.1: fixing that changes the rendered count but not the ceiling. |
+
+### T3 — Standards, hygiene, and watch items
+
+| # | Row | Evidence | Where to start |
+|---|---|---|---|
+| RF3.1 | **`.header-live-pill-dot` is under the 3:1 non-text bar in dark mode.** `assets/css/main.css:5149` — `background: #b22222`, another hardcoded hex outside the token blocks and therefore invisible to `check-contrast.py`. | Computed against the dark `--color-stone` (`#181818`): **2.66:1**. Light mode is 5.74:1. | Materially mitigated: the dot sits inside a pill that carries the literal text "LIVE", so the colour is not the only channel and SC 1.4.11's "meaningful" test is arguable. Fix alongside RF1.2 — same root cause (untokenized literal), same one-line remedy, and the pairing then joins the gate. |
+| RF3.2 | **`<noscript><style>` sits in `<body>`.** `layouts/partials/recipes/rail.html:2`. `<style>` is metadata content; its content model places it in `<head>`, with the HTML spec's body-allowance being a parser concession rather than a conformance one. The precedent it cites — `layouts/partials/head.html:65`, the `.cite-static` no-JS rule — is inside `<head>`, where it conforms. | In the built page the block renders at byte offset 4697, against `<body` at 2336 and `</head>` at 2329. Every browser honours it (RF's own new E2E guard depends on that), and no validator runs in CI, so nothing catches it. | Move the rule into `head.html` gated on `.Section == "recipes"`, matching the `.cite-static` pattern one line above it. Zero behavioural change; it is purely about not carrying a second, weaker precedent. |
+| RF3.3 | **`--color-paper` is in the contrast gate only by value-coincidence.** The token is a real surface — the search-modal panel, used at `main.css:3772`, `:4140`, `:4168`, `:4303`, `:4314` — but `check-contrast.py` never names it. It is currently safe only because it happens to be byte-identical to `--color-tile`, which *is* checked. | Light: `--color-paper: #fdfcf8`, `--color-tile: #fdfcf8`. Dark: both `#2a2a2a`. Nothing enforces the equality; the moment either is nudged, `--color-paper` drops out of the gate with no failure anywhere. | Add explicit `ink on paper` / `ink-soft on paper` pairings to `check-contrast.py`. Two lines, and it converts a coincidence into a checked invariant. |
+| RF3.4 | **Two checked pairings sit ~0.1 above the AA bar.** `color-ink-fade on color-stone` **4.62:1** (light) and `color-burgundy on color-tile` / `color-tile on color-burgundy` **4.56:1** (dark), against a 4.5 minimum. | Full output of `python3 tools/check-contrast.py` — 15 pairings per mode, 30 lines, all PASS. | No action. Recorded because these are the first things any future palette nudge will break, and the gate will catch it *loudly* rather than silently — which is the intended behaviour, not a defect. Stated here so a future palette change knows where the margin is. |
+
+---
+
+## 3. Verified clean
+
+Recorded so a later pass does not re-litigate them:
+
+- **`grep -c '^\s*- name:' .github/workflows/hugo.yaml` → 97**, matching the
+  number documented in `CLAUDE.md`. No drift.
+- **`--color-paper` / `--color-tile` semantics** are distinct and correctly
+  documented in `CLAUDE.md`; only the *gate* coverage is thin (RF3.3), not the
+  palette.
+- **The other two hardcoded literals in `main.css`** (`#000` at `:5165`, the
+  YouTube embed letterbox; the `rgba(178,34,34,…)` pill background at
+  `:5135-5136`) are decorative backgrounds behind opaque content, not
+  foreground colours, and carry no contrast obligation.
