@@ -160,3 +160,16 @@ test('both scaler inputs honour their own declared bounds', async ({ page }) => 
   await expect(serves).toHaveValue('4');
   await expect(mult).toHaveValue('1');
 });
+test('index heading order has no skipped level (axe heading-order)', async ({ page }) => {
+  await page.goto('/recipes/');
+  // Anchor the cards' existence first: a heading sequence of just [h1] passes
+  // the no-skip loop trivially, so without this the assertion has no teeth if
+  // the card grid ever renders empty.
+  expect(await page.locator('.recipe-card').count()).toBeGreaterThan(0);
+  const levels = await page.locator('h1, h2, h3, h4, h5, h6')
+    .evaluateAll((els) => els.map((e) => Number(e.tagName.slice(1))));
+  expect(levels[0]).toBe(1);
+  for (let i = 1; i < levels.length; i++) {
+    expect(levels[i] - levels[i - 1]).toBeLessThanOrEqual(1);
+  }
+});
