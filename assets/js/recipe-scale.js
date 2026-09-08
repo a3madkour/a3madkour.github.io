@@ -47,3 +47,19 @@ export function formatQuantity(value, unit) {
       return fmtFrac(value);
   }
 }
+
+/** Singularise a yield unit for a count of exactly 1.
+ *
+ * Handles the regular English plurals a `yield_unit` actually takes, plus the
+ * -ves/-f family, which the trailing-s rule alone mangles ("loaves" -> "loave",
+ * RF2.3). Genuinely irregular forms are returned untouched: `yield_unit` is a
+ * free-form optional string with no schema constraint, so this is a best-effort
+ * display nicety, not a contract.
+ */
+export function singularUnit(unit) {
+  const u = unit || '';
+  if (/ves$/i.test(u)) return u.slice(0, -3) + 'f';
+  if (/(ch|sh|s|x|z)es$/i.test(u)) return u.slice(0, -2);
+  if (/[^s]s$/i.test(u)) return u.slice(0, -1);
+  return u;
+}

@@ -3,7 +3,7 @@
 // Wires two halves:
 //   1. Scaler DOM binding (single pages): .recipe-rail[data-base-servings]
 //   2. Filter chips (index): #recipe-grid guard → setupFilterChips
-import { formatQuantity } from './recipe-scale.js';
+import { formatQuantity, singularUnit } from './recipe-scale.js';
 import { setupFilterChips } from './filter-chips.js';
 
 function initScaler(rail) {
@@ -39,14 +39,11 @@ function initScaler(rail) {
   }
 
   // data-yield-unit is authored plural ("servings", "cookies"), so a yield of
-  // exactly 1 needs the singular or the region announces "1 servings". Covers
-  // the regular English plurals an author will write; anything unrecognised is
-  // returned untouched (irregulars like "loaves" are a known limitation).
+  // exactly 1 needs the singular or the region announces "1 servings".
+  // Pluralisation lives in recipe-scale.js so the unit-test layer can reach it;
+  // see singularUnit() there for what it does and does not handle.
   function unitFor(n) {
-    if (n !== 1) return yieldUnit;
-    if (/(ch|sh|s|x|z)es$/i.test(yieldUnit)) return yieldUnit.slice(0, -2);
-    if (/[^s]s$/i.test(yieldUnit)) return yieldUnit.slice(0, -1);
-    return yieldUnit;
+    return n === 1 ? singularUnit(yieldUnit) : yieldUnit;
   }
 
   // Second channel: says by how much, and announces it. .recipe-q-changed says
