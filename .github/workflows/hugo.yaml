@@ -165,6 +165,10 @@ jobs:
         run: python3 tools/check_recipes_links.py
       - name: Recipe links linter tests
         run: python3 -m unittest tools/test_check_recipes_links.py -v
+      - name: Verify the image ladder stays in lockstep
+        run: python3 tools/check_image_ladder.py
+      - name: Run image-ladder linter unit tests
+        run: python3 -m unittest tools/test_check_image_ladder.py -v
       - name: Verify org-asset references
         run: python3 tools/check_org_assets.py
       - name: Run org-assets linter unit tests

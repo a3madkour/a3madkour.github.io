@@ -97,6 +97,8 @@ python3 tools/check_recipes_fixtures.py
 python3 -m unittest tools/test_check_recipes_fixtures.py -v 2>&1 | tail -3
 
 python3 tools/check_recipes_links.py
+python3 tools/check_image_ladder.py
+python3 -m unittest tools/test_check_image_ladder.py -v 2>&1 | tail -3
 python3 -m unittest tools/test_check_recipes_links.py -v 2>&1 | tail -3
 
 python3 tools/check_org_assets.py
