@@ -7,7 +7,7 @@
 {{ with .Params.category }}<span data-pagefind-meta="category:{{ . }}" hidden></span>{{ end }}
 <article class="recipe">
   <header class="recipe-head">
-    <div class="recipe-kicker">{{ .Params.cuisine }}{{ with .Params.category }} · {{ . }}{{ end }}</div>
+    {{ if or .Params.cuisine .Params.category }}<div class="recipe-kicker">{{ .Params.cuisine }}{{ if and .Params.cuisine .Params.category }} · {{ end }}{{ .Params.category }}</div>{{ end }}
     <h1>{{ .Title }}</h1>
     {{ with .Params.summary }}<p class="recipe-note">{{ . }}</p>{{ end }}
     <div class="recipe-meta">
@@ -15,7 +15,7 @@
       {{ with .Params.cook_minutes }}Cook {{ . }}&nbsp;min · {{ end }}
       {{ if $hasTime }}Total {{ $total }}&nbsp;min{{ end }}
       {{ with .OutputFormats.Get "RECIPE" }}
-        {{ if $hasTime }} · {{ end }}<a class="recipe-dl" href="{{ .RelPermalink }}" download><span aria-hidden="true">⬇</span> Download recipe (.json)</a>
+        {{ if $hasTime }} · {{ end }}<a class="recipe-dl" href="{{ .RelPermalink }}" download="{{ $.File.ContentBaseName }}.json"><span aria-hidden="true">⬇</span> Download recipe (.json)</a>
       {{ end }}
     </div>
   </header>

@@ -6133,6 +6133,14 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   font-variant-numeric: tabular-nums;
 }
 
+/* The time badge is optional. Under `justify-content: space-between` a lone
+   servings span falls to the left edge while every other card puts it on the
+   right; an auto margin pins it right in both cases (with two children the
+   auto margin absorbs the same free space space-between would have). */
+.recipe-card-serves {
+  margin-left: auto;
+}
+
 .recipe-empty {
   font-family: var(--font-ui);
   font-size: var(--text-sm);
