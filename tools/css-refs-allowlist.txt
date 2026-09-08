@@ -25,3 +25,10 @@ works-graph-node
 # verified by tests/e2e/math.spec.ts.
 katex
 katex-display
+
+# §51 recipe scaler: the JS scaler adds `.recipe-q-changed` to `.q` elements
+# when a quantity differs from the authored amount, and reveals
+# `.recipe-scale-status`. Neither appears as a literal in layouts — both are
+# toggled at runtime by assets/js/entry-recipes.js. Verified by
+# tests/e2e/recipes.spec.ts.
+recipe-q-changed

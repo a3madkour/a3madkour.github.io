@@ -157,6 +157,14 @@ jobs:
         run: python3 tools/check_streams_links.py
       - name: Run streams links linter unit tests
         run: python3 -m unittest tools/test_check_streams_links.py -v
+      - name: Recipe fixtures linter
+        run: python3 tools/check_recipes_fixtures.py
+      - name: Recipe fixtures linter tests
+        run: python3 -m unittest tools/test_check_recipes_fixtures.py -v
+      - name: Recipe links linter
+        run: python3 tools/check_recipes_links.py
+      - name: Recipe links linter tests
+        run: python3 -m unittest tools/test_check_recipes_links.py -v
       - name: Verify org-asset references
         run: python3 tools/check_org_assets.py
       - name: Run org-assets linter unit tests
@@ -201,6 +209,8 @@ jobs:
           node-version: 20
       - name: Install E2E dependencies
         run: npm ci
+      - name: JS unit tests
+        run: node --no-experimental-detect-module --test tests/unit/*.test.mjs
       - name: Install Playwright browser (chromium)
         run: npx playwright install --with-deps chromium
       - name: Run Playwright E2E over built site

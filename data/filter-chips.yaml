@@ -51,3 +51,7 @@ library-watching:
 streams:
   primary_tags: [example, prototype, lyric]
   primary_top_k: 10
+
+recipes:
+  primary_tags: [example]
+  primary_top_k: 10

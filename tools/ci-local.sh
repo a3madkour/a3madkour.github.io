@@ -93,6 +93,12 @@ python3 -m unittest tools/test_check_streams_fixtures.py -v 2>&1 | tail -3
 python3 tools/check_streams_links.py
 python3 -m unittest tools/test_check_streams_links.py -v 2>&1 | tail -3
 
+python3 tools/check_recipes_fixtures.py
+python3 -m unittest tools/test_check_recipes_fixtures.py -v 2>&1 | tail -3
+
+python3 tools/check_recipes_links.py
+python3 -m unittest tools/test_check_recipes_links.py -v 2>&1 | tail -3
+
 python3 tools/check_org_assets.py
 python3 -m unittest tools/test_check_org_assets.py -v 2>&1 | tail -3
 
@@ -161,10 +167,11 @@ separator "Playwright E2E (built site)"
 # the truth about what ran (mirrors the LHCI need_lhci_dep preflight pattern).
 if command -v npx >/dev/null 2>&1; then
   [ -d node_modules ] || npm ci
+  node --no-experimental-detect-module --test tests/unit/*.test.mjs
   npx playwright install chromium >/dev/null 2>&1 || true
   npx playwright test
 else
-  printf "\033[1;33m⚠ npx not found — skipping Playwright E2E. Install Node.js to run it (mirrors CI).\033[0m\n"
+  printf "\033[1;33m⚠ npx not found — skipping JS unit tests + Playwright E2E. Install Node.js to run them (mirrors CI).\033[0m\n"
 fi
 
 separator "Lighthouse CI (desktop + mobile)"

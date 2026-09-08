@@ -33,6 +33,16 @@ outputFormats:
     baseName: lhci-pages
     isPlainText: true
     notAlternative: true
+  RECIPE:
+    # RC4.1: use the built-in application/json type. Registering a custom
+    # application/ld+json that claims suffixes: ["json"] rebinds the global
+    # suffix -> media-type lookup, so EVERY .json output (including
+    # /lhci-pages.json) gets served as application/ld+json. The emitted
+    # bytes and filename are identical either way.
+    mediaType: application/json
+    baseName: index
+    isPlainText: true
+    notAlternative: true
 
 markup:
     goldmark:

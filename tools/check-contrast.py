@@ -28,6 +28,12 @@ PAIRINGS = [
     ("color-green-soft", "color-stone", 4.5, "garden seedling stage glyph on background"),
     ("color-warn",     "color-stone", 4.5, "warn pill text on background"),
     ("color-stone",    "color-warn",  4.5, "stone on warn pill background"),
+    ("color-ink",      "color-tile", 7.0, "body text on tile/rail surface"),
+    ("color-burgundy", "color-tile", 4.5, "rescaled-quantity accent on rail surface"),
+    ("color-ink-fade", "color-tile", 4.5, "ingredient qualifier text on rail surface"),
+    ("color-stone",    "color-burgundy", 4.5, "stone on burgundy accent background"),
+    ("color-ink-fade", "color-stone", 4.5, "de-emphasised meta text on background"),
+    ("color-tile",     "color-burgundy", 4.5, "tile surface on burgundy accent background"),
 ]
 
 

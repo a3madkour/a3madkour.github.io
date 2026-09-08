@@ -37,6 +37,8 @@ BUDGETS_PREFIX = [
 
     ("/essays/",         200_000),   # essay pages — accumulated CSS growth (sidenotes, citations, Bento, §43)
     ("/streams/",        300_000),   # streams archive pages — YT thumbnail (lazy) + cite blob + chrome
+    ("/recipes/",        200_000),   # recipe single + index — shared main.css dominates (~115KB)
+                                     # + entry-recipes.js (scaler + filter-chips ~16KB); default 100K too low
     ("/about/",          150_000),   # thin page; site-wide CSS bundle dominates
     ("/credits/",        150_000),   # thin page; site-wide CSS bundle dominates
     ("/blog/",           150_000),   # legacy thin page; site-wide CSS bundle dominates

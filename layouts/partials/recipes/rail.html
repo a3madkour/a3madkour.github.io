@@ -1,0 +1,35 @@
+<aside class="recipe-rail" data-base-servings="{{ .Params.servings }}" data-yield-unit="{{ default "servings" .Params.yield_unit }}">
+  <noscript><style>.recipe-scaler,.recipe-scale-status{display:none}</style></noscript>
+  <div class="recipe-scaler">
+    <label class="recipe-serves-label" for="recipe-serves">Serves</label>
+    <span class="recipe-stp">
+      <button type="button" class="recipe-minus" aria-label="fewer servings">–</button>
+      <input id="recipe-serves" class="recipe-serves numin" type="number" min="1" max="99"
+             value="{{ .Params.servings }}" inputmode="decimal">
+      <button type="button" class="recipe-plus" aria-label="more servings">+</button>
+    </span>
+    <span class="recipe-mult-wrap">
+      <input class="recipe-mult" type="number" min="0.1" max="20" step="any"
+             value="1" inputmode="decimal" aria-label="multiplier"><span class="recipe-x">×</span>
+    </span>
+  </div>
+  <p class="recipe-scale-status" role="status"></p>
+  <h2 class="recipe-sec">Ingredients</h2>
+  {{- $sc := newScratch -}}
+  {{- $sc.Set "g" "\x00init" -}}
+  {{- range $i, $ing := .Params.ingredients -}}
+    {{- $g := $ing.group | default "" -}}
+    {{- if ne ($sc.Get "g") $g -}}
+      {{- if ne ($sc.Get "g") "\x00init" -}}</ul>{{- end -}}
+      {{- with $g }}<h3 class="recipe-ing-group">{{ . }}</h3>{{- end -}}
+      <ul class="recipe-ing">
+      {{- $sc.Set "g" $g -}}
+    {{- end -}}
+      <li data-i="{{ $i }}">
+        {{ with $ing.qty }}<span class="q">{{ . }}{{ with $ing.unit }} {{ . }}{{ end }}</span> {{ end }}
+        {{ $ing.item }}{{ with $ing.note }}, <span class="alt">{{ . }}</span>{{ end }}{{ with $ing.alt }} <span class="alt">(or {{ . }})</span>{{ end }}
+      </li>
+  {{- end -}}
+  {{- if ne ($sc.Get "g") "\x00init" -}}</ul>{{- end -}}
+  <script type="application/json" class="recipe-data">{{ .Params.ingredients | jsonify | safeJS }}</script>
+</aside>

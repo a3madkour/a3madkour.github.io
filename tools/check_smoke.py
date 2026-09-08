@@ -12,6 +12,7 @@ No paired unit-test sibling: the logic is too thin (it's mostly stdlib
 HTMLParser + file-exists checks). Documented in spec §3.1.
 """
 
+import json
 import sys
 from html.parser import HTMLParser
 from pathlib import Path
@@ -39,6 +40,14 @@ EXPLORABLES_REQUIRED_SUBSTRINGS = [
     "data-widget-id=gaussian",
     "data-widget-id=spinner",
     "src=/js/explorables-example-explorables.",
+]
+
+# Recipe smoke targets: every recipe dir must emit index.html with ld+json
+# and a sibling index.json that parses as a schema.org Recipe.
+RECIPE_URLS = [
+    "/recipes/example-recipe-one/",
+    "/recipes/example-recipe-two/",
+    "/recipes/example-recipe-three/",
 ]
 
 
@@ -104,11 +113,45 @@ def check_url(public: Path, url: str) -> list:
     return errors
 
 
+def check_recipe_ld_json(public: Path, url: str) -> list:
+    """Assert a recipe page emits ld+json in HTML and a valid index.json."""
+    errors = []
+    html_file = file_for_url(public, url)
+    if not html_file.is_file():
+        errors.append(f"{url}: index.html missing")
+        return errors
+    html = html_file.read_text(encoding="utf-8", errors="replace")
+    if "application/ld+json" not in html:
+        errors.append(f"{url}: no application/ld+json script tag in index.html")
+
+    json_file = html_file.parent / "index.json"
+    if not json_file.is_file():
+        errors.append(f"{url}: index.json missing (RECIPE output format not emitted)")
+        return errors
+    raw = json_file.read_text(encoding="utf-8", errors="replace")
+    try:
+        obj = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        errors.append(f"{url}: index.json parse error: {exc}")
+        return errors
+    if not isinstance(obj, dict):
+        errors.append(f"{url}: index.json is not a JSON object")
+        return errors
+    at_type = obj.get("@type")
+    if not isinstance(at_type, str) or at_type != "Recipe":
+        errors.append(
+            f"{url}: index.json @type is {at_type!r}, expected 'Recipe'"
+        )
+    return errors
+
+
 def run(repo_root: Path) -> tuple[int, list[str]]:
     public = repo_root / "public"
     all_errors: list[str] = []
     for url in URLS + ANCHOR_LINK_REQUIRED_URLS + [EXPLORABLES_URL]:
         all_errors.extend(check_url(public, url))
+    for url in RECIPE_URLS:
+        all_errors.extend(check_recipe_ld_json(public, url))
     return (1 if all_errors else 0, all_errors)
 
 
@@ -127,7 +170,8 @@ def main() -> int:
         for e in errors:
             print(f"  - {e}", file=sys.stderr)
     if rc == 0:
-        print(f"check_smoke: OK ({len(URLS) + len(ANCHOR_LINK_REQUIRED_URLS) + 1} URLs)")
+        total = len(URLS) + len(ANCHOR_LINK_REQUIRED_URLS) + 1 + len(RECIPE_URLS)
+        print(f"check_smoke: OK ({total} URLs)")
     return rc
 
 

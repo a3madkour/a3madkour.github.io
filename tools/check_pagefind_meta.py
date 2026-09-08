@@ -31,6 +31,7 @@ SECTION_BY_PREFIX = [
     ("/blog/",     "blog"),
     ("/credits/",  "credits"),
     ("/streams/",  "streams"),
+    ("/recipes/",  "recipes"),
     ("/",          "home"),
 ]
 

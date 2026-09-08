@@ -1,0 +1,69 @@
+{{- /* schema-recipe.html — builds a schema.org/Recipe dict and returns jsonify.
+       Called by: layouts/recipes/single.recipe.json (RECIPE output format)
+                  layouts/partials/head.html (JSON-LD <script> on recipe pages)
+       Both call this partial — keep the object-building logic here, DRY.
+*/ -}}
+{{- $p := . -}}
+{{- $total := or $p.Params.total_minutes (add (default 0 $p.Params.prep_minutes) (default 0 $p.Params.cook_minutes)) -}}
+{{- $ingText := slice -}}
+{{- range $p.Params.ingredients -}}
+  {{- $q := "" -}}
+  {{- with .qty }}{{- $q = printf "%v " . -}}{{- end -}}
+  {{- $u := "" -}}
+  {{- with .unit }}{{- $u = printf "%s " . -}}{{- end -}}
+  {{- $line := printf "%s%s%s" $q $u .item -}}
+  {{- with .note }}{{- $line = printf "%s, %s" $line . -}}{{- end -}}
+  {{- $ingText = $ingText | append (trim $line " ") -}}
+{{- end -}}
+{{- $steps := slice -}}
+{{- range $p.Params.steps -}}
+  {{- $t := replaceRE `^\[\d{1,2}:[0-5]\d(?:\.\d{1,2})?\]\s*` "" . -}}
+  {{- $steps = $steps | append (dict "@type" "HowToStep" "text" $t) -}}
+{{- end -}}
+{{- /* A CreativeWork is valid with `name` alone — a url-less source (a book,
+       a notebook) must still reach isBasedOn, so append unconditionally and
+       merge `url` only when the source carries one. */ -}}
+{{- $based := slice -}}
+{{- range $p.Params.sources -}}
+  {{- $cw := dict "@type" "CreativeWork" "name" .name -}}
+  {{- with .url }}{{- $cw = merge $cw (dict "url" .) -}}{{- end -}}
+  {{- $based = $based | append $cw -}}
+{{- end -}}
+{{- $obj := dict
+    "@context" "https://schema.org"
+    "@type" "Recipe"
+    "name" $p.Title
+    "datePublished" ($p.Date.Format "2006-01-02")
+    "recipeYield" (printf "%v %s" $p.Params.servings (default "servings" $p.Params.yield_unit))
+    "recipeIngredient" $ingText
+    "recipeInstructions" $steps
+-}}
+{{- /* Time keys are presence-gated so the minimal recipe emits none (no PT0M).
+       KNOWN GAP (unfixed, no fixture): a recipe with prep_minutes but no
+       cook_minutes emits prepTime alone, which Google's Recipe rich-result
+       spec does not accept — it wants prepTime and cookTime together. */ -}}
+{{- with $p.Params.prep_minutes }}{{- $obj = merge $obj (dict "prepTime" (printf "PT%dM" (int .))) -}}{{- end -}}
+{{- with $p.Params.cook_minutes }}{{- $obj = merge $obj (dict "cookTime" (printf "PT%dM" (int .))) -}}{{- end -}}
+{{- if or $p.Params.total_minutes (and $p.Params.prep_minutes $p.Params.cook_minutes) -}}
+  {{- $obj = merge $obj (dict "totalTime" (printf "PT%dM" (int $total))) -}}
+{{- end -}}
+{{- with $p.Params.summary }}{{- $obj = merge $obj (dict "description" .) -}}{{- end -}}
+{{- with $p.Params.cuisine }}{{- $obj = merge $obj (dict "recipeCuisine" .) -}}{{- end -}}
+{{- with $p.Params.category }}{{- $obj = merge $obj (dict "recipeCategory" .) -}}{{- end -}}
+{{- with $p.Params.tags }}{{- $obj = merge $obj (dict "keywords" (delimit . ", ")) -}}{{- end -}}
+{{- /* Three accepted `image` shapes (mirrored by tools/check_recipes_links.py):
+       absolute http(s) URL — pass through; root-relative "/…" resolving under
+       static/ — absURL; anything else — a file in the page bundle, prefixed
+       with the permalink. Prefixing blindly broke the first two. */ -}}
+{{- with $p.Params.image -}}
+  {{- $img := . -}}
+  {{- if or (hasPrefix $img "http://") (hasPrefix $img "https://") -}}
+  {{- else if hasPrefix $img "/" -}}
+    {{- $img = absURL $img -}}
+  {{- else -}}
+    {{- $img = printf "%s%s" $p.Permalink $img -}}
+  {{- end -}}
+  {{- $obj = merge $obj (dict "image" $img) -}}
+{{- end -}}
+{{- with $based }}{{- $obj = merge $obj (dict "isBasedOn" .) -}}{{- end -}}
+{{- $obj | jsonify -}}

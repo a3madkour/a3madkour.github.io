@@ -16,6 +16,8 @@
         "http://localhost/library/playing/",
         "http://localhost/library/reading/",
         "http://localhost/library/watching/",
+        "http://localhost/recipes/",
+        "http://localhost/recipes/example-recipe-one/",
         "http://localhost/research/",
         "http://localhost/research/questions/example-question-four/",
         "http://localhost/research/themes/example-theme-one/",
