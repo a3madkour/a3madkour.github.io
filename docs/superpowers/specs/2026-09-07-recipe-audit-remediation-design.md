@@ -114,6 +114,7 @@ because the two defects are different:
 | RC2.4 | `rail.html:3` — `<label>Serves` encloses the minus button, so the button is its labeled control; clicking the word "Serves" decrements and rescales, and the input has no programmatic label matching its visible text (WCAG 2.5.3) | Non-wrapping `<label for>` bound to the input by id |
 | RC2.5 | `entry-recipes.js:56` — the load-time rewrite (§2.2), plus `formatQuantity` rounding `0.25 g` and `0.04 kg` to `0` | Skip `apply()` at ratio 1; add the two-significant-digit floor |
 | RC2.6 | `entry-recipes.js:31` — the servings clamp is never written back (typing `100` yields servings-for-100 with amounts-for-99) and `fromMult` ignores its own `min`/`max` entirely; `min="0.1"` with `step="0.25"` is a permanent `stepMismatch` | Normalize on `change` in both directions, writing the clamped value back to the field; `step="any"` |
+| RC2.7 | `single.html:12-19`, `card.html:1,10`, `schema-recipe.html:7,34-36` — all three time fields are OPTIONAL in the linter but rendered unconditionally, so a linter-valid recipe ships "Total 0&nbsp;min" and `"prepTime":"PT0M"`; Google Rich Results rejects zero-length durations and drops the whole Recipe result | §2.1: render the meta line only when at least one time field is present, and omit the JSON-LD keys entirely rather than emitting `PT0M` |
 
 ### T3 — Layout & accessibility
 
