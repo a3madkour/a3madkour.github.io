@@ -11,6 +11,8 @@ function initScaler(rail) {
   const data = JSON.parse(rail.querySelector('.recipe-data').textContent);
   const serves = rail.querySelector('.recipe-serves');
   const mult = rail.querySelector('.recipe-mult');
+  const status = rail.querySelector('.recipe-scale-status');
+  const yieldUnit = rail.dataset.yieldUnit || 'servings';
   // Rail-scoped, and spans every <ul> in the rail (one per run of ingredients).
   const items = rail.querySelectorAll('.recipe-ing li');
 
@@ -32,8 +34,21 @@ function initScaler(rail) {
       q.textContent = isBase
         ? originals.get(q)
         : formatQuantity(ing.qty * r, ing.unit) + (ing.unit ? ' ' + ing.unit : '');
-      q.classList.toggle('changed', !isBase);
+      q.classList.toggle('recipe-q-changed', !isBase);
     });
+  }
+
+  // Second channel: says by how much, and announces it. .recipe-q-changed says
+  // which values moved; colour alone would carry the whole meaning otherwise.
+  // Only ever called from a change handler — never at init, so the at-rest
+  // render stays byte-identical to the no-JS one.
+  function updateStatus(s, r) {
+    if (!status) return;
+    const isBase = Math.abs(r - 1) <= 1e-9;
+    status.hidden = isBase;
+    status.textContent = isBase
+      ? ''
+      : `Scaled ×${clean(r)} — amounts shown for ${clean(s)} ${yieldUnit}`;
   }
 
   // Both controls declare their own bounds in rail.html; the JS must respect
@@ -64,6 +79,7 @@ function initScaler(rail) {
     mult.value = clean(r);
     if (writeBack) serves.value = clean(s);
     apply(r);
+    updateStatus(s, r);
   }
 
   function fromMult(writeBack) {
@@ -73,6 +89,7 @@ function initScaler(rail) {
     serves.value = clean(s);
     if (writeBack) mult.value = clean(r);
     apply(r);
+    updateStatus(s, r);
   }
 
   // `input` tracks as you type without fighting the caret; `change` (blur or

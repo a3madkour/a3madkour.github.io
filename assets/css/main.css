@@ -5935,9 +5935,22 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   font-variant-numeric: tabular-nums;
   font-weight: 600;
 }
-.q.changed {
+.q.recipe-q-changed {
   color: var(--color-burgundy);
+  border-bottom: 1px dotted currentColor;
 }
+
+/* Second, non-colour channel: states the ratio and the resulting yield, and is
+   announced (role=status). Hidden — genuinely not rendered — at ratio 1. */
+.recipe-scale-status {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-burgundy);
+  margin: var(--space-sm) 0 0;
+  padding-top: var(--space-2xs);
+  border-top: 1px dashed var(--color-rule);
+}
+.recipe-scale-status[hidden] { display: none; }
 
 .alt {
   color: var(--color-ink-fade);

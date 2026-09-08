@@ -26,7 +26,9 @@ works-graph-node
 katex
 katex-display
 
-# §51 recipe scaler (Task 8): the JS scaler adds `.changed` to `.q` elements
-# when the quantity differs from the base serving count. No static template
-# reference; the class is toggled at runtime by assets/js/entry-recipes.js.
-changed
+# §51 recipe scaler: the JS scaler adds `.recipe-q-changed` to `.q` elements
+# when a quantity differs from the authored amount, and reveals
+# `.recipe-scale-status`. Neither appears as a literal in layouts — both are
+# toggled at runtime by assets/js/entry-recipes.js. Verified by
+# tests/e2e/recipes.spec.ts.
+recipe-q-changed

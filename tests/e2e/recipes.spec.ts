@@ -160,3 +160,29 @@ test('both scaler inputs honour their own declared bounds', async ({ page }) => 
   await expect(serves).toHaveValue('4');
   await expect(mult).toHaveValue('1');
 });
+// RC3.4 + RC4.8. Burgundy text was the only signal a quantity had been
+// rescaled: colour-only meaning, and silent to a screen reader. Two channels
+// now: a dotted underline on each moved .q, and a role=status line stating the
+// ratio and the resulting yield. Both are absent at rest.
+test('a rescaled quantity signals in two channels (RC3.4)', async ({ page }) => {
+  await page.goto('/recipes/example-recipe-one/');
+  const oil = page.locator('.recipe-ing li', { hasText: 'olive oil' }).locator('.q');
+  const status = page.locator('.recipe-scale-status');
+
+  await expect(status).toBeHidden();
+
+  await page.fill('.recipe-serves', '6');
+  await expect(oil).toHaveClass(/recipe-q-changed/);
+  // Channel 2: a non-colour, announced signal.
+  await expect(status).toBeVisible();
+  await expect(status).toHaveAttribute('role', 'status');
+  await expect(status).toContainText('1.5');
+  await expect(status).toContainText('6');
+  // Channel 1: not colour alone — the underline is a second visual channel.
+  const decoration = await oil.evaluate((el) => getComputedStyle(el).textDecorationLine
+    + ' ' + getComputedStyle(el).borderBottomStyle);
+  expect(decoration).toMatch(/underline|dotted/);
+
+  await page.fill('.recipe-serves', '4');
+  await expect(status).toBeHidden();
+});
