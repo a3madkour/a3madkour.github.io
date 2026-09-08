@@ -225,6 +225,10 @@ jobs:
         run: python3 tools/check_html_links.py
       - name: Run HTML-link linter unit tests
         run: python3 -m unittest tools/test_check_html_links.py -v
+      - name: Verify search renders every emitted section
+        run: python3 tools/check_search_sections.py
+      - name: Run search-section linter unit tests
+        run: python3 -m unittest tools/test_check_search_sections.py -v
       - name: Verify explorables coupling
         run: python3 tools/check_explorables.py
       - name: Run explorables linter unit tests

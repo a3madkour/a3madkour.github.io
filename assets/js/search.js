@@ -3,7 +3,12 @@
    Lazy-loads /pagefind/pagefind.js on first open.
 */
 
-const SECTION_ORDER = ['essays', 'garden', 'research', 'works', 'library', 'streams', 'recipes', 'home', 'about'];
+// Every section value Pagefind can emit must appear here, or its hits are
+// dropped from the pane while still counting toward the total (RF1.1).
+// The tail after 'about' is not chip-backed — those pages are only
+// reachable under the All filter, which is exactly why they were invisible.
+const SECTION_ORDER = ['essays', 'garden', 'research', 'works', 'library', 'streams', 'recipes', 'home', 'about',
+                       'blog', 'credits', 'series', 'tags', 'other'];
 const SECTION_LABEL = {
   essays:   'Essays',
   garden:   'Garden',
@@ -14,6 +19,11 @@ const SECTION_LABEL = {
   recipes:  'Recipes',
   home:     'Home',
   about:    'About',
+  blog:     'Blog',
+  credits:  'Credits',
+  series:   'Series',
+  tags:     'Tags',
+  other:    'Other',
 };
 
 let pagefindInstance = null;
@@ -63,7 +73,7 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
-function renderResults(resultsEl, statusEl, groups, totalMs, query) {
+function renderResults(resultsEl, statusEl, groups, totalMs, query, matchCount) {
   resultRows = [];
   activeRowIndex = -1;
 
@@ -73,13 +83,16 @@ function renderResults(resultsEl, statusEl, groups, totalMs, query) {
     return;
   }
 
-  const total = Object.values(groups).reduce((acc, arr) => acc + arr.length, 0);
-  if (total === 0) {
+  // Count what will actually render, not what was fetched: a section missing
+  // from SECTION_ORDER contributes rows to `groups` that never reach the pane.
+  const shown = SECTION_ORDER.reduce((acc, s) => acc + (groups[s] ? groups[s].length : 0), 0);
+  if (shown === 0) {
     resultsEl.innerHTML = '<p class="search-modal-empty">No results.</p>';
     statusEl.textContent = `0 results in ${totalMs}ms`;
     return;
   }
 
+  const matches = typeof matchCount === 'number' ? matchCount : shown;
   const sections = SECTION_ORDER.filter((s) => groups[s] && groups[s].length > 0);
   let html = '';
   let optIdx = 0; // running index so each option gets a unique id for aria-activedescendant
@@ -111,7 +124,11 @@ function renderResults(resultsEl, statusEl, groups, totalMs, query) {
     searchInput.removeAttribute('aria-activedescendant');
     searchInput.setAttribute('aria-expanded', resultRows.length > 0 ? 'true' : 'false');
   }
-  statusEl.textContent = `${total} result${total === 1 ? '' : 's'} in ${totalMs}ms`;
+  // Say what is on screen. When Pagefind matched more than the 30 rows we
+  // fetch, say so explicitly rather than reporting the cap as the total.
+  statusEl.textContent = matches > shown
+    ? `Showing ${shown} of ${matches} results in ${totalMs}ms`
+    : `${shown} result${shown === 1 ? '' : 's'} in ${totalMs}ms`;
 }
 
 async function performSearch(query, resultsEl, statusEl) {
@@ -139,7 +156,7 @@ async function performSearch(query, resultsEl, statusEl) {
     groups[section].push(d);
   }
   const elapsed = Math.round(performance.now() - t0);
-  renderResults(resultsEl, statusEl, groups, elapsed, query);
+  renderResults(resultsEl, statusEl, groups, elapsed, query, search.results.length);
 }
 
 function setActiveRow(idx) {

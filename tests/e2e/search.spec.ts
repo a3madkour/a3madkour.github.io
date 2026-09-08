@@ -48,3 +48,28 @@ test('recipes filter returns visible results, not an empty pane (RC2.1)', async 
   await expect(group).toHaveAttribute('aria-label', 'Recipes');
   await expect(group.locator('h3')).toHaveText('Recipes');
 });
+
+test('the status count equals the rendered result count (RF1.1, RF2.6)', async ({ page }) => {
+  await page.goto('/');
+  await page.click('[data-search-toggle]');
+  // 'example' matches across every section, including the taxonomy pages that
+  // were counted but never rendered, and enough of them to exceed the 30-row
+  // fetch cap that used to be reported as if it were the total.
+  await page.fill('[data-search-input]', 'example');
+  await expect(page.locator('.search-modal-result').first()).toBeVisible({ timeout: 10000 });
+
+  const status = (await page.locator('[data-search-status]').textContent()) ?? '';
+  const rendered = await page.locator('.search-modal-result').count();
+
+  // The status line must describe what is on screen. Either it states a plain
+  // count equal to the rows, or it says "N of M" with N equal to the rows.
+  const showing = status.match(/showing (\d+) of (\d+)/i);
+  if (showing) {
+    expect(Number(showing[1])).toBe(rendered);
+    expect(Number(showing[2])).toBeGreaterThanOrEqual(rendered);
+  } else {
+    const plain = status.match(/(\d+) results?/);
+    expect(plain, `status did not state a count: "${status}"`).not.toBeNull();
+    expect(Number(plain![1])).toBe(rendered);
+  }
+});
