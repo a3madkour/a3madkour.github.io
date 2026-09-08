@@ -50,5 +50,8 @@ test('a recipe with no times renders no time chrome anywhere', async ({ page }) 
 
   await page.goto('/recipes/');
   const minimal = page.locator('.recipe-card[href="/recipes/example-recipe-three/"]');
+  // Assert the parent exists first: toHaveCount(0) on a child of a locator that
+  // matches nothing passes trivially, so without this the next line has no teeth.
+  await expect(minimal).toHaveCount(1);
   await expect(minimal.locator('.recipe-card-time')).toHaveCount(0);
 });
