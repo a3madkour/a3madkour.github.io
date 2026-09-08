@@ -26,6 +26,7 @@
 - [Plans update a3-pub.sh for new elisp modules](feedback_plan_wrapper_script_updates.md) — new modules need explicit `-l <module>`
 - [Hugo reserves type AND kind frontmatter](feedback_hugo_reserved_fields.md) — use domain-prefixed enum field names
 - [Measured tone in audits/reviews](feedback_tone.md) — drop asides, rhetorical flourishes, closers
+- [Mutation-test every guard](feedback_mutation_test_every_guard.md) — break it and watch the test fail; passing proves nothing
 
 ## Reference — gotchas & APIs
 - [Dotfiles `#+keyword:` API](reference_dotfiles_keywords_api.md) — `a3madkour-pub-keywords/extract` + `boolean-p`
@@ -67,11 +68,13 @@
 - [Paired shortcode → partial needs literal .Inner](reference_hugo_paired_shortcode_partial_inner.md) — pass `"inner" .Inner` hint or Hugo rejects the closing tag
 - [Verify template refactors against minified build](reference_verify_template_refactor_minified.md) — raw over-flags cosmetic whitespace/attr-order the minifier erases
 - [org-element file-level :PROPERTIES: needs to be first element](reference_org_element_file_property_drawer_position.md) — keywords-first → generic `drawer`, property-drawer map returns nil; scan interpreted text
+- [Playwright reuseExistingServer serves a foreign build](reference_playwright_reuse_existing_server.md) — assert page identity before trusting any browser result
 
 ## Project — active queue
+- [Recipe section + remediation — SHIPPED & DEPLOYED](project_recipe_remediation_shipped.md) — 2026-09-07 `main` @ `2d01fa1`, 3 green deploys; 29 rows + 12 of 13 follow-ups (RF3.3 closed 2026-09-08); 38 linter pairs; RF3.4 informational + Slice 3 + real-corpus publish remain
 - [KaTeX math — SHIPPED, merged to main](project_katex_math_runtime_complete.md) — build-time transform.ToMath; audit+review+remediation done; master→main renamed, remote push/default-branch/delete-origin-master still manual
-- [Recipe section — Slice 1 SHIPPED](project_recipe_section.md) — 2026-07-06 brainstorm; standard=schema.org/Recipe JSON. **Slice 1 (site render+download+scaling) MERGED to master `6d8cf4a` 2026-07-07 (NOT pushed — push = live deploy), 20 commits all green**; Slice 2 (org authoring+lint+export) research-gated brainstorm-later, Slice 3 (meal-prep planner) deferred separate project; specs `bcb156d`/`50a0673`, plan `fa2d65f`
-- [Recipe Slice 2 — IMPLEMENTED + full ox-hugo E2E verified, unpushed](project_recipe_slice_2_complete.md) — 2026-07-09/10; org→lint→export handler+linter+normalize branch (dotfiles `main` `7161d59..2d6ac4a`, 17 commits, 780/780), SDD-executed; 5 bugs caught (drawer-position, source em-dash, missing `recipes` section allow-list, `:image:` copy, ox-hugo drawer body-leak); FULL E2E: real publish-recipe-file→ox-hugo→site linters clean→Hugo renders page (JSON-LD+scaler+download); REMAINING = publish via real org-roam + push (both repos unpushed); Slice 3 still deferred
+- [Recipe section — Slice 1 SHIPPED](project_recipe_section.md) — 2026-07-06 brainstorm; standard=schema.org/Recipe JSON. **Slice 1 SHIPPED — merged to `main` and deployed 2026-09-07 as part of the remediation run; see [[project_recipe_remediation_shipped]]**; Slice 2 (org authoring+lint+export) research-gated brainstorm-later, Slice 3 (meal-prep planner) deferred separate project; specs `bcb156d`/`50a0673`, plan `fa2d65f`
+- [Recipe Slice 2 — IMPLEMENTED + full ox-hugo E2E verified, unpushed](project_recipe_slice_2_complete.md) — 2026-07-09/10; org→lint→export handler+linter+normalize branch (dotfiles `main` `7161d59..2d6ac4a`, 17 commits, 780/780), SDD-executed; 5 bugs caught (drawer-position, source em-dash, missing `recipes` section allow-list, `:image:` copy, ox-hugo drawer body-leak); FULL E2E: real publish-recipe-file→ox-hugo→site linters clean→Hugo renders page (JSON-LD+scaler+download); site repo now pushed+deployed; REMAINING = publish via real org-roam (dotfiles repo still unpushed); Slice 3 still deferred
 - [Publish-pipeline audit (dotfiles elisp)](project_publish_pipeline_audit.md) — 2026-07-05/06 six-lens audit **FULLY CLOSED**; P1+P2+P2.14 + P3.1/P3.3/P3.7 + P4 + **P5 (7161d59, 751 green)** SHIPPED (8 commits on main); P3.2/P3.5/P3.6/P3.8 + P4.5 + P5.2 assessed+flagged; **only P3.4 (library slug NFD/NFKD) left = deferred user decision**; roadmap in dotfiles docs
 - [Audit roadmap FULLY CLOSED — R1–R6.3 ALL SHIPPED](project_r6_kickoff.md) — nothing left in the audit queue (R6.3 built too, not deferred).
 - [Audit R6.3 — shipped, CLOSES WHOLE ROADMAP](project_audit_r6_3_complete.md) — 2026-07-05 `da7a7a5..f8f0e1b`; built-HTML link crawler (33rd pair, html.parser over public/); caught a real /tags/fiction/ 404; E2E 9/9, opus READY
