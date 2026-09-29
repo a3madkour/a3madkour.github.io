@@ -8,6 +8,7 @@ Exits 0 on all-pass, 1 on any violation. Stdlib only.
 """
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -27,8 +28,6 @@ GAME_OPTIONAL = {
     "source_stream",
 } | UMBRELLA_OPTIONAL
 GAME_FIELDS = GAME_REQUIRED | GAME_OPTIONAL
-GAME_STATUSES = {"playable", "in-progress", "archived"}
-GAME_KINDS = {"full-release", "jam", "research-prototype", "experiment"}
 
 MUSIC_REQUIRED = {"title", "date", "lastmod", "draft", "format", "year"}
 MUSIC_OPTIONAL = {
@@ -38,12 +37,43 @@ MUSIC_OPTIONAL = {
     "source_stream",
 } | UMBRELLA_OPTIONAL
 MUSIC_FIELDS = MUSIC_REQUIRED | MUSIC_OPTIONAL
-MUSIC_FORMATS = {"album", "track", "experiment", "live"}
-PLATFORM_KINDS = {"bandcamp", "soundcloud", "youtube"}
 
 POEM_REQUIRED = {"title", "date", "lastmod", "draft", "lines"}
 POEM_OPTIONAL = {"tags", "collection", "set_to_music", "summary", "audio_url", "source_stream"} | UMBRELLA_OPTIONAL
 POEM_FIELDS = POEM_REQUIRED | POEM_OPTIONAL
+
+# --- shared enum vocabulary (single-sourced with the elisp author-side linter) ---
+
+VOCAB_REL = Path("data") / "works-vocab.json"
+_VOCAB_KEYS = {"game_statuses", "game_kinds", "music_formats", "platform_kinds"}
+
+
+def load_vocab(repo_root: Path) -> dict[str, set[str]]:
+    """Load the shared enum vocabulary. Fails closed: never returns defaults.
+
+    A fallback here would silently restore the cross-language drift surface
+    this file exists to remove.
+    """
+    path = repo_root / VOCAB_REL
+    try:
+        raw = json.loads(path.read_text())
+    except FileNotFoundError:
+        sys.exit(f"check_works_fixtures: vocabulary not found at {path}")
+    except json.JSONDecodeError as e:
+        sys.exit(f"check_works_fixtures: vocabulary at {path} is not valid JSON: {e}")
+    missing = _VOCAB_KEYS - raw.keys()
+    if missing:
+        sys.exit(f"check_works_fixtures: vocabulary missing keys: {sorted(missing)}")
+    return {k: set(raw[k]) for k in _VOCAB_KEYS}
+
+
+def _default_vocab() -> dict[str, set[str]]:
+    """Vocab used when a caller invokes lint_file()/_lint_game()/_lint_music()
+    directly without threading one through (e.g. existing unit tests that
+    call lint_file(path) with no repo_root in scope). Resolves against this
+    checkout's own data/works-vocab.json via the same fail-closed loader —
+    never a hardcoded copy."""
+    return load_vocab(Path(__file__).resolve().parent.parent)
 
 
 def _validate_umbrella_fields(md: Path, fm: dict[str, object]) -> list[str]:
@@ -65,10 +95,13 @@ def _validate_umbrella_fields(md: Path, fm: dict[str, object]) -> list[str]:
     return errs
 
 
-def lint_file(md: Path) -> list[str]:
+def lint_file(md: Path, vocab: dict[str, set[str]] | None = None) -> list[str]:
     """Return a list of error strings for a single fixture index.md.
 
     Sub-section is derived from the path: content/works/<sub>/<slug>/index.md.
+    `vocab` is the loaded shared enum vocabulary (see load_vocab); when
+    omitted, games/music validation falls back to loading this checkout's
+    own data/works-vocab.json (still via the fail-closed loader).
     """
     parts = md.parts
     try:
@@ -86,15 +119,17 @@ def lint_file(md: Path) -> list[str]:
         return [f"{md}: no frontmatter"]
 
     if sub == "games":
-        return _lint_game(md, fm)
+        return _lint_game(md, fm, vocab)
     if sub == "music":
-        return _lint_music(md, fm)
+        return _lint_music(md, fm, vocab)
     if sub == "poetry":
         return _lint_poem(md, fm)
     return [f"{md}: unknown works sub-section '{sub}'"]
 
 
-def _lint_game(md: Path, fm: dict[str, object]) -> list[str]:
+def _lint_game(md: Path, fm: dict[str, object], vocab: dict[str, set[str]] | None = None) -> list[str]:
+    if vocab is None:
+        vocab = _default_vocab()
     errs: list[str] = []
     for f in sorted(GAME_REQUIRED - fm.keys()):
         errs.append(f"{md}: missing required field '{f}'")
@@ -102,12 +137,12 @@ def _lint_game(md: Path, fm: dict[str, object]) -> list[str]:
         errs.append(f"{md}: unknown field '{f}'")
 
     status = fm.get("status")
-    if status is not None and status not in GAME_STATUSES:
-        errs.append(f"{md}: status='{status}' not in {sorted(GAME_STATUSES)}")
+    if status is not None and status not in vocab["game_statuses"]:
+        errs.append(f"{md}: status='{status}' not in {sorted(vocab['game_statuses'])}")
 
     gkind = fm.get("game_kind")
-    if gkind is not None and gkind not in GAME_KINDS:
-        errs.append(f"{md}: game_kind='{gkind}' not in {sorted(GAME_KINDS)}")
+    if gkind is not None and gkind not in vocab["game_kinds"]:
+        errs.append(f"{md}: game_kind='{gkind}' not in {sorted(vocab['game_kinds'])}")
 
     year = fm.get("year")
     if year is not None and not isinstance(year, int):
@@ -124,7 +159,9 @@ def _lint_game(md: Path, fm: dict[str, object]) -> list[str]:
     return errs
 
 
-def _lint_music(md: Path, fm: dict[str, object]) -> list[str]:
+def _lint_music(md: Path, fm: dict[str, object], vocab: dict[str, set[str]] | None = None) -> list[str]:
+    if vocab is None:
+        vocab = _default_vocab()
     errs: list[str] = []
     for f in sorted(MUSIC_REQUIRED - fm.keys()):
         errs.append(f"{md}: missing required field '{f}'")
@@ -132,8 +169,8 @@ def _lint_music(md: Path, fm: dict[str, object]) -> list[str]:
         errs.append(f"{md}: unknown field '{f}'")
 
     fmt = fm.get("format")
-    if fmt is not None and fmt not in MUSIC_FORMATS:
-        errs.append(f"{md}: format='{fmt}' not in {sorted(MUSIC_FORMATS)}")
+    if fmt is not None and fmt not in vocab["music_formats"]:
+        errs.append(f"{md}: format='{fmt}' not in {sorted(vocab['music_formats'])}")
 
     year = fm.get("year")
     if year is not None and not isinstance(year, int):
@@ -159,8 +196,8 @@ def _lint_music(md: Path, fm: dict[str, object]) -> list[str]:
             kind = pe.get("kind")
             if kind is None:
                 errs.append(f"{md}: platform_embed.kind missing")
-            elif kind not in PLATFORM_KINDS:
-                errs.append(f"{md}: platform_embed.kind='{kind}' not in {sorted(PLATFORM_KINDS)}")
+            elif kind not in vocab["platform_kinds"]:
+                errs.append(f"{md}: platform_embed.kind='{kind}' not in {sorted(vocab['platform_kinds'])}")
             if "url" not in pe:
                 errs.append(f"{md}: platform_embed.url missing")
 
@@ -200,17 +237,26 @@ def run(repo_root: Path) -> tuple[int, list[str]]:
     works = repo_root / "content" / "works"
     if not works.exists():
         return 0, []
+    # Loaded once, lazily, the first time a games/music fixture is actually
+    # encountered — poetry has no enums, so a poetry-only tree (e.g. the
+    # poetry publish-integration test's tmp site root) must not be forced
+    # to carry a vocab file it never needs. Still fails closed: any repo
+    # that *does* have games/music content gets exactly one fail-closed
+    # load attempt.
+    vocab: dict[str, set[str]] | None = None
     for sub in ("games", "music", "poetry"):
         sub_dir = works / sub
         if not sub_dir.exists():
             continue
+        if sub in ("games", "music") and vocab is None:
+            vocab = load_vocab(repo_root)
         for child in sorted(sub_dir.iterdir()):
             if not child.is_dir():
                 continue
             md = child / "index.md"
             if not md.exists():
                 continue
-            all_errs.extend(lint_file(md))
+            all_errs.extend(lint_file(md, vocab))
     return (1 if all_errs else 0), all_errs
 
 

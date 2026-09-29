@@ -1,0 +1,6 @@
+{
+  "game_statuses":  ["playable", "in-progress", "archived"],
+  "game_kinds":     ["full-release", "jam", "research-prototype", "experiment"],
+  "music_formats":  ["album", "track", "experiment", "live"],
+  "platform_kinds": ["bandcamp", "soundcloud", "youtube"]
+}

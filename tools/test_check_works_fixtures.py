@@ -3,6 +3,7 @@
 """
 from __future__ import annotations
 
+import json
 import shutil
 import sys
 import tempfile
@@ -11,6 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import check_works_fixtures as lint  # noqa: E402
+from test_helpers import TempRepo  # noqa: E402
 
 
 GAME_VALID = """\
@@ -41,6 +43,11 @@ year: 2026
 Body.
 """
 
+# Minimal valid game fixture with status: playable — used by the shared-vocab
+# tests below, where TempRepo writes it at an arbitrary path (not necessarily
+# "ok") rather than through self._write's games/<slug> convention.
+GAME_MD_PLAYABLE = GAME_VALID
+
 POEM_VALID = """\
 ---
 title: "Example Poem"
@@ -60,6 +67,18 @@ class WorksFixturesLinterTests(unittest.TestCase):
         self.works = self.tmp / "content" / "works"
         for sub in ("games", "music", "poetry"):
             (self.works / sub).mkdir(parents=True)
+        # lint.run() fails closed on a missing vocab file (see
+        # test_missing_vocab_fails_closed below); seed a real one here so
+        # every pre-existing test that goes through run() — not the
+        # per-file lint_file() calls, which fall back to this checkout's
+        # own data/works-vocab.json — keeps behaving exactly as before.
+        (self.tmp / "data").mkdir(parents=True)
+        (self.tmp / "data" / "works-vocab.json").write_text(json.dumps({
+            "game_statuses": ["playable", "in-progress", "archived"],
+            "game_kinds": ["full-release", "jam", "research-prototype", "experiment"],
+            "music_formats": ["album", "track", "experiment", "live"],
+            "platform_kinds": ["bandcamp", "soundcloud", "youtube"],
+        }))
 
     def tearDown(self):
         shutil.rmtree(self.tmp)
@@ -332,6 +351,35 @@ Body.
         rc, errs = lint.run(self.tmp)
         self.assertEqual(rc, 1)
         self.assertEqual(len(errs), 2)
+
+    # --- shared enum vocabulary (single-sourced with the elisp linter) ---
+
+    def test_vocab_is_single_source(self):
+        """Mutating the vocab file must change what the linter accepts."""
+        repo = TempRepo()
+        try:
+            repo.write("data/works-vocab.json", json.dumps({
+                "game_statuses": ["playible"],          # deliberate typo
+                "game_kinds": ["jam"],
+                "music_formats": ["album"],
+                "platform_kinds": ["bandcamp"],
+            }))
+            repo.write("content/works/games/g/index.md", GAME_MD_PLAYABLE)
+            code, errs = lint.run(repo.root)
+            self.assertEqual(code, 1)
+            self.assertTrue(any("status='playable'" in e for e in errs), errs)
+        finally:
+            repo.cleanup()
+
+    def test_missing_vocab_fails_closed(self):
+        """A missing vocab file must error, never fall back to a hardcoded copy."""
+        repo = TempRepo()
+        try:
+            repo.write("content/works/games/g/index.md", GAME_MD_PLAYABLE)
+            with self.assertRaises(SystemExit):
+                lint.run(repo.root)
+        finally:
+            repo.cleanup()
 
 
 if __name__ == "__main__":
