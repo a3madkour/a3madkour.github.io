@@ -48,6 +48,20 @@ Body.
 # "ok") rather than through self._write's games/<slug> convention.
 GAME_MD_PLAYABLE = GAME_VALID
 
+# Vocab threaded explicitly into every direct lint_file() call in this file.
+# lint_file()/_lint_game()/_lint_music() take vocab as a required argument
+# with no fallback (check_works_fixtures.py deliberately has no
+# "read the live repo's own data/works-vocab.json if omitted" path — a test
+# that could silently pass by reading the real site's file, rather than a
+# fixture the test author controls, is exactly the coupling this constant
+# exists to rule out). Mirrors data/works-vocab.json's real values.
+VOCAB = {
+    "game_statuses": {"playable", "in-progress", "archived"},
+    "game_kinds": {"full-release", "jam", "research-prototype", "experiment"},
+    "music_formats": {"album", "track", "experiment", "live"},
+    "platform_kinds": {"bandcamp", "soundcloud", "youtube"},
+}
+
 POEM_VALID = """\
 ---
 title: "Example Poem"
@@ -69,9 +83,10 @@ class WorksFixturesLinterTests(unittest.TestCase):
             (self.works / sub).mkdir(parents=True)
         # lint.run() fails closed on a missing vocab file (see
         # test_missing_vocab_fails_closed below); seed a real one here so
-        # every pre-existing test that goes through run() — not the
-        # per-file lint_file() calls, which fall back to this checkout's
-        # own data/works-vocab.json — keeps behaving exactly as before.
+        # every pre-existing test that goes through run() (test_runner_*)
+        # keeps passing. Direct lint_file() calls elsewhere in this file
+        # thread the module-level VOCAB constant explicitly instead — they
+        # never touch this tempdir's copy or the live repo's.
         (self.tmp / "data").mkdir(parents=True)
         (self.tmp / "data" / "works-vocab.json").write_text(json.dumps({
             "game_statuses": ["playable", "in-progress", "archived"],
@@ -95,36 +110,36 @@ class WorksFixturesLinterTests(unittest.TestCase):
 
     def test_game_valid_passes(self):
         p = self._write("games", "ok", GAME_VALID)
-        self.assertEqual(lint.lint_file(p), [])
+        self.assertEqual(lint.lint_file(p, VOCAB), [])
 
     def test_game_missing_status(self):
         body = GAME_VALID.replace("status: playable\n", "")
         p = self._write("games", "missing-status", body)
-        errs = lint.lint_file(p)
+        errs = lint.lint_file(p, VOCAB)
         self.assertTrue(any("missing required field 'status'" in e for e in errs))
 
     def test_game_bad_status_enum(self):
         body = GAME_VALID.replace("status: playable", "status: shipped")
         p = self._write("games", "bad-status", body)
-        errs = lint.lint_file(p)
+        errs = lint.lint_file(p, VOCAB)
         self.assertTrue(any("status='shipped'" in e for e in errs))
 
     def test_game_bad_kind_enum(self):
         body = GAME_VALID.replace("game_kind: full-release", "game_kind: walking-sim")
         p = self._write("games", "bad-kind", body)
-        errs = lint.lint_file(p)
+        errs = lint.lint_file(p, VOCAB)
         self.assertTrue(any("game_kind='walking-sim'" in e for e in errs))
 
     def test_game_year_not_int(self):
         body = GAME_VALID.replace("year: 2026", "year: 'twenty-six'")
         p = self._write("games", "bad-year", body)
-        errs = lint.lint_file(p)
+        errs = lint.lint_file(p, VOCAB)
         self.assertTrue(any("year" in e and "integer" in e for e in errs))
 
     def test_game_unknown_field(self):
         body = GAME_VALID.replace("year: 2026\n", "year: 2026\nrarity: 99\n")
         p = self._write("games", "extra-field", body)
-        errs = lint.lint_file(p)
+        errs = lint.lint_file(p, VOCAB)
         self.assertTrue(any("unknown field 'rarity'" in e for e in errs))
 
     def test_game_with_all_optionals(self):
@@ -156,24 +171,24 @@ related_notes: [/garden/story-atoms/]
 Body.
 """
         p = self._write("games", "full", body)
-        self.assertEqual(lint.lint_file(p), [])
+        self.assertEqual(lint.lint_file(p, VOCAB), [])
 
     # --- music contract ---
 
     def test_music_valid_passes(self):
         p = self._write("music", "ok", MUSIC_VALID)
-        self.assertEqual(lint.lint_file(p), [])
+        self.assertEqual(lint.lint_file(p, VOCAB), [])
 
     def test_music_missing_format(self):
         body = MUSIC_VALID.replace("format: album\n", "")
         p = self._write("music", "missing-format", body)
-        errs = lint.lint_file(p)
+        errs = lint.lint_file(p, VOCAB)
         self.assertTrue(any("missing required field 'format'" in e for e in errs))
 
     def test_music_bad_format_enum(self):
         body = MUSIC_VALID.replace("format: album", "format: cassette")
         p = self._write("music", "bad-format", body)
-        errs = lint.lint_file(p)
+        errs = lint.lint_file(p, VOCAB)
         self.assertTrue(any("format='cassette'" in e for e in errs))
 
     def test_music_platform_embed_bad_kind(self):
@@ -182,7 +197,7 @@ Body.
             "year: 2026\nplatform_embed: { kind: spotify, url: 'https://example.com' }\n",
         )
         p = self._write("music", "bad-embed-kind", body)
-        errs = lint.lint_file(p)
+        errs = lint.lint_file(p, VOCAB)
         self.assertTrue(any("platform_embed.kind='spotify'" in e for e in errs))
 
     def test_music_platform_embed_missing_url(self):
@@ -191,7 +206,7 @@ Body.
             "year: 2026\nplatform_embed: { kind: bandcamp }\n",
         )
         p = self._write("music", "embed-no-url", body)
-        errs = lint.lint_file(p)
+        errs = lint.lint_file(p, VOCAB)
         self.assertTrue(any("platform_embed.url" in e and "missing" in e for e in errs))
 
     def test_music_tracks_shape(self):
@@ -200,7 +215,7 @@ Body.
             'year: 2026\ntracks:\n  - { title: "Track 1", duration: "3:14" }\n  - { title: "Track 2", duration: "4:20" }\n',
         )
         p = self._write("music", "good-tracks", body)
-        self.assertEqual(lint.lint_file(p), [])
+        self.assertEqual(lint.lint_file(p, VOCAB), [])
 
     def test_music_track_missing_duration(self):
         body = MUSIC_VALID.replace(
@@ -208,31 +223,31 @@ Body.
             'year: 2026\ntracks:\n  - { title: "Track 1" }\n',
         )
         p = self._write("music", "bad-track", body)
-        errs = lint.lint_file(p)
+        errs = lint.lint_file(p, VOCAB)
         self.assertTrue(any("tracks[0]" in e for e in errs))
 
     def test_music_unknown_field(self):
         body = MUSIC_VALID.replace("year: 2026\n", "year: 2026\nbpm: 128\n")
         p = self._write("music", "extra-field", body)
-        errs = lint.lint_file(p)
+        errs = lint.lint_file(p, VOCAB)
         self.assertTrue(any("unknown field 'bpm'" in e for e in errs))
 
     # --- poetry contract ---
 
     def test_poem_valid_passes(self):
         p = self._write("poetry", "ok", POEM_VALID)
-        self.assertEqual(lint.lint_file(p), [])
+        self.assertEqual(lint.lint_file(p, VOCAB), [])
 
     def test_poem_missing_lines(self):
         body = POEM_VALID.replace("lines: 14\n", "")
         p = self._write("poetry", "missing-lines", body)
-        errs = lint.lint_file(p)
+        errs = lint.lint_file(p, VOCAB)
         self.assertTrue(any("missing required field 'lines'" in e for e in errs))
 
     def test_poem_lines_not_int(self):
         body = POEM_VALID.replace("lines: 14", "lines: 'fourteen'")
         p = self._write("poetry", "bad-lines", body)
-        errs = lint.lint_file(p)
+        errs = lint.lint_file(p, VOCAB)
         self.assertTrue(any("lines" in e and "integer" in e for e in errs))
 
     def test_poem_with_optionals(self):
@@ -252,7 +267,7 @@ summary: "A summary."
 Body.
 """
         p = self._write("poetry", "with-optionals", body)
-        self.assertEqual(lint.lint_file(p), [])
+        self.assertEqual(lint.lint_file(p, VOCAB), [])
 
     def test_poem_accepts_audio_url(self):
         body = POEM_VALID.replace(
@@ -260,7 +275,7 @@ Body.
             'lines: 14\naudio_url: "https://example.com/reading.mp3"\n',
         )
         p = self._write("poetry", "with-audio", body)
-        self.assertEqual(lint.lint_file(p), [])
+        self.assertEqual(lint.lint_file(p, VOCAB), [])
 
     def test_poem_audio_url_relative_accepted_by_fixture_linter(self):
         # check_works_fixtures only validates *shape* (unknown-field gate);
@@ -270,7 +285,7 @@ Body.
             'lines: 14\naudio_url: reading.mp3\n',
         )
         p = self._write("poetry", "with-audio-rel", body)
-        self.assertEqual(lint.lint_file(p), [])
+        self.assertEqual(lint.lint_file(p, VOCAB), [])
 
     # --- umbrella (Bento grid) fields ---
 
@@ -280,7 +295,7 @@ Body.
             "year: 2026\ntile_size: large\nfeatured: true\nhero: true\n",
         )
         p = self._write("games", "with-umbrella", body)
-        self.assertEqual(lint.lint_file(p), [])
+        self.assertEqual(lint.lint_file(p, VOCAB), [])
 
     def test_music_accepts_tile_size_featured_hero(self):
         body = MUSIC_VALID.replace(
@@ -288,7 +303,7 @@ Body.
             "year: 2026\ntile_size: small\nfeatured: true\nhero: false\n",
         )
         p = self._write("music", "with-umbrella", body)
-        self.assertEqual(lint.lint_file(p), [])
+        self.assertEqual(lint.lint_file(p, VOCAB), [])
 
     def test_poem_accepts_tile_size_featured_hero(self):
         body = POEM_VALID.replace(
@@ -296,7 +311,7 @@ Body.
             "lines: 14\ntile_size: medium\nfeatured: false\nhero: true\n",
         )
         p = self._write("poetry", "with-umbrella", body)
-        self.assertEqual(lint.lint_file(p), [])
+        self.assertEqual(lint.lint_file(p, VOCAB), [])
 
     def test_tile_size_must_be_in_enum(self):
         body = GAME_VALID.replace(
@@ -304,7 +319,7 @@ Body.
             "year: 2026\ntile_size: huge\n",
         )
         p = self._write("games", "bad-tile-size", body)
-        errs = lint.lint_file(p)
+        errs = lint.lint_file(p, VOCAB)
         self.assertTrue(any("tile_size='huge'" in e for e in errs), errs)
 
     # --- source_stream (streams-section back-edge) ---
@@ -315,7 +330,7 @@ Body.
             "year: 2026\nsource_stream: 2026-04-10-example-live-coding-stream\n",
         )
         p = self._write("games", "with-source-stream", body)
-        self.assertEqual(lint.lint_file(p), [])
+        self.assertEqual(lint.lint_file(p, VOCAB), [])
 
     def test_music_accepts_source_stream(self):
         body = MUSIC_VALID.replace(
@@ -323,7 +338,7 @@ Body.
             "year: 2026\nsource_stream: 2026-04-22-example-music-jam-stream\n",
         )
         p = self._write("music", "with-source-stream", body)
-        self.assertEqual(lint.lint_file(p), [])
+        self.assertEqual(lint.lint_file(p, VOCAB), [])
 
     def test_poem_accepts_source_stream(self):
         body = POEM_VALID.replace(
@@ -331,7 +346,7 @@ Body.
             "lines: 14\nsource_stream: 2026-04-22-example-music-jam-stream\n",
         )
         p = self._write("poetry", "with-source-stream", body)
-        self.assertEqual(lint.lint_file(p), [])
+        self.assertEqual(lint.lint_file(p, VOCAB), [])
 
     # --- runner ---
 

@@ -67,15 +67,6 @@ def load_vocab(repo_root: Path) -> dict[str, set[str]]:
     return {k: set(raw[k]) for k in _VOCAB_KEYS}
 
 
-def _default_vocab() -> dict[str, set[str]]:
-    """Vocab used when a caller invokes lint_file()/_lint_game()/_lint_music()
-    directly without threading one through (e.g. existing unit tests that
-    call lint_file(path) with no repo_root in scope). Resolves against this
-    checkout's own data/works-vocab.json via the same fail-closed loader —
-    never a hardcoded copy."""
-    return load_vocab(Path(__file__).resolve().parent.parent)
-
-
 def _validate_umbrella_fields(md: Path, fm: dict[str, object]) -> list[str]:
     """Validate optional Bento-grid fields (tile_size, featured, hero).
 
@@ -95,13 +86,16 @@ def _validate_umbrella_fields(md: Path, fm: dict[str, object]) -> list[str]:
     return errs
 
 
-def lint_file(md: Path, vocab: dict[str, set[str]] | None = None) -> list[str]:
+def lint_file(md: Path, vocab: dict[str, set[str]] | None) -> list[str]:
     """Return a list of error strings for a single fixture index.md.
 
     Sub-section is derived from the path: content/works/<sub>/<slug>/index.md.
-    `vocab` is the loaded shared enum vocabulary (see load_vocab); when
-    omitted, games/music validation falls back to loading this checkout's
-    own data/works-vocab.json (still via the fail-closed loader).
+    `vocab` is the loaded shared enum vocabulary (see load_vocab) — a
+    required argument, deliberately with no default. Games/music fixtures
+    need a real vocab dict (a caller that omits it fails loudly inside
+    _lint_game/_lint_music rather than silently reading some other vocab
+    source). `None` is only a legitimate value here for poetry fixtures,
+    which have no enums and never dereference it.
     """
     parts = md.parts
     try:
@@ -127,9 +121,7 @@ def lint_file(md: Path, vocab: dict[str, set[str]] | None = None) -> list[str]:
     return [f"{md}: unknown works sub-section '{sub}'"]
 
 
-def _lint_game(md: Path, fm: dict[str, object], vocab: dict[str, set[str]] | None = None) -> list[str]:
-    if vocab is None:
-        vocab = _default_vocab()
+def _lint_game(md: Path, fm: dict[str, object], vocab: dict[str, set[str]]) -> list[str]:
     errs: list[str] = []
     for f in sorted(GAME_REQUIRED - fm.keys()):
         errs.append(f"{md}: missing required field '{f}'")
@@ -159,9 +151,7 @@ def _lint_game(md: Path, fm: dict[str, object], vocab: dict[str, set[str]] | Non
     return errs
 
 
-def _lint_music(md: Path, fm: dict[str, object], vocab: dict[str, set[str]] | None = None) -> list[str]:
-    if vocab is None:
-        vocab = _default_vocab()
+def _lint_music(md: Path, fm: dict[str, object], vocab: dict[str, set[str]]) -> list[str]:
     errs: list[str] = []
     for f in sorted(MUSIC_REQUIRED - fm.keys()):
         errs.append(f"{md}: missing required field '{f}'")
