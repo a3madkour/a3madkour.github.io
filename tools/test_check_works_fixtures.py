@@ -423,6 +423,33 @@ Body.
         finally:
             repo.cleanup()
 
+    def test_poetry_only_tree_still_requires_the_vocabulary(self):
+        """A works tree with no games/music still reads the vocabulary.
+
+        `run()` used to load it lazily, only on reaching a games/music
+        fixture, so a poetry-only site root needed no vocabulary file at all.
+        That laziness stopped being correct when `umbrella_optional` moved
+        into the vocabulary: `poem_fields()` composes from it. The consequence
+        is load-bearing for a caller outside this file —
+        `tools/test_publish_integration.py`'s `TestPoetryPublishDeliberate`
+        builds a poetry-only site root and asserts `run(...) == 0`, and it had
+        to start seeding `data/works-vocab.json` in `setUp`. Pinned here
+        because that integration test needs a subprocess `emacs --batch` and
+        can be skipped or environment-blocked, so it is not a reliable guard
+        for this contract.
+        """
+        repo = TempRepo()
+        try:
+            repo.write("content/works/poetry/p/index.md", POEM_VALID)
+            code, errs = lint.run(repo.root)
+            self.assertEqual(code, 1)
+            self.assertIn("vocabulary not found at", errs[0])
+            # ...and with the file present it is clean again.
+            repo.write("data/works-vocab.json", _vocab_json())
+            self.assertEqual(lint.run(repo.root), (0, []))
+        finally:
+            repo.cleanup()
+
     def test_run_never_exits_the_process_on_a_bad_vocab(self):
         """Malformed JSON is a returned error too, not a SystemExit."""
         repo = TempRepo()

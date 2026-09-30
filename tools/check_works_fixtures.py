@@ -260,11 +260,23 @@ def run(repo_root: Path) -> tuple[int, list[str]]:
     works = repo_root / "content" / "works"
     if not works.exists():
         return 0, []
-    # One fail-closed load for the whole walk. Every sub-section needs it
-    # now that `umbrella_optional` lives in the vocabulary, so there is no
-    # lazy/poetry-only exemption left. A missing or malformed vocabulary is
-    # reported through the uniform `(rc, errs)` seam rather than exiting the
-    # process from inside `run()` — `main()` owns the exit.
+    # One fail-closed load for the whole walk, unconditional once there is a
+    # `content/works/` at all.
+    #
+    # This deliberately replaced a lazy load that fired only on reaching a
+    # games/music fixture. That laziness existed so a POETRY-ONLY tree — the
+    # site root `tools/test_publish_integration.py`'s
+    # `TestPoetryPublishDeliberate` builds — needed no vocabulary file. It
+    # stopped being correct when `umbrella_optional` (tile_size / featured /
+    # hero) moved into the vocabulary: `poem_fields()` composes from that list,
+    # so poetry reads the vocabulary too. Re-exempting poetry would mean a
+    # second, hardcoded copy of `umbrella_optional` here, which is exactly the
+    # duplicate that move removed. Any caller with works content must therefore
+    # supply `data/works-vocab.json`; that integration test seeds it in setUp.
+    #
+    # A missing or malformed vocabulary is reported through the uniform
+    # `(rc, errs)` seam rather than exiting the process from inside `run()` —
+    # `main()` owns the exit.
     try:
         vocab = load_vocab(repo_root)
     except VocabError as e:
