@@ -1,0 +1,21 @@
+{
+  "game_statuses":  ["playable", "in-progress", "archived"],
+  "game_kinds":     ["full-release", "jam", "research-prototype", "experiment"],
+  "music_formats":  ["album", "track", "experiment", "live"],
+  "platform_kinds": ["bandcamp", "soundcloud", "youtube"],
+
+  "umbrella_optional": ["tile_size", "featured", "hero"],
+
+  "game_required": ["title", "date", "lastmod", "draft",
+                    "status", "game_kind", "tagline", "year"],
+  "game_optional": ["tags", "summary", "embed_url", "source_url", "itch_url",
+                    "collaborators", "tech_stack", "length", "screenshots",
+                    "research_questions", "related_essays", "related_notes",
+                    "source_stream"],
+
+  "music_required": ["title", "date", "lastmod", "draft", "format", "year"],
+  "music_optional": ["tags", "summary", "tagline", "cover", "duration",
+                     "tracks", "platform_embed", "audio_url", "lyrics_poem",
+                     "related_works", "related_essays", "made_with",
+                     "collaborators", "source_stream"]
+}

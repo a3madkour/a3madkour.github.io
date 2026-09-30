@@ -24,6 +24,7 @@ Implementation notes
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 import shutil
 import subprocess
@@ -32,6 +33,8 @@ import time
 import unittest
 from pathlib import Path
 
+
+SITE_ROOT = Path(__file__).resolve().parent.parent
 
 # Matches the LISP_DIR / CUSTOM_DIR layout in run-tests.sh.
 _HOME = Path.home()
@@ -2082,6 +2085,13 @@ class TestPoetryPublishDeliberate(unittest.TestCase):
     in `main()` but expose `run(repo_root)` for direct use.  We invoke them
     in-process via `_import_linter` against the tmp site root (same pattern
     as `TestGardenPublishLiving.test_garden_emits_lint_clean_output`).
+
+    Compromise 3 — the tmp site root must carry `data/works-vocab.json`, even
+    though nothing here publishes a game or a release.  See the comment in
+    `setUp`; the short version is that the vocabulary now owns
+    `umbrella_optional`, which poetry composes from, so it is required
+    infrastructure for every works sub-section rather than a games/music enum
+    lookup.
     """
 
     def setUp(self) -> None:
@@ -2097,6 +2107,29 @@ class TestPoetryPublishDeliberate(unittest.TestCase):
         # Seed an empty manifest so begin-publish reads cleanly.
         (self.site_root / "data" / "url-history.yaml").write_text(
             "manifest_version: 1\nnotes: []\n"
+        )
+        # Compromise 3 — `check_works_fixtures.run()` needs the shared works
+        # vocabulary for ANY works sub-section, poetry included, and fails
+        # closed without it. Do not "optimise" this away: it looks unnecessary
+        # for a poetry-only tree, and it is not.
+        #
+        # It used to be. Until 2026-09-29 the linter loaded the vocabulary
+        # lazily, only on reaching a games/music fixture, and that laziness
+        # existed precisely so this test's site root did not have to carry the
+        # file. What changed is that `umbrella_optional` (tile_size / featured
+        # / hero) moved INTO the vocabulary, and poetry composes its optional
+        # set from that same list — so the vocabulary stopped being a
+        # games/music enum lookup and became infrastructure every works-
+        # touching caller needs. Exempting poetry again would mean a second,
+        # hardcoded copy of `umbrella_optional` in the linter, which is the
+        # duplicate that move removed.
+        #
+        # Copied from the live file rather than written out here, for the same
+        # reason `test_check_works_fixtures.py` copies it: a literal would be
+        # another thing to keep in step with the contract.
+        shutil.copyfile(
+            SITE_ROOT / "data" / "works-vocab.json",
+            self.site_root / "data" / "works-vocab.json",
         )
 
     def tearDown(self) -> None:
@@ -2211,6 +2244,68 @@ class TestPoetryPublishDeliberate(unittest.TestCase):
             f"check_works_fixtures rejected B-emitted bundle:\n"
             + "\n".join(f"  {e}" for e in errs_wf),
         )
+
+
+
+@unittest.skipIf(_MISSING_PREREQS, _SKIP_REASON)
+class TestWorksVocabularyIsSingleSourced(unittest.TestCase):
+    """The elisp test fixture must not drift from `data/works-vocab.json`.
+
+    `data/works-vocab.json` is the single home of the works enum vocabulary
+    AND of the games/music emitted-field contract: `check_works_fixtures.py`
+    builds its field sets from it, and the elisp normalizer filters emitted
+    frontmatter to the same lists via `a3madkour-works-vocab.el`. Neither side
+    carries a copy.
+
+    The elisp TEST SUITE does, though, and it has to: `run-tests.sh` runs with
+    no site root, so `a3madkour-works-vocab-fixture.el` writes a vocabulary
+    into a tmp root for the works tests to read. Nothing inside the dotfiles
+    repo can check that fixture against the real file — it cannot see this
+    repo. Nothing inside this repo can either, in isolation.
+
+    This module is the one test layer that spans both checkouts (it already
+    shells into `$DOTFILES_LISP` for every other test here), so the
+    cross-repo assertion belongs here. Without it the fixture is a fourth
+    transcription of the contract that can rot silently, and every elisp
+    works test that derives its expectation from the fixture would keep
+    passing against a vocabulary the site no longer uses.
+    """
+
+    FIXTURE = DOTFILES_LISP / "a3madkour-works-vocab-fixture.el"
+    DEFCONST = "(defconst a3madkour-works-vocab-test--json"
+
+    def _fixture_vocab(self) -> dict[str, list[str]]:
+        """Parse the JSON out of the fixture's elisp string literal."""
+        text = self.FIXTURE.read_text()
+        start = text.index(self.DEFCONST)
+        open_quote = text.index('"', start)
+        i, chars = open_quote + 1, []
+        while True:
+            c = text[i]
+            if c == "\\":            # elisp escape: take the next char verbatim
+                chars.append(text[i + 1])
+                i += 2
+                continue
+            if c == '"':
+                break
+            chars.append(c)
+            i += 1
+        return json.loads("".join(chars))
+
+    def test_fixture_matches_the_live_vocabulary(self):
+        live = json.loads((SITE_ROOT / "data" / "works-vocab.json").read_text())
+        fixture = self._fixture_vocab()
+        self.assertEqual(
+            sorted(fixture), sorted(live),
+            "a3madkour-works-vocab-fixture.el declares a different set of "
+            "vocabulary keys than data/works-vocab.json",
+        )
+        for key in sorted(live):
+            self.assertEqual(
+                sorted(fixture[key]), sorted(live[key]),
+                f"a3madkour-works-vocab-fixture.el's '{key}' has drifted from "
+                f"data/works-vocab.json",
+            )
 
 
 if __name__ == "__main__":
