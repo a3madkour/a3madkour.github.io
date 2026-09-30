@@ -17,54 +17,84 @@ from check_fixtures import parse_frontmatter  # noqa: E402
 
 # --- contracts ---
 
-UMBRELLA_OPTIONAL = {"tile_size", "featured", "hero"}
 TILE_SIZES = {"small", "medium", "large"}
 
-GAME_REQUIRED = {"title", "date", "lastmod", "draft", "status", "game_kind", "tagline", "year"}
-GAME_OPTIONAL = {
-    "tags", "summary", "hero", "embed_url", "source_url", "itch_url",
-    "collaborators", "tech_stack", "length", "screenshots",
-    "research_questions", "related_essays", "related_notes",
-    "source_stream",
-} | UMBRELLA_OPTIONAL
-GAME_FIELDS = GAME_REQUIRED | GAME_OPTIONAL
-
-MUSIC_REQUIRED = {"title", "date", "lastmod", "draft", "format", "year"}
-MUSIC_OPTIONAL = {
-    "tags", "summary", "tagline", "cover", "duration",
-    "tracks", "platform_embed", "audio_url", "lyrics_poem",
-    "related_works", "related_essays", "made_with", "collaborators",
-    "source_stream",
-} | UMBRELLA_OPTIONAL
-MUSIC_FIELDS = MUSIC_REQUIRED | MUSIC_OPTIONAL
-
+# Poetry's field sets stay here: poetry is not part of the org authoring
+# surface this vocabulary single-sources (only games and music have an
+# elisp-side mirror of their emitted-key contract). They still compose with
+# the shared `umbrella_optional` list, which the vocabulary owns.
 POEM_REQUIRED = {"title", "date", "lastmod", "draft", "lines"}
-POEM_OPTIONAL = {"tags", "collection", "set_to_music", "summary", "audio_url", "source_stream"} | UMBRELLA_OPTIONAL
-POEM_FIELDS = POEM_REQUIRED | POEM_OPTIONAL
+POEM_OPTIONAL = {"tags", "collection", "set_to_music", "summary", "audio_url", "source_stream"}
 
-# --- shared enum vocabulary (single-sourced with the elisp author-side linter) ---
+# --- shared vocabulary (single-sourced with the elisp author-side linter) ---
+#
+# Both the enum values AND the games/music emitted-field contract live in
+# data/works-vocab.json, because both are mirrored on the elisp side:
+# `a3madkour-works-lint.el' checks the enums and
+# `a3madkour-publish-frontmatter.el' filters emitted frontmatter to the
+# field sets. The field sets were transcribed into elisp (and again into
+# the elisp tests) until 2026-09-29, and no test could observe both halves:
+# adding an optional key here left the elisp stale and *silently filtered
+# the new field out of every published page*. The spec's original argument
+# for keeping field sets out ("a misspelled key fails loudly in CI
+# regardless") stopped being true the moment the normalizer grew that
+# filter.
 
 VOCAB_REL = Path("data") / "works-vocab.json"
-_VOCAB_KEYS = {"game_statuses", "game_kinds", "music_formats", "platform_kinds"}
+_VOCAB_ENUM_KEYS = {"game_statuses", "game_kinds", "music_formats", "platform_kinds"}
+_VOCAB_FIELD_KEYS = {
+    "umbrella_optional",
+    "game_required", "game_optional",
+    "music_required", "music_optional",
+}
+_VOCAB_KEYS = _VOCAB_ENUM_KEYS | _VOCAB_FIELD_KEYS
+
+
+class VocabError(Exception):
+    """The shared vocabulary is missing, malformed or incomplete."""
 
 
 def load_vocab(repo_root: Path) -> dict[str, set[str]]:
-    """Load the shared enum vocabulary. Fails closed: never returns defaults.
+    """Load the shared vocabulary. Fails closed: never returns defaults.
 
     A fallback here would silently restore the cross-language drift surface
-    this file exists to remove.
+    this file exists to remove. Raises `VocabError` rather than calling
+    `sys.exit`, so `run()` keeps the uniform `(int, list[str])` seam every
+    linter in this repo exposes and a future aggregator is not aborted
+    mid-process.
     """
     path = repo_root / VOCAB_REL
     try:
         raw = json.loads(path.read_text())
     except FileNotFoundError:
-        sys.exit(f"check_works_fixtures: vocabulary not found at {path}")
+        raise VocabError(f"check_works_fixtures: vocabulary not found at {path}")
     except json.JSONDecodeError as e:
-        sys.exit(f"check_works_fixtures: vocabulary at {path} is not valid JSON: {e}")
+        raise VocabError(
+            f"check_works_fixtures: vocabulary at {path} is not valid JSON: {e}"
+        )
     missing = _VOCAB_KEYS - raw.keys()
     if missing:
-        sys.exit(f"check_works_fixtures: vocabulary missing keys: {sorted(missing)}")
+        raise VocabError(
+            f"check_works_fixtures: vocabulary missing keys: {sorted(missing)}"
+        )
     return {k: set(raw[k]) for k in _VOCAB_KEYS}
+
+
+def game_fields(vocab: dict[str, set[str]]) -> tuple[set[str], set[str]]:
+    """(required, every-legal-key) for games, composed from the vocabulary."""
+    required = vocab["game_required"]
+    return required, required | vocab["game_optional"] | vocab["umbrella_optional"]
+
+
+def music_fields(vocab: dict[str, set[str]]) -> tuple[set[str], set[str]]:
+    """(required, every-legal-key) for music, composed from the vocabulary."""
+    required = vocab["music_required"]
+    return required, required | vocab["music_optional"] | vocab["umbrella_optional"]
+
+
+def poem_fields(vocab: dict[str, set[str]]) -> tuple[set[str], set[str]]:
+    """(required, every-legal-key) for poetry."""
+    return POEM_REQUIRED, POEM_REQUIRED | POEM_OPTIONAL | vocab["umbrella_optional"]
 
 
 def _validate_umbrella_fields(md: Path, fm: dict[str, object]) -> list[str]:
@@ -86,16 +116,16 @@ def _validate_umbrella_fields(md: Path, fm: dict[str, object]) -> list[str]:
     return errs
 
 
-def lint_file(md: Path, vocab: dict[str, set[str]] | None) -> list[str]:
+def lint_file(md: Path, vocab: dict[str, set[str]]) -> list[str]:
     """Return a list of error strings for a single fixture index.md.
 
     Sub-section is derived from the path: content/works/<sub>/<slug>/index.md.
-    `vocab` is the loaded shared enum vocabulary (see load_vocab) — a
-    required argument, deliberately with no default. Games/music fixtures
-    need a real vocab dict (a caller that omits it fails loudly inside
-    _lint_game/_lint_music rather than silently reading some other vocab
-    source). `None` is only a legitimate value here for poetry fixtures,
-    which have no enums and never dereference it.
+    `vocab` is the loaded shared vocabulary (see load_vocab) — a required
+    argument, deliberately with no default and never `None`: every
+    sub-section, poetry included, now composes its field sets from it
+    (`umbrella_optional`), so there is no branch that can legitimately
+    skip it. A caller that omits it fails loudly rather than silently
+    reading some other vocabulary source.
     """
     parts = md.parts
     try:
@@ -117,15 +147,16 @@ def lint_file(md: Path, vocab: dict[str, set[str]] | None) -> list[str]:
     if sub == "music":
         return _lint_music(md, fm, vocab)
     if sub == "poetry":
-        return _lint_poem(md, fm)
+        return _lint_poem(md, fm, vocab)
     return [f"{md}: unknown works sub-section '{sub}'"]
 
 
 def _lint_game(md: Path, fm: dict[str, object], vocab: dict[str, set[str]]) -> list[str]:
     errs: list[str] = []
-    for f in sorted(GAME_REQUIRED - fm.keys()):
+    required, fields = game_fields(vocab)
+    for f in sorted(required - fm.keys()):
         errs.append(f"{md}: missing required field '{f}'")
-    for f in sorted(fm.keys() - GAME_FIELDS):
+    for f in sorted(fm.keys() - fields):
         errs.append(f"{md}: unknown field '{f}'")
 
     status = fm.get("status")
@@ -153,9 +184,10 @@ def _lint_game(md: Path, fm: dict[str, object], vocab: dict[str, set[str]]) -> l
 
 def _lint_music(md: Path, fm: dict[str, object], vocab: dict[str, set[str]]) -> list[str]:
     errs: list[str] = []
-    for f in sorted(MUSIC_REQUIRED - fm.keys()):
+    required, fields = music_fields(vocab)
+    for f in sorted(required - fm.keys()):
         errs.append(f"{md}: missing required field '{f}'")
-    for f in sorted(fm.keys() - MUSIC_FIELDS):
+    for f in sorted(fm.keys() - fields):
         errs.append(f"{md}: unknown field '{f}'")
 
     fmt = fm.get("format")
@@ -201,11 +233,12 @@ def _lint_music(md: Path, fm: dict[str, object], vocab: dict[str, set[str]]) -> 
     return errs
 
 
-def _lint_poem(md: Path, fm: dict[str, object]) -> list[str]:
+def _lint_poem(md: Path, fm: dict[str, object], vocab: dict[str, set[str]]) -> list[str]:
     errs: list[str] = []
-    for f in sorted(POEM_REQUIRED - fm.keys()):
+    required, fields = poem_fields(vocab)
+    for f in sorted(required - fm.keys()):
         errs.append(f"{md}: missing required field '{f}'")
-    for f in sorted(fm.keys() - POEM_FIELDS):
+    for f in sorted(fm.keys() - fields):
         errs.append(f"{md}: unknown field '{f}'")
 
     lines = fm.get("lines")
@@ -227,19 +260,19 @@ def run(repo_root: Path) -> tuple[int, list[str]]:
     works = repo_root / "content" / "works"
     if not works.exists():
         return 0, []
-    # Loaded once, lazily, the first time a games/music fixture is actually
-    # encountered — poetry has no enums, so a poetry-only tree (e.g. the
-    # poetry publish-integration test's tmp site root) must not be forced
-    # to carry a vocab file it never needs. Still fails closed: any repo
-    # that *does* have games/music content gets exactly one fail-closed
-    # load attempt.
-    vocab: dict[str, set[str]] | None = None
+    # One fail-closed load for the whole walk. Every sub-section needs it
+    # now that `umbrella_optional` lives in the vocabulary, so there is no
+    # lazy/poetry-only exemption left. A missing or malformed vocabulary is
+    # reported through the uniform `(rc, errs)` seam rather than exiting the
+    # process from inside `run()` — `main()` owns the exit.
+    try:
+        vocab = load_vocab(repo_root)
+    except VocabError as e:
+        return 1, [str(e)]
     for sub in ("games", "music", "poetry"):
         sub_dir = works / sub
         if not sub_dir.exists():
             continue
-        if sub in ("games", "music") and vocab is None:
-            vocab = load_vocab(repo_root)
         for child in sorted(sub_dir.iterdir()):
             if not child.is_dir():
                 continue

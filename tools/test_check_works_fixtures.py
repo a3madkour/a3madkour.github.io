@@ -48,19 +48,30 @@ Body.
 # "ok") rather than through self._write's games/<slug> convention.
 GAME_MD_PLAYABLE = GAME_VALID
 
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
 # Vocab threaded explicitly into every direct lint_file() call in this file.
-# lint_file()/_lint_game()/_lint_music() take vocab as a required argument
-# with no fallback (check_works_fixtures.py deliberately has no
-# "read the live repo's own data/works-vocab.json if omitted" path — a test
-# that could silently pass by reading the real site's file, rather than a
-# fixture the test author controls, is exactly the coupling this constant
-# exists to rule out). Mirrors data/works-vocab.json's real values.
-VOCAB = {
+# lint_file() takes it as a required argument with no fallback
+# (check_works_fixtures.py deliberately has no "read the live repo's own
+# data/works-vocab.json if omitted" path).
+#
+# The ENUM values below are hand-written: a test asserting that "shipped" is
+# rejected must control the set it is rejected against, or a later addition to
+# the real vocabulary would quietly change what the test means.
+#
+# The FIELD SETS are deliberately NOT written out here. data/works-vocab.json
+# is their single home, shared with the elisp normalizer's allowed-key filter,
+# and a transcription in this file would be exactly the third copy that made
+# the old elisp `-key-set-matches-contract` tests vacuous. They are loaded
+# through the same loader the linter uses, so adding an optional key to the
+# JSON is picked up here, in the linter and in the publisher at once.
+VOCAB = dict(lint.load_vocab(REPO_ROOT))
+VOCAB.update({
     "game_statuses": {"playable", "in-progress", "archived"},
     "game_kinds": {"full-release", "jam", "research-prototype", "experiment"},
     "music_formats": {"album", "track", "experiment", "live"},
     "platform_kinds": {"bandcamp", "soundcloud", "youtube"},
-}
+})
 
 POEM_VALID = """\
 ---
@@ -73,6 +84,21 @@ lines: 14
 
 Body.
 """
+
+_LIVE = {
+    k: sorted(v) for k, v in lint.load_vocab(REPO_ROOT).items()
+}
+
+
+def _vocab_json(**overrides) -> str:
+    """The live vocabulary with named lists replaced — a fixture, not a copy.
+
+    Tests that mutate the contract override exactly the list under test and
+    inherit the rest, so none of them restates the field sets.
+    """
+    data = dict(_LIVE)
+    data.update(overrides)
+    return json.dumps(data)
 
 
 class WorksFixturesLinterTests(unittest.TestCase):
@@ -88,12 +114,9 @@ class WorksFixturesLinterTests(unittest.TestCase):
         # thread the module-level VOCAB constant explicitly instead — they
         # never touch this tempdir's copy or the live repo's.
         (self.tmp / "data").mkdir(parents=True)
-        (self.tmp / "data" / "works-vocab.json").write_text(json.dumps({
-            "game_statuses": ["playable", "in-progress", "archived"],
-            "game_kinds": ["full-release", "jam", "research-prototype", "experiment"],
-            "music_formats": ["album", "track", "experiment", "live"],
-            "platform_kinds": ["bandcamp", "soundcloud", "youtube"],
-        }))
+        shutil.copyfile(
+            REPO_ROOT / lint.VOCAB_REL, self.tmp / "data" / "works-vocab.json"
+        )
 
     def tearDown(self):
         shutil.rmtree(self.tmp)
@@ -373,12 +396,9 @@ Body.
         """Mutating the vocab file must change what the linter accepts."""
         repo = TempRepo()
         try:
-            repo.write("data/works-vocab.json", json.dumps({
-                "game_statuses": ["playible"],          # deliberate typo
-                "game_kinds": ["jam"],
-                "music_formats": ["album"],
-                "platform_kinds": ["bandcamp"],
-            }))
+            repo.write("data/works-vocab.json", _vocab_json(
+                game_statuses=["playible"],             # deliberate typo
+            ))
             repo.write("content/works/games/g/index.md", GAME_MD_PLAYABLE)
             code, errs = lint.run(repo.root)
             self.assertEqual(code, 1)
@@ -387,12 +407,92 @@ Body.
             repo.cleanup()
 
     def test_missing_vocab_fails_closed(self):
-        """A missing vocab file must error, never fall back to a hardcoded copy."""
+        """A missing vocab file must fail, never fall back to a hardcoded copy.
+
+        Reported through the uniform `(rc, errs)` seam rather than by
+        `sys.exit` from inside `run()`: an aggregator importing this module
+        must not have the process pulled out from under it.
+        """
         repo = TempRepo()
         try:
             repo.write("content/works/games/g/index.md", GAME_MD_PLAYABLE)
-            with self.assertRaises(SystemExit):
-                lint.run(repo.root)
+            code, errs = lint.run(repo.root)
+            self.assertEqual(code, 1)
+            self.assertEqual(len(errs), 1)
+            self.assertIn("vocabulary not found at", errs[0])
+        finally:
+            repo.cleanup()
+
+    def test_run_never_exits_the_process_on_a_bad_vocab(self):
+        """Malformed JSON is a returned error too, not a SystemExit."""
+        repo = TempRepo()
+        try:
+            repo.write("data/works-vocab.json", "{ not json")
+            repo.write("content/works/games/g/index.md", GAME_MD_PLAYABLE)
+            code, errs = lint.run(repo.root)
+            self.assertEqual(code, 1)
+            self.assertIn("is not valid JSON", errs[0])
+        finally:
+            repo.cleanup()
+
+    # --- the field-set contract is vocabulary-owned, not hardcoded here ---
+
+    def test_field_sets_come_from_the_vocabulary_file(self):
+        """Dropping an optional key from the JSON must make it an unknown field.
+
+        This is what makes data/works-vocab.json the single home of the
+        emitted-key contract that the elisp normalizer filters against. If
+        this module ever re-hardcodes GAME_FIELDS, the fixture below keeps
+        passing and the guard is gone.
+        """
+        repo = TempRepo()
+        try:
+            repo.write("data/works-vocab.json", _vocab_json(
+                game_optional=[k for k in _LIVE["game_optional"] if k != "length"],
+            ))
+            repo.write(
+                "content/works/games/g/index.md",
+                GAME_VALID.replace("year: 2026\n", "year: 2026\nlength: '2 hours'\n"),
+            )
+            code, errs = lint.run(repo.root)
+            self.assertEqual(code, 1)
+            self.assertTrue(any("unknown field 'length'" in e for e in errs), errs)
+        finally:
+            repo.cleanup()
+
+    def test_required_sets_come_from_the_vocabulary_file(self):
+        """A key promoted to required in the JSON is demanded by the linter."""
+        repo = TempRepo()
+        try:
+            repo.write("data/works-vocab.json", _vocab_json(
+                game_required=sorted(set(_LIVE["game_required"]) | {"itch_url"}),
+            ))
+            repo.write("content/works/games/g/index.md", GAME_VALID)
+            code, errs = lint.run(repo.root)
+            self.assertEqual(code, 1)
+            self.assertTrue(
+                any("missing required field 'itch_url'" in e for e in errs), errs
+            )
+        finally:
+            repo.cleanup()
+
+    def test_umbrella_optional_is_shared_by_all_three_sub_sections(self):
+        """One `umbrella_optional` list feeds games, music AND poetry."""
+        repo = TempRepo()
+        try:
+            repo.write("data/works-vocab.json", _vocab_json(umbrella_optional=[]))
+            for sub, body in (
+                ("games", GAME_VALID), ("music", MUSIC_VALID), ("poetry", POEM_VALID),
+            ):
+                repo.write(
+                    f"content/works/{sub}/x/index.md",
+                    body.replace("---\n\nBody.", "tile_size: large\n---\n\nBody."),
+                )
+            code, errs = lint.run(repo.root)
+            self.assertEqual(code, 1)
+            self.assertEqual(
+                sum(1 for e in errs if "unknown field 'tile_size'" in e), 3, errs
+            )
         finally:
             repo.cleanup()
 

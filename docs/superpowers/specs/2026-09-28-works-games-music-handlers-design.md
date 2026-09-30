@@ -42,7 +42,7 @@ Slice C, the authoring guide covering every content kind, depends on A1/A2/B1 la
 | Module structure | **One module, type branch** | The handler skeleton is already copied 4× (audit row P3.2). Two peer modules would make it 6; one module with a branch makes it 5. Games and music share ~80% of their shape. |
 | Close P3.2 here? | **No** | Extracting the skeleton from four shipped, proven handlers inside a slice whose job is two new ones risks breaking garden, research, essays and recipes at once. Prove the fifth copy, extract later from five known-good call sites. |
 | Authoring idiom | **`#+HUGO_CUSTOM_FRONT_MATTER:`**, not a `:PROPERTIES:` drawer | See §3. |
-| Enum vocabulary | **One JSON file, read by both languages, fail-closed** | See §4. |
+| Shared vocabulary (enums + emitted-field sets) | **One JSON file, read by both languages, fail-closed** | See §4. |
 | Frontmatter-declared assets | **New optional `extra-refs` on `asset-validate-and-copy`** | See §6. |
 | `lyrics_poem` symmetry | **Author declares both sides; lint checks early** | See §7. |
 
@@ -167,22 +167,35 @@ carried by a single custom-front-matter key.
 
 ## §4. The shared enum vocabulary
 
-`check_works_fixtures.py` hardcodes four enum sets: `GAME_STATUSES`, `GAME_KINDS`,
-`MUSIC_FORMATS`, `PLATFORM_KINDS`. An org-side lint needs the same four. A second copy in
-elisp would be a cross-language drift surface with no test able to observe both halves —
-the same shape as the `check_image_ladder.py` problem, which shipped and survived a
-review.
+`check_works_fixtures.py` hardcoded four enum sets (`GAME_STATUSES`, `GAME_KINDS`,
+`MUSIC_FORMATS`, `PLATFORM_KINDS`) and the two emitted-field contracts (`GAME_FIELDS`,
+`MUSIC_FIELDS`). An org-side lint needs the enums; the org-side normalizer needs the field
+sets, because it filters emitted frontmatter to them. A second copy in elisp would be a
+cross-language drift surface with no test able to observe both halves — the same shape as
+the `check_image_ladder.py` problem, which shipped and survived a review.
 
-**`data/works-vocab.json`**, read by both consumers:
+**`data/works-vocab.json`**, read by both consumers — enums *and* field sets:
 
 ```json
 {
   "game_statuses":  ["playable", "in-progress", "archived"],
   "game_kinds":     ["full-release", "jam", "research-prototype", "experiment"],
   "music_formats":  ["album", "track", "experiment", "live"],
-  "platform_kinds": ["bandcamp", "soundcloud", "youtube"]
+  "platform_kinds": ["bandcamp", "soundcloud", "youtube"],
+
+  "umbrella_optional": ["tile_size", "featured", "hero"],
+  "game_required":  ["title", "date", "lastmod", "draft",
+                     "status", "game_kind", "tagline", "year"],
+  "game_optional":  ["tags", "summary", "embed_url", "…"],
+  "music_required": ["title", "date", "lastmod", "draft", "format", "year"],
+  "music_optional": ["tags", "summary", "tagline", "…"]
 }
 ```
+
+The per-type unions are **composed, not stored**: `GAME_FIELDS` is
+`game_required | game_optional | umbrella_optional`, and poetry reuses the same
+`umbrella_optional` list, so one Bento-grid key added there reaches all three
+sub-sections at once.
 
 **JSON, not YAML** — both languages parse it with zero new dependencies (`json-parse-string`
 is built into Emacs 27+; Python has `json`). YAML would force an elisp YAML package into
@@ -192,18 +205,35 @@ the dotfiles dependency tree to read four string lists.
 `data/filter-chips.yaml`. It also leaves the door open for a template to read the
 vocabulary later. If one ever does: `index site.Data "works-vocab"`, never dot syntax.
 
-**Scope is the four enum lists only.** Not the required/optional field sets — those are
-entangled with Python set algebra (`GAME_OPTIONAL | UMBRELLA_OPTIONAL`) and moving them
-would be a far larger refactor of a shipped gate for a smaller gain. A misspelled *key*
-fails loudly in CI regardless; a misspelled enum *value* is what benefits from an early
-check.
+**Scope: the four enum lists plus the games/music field sets** (revised 2026-09-29, final
+whole-branch review). The original scope was enums only, on the reasoning that "a
+misspelled *key* fails loudly in CI regardless". **That reasoning expired inside this very
+slice.** Once `--normalize-works-common` grew an allowed-key filter, a key the elisp did
+not know about was no longer a loud CI failure — it was *silently filtered out of the
+emitted frontmatter*, with no error at any layer. The contract was then transcribed three
+times (Python, the elisp defconsts, the elisp test constants), and the two
+`-key-set-matches-contract` tests compared copy 1 against copy 3 — both elisp — so adding
+an optional key on the Python side left all three stale and green.
+
+The fallback option was a comment in each file naming its mirrors. That is
+coupling-recorded-in-a-comment, the exact anti-pattern this project keeps getting bitten
+by, so the structural fix was taken instead: the field sets moved into the vocabulary, the
+elisp defconsts were deleted, and the elisp tests assert against a JSON fixture rather
+than a literal list.
+
+Poetry's field sets stay in `check_works_fixtures.py`: poetry has no org-authoring
+normalizer in this family, so it has no second copy to drift from. Only its share of
+`umbrella_optional` comes from the vocabulary.
 
 **Both consumers fail closed.** This is what makes it one source rather than two.
 `check_works_fixtures.py` errors if the file is missing or malformed and never falls back
 to a hardcoded copy — a fallback would silently restore the drift surface being removed.
-`a3madkour-works-lint.el` errors if it cannot resolve or parse the file rather than
-skipping validation. The residual failure mode is the elisp module pointing at a stale
-path after a repo reorganisation, which now fails loudly at publish time.
+`a3madkour-works-vocab.el` — the one elisp reader, shared by the lint (enums) and the
+normalizer (field sets) — errors if it cannot resolve or parse the file rather than
+skipping validation, so a works publish against a site root with no vocabulary aborts
+rather than emitting unfiltered frontmatter. The residual failure mode is the elisp module
+pointing at a stale path after a repo reorganisation, which now fails loudly at publish
+time.
 
 ## §5. Handler pipeline
 
@@ -336,7 +366,8 @@ proves nothing.
 
 | Guard | Mutation that must fail it |
 |---|---|
-| Vocabulary is single-source | `"playable"` → `"playible"` in the JSON; all four game fixtures must fail the Python linter |
+| Vocabulary is single-source (enums) | `"playable"` → `"playible"` in the JSON; all four game fixtures must fail the Python linter |
+| Vocabulary is single-source (field sets) | drop `length` from `game_optional`; the Python linter must call it an unknown field, and the elisp normalizer must filter it out of emitted frontmatter |
 | Both sides fail closed | Delete `data/works-vocab.json`; Python linter and elisp lint must both error, not skip |
 | `extra-refs` | Publish a game with a screenshot; the file must land in the bundle **and** survive cleanup-stale |
 | Asset existence | Delete a declared screenshot; publish must fail with `file:line`, not emit a dangling name |
