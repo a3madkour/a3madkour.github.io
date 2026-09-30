@@ -92,7 +92,7 @@
 - [Audit R3 accessibility — shipped](project_audit_r3_complete.md) — 2026-07-03/04 `92a525b..3c3af9e`; AMS h4→p + graph-panel a11y + search listbox + cite tabs kbd + figure alt + no-js wiring
 - [Audit R4 hygiene/config — shipped](project_audit_r4_complete.md) — 2026-07-04 `840a20e..6f2f4fb`; CLAUDE.md drift sweep + §42a + CI hardening (checksums, SHA-pins, numberOfRuns 3) + ci-local pagefind + escaping; **R5 next (start R5.1 JS harness)**
 - [Polish/bugfix roadmap (sibling)](project_next_slice.md) — Tiers 1–8; all closed/deferred as of 2026-06-12
-- [Works handlers (slice A1) — DONE on branch, NOT merged](project_works_handlers_slice.md) — 2026-09-29 `works-handlers` both repos; E2E found 6 defects 829 green tests missed; 9 tests pinned nothing
+- [Works handlers (slice A1) — MERGED to main, NOT pushed](project_works_handlers_slice.md) — 2026-09-29 site `2fd99bb` / dotfiles `d8bacbc`; E2E found 6 defects 829 green tests missed; 9 tests pinned nothing
 - [Authoring-surface audit — 4-tier gap list](project_authoring_surface_audit.md) — 2026-09-27; class A (org→pipeline) vs class B (direct site edit); slices A1/A2/B1/C
 - [Emacs publish-author helpers — SHIPPED](project_emacs_publish_helpers_followup.md) — Tier 5.2 2026-06-08, 6 commands; only the dry-run preview never shipped
 - [LHCI 4.3 fingerprint autodetect — queued](project_lhci_representative_pages_queued.md) — 4.1+4.2 shipped; 4.3 deferred

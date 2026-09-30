@@ -1,19 +1,23 @@
 ---
 name: project_works_handlers_slice
-description: "Slice A1 — works/games + works/music org handlers. Built on branch works-handlers in both repos, 12 tasks subagent-driven, NOT YET MERGED. The E2E found 6 defects that 829 green unit tests missed."
+description: "Slice A1 — works/games + works/music org handlers. MERGED to main in both repos 2026-09-29, not yet pushed. The E2E found 6 defects that 829 green unit tests missed."
 metadata:
   node_type: memory
   type: project
 ---
 
 **2026-09-28/29. Slice A1 of the "author everything from Emacs" decomposition
-([[project_authoring_surface_audit]]). Complete and review-clean on branch `works-handlers`
-in BOTH repos; NOT merged.**
+([[project_authoring_surface_audit]]). MERGED to `main` in BOTH repos on 2026-09-29 and the
+feature branches deleted. NEITHER REPO IS PUSHED — site `main` is 11 commits ahead of
+origin, dotfiles 29. Nothing has deployed; the site's Pages deploy fires on push.**
 
 - Spec: `docs/superpowers/specs/2026-09-28-works-games-music-handlers-design.md` — **read §8a**
 - Plan: `docs/superpowers/plans/2026-09-28-works-games-music-handlers.md` (12 tasks)
-- Site: `main..works-handlers` = 9 commits, 6 files, +2576/-75
-- Dotfiles: `main..works-handlers` = 28 commits, 15 files, +2873/-17
+- Site merge commit `2fd99bb`; dotfiles merge commit `d8bacbc`
+- Merged result verified: elisp 875 tests at the one known failure; every Python linter
+  incl. the six post-build ones; contrast + dark-token gates; 128 pages built
+- Note: dotfiles `main` had moved upstream (`e5e4c4e..5c50b4f`, a config.org-only commit)
+  during the merge, so the merge combined the branch with it
 - Verified: elisp 875 tests / 1 known pre-existing failure
   (`a3madkour-pub-multi-pdf/compile-chain-runs-four-passes`); `check_works_fixtures.py` and
   `check_works_links.py` green; the linter's own suite 37/37.
