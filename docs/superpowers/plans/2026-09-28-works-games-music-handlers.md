@@ -18,7 +18,17 @@
 - **Fixture content is obviously dummy** — lorem ipsum or "Example N". Never authored prose.
 - **Every guard is mutation-tested**: break it, watch the test fail. A guard observed passing proves nothing.
 - **`.elc` shadowing**: `require` prefers a stale `.elc` over a newer `.el`. Run `rm -f ~/dotfiles/emacs-configs/custom/lisp/a3madkour-publish*.elc` before any TDD cycle.
-- Tests run with `~/dotfiles/emacs-configs/custom/lisp/run-tests.sh`. Baseline is **751 passing**; every task states its expected new total.
+- Tests run with `~/dotfiles/emacs-configs/custom/lisp/run-tests.sh`.
+- **Baseline: 784 tests, 783 as expected, 1 genuine pre-existing failure** —
+  `a3madkour-pub-multi-pdf/compile-chain-runs-four-passes`, which predates this branch.
+  Assert **no new failures beyond that one**. Do not assert an absolute pass count:
+  the suite grows as tasks add tests, and an absolute number goes stale immediately.
+- Emacs here is **31.1**, and it cannot native-compile subr trampolines on this macOS
+  (`clang: error: invalid version number in '-mmacosx-version-min=18.0'`). `run-tests.sh`
+  disables them; without that, every test mocking `call-process`/`make-process` dies
+  with `native-compiler-error` before its own assertions run (54 tests).
+- On Emacs 31.1, `json-parse-string ... :object-type 'alist` returns **symbol** keys,
+  not strings. Intern before an alist lookup, or use `assq`.
 
 ## Review Focus
 
@@ -256,7 +266,7 @@ Expected: FAIL — `a3madkour-works-lint` is not loadable.
                         (error "a3madkour-works-lint: vocabulary at %s is not valid JSON: %S"
                                path err)))))
         (dolist (k a3madkour-works-lint--vocab-keys)
-          (unless (assoc k parsed)
+          (unless (assq (intern k) parsed)
             (error "a3madkour-works-lint: vocabulary at %s missing key %s" path k)))
         (setq a3madkour-works-lint--vocab-cache (cons path parsed))
         parsed))))
@@ -265,7 +275,9 @@ Expected: FAIL — `a3madkour-works-lint` is not loadable.
   "Return the list of allowed values for KEY (a string)."
   (unless (member key a3madkour-works-lint--vocab-keys)
     (error "a3madkour-works-lint: unknown vocabulary key %s" key))
-  (cdr (assoc key (a3madkour-works-lint--read-vocab))))
+  ;; json-parse-string :object-type 'alist yields SYMBOL keys on Emacs 31.1,
+  ;; so the string KEY must be interned before lookup.
+  (cdr (assq (intern key) (a3madkour-works-lint--read-vocab))))
 
 (defun a3madkour-works-lint/lint-file (file)
   "Lint works FILE.  Return a list of \"FILE:LINE: message\" strings.
@@ -281,7 +293,7 @@ Rules are added in later tasks; this returns the empty list."
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `~/dotfiles/emacs-configs/custom/lisp/run-tests.sh 2>&1 | tail -5`
-Expected: PASS, **755 passing** (751 + 4).
+Expected: PASS — your new tests pass, and no failures appear beyond the one known pre-existing failure.
 
 - [ ] **Step 5: Commit**
 
@@ -433,7 +445,7 @@ not render an empty track list."
                                     (cons 'duration (or duration ""))))))
                         (cdr rows)))))))
 
-(defun a3madkour-pub-works/publish-works-file (file run &key on-done)
+(cl-defun a3madkour-pub-works/publish-works-file (file run &key on-done)
   "Publish a works FILE.  Filled in by Task 7."
   (ignore file run)
   (when on-done (funcall on-done 'err)))
@@ -443,12 +455,12 @@ not render an empty track list."
 ;;; a3madkour-publish-works.el ends here
 ```
 
-Note: `publish-works-file` must be `cl-defun` once it takes `&key`; declare it as `(cl-defun a3madkour-pub-works/publish-works-file (file run &key on-done) ...)` and add `(require 'cl-lib)` (already present).
+`cl-defun` is required, not stylistic: a plain `defun` cannot take `&key` and the module would fail to load, breaking every later task. `(require 'cl-lib)` is already at the top.
 
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `~/dotfiles/emacs-configs/custom/lisp/run-tests.sh 2>&1 | tail -5`
-Expected: PASS, **760 passing** (755 + 5).
+Expected: PASS — your new tests pass, and no failures appear beyond the one known pre-existing failure.
 
 - [ ] **Step 5: Commit**
 
@@ -614,7 +626,7 @@ Note on `--coerce-bool`: confirm its nil-return contract before relying on it. I
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `~/dotfiles/emacs-configs/custom/lisp/run-tests.sh 2>&1 | tail -5`
-Expected: PASS, **764 passing** (760 + 4).
+Expected: PASS — your new tests pass, and no failures appear beyond the one known pre-existing failure.
 
 - [ ] **Step 5: Commit**
 
@@ -718,7 +730,7 @@ Add to `a3madkour-publish-works.el`, with `(require 'a3madkour-publish-yaml)` an
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `~/dotfiles/emacs-configs/custom/lisp/run-tests.sh 2>&1 | tail -5`
-Expected: PASS, **768 passing** (764 + 4).
+Expected: PASS — your new tests pass, and no failures appear beyond the one known pre-existing failure.
 
 - [ ] **Step 5: Commit**
 
@@ -843,7 +855,7 @@ Insert immediately **before** the `(let ((removed ...)))` form:
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `~/dotfiles/emacs-configs/custom/lisp/run-tests.sh 2>&1 | tail -5`
-Expected: PASS, **771 passing** (768 + 3). All pre-existing asset tests still pass, proving the parameter is additive.
+Expected: PASS — your new tests pass, and no failures appear beyond the one known pre-existing failure. All pre-existing asset tests still pass, proving the parameter is additive.
 
 - [ ] **Step 5: Commit**
 
@@ -943,7 +955,13 @@ bundle, and the second would silently overwrite the first."
     t))
 
 (defvar a3madkour-pub-works--slugs-seen (make-hash-table :test #'equal)
-  "Slug → file, for the duration of one publish run.")
+  "Slug -> file, for the duration of ONE publish run.
+
+MUST be cleared at the start of each run, not left to accumulate for the life
+of the Emacs session: otherwise renaming a works org file leaves the old file's
+claim in the table forever, and the renamed file errors as a duplicate until
+Emacs restarts.  A guard that blocks correct work is worse than the bug it
+prevents.")
 
 (defun a3madkour-pub-works--asset-names (section fm)
   "Bare asset filenames declared in frontmatter FM for SECTION."
@@ -1033,7 +1051,7 @@ At the bottom of `a3madkour-publish-living.el`, after the recipes block:
 - [ ] **Step 5: Run tests to verify they pass**
 
 Run: `~/dotfiles/emacs-configs/custom/lisp/run-tests.sh 2>&1 | tail -5`
-Expected: PASS, **776 passing** (771 + 5).
+Expected: PASS — your new tests pass, and no failures appear beyond the one known pre-existing failure.
 
 - [ ] **Step 6: Commit**
 
@@ -1274,7 +1292,7 @@ Note the two-part space check: `screenshots "my shot.png"` arrives as one string
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `~/dotfiles/emacs-configs/custom/lisp/run-tests.sh 2>&1 | tail -5`
-Expected: PASS, **782 passing** (776 + 6).
+Expected: PASS — your new tests pass, and no failures appear beyond the one known pre-existing failure.
 
 - [ ] **Step 5: Mutation-check the vocabulary coupling**
 
@@ -1436,7 +1454,7 @@ Call it from the entry point when `nsym` is `works-music` and `lyrics_poem` is p
 - [ ] **Step 5: Run tests to verify they pass**
 
 Run: `~/dotfiles/emacs-configs/custom/lisp/run-tests.sh 2>&1 | tail -5`
-Expected: PASS, **785 passing** (782 + 3).
+Expected: PASS — your new tests pass, and no failures appear beyond the one known pre-existing failure.
 
 - [ ] **Step 6: Commit**
 
@@ -1526,7 +1544,7 @@ Note the ordering change: triples now come out in file order rather than grouped
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `~/dotfiles/emacs-configs/custom/lisp/run-tests.sh 2>&1 | tail -5`
-Expected: PASS, **787 passing** (785 + 2), with every pre-existing living test still green.
+Expected: PASS — your new tests pass, and no new failures, with every pre-existing living test still green.
 
 - [ ] **Step 5: Commit**
 
