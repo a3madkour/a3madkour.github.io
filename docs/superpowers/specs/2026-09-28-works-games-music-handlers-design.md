@@ -65,8 +65,16 @@ bugs:
 Recipes paid for those because org-chef alignment was worth it. There is no org-chef for
 games, so the drawer buys nothing here and re-imports both traps.
 `HUGO_CUSTOM_FRONT_MATTER` is ox-hugo-native, position-insensitive, and already carries
-the slug-list machinery. **No drawer means no strip stage, so the body-leak bug cannot
-recur by construction.**
+the slug-list machinery.
+
+**A claim this spec originally made here was wrong**, and the end-to-end run disproved it:
+"no drawer means no strip stage, so the body-leak bug cannot recur by construction." The
+drawer is indeed gone, but music's `#+NAME: tracks` table is *also* data that must not
+reach the body — and because nothing stripped it, it rendered as a second raw `<table>`
+beside the real Tracks section. **The rule is about data-bearing elements, not about
+drawers specifically:** anything parsed for frontmatter must be removed before export,
+whichever org construct carries it. Music therefore does run a strip stage
+(`--strip-named-table`); games, which parse nothing from the body, do not.
 
 ### 3.1 A game
 
@@ -106,8 +114,27 @@ track list as an org table — the recipes `#+NAME: ingredients` pattern, parsed
 
 ### 3.3 Key mapping and three consequences
 
-**Org keys mirror emitted frontmatter keys exactly.** What the author types is what lands,
-which keeps the guide (slice C) trivial and makes debugging a one-step comparison.
+**Org keys mirror emitted frontmatter keys exactly** — with one documented exception, below.
+What the author types is what lands, which keeps the guide (slice C) trivial and makes
+debugging a one-step comparison.
+
+**The exception: `platform_embed`.** This principle cannot hold for a key whose value is a
+nested map, because `#+HUGO_CUSTOM_FRONT_MATTER:` carries only flat scalars — ox-hugo
+round-trips any value as a string. The original design had the author write
+`:platform_embed` directly; the end-to-end run proved that **silently does nothing**: the
+value arrives as a string, the render key-hook `:omit`s any non-list, and the field
+vanishes from the page with no error at any layer. A field that cannot be authored is worse
+than an inconsistent one, so `platform_embed` is authored as **two flat keys**,
+`:platform_kind` and `:platform_url`, which the music normalizer assembles into the nested
+map the site expects. The lint requires both-or-neither, validates `platform_kind` against
+the shared vocabulary's `platform_kinds`, and **rejects the direct `:platform_embed` form
+outright** rather than dropping it — otherwise anyone following the old spec would hit the
+original silent failure.
+
+This is the general lesson, not a one-off: any future works field whose emitted shape is a
+map or a list of maps needs either flat component keys assembled in the normalizer (this
+pattern) or a named org table parsed from the AST (the `tracks` pattern). It cannot be
+carried by a single custom-front-matter key.
 
 1. **List separators are not uniform.** `--coerce-slug-list` splits on whitespace, which
    is correct for slug and filename fields but wrong for free-text ones —
@@ -324,6 +351,27 @@ integration bugs sat in the tree, because tests bypass `note-section` and ox-hug
 requires a **real end-to-end run**: an actual game and an actual music org file, through
 real ox-hugo, into the site repo, with `check_works_fixtures.py` and
 `check_works_links.py` clean and Hugo building both pages.
+
+## §8a. What the end-to-end run found (2026-09-29)
+
+The scoped end-to-end run — real ox-hugo, real Hugo, real site linters — found **six
+defects that 829 green unit tests did not**, two of which meant `check_works_fixtures.py`
+failed on every real publish. They are recorded here because the *class* matters more than
+the individual fixes:
+
+| # | Defect | Why the unit tests missed it |
+|---|---|---|
+| 1 | The lint read the note ID from a `#+ID:` keyword, not the `:PROPERTIES: :ID:` drawer, so the asset rule computed the wrong directory and false-failed every declared asset | **The lint's own fixtures authored `#+ID:` too** — the tests certified the bug |
+| 2 | Rule 5's space guard rejected the documented multi-file form `:screenshots "a.png b.png"` | No test used more than one screenshot |
+| 3 | `lastmod` (required) was never set; the normalizer ignored the P2.14 cascade the handler binds | Unit tests assert on keys they pass in, not on the full required set |
+| 4 | No allowed-key filtering, so ox-hugo's `author`/`slug` leaked in | Tests feed hand-built alists; only real ox-hugo adds those keys |
+| 5 | The `#+NAME: tracks` table was never stripped pre-export and rendered as a second raw `<table>` | Body output is only visible after a real export |
+| 6 | `platform_embed` was unauthorable (see §3.3) | Tests called the renderer with a real alist; only ox-hugo flattens it |
+
+Every one of these needed real ox-hugo, real Hugo, or the real authoring convention to
+surface. The standing conclusion for any future handler in this family: **green ERT is not
+an acceptance gate.** A slice is not done until one real file has gone through the real
+exporter into the real site and passed the real linters.
 
 ## §9. Out of scope
 
