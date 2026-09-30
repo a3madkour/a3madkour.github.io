@@ -16,8 +16,17 @@ origin, dotfiles 29. Nothing has deployed; the site's Pages deploy fires on push
 - Site merge commit `2fd99bb`; dotfiles merge commit `d8bacbc`
 - Merged result verified: elisp 875 tests at the one known failure; every Python linter
   incl. the six post-build ones; contrast + dark-token gates; 128 pages built
-- Note: dotfiles `main` had moved upstream (`e5e4c4e..5c50b4f`, a config.org-only commit)
-  during the merge, so the merge combined the branch with it
+- **Site is PUSHED** (`384e110..832d621`, 2026-09-30) and deployed.
+- **Dotfiles is NOT pushed and has DIVERGED from origin: 29 ahead, 1 behind.** The upstream
+  commit `5c50b4f` edits `config.org`, where the user has ~103 uncommitted lines, so
+  `git pull` correctly refused. `git merge-tree` shows the merge itself would be
+  conflict-free; the blocker is purely the uncommitted work. User chose to hold the push.
+- **Correction to an earlier claim in this file's history:** the dotfiles merge did NOT
+  include `5c50b4f`. See [[reference_pipeline_masks_exit_status]] — a `git pull … | tail -1`
+  returned tail's exit status, so a failed pull looked like success and the merge ran on the
+  un-updated main. The 875-green suite result still stands for the code (5c50b4f touches
+  only config.org, nothing under lisp/), but it was not verified against the upstream commit
+  as originally reported.
 - Verified: elisp 875 tests / 1 known pre-existing failure
   (`a3madkour-pub-multi-pdf/compile-chain-runs-four-passes`); `check_works_fixtures.py` and
   `check_works_links.py` green; the linter's own suite 37/37.

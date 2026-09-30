@@ -69,6 +69,7 @@
 - [Verify template refactors against minified build](reference_verify_template_refactor_minified.md) — raw over-flags cosmetic whitespace/attr-order the minifier erases
 - [org-element file-level :PROPERTIES: needs to be first element](reference_org_element_file_property_drawer_position.md) — keywords-first → generic `drawer`, property-drawer map returns nil; scan interpreted text
 - [Emacs 31.1 can't native-compile subr trampolines](reference_emacs31_subr_trampoline_breakage.md) — 54 of 55 ert failures; run-tests.sh fixed, a3-pub.sh not
+- [Shell pipeline masks the exit status](reference_pipeline_masks_exit_status.md) — `git pull | tail && git merge` merges on a FAILED pull; assert ancestry
 - [Playwright reuseExistingServer serves a foreign build](reference_playwright_reuse_existing_server.md) — assert page identity before trusting any browser result
 
 ## Project — active queue
