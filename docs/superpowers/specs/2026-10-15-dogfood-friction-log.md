@@ -1,22 +1,24 @@
 # S1 dogfood run — friction log
 
 **Roadmap:** `2026-10-15-authoring-infra-roadmap.md` §3.1 (session S1)
-**Status:** prepared 2026-10-15, not started
+**Status:** prerequisites done 2026-10-15; blocked on log row 2 before any real publish
 **Purpose:** run the shipped pipeline on real org-roam content in every handled section, and
 record every failure and annoyance. Triage at the end decides S2 and feeds B1.
 
 ## 1. Prerequisites (do these first, on the machine running S1)
 
-- [ ] Dotfiles: commit or stash local changes, `git pull`, then confirm with
+- [x] Dotfiles: commit or stash local changes, `git pull`, then confirm with
       `git merge-base --is-ancestor origin/main HEAD` (don't trust a piped pull's exit status).
-- [ ] Memory symlink: `~/.claude/projects/<project-key>/memory -> <site clone>/.claude/memory`.
-- [ ] Trampoline check: run `emacs-configs/custom/lisp/run-tests.sh`, then one living publish
+- [x] Memory symlink: `~/.claude/projects/<project-key>/memory -> <site clone>/.claude/memory`.
+- [x] Trampoline check: run `emacs-configs/custom/lisp/run-tests.sh`, then one living publish
       through `a3-pub.sh` with nothing changed (it has no dry-run flag; an unchanged living
       publish should be a no-op — confirm `git status` in the site repo stays clean). If it
       dies with `invalid version number in '-mmacosx-version-min=…'`, port the `run-tests.sh`
       trampoline fix to `a3-pub.sh` before going further.
-- [ ] Baseline: site repo clean on `main`, `hugo --gc --minify` succeeds, no dev server running.
-- [ ] Note the starting commit of both repos here: site `________` dotfiles `________`.
+- [x] Baseline: site repo clean on `main`, `hugo --gc --minify` succeeds, no dev server running.
+- [x] Note the starting commit of both repos here: site `8ba7dc2` dotfiles `0e8c7b7`.
+
+**Prereq results (2026-10-15, MacBook):** dotfiles fast-forwarded 2 commits (ancestry asserted); the 6 uncommitted local edits were left in place (none overlap the pulled change). Memory symlink was already present. `run-tests.sh` 927 run / 926 pass / 1 skip, so no trampoline failure, and `a3-pub.sh` loads cleanly under Emacs 31 (only `when-let` obsolescence warnings). The no-op living publish is **not** a no-op: see log rows 1–2. `hugo --gc --minify` succeeds.
 
 ## 2. How each section is run
 
@@ -50,7 +52,8 @@ Rule: *blocks publish* and *wrong output* are always *fix now*.
 
 | # | Section | Action | What happened | Severity | Triage | Resolving commit |
 |---|---|---|---|---|---|---|
-| | | | | | | |
+| 1 | (all) | `a3-pub.sh --publish-living` on a new machine | Exit 2: `org-math-lint not installed at ~/org/notes/tools/org-math-lint/.venv/bin/python`. That path is hard-coded (`a3-pub.sh:78`) and does not exist here; the tool is installed via uv (`~/.local/bin/org-math-lint`) and cloned at `~/Sync/Workspace/org-math-lint`. The suggested install command `cd`s into a missing directory. Worked around with `--skip-math-check`. | blocks publish | fix now | |
+| 2 | essays, poetry, garden | Unchanged living publish (§1 no-op check), site `8ba7dc2`, dotfiles `0e8c7b7` | Not a no-op. Deleted every deliberate-published bundle — `essays/example-{one,two,three,four,multi}/` and `works/poetry/smoke-test-poem/` — although their org sources are still marked `#+HUGO_PUBLISH: t`. Also deleted `garden/mei-r-wom-2026/`, rewrote `garden/bayesian-statistics/` (dropped a body link present on the site but absent from this machine's org source), and added `last_modified` to every `data/url-history.yaml` entry. Log line: `delete-bundle: …/example-essay-multi-target-export/ already absent (stale manifest?)`. Org files untouched (mtime diff clean). Restored with `git restore -- content data`. Unresolved: whether the garden changes are org-tree drift between machines or the same sweep bug. | wrong output | fix now | |
 
 ## 5. Close-out
 
