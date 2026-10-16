@@ -1,7 +1,7 @@
 # S1 dogfood run — friction log
 
 **Roadmap:** `2026-10-15-authoring-infra-roadmap.md` §3.1 (session S1)
-**Status:** prerequisites done 2026-10-15; blocked on log row 2 before any real publish
+**Status:** prerequisites done 2026-10-15; row 2 fixed; rows 3–4 open before any real publish
 **Purpose:** run the shipped pipeline on real org-roam content in every handled section, and
 record every failure and annoyance. Triage at the end decides S2 and feeds B1.
 
@@ -53,7 +53,10 @@ Rule: *blocks publish* and *wrong output* are always *fix now*.
 | # | Section | Action | What happened | Severity | Triage | Resolving commit |
 |---|---|---|---|---|---|---|
 | 1 | (all) | `a3-pub.sh --publish-living` on a new machine | Exit 2: `org-math-lint not installed at ~/org/notes/tools/org-math-lint/.venv/bin/python`. That path is hard-coded (`a3-pub.sh:78`) and does not exist here; the tool is installed via uv (`~/.local/bin/org-math-lint`) and cloned at `~/Sync/Workspace/org-math-lint`. The suggested install command `cd`s into a missing directory. Worked around with `--skip-math-check`. | blocks publish | fix now | |
-| 2 | essays, poetry, garden | Unchanged living publish (§1 no-op check), site `8ba7dc2`, dotfiles `0e8c7b7` | Not a no-op. Deleted every deliberate-published bundle — `essays/example-{one,two,three,four,multi}/` and `works/poetry/smoke-test-poem/` — although their org sources are still marked `#+HUGO_PUBLISH: t`. Also deleted `garden/mei-r-wom-2026/`, rewrote `garden/bayesian-statistics/` (dropped a body link present on the site but absent from this machine's org source), and added `last_modified` to every `data/url-history.yaml` entry. Log line: `delete-bundle: …/example-essay-multi-target-export/ already absent (stale manifest?)`. Org files untouched (mtime diff clean). Restored with `git restore -- content data`. Unresolved: whether the garden changes are org-tree drift between machines or the same sweep bug. | wrong output | fix now | |
+| 2 | essays, poetry | Unchanged living publish (§1 no-op check), site `8ba7dc2`, dotfiles `0e8c7b7` | Not a no-op: deleted every deliberate-published bundle (`essays/example-{one,two,three,four,multi}/`, `works/poetry/smoke-test-poem/`) although their org sources are still marked. **Cause:** `finish-publish` Step A diffs the living run's new-set against *every* live manifest entry; a living run never publishes deliberate sections, so they always read as removed. 9 of 19 live removed = 0.47, just under the 0.5 breaker. **Fix:** deliberate-section ids are never sweep candidates and the breaker counts the living set only; `a3madkour-pub-deliberate-sections` pinned to the handler registry by a test; guard mutation-tested. Re-run: essays/poetry survive. Org files untouched throughout. | wrong output | fix now | dotfiles `f450497` |
+| 3 | garden | Same run | `garden/mei-r-wom-2026/` deleted and `garden/bayesian-statistics/` rewritten (drops a body link to `/essays/example-five/`). Not the sweep bug: the mei note's id `E2C28B89-…` exists nowhere in `~/org` on this machine, and the bayesian source here lacks that link. The org tree on this machine differs from the one these were published from. Restored both. Needs a decision: recover the source, or let the next publish remove them. | wrong output | fix now | |
+| 4 | (all) | Editing publish elisp, then testing | `run-tests.sh` and `a3-pub.sh` both load an older `.elc` over a newer `.el` (`Source file … newer than byte-compiled file; using older file`) — neither sets `load-prefer-newer`. A source fix is silently not exercised by tests *or* by a real publish until recompiled. The `.elc` files are untracked and dated 2026-10-01. Worked around by batch byte-compiling. | wrong output | fix now | |
+| 5 | (all) | Unchanged living publish | `data/url-history.yaml` churns on a no-op run: `last_modified` backfilled into 10 entries and history-entry keys reordered (`url`/`reason`, `reason`/`replaced_at`). Harmless but makes a no-op show as a diff. | annoyance | fold into B1 | |
 
 ## 5. Close-out
 
