@@ -73,6 +73,7 @@
 - [Playwright reuseExistingServer serves a foreign build](reference_playwright_reuse_existing_server.md) — assert page identity before trusting any browser result
 
 ## Project — active queue
+- [Recipes on hiatus](project_recipe_hiatus.md) — 2026-10-15 user decision: no recipe work (corpus run, Slice 3) until they raise it
 - [Recipe section + remediation — SHIPPED & DEPLOYED](project_recipe_remediation_shipped.md) — 2026-09-07 `main` @ `2d01fa1`, 3 green deploys; 29 rows + all 13 follow-ups closed (RF3.3/RF3.4 on 2026-09-08); 38 linter pairs; only Slice 3 + real-corpus publish remain
 - [KaTeX math — SHIPPED, merged to main](project_katex_math_runtime_complete.md) — build-time transform.ToMath; audit+review+remediation done; master→main renamed, remote push/default-branch/delete-origin-master still manual
 - [Recipe section — Slice 1 SHIPPED](project_recipe_section.md) — 2026-07-06 brainstorm; standard=schema.org/Recipe JSON. **Slice 1 SHIPPED — merged to `main` and deployed 2026-09-07 as part of the remediation run; see [[project_recipe_remediation_shipped]]**; Slice 2 (org authoring+lint+export) research-gated brainstorm-later, Slice 3 (meal-prep planner) deferred separate project; specs `bcb156d`/`50a0673`, plan `fa2d65f`
