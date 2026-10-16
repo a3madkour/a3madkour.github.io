@@ -73,6 +73,7 @@
 - [Playwright reuseExistingServer serves a foreign build](reference_playwright_reuse_existing_server.md) — assert page identity before trusting any browser result
 
 ## Project — active queue
+- [Authoring-infra roadmap — S1 dogfood is queue head](project_authoring_infra_roadmap.md) — 2026-10-15 approved; S1 dogfood → S2 fixes → re-plan → B1 (prose org / structural direct-edit) → C guide; A2 trigger-gated
 - [Recipes on hiatus](project_recipe_hiatus.md) — 2026-10-15 user decision: no recipe work (corpus run, Slice 3) until they raise it
 - [Recipe section + remediation — SHIPPED & DEPLOYED](project_recipe_remediation_shipped.md) — 2026-09-07 `main` @ `2d01fa1`, 3 green deploys; 29 rows + all 13 follow-ups closed (RF3.3/RF3.4 on 2026-09-08); 38 linter pairs; only Slice 3 + real-corpus publish remain
 - [KaTeX math — SHIPPED, merged to main](project_katex_math_runtime_complete.md) — build-time transform.ToMath; audit+review+remediation done; master→main renamed, remote push/default-branch/delete-origin-master still manual
