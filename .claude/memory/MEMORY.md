@@ -71,6 +71,7 @@
 - [Emacs 31.1 can't native-compile subr trampolines](reference_emacs31_subr_trampoline_breakage.md) — 54 of 55 ert failures; run-tests.sh fixed, a3-pub.sh not
 - [Shell pipeline masks the exit status](reference_pipeline_masks_exit_status.md) — `git pull | tail && git merge` merges on a FAILED pull; assert ancestry
 - [Playwright reuseExistingServer serves a foreign build](reference_playwright_reuse_existing_server.md) — assert page identity before trusting any browser result
+- [Stale .elc shadows edited publish elisp](reference_stale_elc_shadows_publish_elisp.md) — no `load-prefer-newer`; grep for `newer than` or recompile first
 
 ## Project — active queue
 - [Authoring-infra roadmap — S1 dogfood is queue head](project_authoring_infra_roadmap.md) — 2026-10-15 approved; S1 dogfood → S2 fixes → re-plan → B1 (prose org / structural direct-edit) → C guide; A2 trigger-gated
