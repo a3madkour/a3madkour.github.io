@@ -25,5 +25,5 @@ Decisions taken in the brainstorm:
 **Why:** everything but garden has only ever run on fixtures; A1 showed green unit tests miss
 what a real run finds.
 
-**How to apply:** start the next session at S1's prerequisites (§3.1: pull dotfiles, memory
-symlink, trampoline check). Update the spec's status table at the end of each session.
+**How to apply:** S1 is prepared: open `docs/superpowers/specs/2026-10-15-dogfood-friction-log.md`
+and work its §1 prerequisites checklist, then §3's per-section candidates (user picks notes). Update the spec's status table at the end of each session.
