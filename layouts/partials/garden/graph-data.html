@@ -11,11 +11,14 @@
 {{- $byOut := dict -}}
 {{- range $pages -}}
   {{- $slug := path.Base .File.Dir -}}
-  {{- $matches := findRE `\(/garden/[a-z0-9-]+/\)` .RawContent -}}
+  {{- /* Both link forms: markdown `(/garden/x/)` (hand-written fixtures) and the
+         `href="/garden/x/"` HTML the org pipeline emits — matching only the first
+         gave real notes zero edges and zero backlinks (S1 row 12).  A trailing
+         `#fragment` is still a link to the note. */ -}}
+  {{- $matches := findRE `(?:\(|href=")/garden/[a-z0-9-]+/(?:\)|"|#)` .RawContent -}}
   {{- $targets := slice -}}
   {{- range $matches -}}
-    {{- $t := strings.TrimPrefix "(/garden/" . -}}
-    {{- $t = strings.TrimSuffix "/)" $t -}}
+    {{- $t := replaceRE `^(?:\(|href=")/garden/([a-z0-9-]+)/.*$` "$1" . -}}
     {{- if not (in $targets $t) -}}
       {{- if ne $t $slug -}}
         {{- $targets = $targets | append $t -}}

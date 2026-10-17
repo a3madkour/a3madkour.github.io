@@ -516,11 +516,14 @@ main { flex-grow: 1; }
   margin: 0 0 var(--space-lg);
 }
 .essay-meta .meta-sep { color: var(--color-ink-fade); }
-.essay-meta .tag-chip {
+.essay-meta .tag-chip,
+.garden-note-header .tag-chip {
   color: var(--color-ink-soft);
   text-decoration: none;
 }
-.essay-meta .tag-chip:hover { color: var(--color-burgundy); }
+.essay-meta .tag-chip:hover,
+.garden-note-header .tag-chip:hover { color: var(--color-burgundy); }
+.garden-note-header .meta-tags { display: inline-flex; flex-wrap: wrap; gap: var(--space-xs); }
 .essay-meta .series-pill {
   font-style: italic;
   color: var(--color-ink-soft);

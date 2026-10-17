@@ -21,6 +21,14 @@
   {{- with .Params.last_modified -}}
   <span class="tended">tended {{ partial "garden/relative-date.html" (dict "date" .) }}</span>
   {{- end -}}
+  {{- with .Params.tags -}}
+  <span class="meta-sep" aria-hidden="true">·</span>
+  <span class="meta-tags">
+    {{- range . -}}
+    <a href="{{ printf "/tags/%s/" (urlize .) | relURL }}" class="tag-chip">#{{ . }}</a>
+    {{- end -}}
+  </span>
+  {{- end -}}
 
   {{- if eq $flavor "media" -}}
     {{- with .Params.status -}}
