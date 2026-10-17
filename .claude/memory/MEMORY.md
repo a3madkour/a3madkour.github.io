@@ -72,6 +72,7 @@
 - [Shell pipeline masks the exit status](reference_pipeline_masks_exit_status.md) — `git pull | tail && git merge` merges on a FAILED pull; assert ancestry
 - [Playwright reuseExistingServer serves a foreign build](reference_playwright_reuse_existing_server.md) — assert page identity before trusting any browser result
 - [Stale .elc shadows edited publish elisp](reference_stale_elc_shadows_publish_elisp.md) — no `load-prefer-newer`; grep for `newer than` or recompile first
+- [LHCI assertMatrix excludes assertions — job stays green](reference_lhci_assertmatrix_exclusive.md) — errors, asserts nothing; grep for `Checking assertions`
 
 ## Project — active queue
 - [Authoring-infra roadmap — S1 dogfood is queue head](project_authoring_infra_roadmap.md) — 2026-10-15 approved; S1 dogfood → S2 fixes → re-plan → B1 (prose org / structural direct-edit) → C guide; A2 trigger-gated
