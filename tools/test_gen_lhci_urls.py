@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import sys
 import tempfile
@@ -213,8 +214,71 @@ class RewriteLighthouserc(unittest.TestCase):
         gen.rewrite_lighthouserc(mobile, picks, overrides=overrides)
         result = json.loads(mobile.read_text())
         matrix = result["ci"]["assert"]["assertMatrix"]
-        self.assertEqual(len(matrix), 1)
-        self.assertEqual(matrix[0]["matchingUrlPattern"], "/essays/example-one/$")
+        # S1 row 13: catch-all defaults entry + one override entry.
+        self.assertEqual(len(matrix), 2)
+        self.assertEqual(matrix[1]["matchingUrlPattern"], "/essays/example-one/$")
+
+    # -- S1 row 13: LHCI rejects `assertions` beside `assertMatrix` with
+    #    "Cannot use assertMatrix with other options" and asserts nothing; the
+    #    CI job still reported green, so the mobile gate was inert for months.
+
+    def _mobile(self, seed=MOBILE_SEED):
+        mobile = self.tmp / "lighthouserc.mobile.json"
+        mobile.write_text(json.dumps(seed, indent=2), encoding="utf-8")
+        return mobile
+
+    def test_mobile_never_mixes_assertions_and_matrix(self) -> None:
+        mobile = self._mobile()
+        gen.rewrite_lighthouserc(
+            mobile, {"page:essays:essays": "/essays/example-one/"},
+            overrides=[{"group": "page:essays:essays", "perf": 0.85}])
+        assert_cfg = json.loads(mobile.read_text())["ci"]["assert"]
+        self.assertIn("assertMatrix", assert_cfg)
+        self.assertEqual(set(assert_cfg), {"assertMatrix"})
+
+    def test_mobile_catch_all_carries_base_and_skips_overridden_url(self) -> None:
+        mobile = self._mobile()
+        gen.rewrite_lighthouserc(
+            mobile, {"page:essays:essays": "/essays/example-one/", "home::page": "/"},
+            overrides=[{"group": "page:essays:essays", "perf": 0.85}])
+        catch_all, override = json.loads(mobile.read_text())["ci"]["assert"]["assertMatrix"]
+        base = MOBILE_SEED["ci"]["assert"]["assertions"]
+        self.assertEqual(catch_all["assertions"], base)
+        pat = re.compile(catch_all["matchingUrlPattern"])
+        self.assertTrue(pat.search("http://localhost:1234/"))
+        self.assertTrue(pat.search("http://localhost:1234/essays/"))
+        self.assertFalse(pat.search("http://localhost:1234/essays/example-one/"))
+        self.assertTrue(re.search(override["matchingUrlPattern"],
+                                  "http://localhost:1234/essays/example-one/"))
+
+    def test_mobile_override_entry_keeps_other_base_categories(self) -> None:
+        mobile = self._mobile()
+        gen.rewrite_lighthouserc(
+            mobile, {"page:essays:essays": "/essays/example-one/"},
+            overrides=[{"group": "page:essays:essays", "perf": 0.85}])
+        override = json.loads(mobile.read_text())["ci"]["assert"]["assertMatrix"][1]
+        a = override["assertions"]
+        self.assertEqual(a["categories:performance"], ["error", {"minScore": 0.85}])
+        for k in ("categories:accessibility", "categories:best-practices", "categories:seo"):
+            self.assertEqual(a[k], ["error", {"minScore": 0.9}])
+
+    def test_mobile_idempotent_with_overrides(self) -> None:
+        mobile = self._mobile()
+        args = ({"page:essays:essays": "/essays/example-one/", "home::page": "/"},
+                [{"group": "page:essays:essays", "perf": 0.85}])
+        gen.rewrite_lighthouserc(mobile, *args)
+        first = mobile.read_text()
+        gen.rewrite_lighthouserc(mobile, *args)
+        self.assertEqual(first, mobile.read_text())
+
+    def test_matrix_only_config_without_overrides_restores_assertions(self) -> None:
+        mobile = self._mobile()
+        picks = {"page:essays:essays": "/essays/example-one/"}
+        gen.rewrite_lighthouserc(
+            mobile, picks, overrides=[{"group": "page:essays:essays", "perf": 0.85}])
+        gen.rewrite_lighthouserc(mobile, picks, overrides=[])
+        assert_cfg = json.loads(mobile.read_text())["ci"]["assert"]
+        self.assertEqual(assert_cfg, {"assertions": MOBILE_SEED["ci"]["assert"]["assertions"]})
 
     def test_idempotent(self) -> None:
         picks = {"home::page": "/"}
@@ -258,7 +322,8 @@ class RunEndToEnd(unittest.TestCase):
         self.assertNotIn("assertMatrix", desktop["ci"]["assert"])
         # Mobile: collect.url replaced, assertMatrix targeting picked essay
         matrix = mobile["ci"]["assert"]["assertMatrix"]
-        self.assertEqual(len(matrix), 1)
+        self.assertEqual(len(matrix), 2)
+        self.assertNotIn("assertions", mobile["ci"]["assert"])
 
     def test_run_missing_manifest_returns_rc1(self) -> None:
         (self.tmp / "public" / "lhci-pages.json").unlink()

@@ -77,6 +77,46 @@ def render_assert_matrix(
     return matrix
 
 
+# S1 row 13: LHCI refuses `assertions` (or `preset`) beside `assertMatrix` —
+# "Cannot use assertMatrix with other options" — and then asserts nothing, while
+# CI's lhci-mobile job still reported success.  With overrides present, the
+# defaults therefore travel *inside* the matrix as a catch-all entry that
+# excludes every overridden URL; each override entry carries the defaults too,
+# so an overridden page keeps its other three category gates.
+CATCH_ALL_PREFIX = "^(?!.*(?:"
+
+
+def _base_assertions(assert_cfg: dict) -> dict:
+    """The default assertions: the plain `assertions` key, or — once a previous
+    run folded them into the matrix — the catch-all entry's assertions."""
+    if "assertions" in assert_cfg:
+        return assert_cfg["assertions"]
+    for entry in assert_cfg.get("assertMatrix", []):
+        if entry.get("matchingUrlPattern", "").startswith(CATCH_ALL_PREFIX):
+            return entry["assertions"]
+    raise ValueError("lighthouserc has no base assertions (neither `assertions` "
+                     "nor a catch-all assertMatrix entry)")
+
+
+def apply_assert_config(assert_cfg: dict, override_matrix: list[dict]) -> dict:
+    """Return the new ci.assert block for OVERRIDE_MATRIX (from
+    `render_assert_matrix`).  Never emits `assertions` beside `assertMatrix`."""
+    base = _base_assertions(assert_cfg)
+    rest = {k: v for k, v in assert_cfg.items()
+            if k not in ("assertions", "assertMatrix")}
+    if not override_matrix:
+        return {**rest, "assertions": base}
+    if "preset" in rest:
+        raise ValueError("lighthouserc: `preset` cannot be combined with assertMatrix")
+    pats = "|".join(e["matchingUrlPattern"] for e in override_matrix)
+    entries = [{"matchingUrlPattern": f"{CATCH_ALL_PREFIX}{pats})).*$",
+                "assertions": base}]
+    entries += [{"matchingUrlPattern": e["matchingUrlPattern"],
+                 "assertions": {**base, **e["assertions"]}}
+                for e in override_matrix]
+    return {**rest, "assertMatrix": entries}
+
+
 def rewrite_lighthouserc(
     config_path: Path,
     picks: dict[str, str],
@@ -86,9 +126,9 @@ def rewrite_lighthouserc(
     """Load existing JSON config; replace collect.url + assertMatrix; write back.
 
     - collect.url := sorted list of base_url + each picked URL.
-    - assertMatrix := render_assert_matrix(picks, overrides) when non-empty,
-      else removed entirely.
-    - All other fields (preset, numberOfRuns, base assertions, upload) preserved.
+    - ci.assert := apply_assert_config(...): with overrides, a matrix-only block
+      (defaults as a catch-all entry); without, plain `assertions` restored.
+    - All other fields (numberOfRuns, upload, ...) preserved.
     - Output: 2-space JSON, trailing newline, sort_keys False.
     """
     config = json.loads(config_path.read_text(encoding="utf-8"))
@@ -96,11 +136,8 @@ def rewrite_lighthouserc(
     urls = sorted(f"{base_url}{path}" for path in picks.values())
     config["ci"]["collect"]["url"] = urls
 
-    matrix = render_assert_matrix(picks, overrides)
-    if matrix:
-        config["ci"]["assert"]["assertMatrix"] = matrix
-    else:
-        config["ci"]["assert"].pop("assertMatrix", None)
+    config["ci"]["assert"] = apply_assert_config(
+        config["ci"]["assert"], render_assert_matrix(picks, overrides))
 
     config_path.write_text(
         json.dumps(config, indent=2, sort_keys=False) + "\n",
@@ -170,11 +207,8 @@ def _preview_rewrite(cfg_path: Path, picks: dict[str, str], overrides: list[dict
     """Compute what rewrite_lighthouserc would write and print to stdout."""
     config = json.loads(cfg_path.read_text(encoding="utf-8"))
     config["ci"]["collect"]["url"] = sorted(f"http://localhost{p}" for p in picks.values())
-    matrix = render_assert_matrix(picks, overrides)
-    if matrix:
-        config["ci"]["assert"]["assertMatrix"] = matrix
-    else:
-        config["ci"]["assert"].pop("assertMatrix", None)
+    config["ci"]["assert"] = apply_assert_config(
+        config["ci"]["assert"], render_assert_matrix(picks, overrides))
     print(f"--- {cfg_path.name} (dry-run) ---")
     print(json.dumps(config, indent=2, sort_keys=False))
 
