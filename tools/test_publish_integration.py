@@ -50,6 +50,19 @@ _SKIP_REASON = (
 )
 
 
+def _seed_sections(site_data_dir) -> None:
+    """Copy the live section contract into a tmp site's data dir.
+
+    The elisp publisher reads `data/sections.json` from the site root it
+    publishes into and fails closed without it.  Copied from the live file,
+    never written out, so the tmp root cannot drift from the contract.
+    """
+    dst = Path(site_data_dir) / "sections.json"
+    if not dst.exists():
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(SITE_ROOT / "data" / "sections.json", dst)
+
+
 def _emacs_eval(forms: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
     """Run `emacs --batch` with straight.el bootstrapped and FORMS evaluated.
 
@@ -638,6 +651,7 @@ def _publish_living_impl(
     )
 
     env = os.environ.copy()
+    _seed_sections(site_data_dir)
     env["A3_PUB_SITE_DATA_DIR"] = str(site_data_dir) + "/"
 
     # Derive the content dir from site_data_dir's parent (site root) + "content/".
@@ -1668,10 +1682,8 @@ def _copy_section_registry(site_root) -> None:
     tools_src = Path(__file__).resolve().parent
     site_root = Path(site_root)
     (site_root / "tools").mkdir(exist_ok=True)
-    (site_root / "data").mkdir(exist_ok=True)
     _shutil.copy2(tools_src / "sections.py", site_root / "tools" / "sections.py")
-    _shutil.copy2(tools_src.parent / "data" / "sections.json",
-                  site_root / "data" / "sections.json")
+    _seed_sections(site_root / "data")
 
 
 @unittest.skipIf(_MISSING_PREREQS, _SKIP_REASON)
@@ -1712,6 +1724,7 @@ class TestEssaysPublishDeliberate(unittest.TestCase):
 
     def _run_publish_deliberate(self, path: str) -> subprocess.CompletedProcess:
         env = os.environ.copy()
+        _seed_sections(os.path.join(self.site_root, "data"))
         env["A3_PUB_SITE_DATA_DIR"] = os.path.join(self.site_root, "data")
         wrapper = os.path.expanduser(
             "~/dotfiles/emacs-configs/custom/lisp/a3-pub.sh")
@@ -1919,6 +1932,7 @@ class TestCitationRoundtrip(unittest.TestCase):
 
     def _run_publish_deliberate(self, path: str) -> subprocess.CompletedProcess:
         env = os.environ.copy()
+        _seed_sections(os.path.join(self.site_root, "data"))
         env["A3_PUB_SITE_DATA_DIR"] = os.path.join(self.site_root, "data")
         env["A3_PUB_BIB_PATH"] = str(self.FIXTURE_BIB)
         wrapper = os.path.expanduser(
@@ -2006,6 +2020,7 @@ class TestSyncPurges(unittest.TestCase):
 
     def test_sync_drops_uncited_keys(self) -> None:
         env = os.environ.copy()
+        _seed_sections(os.path.join(self.site_root, "data"))
         env["A3_PUB_SITE_DATA_DIR"] = os.path.join(self.site_root, "data")
         env["A3_PUB_BIB_PATH"] = str(self.FIXTURE_BIB)
         wrapper = os.path.expanduser(
@@ -2188,6 +2203,7 @@ class TestPoetryPublishDeliberate(unittest.TestCase):
         self, org_path: Path
     ) -> subprocess.CompletedProcess:
         env = os.environ.copy()
+        _seed_sections(self.site_root / "data")
         env["A3_PUB_SITE_DATA_DIR"] = str(self.site_root / "data")
         # HOME override anchors the poetry-dir defcustom default at the tmp
         # tree (see Compromise 1 in the class docstring).
