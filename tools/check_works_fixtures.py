@@ -8,7 +8,7 @@ Field sets, enums and types — including the shared tile_size / featured / hero
 umbrella fields and the platform_embed sub-keys — come from the
 `works/games`, `works/music` and `works/poetry` entries of data/sections.json
 via sections.check_fields (spec 2026-10-20 §5.1). That file replaced
-data/works-vocab.json as the contract this linter reads; the vocabulary file
+the retired works vocabulary JSON as the contract this linter reads; the vocabulary file
 itself stays until the elisp side switches over (dotfiles plan, spec §8 step
 4). The structured `tracks` shape stays here.
 

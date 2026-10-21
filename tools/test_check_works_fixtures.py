@@ -424,7 +424,7 @@ Body.
     def test_poetry_only_tree_needs_no_seeded_registry(self):
         """The registry belongs to the code tree, not the content tree.
 
-        data/works-vocab.json had to be seeded into every works-touching temp
+        the retired works vocabulary JSON had to be seeded into every works-touching temp
         site root (tools/test_publish_integration.py's
         TestPoetryPublishDeliberate included). sections.json is read from this
         repository, so a bare poetry-only tree lints clean as-is.
@@ -476,7 +476,7 @@ Body.
     def test_umbrella_fields_are_declared_per_sub_section(self):
         """tile_size / featured / hero are listed in each works section.
 
-        works-vocab.json shared one `umbrella_optional` list; the registry has
+        the retired works vocabulary JSON shared one `umbrella_optional` list; the registry has
         no inheritance (spec §4), so dropping tile_size from poetry alone
         rejects it on the poem and nowhere else.
         """
