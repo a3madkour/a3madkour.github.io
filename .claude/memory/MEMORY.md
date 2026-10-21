@@ -75,6 +75,7 @@
 - [LHCI assertMatrix excludes assertions — job stays green](reference_lhci_assertmatrix_exclusive.md) — errors, asserts nothing; grep for `Checking assertions`
 
 ## Project — active queue
+- [Section registry — MERGED locally, not pushed](project_section_registry_design.md) — 2026-10-21; site+dotfiles main; push together at end of S1; S1 research resumes on it
 - [Authoring-infra roadmap — S1 dogfood is queue head](project_authoring_infra_roadmap.md) — 2026-10-15 approved; S1 dogfood → S2 fixes → re-plan → B1 (prose org / structural direct-edit) → C guide; A2 trigger-gated
 - [Recipes on hiatus](project_recipe_hiatus.md) — 2026-10-15 user decision: no recipe work (corpus run, Slice 3) until they raise it
 - [Recipe section + remediation — SHIPPED & DEPLOYED](project_recipe_remediation_shipped.md) — 2026-09-07 `main` @ `2d01fa1`, 3 green deploys; 29 rows + all 13 follow-ups closed (RF3.3/RF3.4 on 2026-09-08); 38 linter pairs; only Slice 3 + real-corpus publish remain
