@@ -1647,6 +1647,7 @@ class TestResearchPublishLiving(unittest.TestCase):
                        "check_research_links.py",
                        "check_fixtures.py"):
             _shutil.copy2(tools_src / script, tools_dst / script)
+        _copy_section_registry(self.site_root)
 
         for linter in ("check_research_fixtures", "check_research_links"):
             result = subprocess.run(
@@ -1659,6 +1660,18 @@ class TestResearchPublishLiving(unittest.TestCase):
                 msg=(f"{linter}.py failed:\nstdout:\n{result.stdout}"
                      f"\nstderr:\n{result.stderr}"),
             )
+
+
+def _copy_section_registry(site_root) -> None:
+    """Copy sections.py + data/sections.json beside linters copied into a tmp site."""
+    import shutil as _shutil
+    tools_src = Path(__file__).resolve().parent
+    site_root = Path(site_root)
+    (site_root / "tools").mkdir(exist_ok=True)
+    (site_root / "data").mkdir(exist_ok=True)
+    _shutil.copy2(tools_src / "sections.py", site_root / "tools" / "sections.py")
+    _shutil.copy2(tools_src.parent / "data" / "sections.json",
+                  site_root / "data" / "sections.json")
 
 
 @unittest.skipIf(_MISSING_PREREQS, _SKIP_REASON)
@@ -1865,6 +1878,7 @@ class TestEssaysPublishDeliberate(unittest.TestCase):
         tools_dst = site_root_path / "tools"
         tools_dst.mkdir(exist_ok=True)
         _shutil.copy2(tools_src / "check_fixtures.py", tools_dst / "check_fixtures.py")
+        _copy_section_registry(site_root_path)
         linter = subprocess.run(
             ["python3", "tools/check_fixtures.py"],
             cwd=self.site_root,
