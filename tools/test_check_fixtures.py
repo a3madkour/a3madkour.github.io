@@ -4,6 +4,7 @@ from __future__ import annotations
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import check_fixtures as lint  # noqa: E402  # pyright: ignore[reportMissingImports]
@@ -274,6 +275,40 @@ class ParseFrontmatterLineEndingTest(unittest.TestCase):
         fm = lint.parse_frontmatter("---\ntitle: X\ndraft: false\n---")
         self.assertIsInstance(fm, dict)
         self.assertEqual(fm.get("title"), "X")
+
+
+class EssayRegistryTest(unittest.TestCase):
+    """The essay field contract is data/sections.json's (an open section)."""
+
+    def setUp(self) -> None:
+        self.repo = TempRepo()
+        self.repo.write_citations(VALID_CITATIONS)
+
+    def tearDown(self) -> None:
+        self.repo.cleanup()
+
+    def test_undeclared_key_still_passes(self) -> None:
+        body = VALID_FRONTMATTER.replace("toc: true\n", "toc: true\ncolophon: yes\n")
+        self.repo.write_essay("open", body, hero=True)
+        self.assertEqual(lint.run(self.repo.root), (0, []))
+
+    def test_declared_key_is_now_type_checked(self) -> None:
+        self.repo.write_essay("typed", VALID_FRONTMATTER.replace("toc: true", "toc: yes"), hero=True)
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any(e.endswith(": toc must be a boolean") for e in errors), errors)
+
+    def test_tile_size_message_is_canonical(self) -> None:
+        self.repo.write_essay("t", VALID_FRONTMATTER.replace("tile_size: large", "tile_size: huge"),
+                              hero=True)
+        _rc, errors = lint.run(self.repo.root)
+        self.assertTrue(any(e.endswith(": tile_size='huge' not in ['large', 'medium', 'small']")
+                            for e in errors), errors)
+
+    def test_run_fails_closed_when_the_registry_cannot_load(self) -> None:
+        boom = lint.sections.SectionsError("sections: registry not found at X")
+        with mock.patch.object(lint.sections, "default_registry", side_effect=boom):
+            self.assertEqual(lint.run(self.repo.root), (1, ["sections: registry not found at X"]))
 
 
 if __name__ == "__main__":

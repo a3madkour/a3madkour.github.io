@@ -1,24 +1,26 @@
 #!/usr/bin/env python3
 """Essay fixture frontmatter linter.
 
-Walks `content/essays/*/index.md`, validates frontmatter, and checks every
-`{{< cite "key" >}}` reference resolves against `data/citations.yaml`.
+Walks `content/essays/*/index.md`, validates frontmatter against the
+`essays` entry of data/sections.json (via sections.check_fields — an open
+section: undeclared keys pass, declared ones are type-checked), and checks
+every `{{< cite "key" >}}` reference resolves against `data/citations.yaml`.
+The series/hero/downloads/date cross-field rules stay here.
+
+This module also hosts the shared frontmatter parser every other linter
+imports; sections.py deliberately imports nothing from it.
 
 Exits 0 on all-pass, 1 on any violation. Stdlib only.
 """
 from __future__ import annotations
 
 import re
+import sys
 from datetime import date as Date
 from pathlib import Path
 
-REQUIRED_FIELDS = {
-    "title", "date", "lastmod", "draft", "summary",
-    "tags", "series", "series_order",
-    "toc", "has_sidenotes", "has_citations", "has_footnotes",
-    "has_math", "has_widgets", "has_video_sync",
-}
-ALLOWED_TILE_SIZE = {"large", "medium", "small"}
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import sections  # noqa: E402
 
 # Trailing delimiter tolerates optional trailing whitespace and either a
 # newline or end-of-string (files whose closing `---` lacks a final newline).
@@ -215,7 +217,8 @@ def parse_citations_yaml(text: str) -> dict[str, dict[str, object]]:
     return entries
 
 
-def lint_essay(essay_dir: Path, valid_cite_keys: set[str]) -> list[str]:
+def lint_essay(essay_dir: Path, valid_cite_keys: set[str],
+               registry: dict | None = None) -> list[str]:
     errors: list[str] = []
     md_path = essay_dir / "index.md"
     if not md_path.exists():
@@ -225,14 +228,7 @@ def lint_essay(essay_dir: Path, valid_cite_keys: set[str]) -> list[str]:
     if fm is None:
         return [f"{md_path}: no frontmatter"]
 
-    missing = REQUIRED_FIELDS - fm.keys()
-    for field in sorted(missing):
-        errors.append(f"{md_path}: missing required field '{field}'")
-
-    if "tile_size" in fm and fm["tile_size"] not in ALLOWED_TILE_SIZE:
-        errors.append(
-            f"{md_path}: tile_size '{fm['tile_size']}' not in {ALLOWED_TILE_SIZE}"
-        )
+    errors = sections.check_fields(fm, "essays", md_path, registry=registry)
 
     series = fm.get("series", "")
     series_order = fm.get("series_order", 0)
@@ -282,7 +278,11 @@ def lint_essay(essay_dir: Path, valid_cite_keys: set[str]) -> list[str]:
     return errors
 
 
-def run(repo_root: Path) -> tuple[int, list[str]]:
+def run(repo_root: Path, registry: dict | None = None) -> tuple[int, list[str]]:
+    try:
+        reg = registry if registry is not None else sections.default_registry()
+    except sections.SectionsError as e:
+        return 1, [str(e)]
     essays_dir = repo_root / "content" / "essays"
     citations_path = repo_root / "data" / "citations.yaml"
     valid_keys = set(parse_citations_yaml(citations_path.read_text(encoding="utf-8"))) if citations_path.exists() else set()
@@ -292,7 +292,7 @@ def run(repo_root: Path) -> tuple[int, list[str]]:
         for essay_dir in sorted(essays_dir.iterdir()):
             if not essay_dir.is_dir():
                 continue
-            errors.extend(lint_essay(essay_dir, valid_keys))
+            errors.extend(lint_essay(essay_dir, valid_keys, reg))
 
     return (1 if errors else 0, errors)
 
