@@ -3,9 +3,11 @@
 """
 from __future__ import annotations
 
+import copy
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import check_garden_fixtures as lint  # noqa: E402
@@ -166,7 +168,7 @@ class GardenLinterTest(unittest.TestCase):
         self.repo.write_note("broken", broken)
         rc, errors = lint.run(self.repo.root)
         self.assertEqual(rc, 1)
-        self.assertTrue(any("status" in e and "concept" in e for e in errors))
+        self.assertTrue(any(e.endswith(": unknown field 'status'") for e in errors), errors)
 
     def test_concept_with_started_fails(self) -> None:
         broken = CONCEPT_NOTE.replace(
@@ -186,7 +188,7 @@ class GardenLinterTest(unittest.TestCase):
         self.repo.write_note("broken", broken)
         rc, errors = lint.run(self.repo.root)
         self.assertEqual(rc, 1)
-        self.assertTrue(any("status" in e and "reference" in e for e in errors))
+        self.assertTrue(any(e.endswith(": unknown field 'status'") for e in errors), errors)
 
     # --- enum-validation failures ---
 
@@ -232,14 +234,14 @@ class GardenLinterTest(unittest.TestCase):
         self.repo.write_note("broken", broken)
         rc, errors = lint.run(self.repo.root)
         self.assertEqual(rc, 1)
-        self.assertTrue(any("last_modified" in e and "not a valid" in e for e in errors))
+        self.assertTrue(any(e.endswith(": last_modified must be a YYYY-MM-DD date") for e in errors), errors)
 
     def test_malformed_started_fails(self) -> None:
         broken = MEDIA_NOTE.replace("started: 2025-12-15", "started: 2025-1-1")
         self.repo.write_note("broken", broken)
         rc, errors = lint.run(self.repo.root)
         self.assertEqual(rc, 1)
-        self.assertTrue(any("started" in e and "not a valid" in e for e in errors))
+        self.assertTrue(any(e.endswith(": started must be a YYYY-MM-DD date") for e in errors), errors)
 
     def test_malformed_finished_fails(self) -> None:
         broken = MEDIA_NOTE.replace(
@@ -249,7 +251,7 @@ class GardenLinterTest(unittest.TestCase):
         self.repo.write_note("broken", broken)
         rc, errors = lint.run(self.repo.root)
         self.assertEqual(rc, 1)
-        self.assertTrue(any("finished" in e and "not a valid" in e for e in errors))
+        self.assertTrue(any(e.endswith(": finished must be a YYYY-MM-DD date") for e in errors), errors)
 
     # --- topic_map resolution ---
 
@@ -341,6 +343,73 @@ Body.
         self.repo.write_note("with-source-stream-ref", body)
         rc, errors = lint.run(self.repo.root)
         self.assertEqual(rc, 0, msg=f"unexpected: {errors}")
+
+
+class GardenRegistryTest(unittest.TestCase):
+    """Flavors are registry variants on media_type (data/sections.json)."""
+
+    def setUp(self) -> None:
+        self.repo = TempRepo()
+
+    def tearDown(self) -> None:
+        self.repo.cleanup()
+
+    def test_empty_media_type_selects_concept(self) -> None:
+        # derive_flavor treated a falsy media_type as concept; so does the
+        # registry's null case — and media_type itself is then not permitted.
+        self.repo.write_note("n", CONCEPT_NOTE.replace("growth_stage: seedling\n",
+                                                       "growth_stage: seedling\nmedia_type:\n"))
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any(e.endswith(": unknown field 'media_type'") for e in errors), errors)
+
+    def test_unknown_media_type_skips_flavor_checks(self) -> None:
+        broken = MEDIA_NOTE.replace("media_type: book", "media_type: scroll").replace(
+            'original_url: "https://example.invalid/book"', 'original_url: "ftp://x"')
+        self.repo.write_note("n", broken)
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn("media_type='scroll' not in ['album', 'article', 'book'", errors[0])
+
+    def test_weight_is_concept_only(self) -> None:
+        self.repo.write_note("n", MEDIA_NOTE.replace("year: 1972\n", "year: 1972\nweight: 3\n"))
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any(e.endswith(": unknown field 'weight'") for e in errors), errors)
+
+    def test_empty_started_now_fails(self) -> None:
+        # The old date loop skipped "" values; a declared date must be a date.
+        self.repo.write_note("n", MEDIA_NOTE.replace("started: 2025-12-15", "started:"))
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any(e.endswith(": started must be a YYYY-MM-DD date") for e in errors), errors)
+
+    def test_datetime_string_last_modified_still_fails(self) -> None:
+        # The registry's date type accepts an ISO-prefixed string (streams
+        # need it); garden keeps its bare-date rule in code.
+        self.repo.write_note("n", CONCEPT_NOTE.replace("last_modified: 2026-04-22",
+                                                       "last_modified: 2026-04-22T10:00:00"))
+        rc, errors = lint.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("last_modified='2026-04-22T10:00:00' is not a valid" in e
+                            for e in errors), errors)
+
+    def test_media_types_come_from_the_registry(self) -> None:
+        reg = copy.deepcopy(lint.sections.default_registry())
+        cases = reg["sections"]["garden"]["variants"]["cases"]
+        cases["media"]["values"] = ["album"]
+        cases["media"]["fields"]["media_type"]["values"] = ["album"]
+        self.repo.write_note("n", MEDIA_NOTE)
+        rc, errors = lint.run(self.repo.root, registry=reg)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("media_type='book' not in" in e for e in errors), errors)
+
+    def test_run_fails_closed_when_the_registry_cannot_load(self) -> None:
+        self.repo.write_note("n", CONCEPT_NOTE)
+        boom = lint.sections.SectionsError("sections: registry not found at X")
+        with mock.patch.object(lint.sections, "default_registry", side_effect=boom):
+            self.assertEqual(lint.run(self.repo.root), (1, ["sections: registry not found at X"]))
 
 
 if __name__ == "__main__":

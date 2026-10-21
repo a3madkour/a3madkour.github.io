@@ -2,7 +2,8 @@
 """Garden note fixture frontmatter linter.
 
 Walks `content/garden/<slug>/index.md` (skips `_index.md`), validates
-flavor-specific frontmatter per spec §5.1, and verifies that every
+flavor-specific frontmatter per spec §5.1 against the `garden` entry of
+data/sections.json (sections.check_fields), and verifies that every
 `topic_map:` entry resolves to an existing non-draft note.
 
 Exits 0 on all-pass, 1 on any violation. Stdlib only — imports the YAML
@@ -16,52 +17,22 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_fixtures import parse_frontmatter  # noqa: E402
+import sections  # noqa: E402
 
 # --- contract ---
-
-ALWAYS_REQUIRED = {"title", "draft", "last_modified", "growth_stage"}
-
-GROWTH_STAGES = {"seedling", "budding", "evergreen"}
-STATUSES = {"reading", "finished", "abandoned", "queued"}
-SPOILER_LEVELS = {"none", "light", "heavy"}
-
-MEDIA_TYPES = {"book", "album", "track", "game", "film", "series"}
-REFERENCE_TYPES = {"paper", "video", "article", "talk"}
-ALL_MEDIA_TYPES = MEDIA_TYPES | REFERENCE_TYPES
-
-# Fields permitted on each flavor (anything else is forbidden)
-CONCEPT_FIELDS = ALWAYS_REQUIRED | {"tags", "summary", "topic_map", "roam_refs", "year", "weight", "source_stream"}
-MEDIA_FIELDS = ALWAYS_REQUIRED | {
-    "media_type", "status", "creator",
-    "tags", "summary", "topic_map", "roam_refs", "year",
-    "original_url", "started", "finished", "spoiler_level",
-    "source_stream",
-}
-REFERENCE_FIELDS = ALWAYS_REQUIRED | {
-    "media_type", "creator",
-    "tags", "summary", "topic_map", "roam_refs", "year",
-    "original_url",
-    "source_stream",
-}
-
-MEDIA_REQUIRED_EXTRA = {"media_type", "status", "creator"}
-REFERENCE_REQUIRED_EXTRA = {"media_type", "creator"}
+#
+# Field sets, enums, types and the concept/media/reference flavors (variants
+# on `media_type`) live in data/sections.json (spec 2026-10-20). What stays
+# here: the future-date and URL-scheme rules and topic_map resolution.
 
 
-def derive_flavor(fm: dict[str, object]) -> str:
-    media_type = fm.get("media_type")
-    if not media_type:
-        return "concept"
-    if media_type in MEDIA_TYPES:
-        return "media"
-    if media_type in REFERENCE_TYPES:
-        return "reference"
-    return "unknown"
+def derive_flavor(fm: dict[str, object], registry: dict | None = None) -> str:
+    """'concept' | 'media' | 'reference', or 'unknown' for an unlisted media_type."""
+    return sections.case_of(fm, "garden", registry) or "unknown"
 
 
-def lint_note(note_dir: Path) -> tuple[list[str], dict[str, object] | None]:
+def lint_note(note_dir: Path, registry: dict | None = None) -> tuple[list[str], dict[str, object] | None]:
     """Return (errors, parsed_frontmatter_or_None) for a single note dir."""
-    errors: list[str] = []
     md = note_dir / "index.md"
     if not md.exists():
         return [f"{note_dir}: no index.md"], None
@@ -70,65 +41,24 @@ def lint_note(note_dir: Path) -> tuple[list[str], dict[str, object] | None]:
     if fm is None:
         return [f"{md}: no frontmatter"], None
 
-    # Always-required fields
-    for field in sorted(ALWAYS_REQUIRED - fm.keys()):
-        errors.append(f"{md}: missing required field '{field}'")
+    errors = sections.check_fields(fm, "garden", md, registry=registry)
 
-    # Enum: growth_stage
-    stage = fm.get("growth_stage")
-    if stage and stage not in GROWTH_STAGES:
-        errors.append(
-            f"{md}: growth_stage='{stage}' not in {sorted(GROWTH_STAGES)}"
-        )
-
-    # Date validation: last_modified, started, finished
+    # The registry's `date` accepts any ISO-date-prefixed string (stream
+    # datetimes). Garden dates must be bare dates, which parse_scalar turns
+    # into date objects; flag the prefixed strings the registry let through.
     for date_field in ("last_modified", "started", "finished"):
         val = fm.get(date_field)
-        if val is None or val == "":
-            continue
-        if not isinstance(val, Date):
-            errors.append(
-                f"{md}: {date_field}='{val}' is not a valid YYYY-MM-DD date"
-            )
-            continue
-        if date_field == "last_modified" and val > Date.today():
-            errors.append(f"{md}: last_modified {val} is in the future")
+        if isinstance(val, str) and sections.DATE_PREFIX_RE.match(val):
+            errors.append(f"{md}: {date_field}='{val}' is not a valid YYYY-MM-DD date")
 
-    # Flavor-specific
-    flavor = derive_flavor(fm)
-    if flavor == "unknown":
-        errors.append(
-            f"{md}: media_type='{fm.get('media_type')}' "
-            f"not in {sorted(ALL_MEDIA_TYPES)}"
-        )
+    last_modified = fm.get("last_modified")
+    if isinstance(last_modified, Date) and last_modified > Date.today():
+        errors.append(f"{md}: last_modified {last_modified} is in the future")
+
+    # An unlisted media_type leaves the flavor — and so the legal field set —
+    # unknown; the registry has already reported it. Stop, as before.
+    if derive_flavor(fm, registry) == "unknown":
         return errors, fm
-
-    if flavor == "concept":
-        allowed = CONCEPT_FIELDS
-    elif flavor == "media":
-        allowed = MEDIA_FIELDS
-        for f in sorted(MEDIA_REQUIRED_EXTRA - fm.keys()):
-            errors.append(f"{md}: '{f}' is required for media notes")
-    else:  # reference
-        allowed = REFERENCE_FIELDS
-        for f in sorted(REFERENCE_REQUIRED_EXTRA - fm.keys()):
-            errors.append(f"{md}: '{f}' is required for reference notes")
-
-    for f in sorted(set(fm.keys()) - allowed):
-        errors.append(f"{md}: '{f}' not permitted on {flavor} notes")
-
-    # Enum checks for media-only fields
-    if flavor == "media":
-        status = fm.get("status")
-        if status and status not in STATUSES:
-            errors.append(
-                f"{md}: status='{status}' not in {sorted(STATUSES)}"
-            )
-        spl = fm.get("spoiler_level")
-        if spl and spl not in SPOILER_LEVELS:
-            errors.append(
-                f"{md}: spoiler_level='{spl}' not in {sorted(SPOILER_LEVELS)}"
-            )
 
     # URL scheme check
     url = fm.get("original_url")
@@ -138,12 +68,16 @@ def lint_note(note_dir: Path) -> tuple[list[str], dict[str, object] | None]:
     return errors, fm
 
 
-def run(repo_root: Path) -> tuple[int, list[str]]:
+def run(repo_root: Path, registry: dict | None = None) -> tuple[int, list[str]]:
     garden_dir = repo_root / "content" / "garden"
     errors: list[str] = []
 
     if not garden_dir.exists():
         return 0, []
+    try:
+        reg = registry if registry is not None else sections.default_registry()
+    except sections.SectionsError as e:
+        return 1, [str(e)]
 
     # Pass 1: lint each note, build the slug → frontmatter index
     notes: dict[str, dict[str, object]] = {}
@@ -158,7 +92,7 @@ def run(repo_root: Path) -> tuple[int, list[str]]:
         # a per-slug index.md and would false-fail on these.
         if (entry / "_index.md").is_file() and not (entry / "index.md").is_file():
             continue
-        note_errors, fm = lint_note(entry)
+        note_errors, fm = lint_note(entry, reg)
         errors.extend(note_errors)
         if fm is not None:
             notes[slug] = fm
