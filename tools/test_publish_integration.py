@@ -981,9 +981,9 @@ class TestGardenPublishLiving(unittest.TestCase):
         check_garden_links.py via in-process invocation.
 
         NOTE — KNOWN GAPS (B.1 follow-on): the garden normalizer currently emits
-        a `flavor:` key that is NOT in check_garden_fixtures.py's CONCEPT_FIELDS
-        allowed set, and does NOT emit `draft:` or `last_modified:` (both
-        ALWAYS_REQUIRED by the linter).  If this test fails, the root cause is
+        a `flavor:` key that is NOT among the concept fields data/sections.json
+        allows for garden, and does NOT emit `draft:` or `last_modified:` (both
+        required by data/sections.json).  If this test fails, the root cause is
         the elisp normalizer, not the linter — do not relax the linter.
 
         Specific elisp gaps to address in a follow-on:
@@ -1613,7 +1613,7 @@ class TestResearchPublishLiving(unittest.TestCase):
         is valid).
         """
         # Seed: 1 theme + 1 question pointing at that theme.
-        # Tags are required by check_research_fixtures.py THEME_REQUIRED.
+        # Tags are required by data/sections.json (research/themes).
         _write_research_source(
             self.notes_dir / "research-themes-mp.org",
             "research/themes", "Memory and play",
