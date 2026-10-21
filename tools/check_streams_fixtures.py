@@ -15,24 +15,19 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_fixtures import parse_frontmatter  # noqa: E402
+import sections  # noqa: E402
 
 # --- contract ---
-
-REQUIRED = {"title", "date", "platforms", "category", "archive_status", "draft"}
-OPTIONAL = {
-    "duration", "vod_url", "twitch_archive_url", "archive_url",
-    "tags", "summary",
-    "related_essays", "related_garden", "related_research", "related_works",
-}
-FIELDS = REQUIRED | OPTIONAL
+#
+# Field sets, enums and types live in data/sections.json (spec 2026-10-20).
+# What stays here is what the schema cannot say: the per-element enum on the
+# `platforms` list (a `list` field takes no `values`) and the archived ⇒
+# vod_url cross-field rule.
 
 PLATFORM_VALUES = {"twitch", "youtube"}
-CATEGORY_VALUES = {"game-dev", "research", "coding", "creative"}
-ARCHIVE_STATUS_VALUES = {"live", "archived", "removed", "private"}
 
 
-def lint_file(md: Path) -> list[str]:
-    errs: list[str] = []
+def lint_file(md: Path, registry: dict | None = None) -> list[str]:
     if not md.exists():
         return [f"{md}: file does not exist"]
     text = md.read_text()
@@ -40,45 +35,20 @@ def lint_file(md: Path) -> list[str]:
     if fm is None:
         return [f"{md}: no frontmatter"]
 
-    for f in sorted(REQUIRED - fm.keys()):
-        errs.append(f"{md}: missing required field '{f}'")
-    for f in sorted(fm.keys() - FIELDS):
-        errs.append(f"{md}: unknown field '{f}'")
+    errs = sections.check_fields(fm, "streams", md, registry=registry)
 
-    # platforms: must be a list, each value in PLATFORM_VALUES
+    # platforms: each value in PLATFORM_VALUES (list-ness is the registry's)
     platforms = fm.get("platforms")
-    if platforms is not None:
-        if not isinstance(platforms, list):
-            errs.append(f"{md}: platforms must be a list")
-        else:
-            for i, p in enumerate(platforms):
-                if str(p) not in PLATFORM_VALUES:
-                    errs.append(f"{md}: platforms[{i}]='{p}' not in {sorted(PLATFORM_VALUES)}")
-
-    cat = fm.get("category")
-    if cat is not None and cat not in CATEGORY_VALUES:
-        errs.append(f"{md}: category='{cat}' not in {sorted(CATEGORY_VALUES)}")
-
-    arc = fm.get("archive_status")
-    if arc is not None and arc not in ARCHIVE_STATUS_VALUES:
-        errs.append(f"{md}: archive_status='{arc}' not in {sorted(ARCHIVE_STATUS_VALUES)}")
+    if isinstance(platforms, list):
+        for i, p in enumerate(platforms):
+            if str(p) not in PLATFORM_VALUES:
+                errs.append(f"{md}: platforms[{i}]='{p}' not in {sorted(PLATFORM_VALUES)}")
 
     # cross-validation: archived requires non-empty vod_url
-    if arc == "archived":
+    if fm.get("archive_status") == "archived":
         vod = fm.get("vod_url") or ""
         if not str(vod).strip():
             errs.append(f"{md}: archive_status=archived requires non-empty vod_url")
-
-    # Related-* must be lists of strings when present
-    for rel_field in ("related_essays", "related_garden", "related_research", "related_works"):
-        v = fm.get(rel_field)
-        if v is not None and not isinstance(v, list):
-            errs.append(f"{md}: {rel_field} must be a list")
-
-    # tags must be a list of strings when present
-    tags = fm.get("tags")
-    if tags is not None and not isinstance(tags, list):
-        errs.append(f"{md}: tags must be a list")
 
     return errs
 
@@ -119,7 +89,11 @@ def _validate_data_yaml(repo_root: Path) -> list[str]:
     return errs
 
 
-def run(repo_root: Path) -> tuple[int, list[str]]:
+def run(repo_root: Path, registry: dict | None = None) -> tuple[int, list[str]]:
+    try:
+        reg = registry if registry is not None else sections.default_registry()
+    except sections.SectionsError as e:
+        return 1, [str(e)]
     all_errs: list[str] = []
     streams = repo_root / "content" / "streams"
     if streams.exists():
@@ -129,7 +103,7 @@ def run(repo_root: Path) -> tuple[int, list[str]]:
             md = child / "index.md"
             if not md.exists():
                 continue
-            all_errs.extend(lint_file(md))
+            all_errs.extend(lint_file(md, reg))
     all_errs.extend(_validate_data_yaml(repo_root))
     return (1 if all_errs else 0), all_errs
 

@@ -3,14 +3,17 @@
 """
 from __future__ import annotations
 
+import copy
 import shutil
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import check_streams_fixtures as lint  # noqa: E402
+import sections  # noqa: E402
 
 
 VALID = """\
@@ -194,6 +197,45 @@ Body.
         rc, errs = lint.run(self.tmp)
         self.assertEqual(rc, 1)
         self.assertTrue(any("streams-live.yaml" in e and "live" in e for e in errs))
+
+
+class StreamsRegistryTests(unittest.TestCase):
+    """The field contract is data/sections.json's, read through sections.py."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.streams = self.tmp / "content" / "streams"
+        self.streams.mkdir(parents=True)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+
+    def _write(self, slug: str, body: str) -> Path:
+        d = self.streams / slug
+        d.mkdir()
+        p = d / "index.md"
+        p.write_text(body)
+        return p
+
+    def test_datetime_string_date_passes(self):
+        # Stream dates carry a time and offset; parse_scalar keeps them strings.
+        p = self._write("dt", VALID)
+        self.assertEqual(lint.lint_file(p), [])
+
+    def test_non_date_string_now_fails(self):
+        p = self._write("bad-date", VALID.replace("date: 2026-04-10T19:00:00-04:00", "date: April"))
+        self.assertIn(f"{p}: date must be a YYYY-MM-DD date", lint.lint_file(p))
+
+    def test_category_enum_comes_from_the_registry(self):
+        reg = copy.deepcopy(sections.default_registry())
+        reg["sections"]["streams"]["fields"]["category"]["values"] = ["research"]
+        p = self._write("cat", VALID)
+        self.assertIn(f"{p}: category='coding' not in ['research']", lint.lint_file(p, reg))
+
+    def test_run_fails_closed_when_the_registry_cannot_load(self):
+        boom = sections.SectionsError("sections: registry not found at X")
+        with mock.patch.object(lint.sections, "default_registry", side_effect=boom):
+            self.assertEqual(lint.run(self.tmp), (1, ["sections: registry not found at X"]))
 
 
 if __name__ == "__main__":
