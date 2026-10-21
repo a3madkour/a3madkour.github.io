@@ -2,8 +2,10 @@
 """Research fixture frontmatter linter.
 
 Validates theme and question frontmatter contracts per spec §3.1
-(2026-05-11 research surface slice). Imports parse_frontmatter from
-check_fixtures so all linters share one YAML parser.
+(2026-05-11 research surface slice). Field sets, enums and types come from
+data/sections.json via sections.check_fields (spec 2026-10-20 §5.1); the
+structured `outputs` shape and theme-weight uniqueness stay here. Imports
+parse_frontmatter from check_fixtures so all linters share one YAML parser.
 
 Exits 0 on all-pass, 1 on any violation. Stdlib only.
 """
@@ -14,83 +16,37 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_fixtures import parse_frontmatter  # noqa: E402
+import sections  # noqa: E402
 
 
-STATUSES = {"active", "dormant", "answered"}
 OUTPUT_KINDS = {"paper", "talk", "code"}
 
-THEME_REQUIRED = {"title", "status", "tags", "last_modified", "description", "weight"}
-THEME_OPTIONAL = {"author", "draft", "garden_topic_ref", "summary", "source_stream"}
-THEME_FORBIDDEN = {"parent_question", "theme"}
 
-QUESTION_REQUIRED = {"title", "theme", "status", "last_modified", "description"}
-QUESTION_OPTIONAL = {
-    "author", "draft", "parent_question", "started", "tags",
-    "supporting_notes", "related_essays", "outputs", "weight",
-    "source_stream",
-}
-
-
-def lint_theme(theme_dir: Path) -> list[str]:
-    """Return list of error strings for one theme dir."""
-    errors: list[str] = []
-    md = theme_dir / "index.md"
+def _lint(entry_dir: Path, section: str, registry: dict | None) -> tuple[Path, dict | None, list[str]]:
+    """Shared front half: locate, parse, and run the registry field checks."""
+    md = entry_dir / "index.md"
     if not md.exists():
-        return [f"{theme_dir}: no index.md"]
+        return md, None, [f"{entry_dir}: no index.md"]
     fm = parse_frontmatter(md.read_text())
     if fm is None:
-        return [f"{md}: no frontmatter"]
+        return md, None, [f"{md}: no frontmatter"]
+    return md, fm, sections.check_fields(fm, section, md, registry=registry)
 
-    for field in sorted(THEME_REQUIRED - fm.keys()):
-        errors.append(f"{md}: missing required field '{field}'")
 
-    for field in sorted(THEME_FORBIDDEN & fm.keys()):
-        errors.append(f"{md}: forbidden field '{field}' on theme")
-
-    allowed = THEME_REQUIRED | THEME_OPTIONAL
-    for field in sorted(fm.keys() - allowed):
-        errors.append(f"{md}: unknown field '{field}'")
-
-    status = fm.get("status")
-    if status and status not in STATUSES:
-        errors.append(f"{md}: status='{status}' not in {sorted(STATUSES)}")
-
-    weight = fm.get("weight")
-    if weight is not None and not isinstance(weight, int):
-        errors.append(f"{md}: weight must be an integer, got {type(weight).__name__}")
-
-    tags = fm.get("tags")
-    if tags is not None and not isinstance(tags, list):
-        errors.append(f"{md}: tags must be a list")
-    elif isinstance(tags, list):
-        for i, t in enumerate(tags):
-            if not isinstance(t, str):
-                errors.append(f"{md}: tags[{i}] must be a string")
-
+def lint_theme(theme_dir: Path, registry: dict | None = None) -> list[str]:
+    """Return list of error strings for one theme dir."""
+    _md, _fm, errors = _lint(theme_dir, "research/themes", registry)
     return errors
 
 
-def lint_question(question_dir: Path) -> list[str]:
+def lint_question(question_dir: Path, registry: dict | None = None) -> list[str]:
     """Return list of error strings for one question dir."""
-    errors: list[str] = []
-    md = question_dir / "index.md"
-    if not md.exists():
-        return [f"{question_dir}: no index.md"]
-    fm = parse_frontmatter(md.read_text())
+    md, fm, errors = _lint(question_dir, "research/questions", registry)
     if fm is None:
-        return [f"{md}: no frontmatter"]
+        return errors
 
-    for field in sorted(QUESTION_REQUIRED - fm.keys()):
-        errors.append(f"{md}: missing required field '{field}'")
-
-    allowed = QUESTION_REQUIRED | QUESTION_OPTIONAL
-    for field in sorted(fm.keys() - allowed):
-        errors.append(f"{md}: unknown field '{field}'")
-
-    status = fm.get("status")
-    if status and status not in STATUSES:
-        errors.append(f"{md}: status='{status}' not in {sorted(STATUSES)}")
-
+    # `outputs` is a `structured` field: the registry checks presence only and
+    # its inner shape stays here (spec §4).
     outputs = fm.get("outputs")
     if outputs is not None:
         if not isinstance(outputs, list):
@@ -117,15 +73,6 @@ def lint_question(question_dir: Path) -> list[str]:
                 if not isinstance(url, str) or not url.strip():
                     errors.append(f"{md}: outputs[{i}].url must be non-empty string")
 
-    for list_field in ("tags", "supporting_notes", "related_essays"):
-        val = fm.get(list_field)
-        if val is not None and not isinstance(val, list):
-            errors.append(f"{md}: {list_field} must be a list")
-
-    weight = fm.get("weight")
-    if weight is not None and not isinstance(weight, int):
-        errors.append(f"{md}: weight must be an integer")
-
     return errors
 
 
@@ -149,7 +96,11 @@ def validate_unique_theme_weights(themes: list[dict]) -> list[str]:
     return errors
 
 
-def run(repo_root: Path) -> tuple[int, list[str]]:
+def run(repo_root: Path, registry: dict | None = None) -> tuple[int, list[str]]:
+    try:
+        reg = registry if registry is not None else sections.default_registry()
+    except sections.SectionsError as e:
+        return 1, [str(e)]
     themes_dir = repo_root / "content" / "research" / "themes"
     questions_dir = repo_root / "content" / "research" / "questions"
     errors: list[str] = []
@@ -157,7 +108,7 @@ def run(repo_root: Path) -> tuple[int, list[str]]:
     for d in sorted(themes_dir.iterdir()):
         if not d.is_dir() or d.name.startswith("_"):
             continue
-        errors.extend(lint_theme(d))
+        errors.extend(lint_theme(d, reg))
         md = d / "index.md"
         if md.exists():
             fm = parse_frontmatter(md.read_text())
@@ -168,7 +119,7 @@ def run(repo_root: Path) -> tuple[int, list[str]]:
     for d in sorted(questions_dir.iterdir()):
         if not d.is_dir() or d.name.startswith("_"):
             continue
-        errors.extend(lint_question(d))
+        errors.extend(lint_question(d, reg))
     return (1 if errors else 0, errors)
 
 

@@ -3,14 +3,17 @@
 """
 from __future__ import annotations
 
+import copy
 import shutil
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import check_research_fixtures as lint  # noqa: E402
+import sections  # noqa: E402
 
 
 THEME_OK = """\
@@ -189,7 +192,7 @@ class LintThemeTests(unittest.TestCase):
     def test_forbidden_field_parent_question(self):
         _write(self.tmp, "memory-and-play", THEME_FORBIDDEN_PARENT_QUESTION)
         errs = lint.lint_theme(self.tmp / "memory-and-play")
-        self.assertTrue(any("forbidden field 'parent_question'" in e for e in errs))
+        self.assertTrue(any("unknown field 'parent_question'" in e for e in errs))
 
     def test_bad_weight_type(self):
         _write(self.tmp, "memory-and-play", THEME_BAD_WEIGHT)
@@ -268,6 +271,37 @@ class ValidateUniqueThemeWeightsTests(unittest.TestCase):
         ]
         errors = lint.validate_unique_theme_weights(themes)
         self.assertEqual(errors, [])
+
+
+class RegistryTests(unittest.TestCase):
+    """The field contract is data/sections.json's, read through sections.py."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+
+    def test_empty_status_now_fails(self):
+        # `status:` with no value parses to "" — the old `if status and ...`
+        # guard let it through; the registry enum check does not.
+        _write(self.tmp, "t", THEME_OK.replace("status: active", "status:"))
+        errs = lint.lint_theme(self.tmp / "t")
+        self.assertTrue(any("status='' not in" in e for e in errs), errs)
+
+    def test_status_enum_comes_from_the_registry(self):
+        reg = copy.deepcopy(sections.default_registry())
+        reg["sections"]["research/themes"]["fields"]["status"]["values"] = ["dormant"]
+        _write(self.tmp, "t", THEME_OK)
+        errs = lint.lint_theme(self.tmp / "t", reg)
+        self.assertTrue(any("status='active' not in ['dormant']" in e for e in errs), errs)
+
+    def test_run_fails_closed_when_the_registry_cannot_load(self):
+        (self.tmp / "content" / "research" / "themes").mkdir(parents=True)
+        (self.tmp / "content" / "research" / "questions").mkdir(parents=True)
+        boom = sections.SectionsError("sections: registry not found at X")
+        with mock.patch.object(lint.sections, "default_registry", side_effect=boom):
+            self.assertEqual(lint.run(self.tmp), (1, ["sections: registry not found at X"]))
 
 
 if __name__ == "__main__":
