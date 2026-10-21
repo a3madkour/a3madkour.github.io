@@ -3,15 +3,17 @@
 """
 from __future__ import annotations
 
-import json
+import copy
 import shutil
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import check_works_fixtures as lint  # noqa: E402
+import sections  # noqa: E402
 from test_helpers import TempRepo  # noqa: E402
 
 
@@ -43,35 +45,12 @@ year: 2026
 Body.
 """
 
-# Minimal valid game fixture with status: playable — used by the shared-vocab
+# Minimal valid game fixture with status: playable — used by the registry
 # tests below, where TempRepo writes it at an arbitrary path (not necessarily
 # "ok") rather than through self._write's games/<slug> convention.
 GAME_MD_PLAYABLE = GAME_VALID
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-
-# Vocab threaded explicitly into every direct lint_file() call in this file.
-# lint_file() takes it as a required argument with no fallback
-# (check_works_fixtures.py deliberately has no "read the live repo's own
-# data/works-vocab.json if omitted" path).
-#
-# The ENUM values below are hand-written: a test asserting that "shipped" is
-# rejected must control the set it is rejected against, or a later addition to
-# the real vocabulary would quietly change what the test means.
-#
-# The FIELD SETS are deliberately NOT written out here. data/works-vocab.json
-# is their single home, shared with the elisp normalizer's allowed-key filter,
-# and a transcription in this file would be exactly the third copy that made
-# the old elisp `-key-set-matches-contract` tests vacuous. They are loaded
-# through the same loader the linter uses, so adding an optional key to the
-# JSON is picked up here, in the linter and in the publisher at once.
-VOCAB = dict(lint.load_vocab(REPO_ROOT))
-VOCAB.update({
-    "game_statuses": {"playable", "in-progress", "archived"},
-    "game_kinds": {"full-release", "jam", "research-prototype", "experiment"},
-    "music_formats": {"album", "track", "experiment", "live"},
-    "platform_kinds": {"bandcamp", "soundcloud", "youtube"},
-})
 
 POEM_VALID = """\
 ---
@@ -85,20 +64,36 @@ lines: 14
 Body.
 """
 
-_LIVE = {
-    k: sorted(v) for k, v in lint.load_vocab(REPO_ROOT).items()
-}
 
+def _registry(**enum_overrides) -> dict:
+    """The live registry with the works enums pinned — a fixture, not a copy.
 
-def _vocab_json(**overrides) -> str:
-    """The live vocabulary with named lists replaced — a fixture, not a copy.
-
-    Tests that mutate the contract override exactly the list under test and
-    inherit the rest, so none of them restates the field sets.
+    The ENUM values are hand-written: a test asserting that "shipped" is
+    rejected must control the set it is rejected against, or a later addition
+    to the real registry would quietly change what the test means. The FIELD
+    SETS are deliberately NOT written out: data/sections.json is their single
+    home, shared with the elisp normalizer's allowed-key filter, and a
+    transcription here would be exactly the third copy that made the old
+    elisp `-key-set-matches-contract` tests vacuous.
     """
-    data = dict(_LIVE)
-    data.update(overrides)
-    return json.dumps(data)
+    reg = copy.deepcopy(sections.load(REPO_ROOT))
+    s = reg["sections"]
+    enums = {
+        ("works/games", "status"): ["playable", "in-progress", "archived"],
+        ("works/games", "game_kind"): ["full-release", "jam", "research-prototype", "experiment"],
+        ("works/music", "format"): ["album", "track", "experiment", "live"],
+    }
+    enums.update(enum_overrides.pop("enums", {}))
+    for (sec, field), values in enums.items():
+        s[sec]["fields"][field]["values"] = values
+    s["works/music"]["fields"]["platform_embed"]["fields"]["kind"]["values"] = (
+        enum_overrides.pop("platform_kinds", ["bandcamp", "soundcloud", "youtube"]))
+    assert not enum_overrides, enum_overrides
+    return reg
+
+
+# Threaded explicitly into every direct lint_file() call in this file.
+REG = _registry()
 
 
 class WorksFixturesLinterTests(unittest.TestCase):
@@ -107,16 +102,6 @@ class WorksFixturesLinterTests(unittest.TestCase):
         self.works = self.tmp / "content" / "works"
         for sub in ("games", "music", "poetry"):
             (self.works / sub).mkdir(parents=True)
-        # lint.run() fails closed on a missing vocab file (see
-        # test_missing_vocab_fails_closed below); seed a real one here so
-        # every pre-existing test that goes through run() (test_runner_*)
-        # keeps passing. Direct lint_file() calls elsewhere in this file
-        # thread the module-level VOCAB constant explicitly instead — they
-        # never touch this tempdir's copy or the live repo's.
-        (self.tmp / "data").mkdir(parents=True)
-        shutil.copyfile(
-            REPO_ROOT / lint.VOCAB_REL, self.tmp / "data" / "works-vocab.json"
-        )
 
     def tearDown(self):
         shutil.rmtree(self.tmp)
@@ -133,36 +118,36 @@ class WorksFixturesLinterTests(unittest.TestCase):
 
     def test_game_valid_passes(self):
         p = self._write("games", "ok", GAME_VALID)
-        self.assertEqual(lint.lint_file(p, VOCAB), [])
+        self.assertEqual(lint.lint_file(p, REG), [])
 
     def test_game_missing_status(self):
         body = GAME_VALID.replace("status: playable\n", "")
         p = self._write("games", "missing-status", body)
-        errs = lint.lint_file(p, VOCAB)
+        errs = lint.lint_file(p, REG)
         self.assertTrue(any("missing required field 'status'" in e for e in errs))
 
     def test_game_bad_status_enum(self):
         body = GAME_VALID.replace("status: playable", "status: shipped")
         p = self._write("games", "bad-status", body)
-        errs = lint.lint_file(p, VOCAB)
+        errs = lint.lint_file(p, REG)
         self.assertTrue(any("status='shipped'" in e for e in errs))
 
     def test_game_bad_kind_enum(self):
         body = GAME_VALID.replace("game_kind: full-release", "game_kind: walking-sim")
         p = self._write("games", "bad-kind", body)
-        errs = lint.lint_file(p, VOCAB)
+        errs = lint.lint_file(p, REG)
         self.assertTrue(any("game_kind='walking-sim'" in e for e in errs))
 
     def test_game_year_not_int(self):
         body = GAME_VALID.replace("year: 2026", "year: 'twenty-six'")
         p = self._write("games", "bad-year", body)
-        errs = lint.lint_file(p, VOCAB)
+        errs = lint.lint_file(p, REG)
         self.assertTrue(any("year" in e and "integer" in e for e in errs))
 
     def test_game_unknown_field(self):
         body = GAME_VALID.replace("year: 2026\n", "year: 2026\nrarity: 99\n")
         p = self._write("games", "extra-field", body)
-        errs = lint.lint_file(p, VOCAB)
+        errs = lint.lint_file(p, REG)
         self.assertTrue(any("unknown field 'rarity'" in e for e in errs))
 
     def test_game_with_all_optionals(self):
@@ -194,24 +179,24 @@ related_notes: [/garden/story-atoms/]
 Body.
 """
         p = self._write("games", "full", body)
-        self.assertEqual(lint.lint_file(p, VOCAB), [])
+        self.assertEqual(lint.lint_file(p, REG), [])
 
     # --- music contract ---
 
     def test_music_valid_passes(self):
         p = self._write("music", "ok", MUSIC_VALID)
-        self.assertEqual(lint.lint_file(p, VOCAB), [])
+        self.assertEqual(lint.lint_file(p, REG), [])
 
     def test_music_missing_format(self):
         body = MUSIC_VALID.replace("format: album\n", "")
         p = self._write("music", "missing-format", body)
-        errs = lint.lint_file(p, VOCAB)
+        errs = lint.lint_file(p, REG)
         self.assertTrue(any("missing required field 'format'" in e for e in errs))
 
     def test_music_bad_format_enum(self):
         body = MUSIC_VALID.replace("format: album", "format: cassette")
         p = self._write("music", "bad-format", body)
-        errs = lint.lint_file(p, VOCAB)
+        errs = lint.lint_file(p, REG)
         self.assertTrue(any("format='cassette'" in e for e in errs))
 
     def test_music_platform_embed_bad_kind(self):
@@ -220,7 +205,7 @@ Body.
             "year: 2026\nplatform_embed: { kind: spotify, url: 'https://example.com' }\n",
         )
         p = self._write("music", "bad-embed-kind", body)
-        errs = lint.lint_file(p, VOCAB)
+        errs = lint.lint_file(p, REG)
         self.assertTrue(any("platform_embed.kind='spotify'" in e for e in errs))
 
     def test_music_platform_embed_missing_url(self):
@@ -229,7 +214,7 @@ Body.
             "year: 2026\nplatform_embed: { kind: bandcamp }\n",
         )
         p = self._write("music", "embed-no-url", body)
-        errs = lint.lint_file(p, VOCAB)
+        errs = lint.lint_file(p, REG)
         self.assertTrue(any("platform_embed.url" in e and "missing" in e for e in errs))
 
     def test_music_tracks_shape(self):
@@ -238,7 +223,7 @@ Body.
             'year: 2026\ntracks:\n  - { title: "Track 1", duration: "3:14" }\n  - { title: "Track 2", duration: "4:20" }\n',
         )
         p = self._write("music", "good-tracks", body)
-        self.assertEqual(lint.lint_file(p, VOCAB), [])
+        self.assertEqual(lint.lint_file(p, REG), [])
 
     def test_music_track_missing_duration(self):
         body = MUSIC_VALID.replace(
@@ -246,31 +231,31 @@ Body.
             'year: 2026\ntracks:\n  - { title: "Track 1" }\n',
         )
         p = self._write("music", "bad-track", body)
-        errs = lint.lint_file(p, VOCAB)
+        errs = lint.lint_file(p, REG)
         self.assertTrue(any("tracks[0]" in e for e in errs))
 
     def test_music_unknown_field(self):
         body = MUSIC_VALID.replace("year: 2026\n", "year: 2026\nbpm: 128\n")
         p = self._write("music", "extra-field", body)
-        errs = lint.lint_file(p, VOCAB)
+        errs = lint.lint_file(p, REG)
         self.assertTrue(any("unknown field 'bpm'" in e for e in errs))
 
     # --- poetry contract ---
 
     def test_poem_valid_passes(self):
         p = self._write("poetry", "ok", POEM_VALID)
-        self.assertEqual(lint.lint_file(p, VOCAB), [])
+        self.assertEqual(lint.lint_file(p, REG), [])
 
     def test_poem_missing_lines(self):
         body = POEM_VALID.replace("lines: 14\n", "")
         p = self._write("poetry", "missing-lines", body)
-        errs = lint.lint_file(p, VOCAB)
+        errs = lint.lint_file(p, REG)
         self.assertTrue(any("missing required field 'lines'" in e for e in errs))
 
     def test_poem_lines_not_int(self):
         body = POEM_VALID.replace("lines: 14", "lines: 'fourteen'")
         p = self._write("poetry", "bad-lines", body)
-        errs = lint.lint_file(p, VOCAB)
+        errs = lint.lint_file(p, REG)
         self.assertTrue(any("lines" in e and "integer" in e for e in errs))
 
     def test_poem_with_optionals(self):
@@ -290,7 +275,7 @@ summary: "A summary."
 Body.
 """
         p = self._write("poetry", "with-optionals", body)
-        self.assertEqual(lint.lint_file(p, VOCAB), [])
+        self.assertEqual(lint.lint_file(p, REG), [])
 
     def test_poem_accepts_audio_url(self):
         body = POEM_VALID.replace(
@@ -298,7 +283,7 @@ Body.
             'lines: 14\naudio_url: "https://example.com/reading.mp3"\n',
         )
         p = self._write("poetry", "with-audio", body)
-        self.assertEqual(lint.lint_file(p, VOCAB), [])
+        self.assertEqual(lint.lint_file(p, REG), [])
 
     def test_poem_audio_url_relative_accepted_by_fixture_linter(self):
         # check_works_fixtures only validates *shape* (unknown-field gate);
@@ -308,7 +293,7 @@ Body.
             'lines: 14\naudio_url: reading.mp3\n',
         )
         p = self._write("poetry", "with-audio-rel", body)
-        self.assertEqual(lint.lint_file(p, VOCAB), [])
+        self.assertEqual(lint.lint_file(p, REG), [])
 
     # --- umbrella (Bento grid) fields ---
 
@@ -318,7 +303,7 @@ Body.
             "year: 2026\ntile_size: large\nfeatured: true\nhero: true\n",
         )
         p = self._write("games", "with-umbrella", body)
-        self.assertEqual(lint.lint_file(p, VOCAB), [])
+        self.assertEqual(lint.lint_file(p, REG), [])
 
     def test_music_accepts_tile_size_featured_hero(self):
         body = MUSIC_VALID.replace(
@@ -326,7 +311,7 @@ Body.
             "year: 2026\ntile_size: small\nfeatured: true\nhero: false\n",
         )
         p = self._write("music", "with-umbrella", body)
-        self.assertEqual(lint.lint_file(p, VOCAB), [])
+        self.assertEqual(lint.lint_file(p, REG), [])
 
     def test_poem_accepts_tile_size_featured_hero(self):
         body = POEM_VALID.replace(
@@ -334,7 +319,7 @@ Body.
             "lines: 14\ntile_size: medium\nfeatured: false\nhero: true\n",
         )
         p = self._write("poetry", "with-umbrella", body)
-        self.assertEqual(lint.lint_file(p, VOCAB), [])
+        self.assertEqual(lint.lint_file(p, REG), [])
 
     def test_tile_size_must_be_in_enum(self):
         body = GAME_VALID.replace(
@@ -342,7 +327,7 @@ Body.
             "year: 2026\ntile_size: huge\n",
         )
         p = self._write("games", "bad-tile-size", body)
-        errs = lint.lint_file(p, VOCAB)
+        errs = lint.lint_file(p, REG)
         self.assertTrue(any("tile_size='huge'" in e for e in errs), errs)
 
     # --- source_stream (streams-section back-edge) ---
@@ -353,7 +338,7 @@ Body.
             "year: 2026\nsource_stream: 2026-04-10-example-live-coding-stream\n",
         )
         p = self._write("games", "with-source-stream", body)
-        self.assertEqual(lint.lint_file(p, VOCAB), [])
+        self.assertEqual(lint.lint_file(p, REG), [])
 
     def test_music_accepts_source_stream(self):
         body = MUSIC_VALID.replace(
@@ -361,7 +346,7 @@ Body.
             "year: 2026\nsource_stream: 2026-04-22-example-music-jam-stream\n",
         )
         p = self._write("music", "with-source-stream", body)
-        self.assertEqual(lint.lint_file(p, VOCAB), [])
+        self.assertEqual(lint.lint_file(p, REG), [])
 
     def test_poem_accepts_source_stream(self):
         body = POEM_VALID.replace(
@@ -369,7 +354,7 @@ Body.
             "lines: 14\nsource_stream: 2026-04-22-example-music-jam-stream\n",
         )
         p = self._write("poetry", "with-source-stream", body)
-        self.assertEqual(lint.lint_file(p, VOCAB), [])
+        self.assertEqual(lint.lint_file(p, REG), [])
 
     # --- runner ---
 
@@ -390,112 +375,97 @@ Body.
         self.assertEqual(rc, 1)
         self.assertEqual(len(errs), 2)
 
-    # --- shared enum vocabulary (single-sourced with the elisp linter) ---
+    # --- the contract is the registry's (data/sections.json) ---
 
-    def test_vocab_is_single_source(self):
-        """Mutating the vocab file must change what the linter accepts."""
+    def test_registry_is_single_source(self):
+        """Mutating the registry must change what the linter accepts."""
         repo = TempRepo()
         try:
-            repo.write("data/works-vocab.json", _vocab_json(
-                game_statuses=["playible"],             # deliberate typo
-            ))
             repo.write("content/works/games/g/index.md", GAME_MD_PLAYABLE)
-            code, errs = lint.run(repo.root)
+            reg = _registry(enums={("works/games", "status"): ["playible"]})  # deliberate typo
+            code, errs = lint.run(repo.root, registry=reg)
             self.assertEqual(code, 1)
             self.assertTrue(any("status='playable'" in e for e in errs), errs)
         finally:
             repo.cleanup()
 
-    def test_missing_vocab_fails_closed(self):
-        """A missing vocab file must fail, never fall back to a hardcoded copy.
+    def _run_against_registry_file(self, text: str | None) -> tuple[int, list[str]]:
+        """run() over a one-game tree with this tree's registry replaced."""
+        site, repo = TempRepo(), TempRepo()
+        try:
+            if text is not None:
+                site.write("data/sections.json", text)
+            repo.write("content/works/games/g/index.md", GAME_MD_PLAYABLE)
+            with mock.patch.object(sections, "SITE_ROOT", site.root), \
+                    mock.patch.object(sections, "_CACHE", {}):
+                return lint.run(repo.root)
+        finally:
+            site.cleanup()
+            repo.cleanup()
+
+    def test_missing_registry_fails_closed(self):
+        """A missing registry must fail, never fall back to a hardcoded copy.
 
         Reported through the uniform `(rc, errs)` seam rather than by
         `sys.exit` from inside `run()`: an aggregator importing this module
         must not have the process pulled out from under it.
         """
-        repo = TempRepo()
-        try:
-            repo.write("content/works/games/g/index.md", GAME_MD_PLAYABLE)
-            code, errs = lint.run(repo.root)
-            self.assertEqual(code, 1)
-            self.assertEqual(len(errs), 1)
-            self.assertIn("vocabulary not found at", errs[0])
-        finally:
-            repo.cleanup()
+        code, errs = self._run_against_registry_file(None)
+        self.assertEqual(code, 1)
+        self.assertEqual(len(errs), 1)
+        self.assertIn("registry not found at", errs[0])
 
-    def test_poetry_only_tree_still_requires_the_vocabulary(self):
-        """A works tree with no games/music still reads the vocabulary.
+    def test_run_never_exits_the_process_on_a_bad_registry(self):
+        """Malformed JSON is a returned error too, not a SystemExit."""
+        code, errs = self._run_against_registry_file("{ not json")
+        self.assertEqual(code, 1)
+        self.assertIn("is not valid JSON", errs[0])
 
-        `run()` used to load it lazily, only on reaching a games/music
-        fixture, so a poetry-only site root needed no vocabulary file at all.
-        That laziness stopped being correct when `umbrella_optional` moved
-        into the vocabulary: `poem_fields()` composes from it. The consequence
-        is load-bearing for a caller outside this file —
-        `tools/test_publish_integration.py`'s `TestPoetryPublishDeliberate`
-        builds a poetry-only site root and asserts `run(...) == 0`, and it had
-        to start seeding `data/works-vocab.json` in `setUp`. Pinned here
-        because that integration test needs a subprocess `emacs --batch` and
-        can be skipped or environment-blocked, so it is not a reliable guard
-        for this contract.
+    def test_poetry_only_tree_needs_no_seeded_registry(self):
+        """The registry belongs to the code tree, not the content tree.
+
+        data/works-vocab.json had to be seeded into every works-touching temp
+        site root (tools/test_publish_integration.py's
+        TestPoetryPublishDeliberate included). sections.json is read from this
+        repository, so a bare poetry-only tree lints clean as-is.
         """
         repo = TempRepo()
         try:
             repo.write("content/works/poetry/p/index.md", POEM_VALID)
-            code, errs = lint.run(repo.root)
-            self.assertEqual(code, 1)
-            self.assertIn("vocabulary not found at", errs[0])
-            # ...and with the file present it is clean again.
-            repo.write("data/works-vocab.json", _vocab_json())
             self.assertEqual(lint.run(repo.root), (0, []))
         finally:
             repo.cleanup()
 
-    def test_run_never_exits_the_process_on_a_bad_vocab(self):
-        """Malformed JSON is a returned error too, not a SystemExit."""
-        repo = TempRepo()
-        try:
-            repo.write("data/works-vocab.json", "{ not json")
-            repo.write("content/works/games/g/index.md", GAME_MD_PLAYABLE)
-            code, errs = lint.run(repo.root)
-            self.assertEqual(code, 1)
-            self.assertIn("is not valid JSON", errs[0])
-        finally:
-            repo.cleanup()
+    def test_field_sets_come_from_the_registry(self):
+        """Dropping an optional key from the registry makes it an unknown field.
 
-    # --- the field-set contract is vocabulary-owned, not hardcoded here ---
-
-    def test_field_sets_come_from_the_vocabulary_file(self):
-        """Dropping an optional key from the JSON must make it an unknown field.
-
-        This is what makes data/works-vocab.json the single home of the
+        This is what makes data/sections.json the single home of the
         emitted-key contract that the elisp normalizer filters against. If
-        this module ever re-hardcodes GAME_FIELDS, the fixture below keeps
+        this module ever re-hardcodes a field set, the fixture below keeps
         passing and the guard is gone.
         """
         repo = TempRepo()
         try:
-            repo.write("data/works-vocab.json", _vocab_json(
-                game_optional=[k for k in _LIVE["game_optional"] if k != "length"],
-            ))
+            reg = _registry()
+            del reg["sections"]["works/games"]["fields"]["length"]
             repo.write(
                 "content/works/games/g/index.md",
                 GAME_VALID.replace("year: 2026\n", "year: 2026\nlength: '2 hours'\n"),
             )
-            code, errs = lint.run(repo.root)
+            code, errs = lint.run(repo.root, registry=reg)
             self.assertEqual(code, 1)
             self.assertTrue(any("unknown field 'length'" in e for e in errs), errs)
         finally:
             repo.cleanup()
 
-    def test_required_sets_come_from_the_vocabulary_file(self):
-        """A key promoted to required in the JSON is demanded by the linter."""
+    def test_required_sets_come_from_the_registry(self):
+        """A key promoted to required in the registry is demanded by the linter."""
         repo = TempRepo()
         try:
-            repo.write("data/works-vocab.json", _vocab_json(
-                game_required=sorted(set(_LIVE["game_required"]) | {"itch_url"}),
-            ))
+            reg = _registry()
+            reg["sections"]["works/games"]["fields"]["itch_url"]["required"] = True
             repo.write("content/works/games/g/index.md", GAME_VALID)
-            code, errs = lint.run(repo.root)
+            code, errs = lint.run(repo.root, registry=reg)
             self.assertEqual(code, 1)
             self.assertTrue(
                 any("missing required field 'itch_url'" in e for e in errs), errs
@@ -503,11 +473,17 @@ Body.
         finally:
             repo.cleanup()
 
-    def test_umbrella_optional_is_shared_by_all_three_sub_sections(self):
-        """One `umbrella_optional` list feeds games, music AND poetry."""
+    def test_umbrella_fields_are_declared_per_sub_section(self):
+        """tile_size / featured / hero are listed in each works section.
+
+        works-vocab.json shared one `umbrella_optional` list; the registry has
+        no inheritance (spec §4), so dropping tile_size from poetry alone
+        rejects it on the poem and nowhere else.
+        """
         repo = TempRepo()
         try:
-            repo.write("data/works-vocab.json", _vocab_json(umbrella_optional=[]))
+            reg = _registry()
+            del reg["sections"]["works/poetry"]["fields"]["tile_size"]
             for sub, body in (
                 ("games", GAME_VALID), ("music", MUSIC_VALID), ("poetry", POEM_VALID),
             ):
@@ -515,13 +491,24 @@ Body.
                     f"content/works/{sub}/x/index.md",
                     body.replace("---\n\nBody.", "tile_size: large\n---\n\nBody."),
                 )
-            code, errs = lint.run(repo.root)
+            code, errs = lint.run(repo.root, registry=reg)
             self.assertEqual(code, 1)
             self.assertEqual(
-                sum(1 for e in errs if "unknown field 'tile_size'" in e), 3, errs
+                [e for e in errs if "unknown field 'tile_size'" in e],
+                [f"{repo.root}/content/works/poetry/x/index.md: unknown field 'tile_size'"],
             )
         finally:
             repo.cleanup()
+
+    def test_platform_embed_sub_keys_are_closed(self):
+        """platform_embed is a registry `object`: an unlisted sub-key now fails."""
+        body = MUSIC_VALID.replace(
+            "year: 2026\n",
+            "year: 2026\nplatform_embed: { kind: bandcamp, url: 'https://x', id: 3 }\n",
+        )
+        p = self._write("music", "embed-extra", body)
+        self.assertEqual(lint.lint_file(p, REG),
+                         [f"{p}: unknown field 'platform_embed.id'"])
 
 
 if __name__ == "__main__":
