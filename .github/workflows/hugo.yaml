@@ -73,6 +73,10 @@ jobs:
         run: python3 tools/check_breakpoints.py
       - name: Run breakpoint linter unit tests
         run: python3 -m unittest tools/test_check_breakpoints.py -v
+      - name: Validate section registry
+        run: python3 tools/sections.py
+      - name: Run section registry unit tests
+        run: python3 -m unittest tools/test_sections.py -v
       - name: Verify essay fixtures
         run: python3 tools/check_fixtures.py
       - name: Run essay linter unit tests

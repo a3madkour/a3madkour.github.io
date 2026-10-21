@@ -30,6 +30,9 @@ python3 -m unittest tools/test_check_spacing_tokens.py -v 2>&1 | tail -3
 python3 tools/check_breakpoints.py
 python3 -m unittest tools/test_check_breakpoints.py -v 2>&1 | tail -3
 
+python3 tools/sections.py
+python3 -m unittest tools/test_sections.py -v 2>&1 | tail -3
+
 python3 tools/check_fixtures.py
 python3 -m unittest tools/test_check_fixtures.py -v 2>&1 | tail -3
 

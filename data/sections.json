@@ -1,0 +1,423 @@
+{
+  "version": 1,
+  "sections": {
+    "essays": {
+      "closed": false,
+      "fields": {
+        "title":          {"type": "text", "required": true, "from": "pipeline"},
+        "date":           {"type": "date", "required": true, "from": "pipeline"},
+        "lastmod":        {"type": "date", "required": true, "from": "pipeline"},
+        "draft":          {"type": "bool", "required": true, "from": "pipeline"},
+        "summary":        {"type": "text", "required": true},
+        "tags":           {"type": "list", "required": true, "from": "pipeline"},
+        "series":         {"type": "text", "required": true, "from": "pipeline"},
+        "series_order":   {"type": "int",  "required": true, "from": "pipeline"},
+        "toc":            {"type": "bool", "required": true, "from": "pipeline"},
+        "has_sidenotes":  {"type": "bool", "required": true, "from": "pipeline"},
+        "has_citations":  {"type": "bool", "required": true, "from": "pipeline"},
+        "has_footnotes":  {"type": "bool", "required": true, "from": "pipeline"},
+        "has_math":       {"type": "bool", "required": true, "from": "pipeline"},
+        "has_widgets":    {"type": "bool", "required": true, "from": "pipeline"},
+        "has_video_sync": {"type": "bool", "required": true, "from": "pipeline"},
+        "tile_size":      {"type": "enum", "values": ["large", "medium", "small"]},
+        "featured":       {"type": "bool"},
+        "hero":           {"type": "text"},
+        "block_numbering":{"type": "text"},
+        "multi_export":   {"type": "bool", "from": "pipeline"},
+        "downloads":      {"type": "structured", "from": "pipeline"},
+        "source_stream":  {"type": "ref",  "to": "streams"}
+      }
+    },
+    "garden": {
+      "fields": {
+        "title":         {"type": "text", "required": true, "from": "pipeline"},
+        "draft":         {"type": "bool", "required": true, "from": "pipeline"},
+        "last_modified": {"type": "date", "required": true, "from": "pipeline"},
+        "growth_stage":  {"type": "enum", "required": true, "from": "pipeline",
+                          "values": ["budding", "evergreen", "seedling"]},
+        "tags":          {"type": "list", "from": "pipeline"},
+        "summary":       {"type": "text"},
+        "topic_map":     {"type": "refs", "to": "garden"},
+        "roam_refs":     {"type": "text", "from": "pipeline"},
+        "year":          {"type": "int"},
+        "source_stream": {"type": "ref",  "to": "streams"}
+      },
+      "variants": {
+        "on": "media_type",
+        "cases": {
+          "concept": {
+            "values": [null],
+            "fields": {
+              "weight": {"type": "int"}
+            }
+          },
+          "media": {
+            "values": ["album", "book", "film", "game", "series", "track"],
+            "fields": {
+              "media_type":    {"type": "enum", "required": true,
+                                "values": ["album", "book", "film", "game", "series", "track"]},
+              "status":        {"type": "enum", "required": true,
+                                "values": ["abandoned", "finished", "queued", "reading"]},
+              "creator":       {"type": "text", "required": true},
+              "original_url":  {"type": "text"},
+              "started":       {"type": "date"},
+              "finished":      {"type": "date"},
+              "spoiler_level": {"type": "enum", "values": ["heavy", "light", "none"]}
+            }
+          },
+          "reference": {
+            "values": ["article", "paper", "talk", "video"],
+            "fields": {
+              "media_type":   {"type": "enum", "required": true,
+                               "values": ["article", "paper", "talk", "video"]},
+              "creator":      {"type": "text", "required": true},
+              "original_url": {"type": "text"}
+            }
+          }
+        }
+      }
+    },
+    "research/themes": {
+      "fields": {
+        "title":            {"type": "text", "required": true, "from": "pipeline"},
+        "last_modified":    {"type": "date", "required": true, "from": "pipeline"},
+        "tags":             {"type": "list", "required": true, "from": "pipeline"},
+        "draft":            {"type": "bool", "from": "pipeline"},
+        "author":           {"type": "list", "from": "pipeline"},
+        "description":      {"type": "text", "required": true},
+        "summary":          {"type": "text"},
+        "status":           {"type": "enum", "required": true,
+                             "values": ["active", "answered", "dormant"], "default": "active"},
+        "weight":           {"type": "int",  "required": true, "fill": "next-weight"},
+        "garden_topic_ref": {"type": "ref",  "to": "garden"},
+        "source_stream":    {"type": "ref",  "to": "streams"}
+      }
+    },
+    "research/questions": {
+      "fields": {
+        "title":            {"type": "text", "required": true, "from": "pipeline"},
+        "last_modified":    {"type": "date", "required": true, "from": "pipeline"},
+        "tags":             {"type": "list", "from": "pipeline"},
+        "draft":            {"type": "bool", "from": "pipeline"},
+        "author":           {"type": "list", "from": "pipeline"},
+        "description":      {"type": "text", "required": true},
+        "status":           {"type": "enum", "required": true,
+                             "values": ["active", "answered", "dormant"], "default": "active"},
+        "theme":            {"type": "ref",  "required": true, "to": "research/themes"},
+        "parent_question":  {"type": "ref",  "to": "research/questions"},
+        "supporting_notes": {"type": "refs", "to": "garden", "ask": true},
+        "related_essays":   {"type": "refs", "to": "essays"},
+        "started":          {"type": "date", "fill": "today", "ask": true},
+        "outputs":          {"type": "structured"},
+        "weight":           {"type": "int"},
+        "source_stream":    {"type": "ref",  "to": "streams"}
+      }
+    },
+    "works/games": {
+      "fields": {
+        "title":              {"type": "text", "required": true, "from": "pipeline"},
+        "date":               {"type": "date", "required": true, "from": "pipeline"},
+        "lastmod":            {"type": "date", "required": true, "from": "pipeline"},
+        "draft":              {"type": "bool", "required": true, "from": "pipeline"},
+        "status":             {"type": "enum", "required": true,
+                               "values": ["archived", "in-progress", "playable"]},
+        "game_kind":          {"type": "enum", "required": true,
+                               "values": ["experiment", "full-release", "jam", "research-prototype"]},
+        "tagline":            {"type": "text", "required": true},
+        "year":               {"type": "int",  "required": true},
+        "tags":               {"type": "list", "from": "pipeline"},
+        "summary":            {"type": "text"},
+        "embed_url":          {"type": "text"},
+        "source_url":         {"type": "text"},
+        "itch_url":           {"type": "text"},
+        "collaborators":      {"type": "list"},
+        "tech_stack":         {"type": "list"},
+        "length":             {"type": "text"},
+        "screenshots":        {"type": "list"},
+        "research_questions": {"type": "list"},
+        "related_essays":     {"type": "list"},
+        "related_notes":      {"type": "list"},
+        "source_stream":      {"type": "ref",  "to": "streams"},
+        "tile_size":          {"type": "enum", "values": ["large", "medium", "small"]},
+        "featured":           {"type": "bool"},
+        "hero":               {"type": "structured"}
+      }
+    },
+    "works/music": {
+      "fields": {
+        "title":          {"type": "text", "required": true, "from": "pipeline"},
+        "date":           {"type": "date", "required": true, "from": "pipeline"},
+        "lastmod":        {"type": "date", "required": true, "from": "pipeline"},
+        "draft":          {"type": "bool", "required": true, "from": "pipeline"},
+        "format":         {"type": "enum", "required": true,
+                           "values": ["album", "experiment", "live", "track"]},
+        "year":           {"type": "int",  "required": true},
+        "tags":           {"type": "list", "from": "pipeline"},
+        "summary":        {"type": "text"},
+        "tagline":        {"type": "text"},
+        "cover":          {"type": "text"},
+        "duration":       {"type": "text"},
+        "tracks":         {"type": "structured"},
+        "platform_embed": {"type": "object",
+                           "fields": {
+                             "kind": {"type": "enum", "required": true,
+                                      "values": ["bandcamp", "soundcloud", "youtube"]},
+                             "url":  {"type": "text", "required": true}
+                           }},
+        "audio_url":      {"type": "text"},
+        "lyrics_poem":    {"type": "ref",  "to": "works/poetry"},
+        "related_works":  {"type": "list"},
+        "related_essays": {"type": "list"},
+        "made_with":      {"type": "list"},
+        "collaborators":  {"type": "list"},
+        "source_stream":  {"type": "ref",  "to": "streams"},
+        "tile_size":      {"type": "enum", "values": ["large", "medium", "small"]},
+        "featured":       {"type": "bool"},
+        "hero":           {"type": "bool"}
+      }
+    },
+    "works/poetry": {
+      "fields": {
+        "title":         {"type": "text", "required": true, "from": "pipeline"},
+        "date":          {"type": "date", "required": true, "from": "pipeline"},
+        "lastmod":       {"type": "date", "required": true, "from": "pipeline"},
+        "draft":         {"type": "bool", "required": true, "from": "pipeline"},
+        "lines":         {"type": "int",  "required": true, "from": "pipeline"},
+        "tags":          {"type": "list", "from": "pipeline"},
+        "collection":    {"type": "text"},
+        "set_to_music":  {"type": "ref",  "to": "works/music"},
+        "summary":       {"type": "text"},
+        "audio_url":     {"type": "text"},
+        "source_stream": {"type": "ref",  "to": "streams"},
+        "tile_size":     {"type": "enum", "values": ["large", "medium", "small"]},
+        "featured":      {"type": "bool"},
+        "hero":          {"type": "bool"}
+      }
+    },
+    "library/reading": {
+      "store": "data",
+      "fields": {
+        "slug":          {"type": "text", "required": true, "from": "pipeline"},
+        "title":         {"type": "text", "required": true, "from": "pipeline"},
+        "creator":       {"type": "text", "required": true},
+        "year":          {"type": "int",  "required": true},
+        "media_type":    {"type": "enum", "required": true, "values": ["book"]},
+        "status":        {"type": "enum", "required": true,
+                          "values": ["abandoned", "finished", "queued", "reading"]},
+        "last_modified": {"type": "date", "required": true, "from": "pipeline"},
+        "tags":          {"type": "list", "required": true, "from": "pipeline"},
+        "started":       {"type": "date"},
+        "finished":      {"type": "date"},
+        "spoiler_level": {"type": "enum", "values": ["heavy", "light", "none"]},
+        "cite_key":      {"type": "text"},
+        "canonical_url": {"type": "text"},
+        "note_slug":     {"type": "ref",  "to": "garden"},
+        "preview":       {"type": "text"},
+        "extras": {
+          "type": "object",
+          "fields": {
+            "cover_file": {"type": "text"},
+            "cover_url":  {"type": "text"}
+          },
+          "variants": {
+            "on": "media_type",
+            "cases": {
+              "book": {
+                "values": ["book"],
+                "fields": {
+                  "progress_pct":   {"type": "int"},
+                  "progress_label": {"type": "text"},
+                  "isbn":           {"type": "text"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "library/listening": {
+      "store": "data",
+      "fields": {
+        "slug":          {"type": "text", "required": true, "from": "pipeline"},
+        "title":         {"type": "text", "required": true, "from": "pipeline"},
+        "creator":       {"type": "text", "required": true},
+        "year":          {"type": "int",  "required": true},
+        "media_type":    {"type": "enum", "required": true, "values": ["album", "track"]},
+        "status":        {"type": "enum", "required": true,
+                          "values": ["dropped", "finished", "listening", "queued"]},
+        "last_modified": {"type": "date", "required": true, "from": "pipeline"},
+        "tags":          {"type": "list", "required": true, "from": "pipeline"},
+        "started":       {"type": "date"},
+        "finished":      {"type": "date"},
+        "spoiler_level": {"type": "enum", "values": ["heavy", "light", "none"]},
+        "cite_key":      {"type": "text"},
+        "canonical_url": {"type": "text"},
+        "note_slug":     {"type": "ref",  "to": "garden"},
+        "preview":       {"type": "text"},
+        "extras": {
+          "type": "object",
+          "fields": {
+            "cover_file": {"type": "text"},
+            "cover_url":  {"type": "text"}
+          },
+          "variants": {
+            "on": "media_type",
+            "cases": {
+              "album": {
+                "values": ["album"],
+                "fields": {
+                  "musicbrainz_release_group": {"type": "text"}
+                }
+              },
+              "track": {
+                "values": ["track"],
+                "fields": {
+                  "musicbrainz_release_group": {"type": "text"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "library/playing": {
+      "store": "data",
+      "fields": {
+        "slug":          {"type": "text", "required": true, "from": "pipeline"},
+        "title":         {"type": "text", "required": true, "from": "pipeline"},
+        "creator":       {"type": "text", "required": true},
+        "year":          {"type": "int",  "required": true},
+        "media_type":    {"type": "enum", "required": true, "values": ["game"]},
+        "status":        {"type": "enum", "required": true,
+                          "values": ["100pct", "dropped", "finished", "playing", "queued"]},
+        "last_modified": {"type": "date", "required": true, "from": "pipeline"},
+        "tags":          {"type": "list", "required": true, "from": "pipeline"},
+        "started":       {"type": "date"},
+        "finished":      {"type": "date"},
+        "spoiler_level": {"type": "enum", "values": ["heavy", "light", "none"]},
+        "cite_key":      {"type": "text"},
+        "canonical_url": {"type": "text"},
+        "note_slug":     {"type": "ref",  "to": "garden"},
+        "preview":       {"type": "text"},
+        "extras": {
+          "type": "object",
+          "fields": {
+            "cover_file": {"type": "text"},
+            "cover_url":  {"type": "text"}
+          },
+          "variants": {
+            "on": "media_type",
+            "cases": {
+              "game": {
+                "values": ["game"],
+                "fields": {
+                  "hours_played": {"type": "int"},
+                  "platform":     {"type": "text"},
+                  "igdb_id":      {"type": "int"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "library/watching": {
+      "store": "data",
+      "fields": {
+        "slug":          {"type": "text", "required": true, "from": "pipeline"},
+        "title":         {"type": "text", "required": true, "from": "pipeline"},
+        "creator":       {"type": "text", "required": true},
+        "year":          {"type": "int",  "required": true},
+        "media_type":    {"type": "enum", "required": true, "values": ["film", "series"]},
+        "status":        {"type": "enum", "required": true,
+                          "values": ["dropped", "finished", "queued", "watching"]},
+        "last_modified": {"type": "date", "required": true, "from": "pipeline"},
+        "tags":          {"type": "list", "required": true, "from": "pipeline"},
+        "started":       {"type": "date"},
+        "finished":      {"type": "date"},
+        "spoiler_level": {"type": "enum", "values": ["heavy", "light", "none"]},
+        "cite_key":      {"type": "text"},
+        "canonical_url": {"type": "text"},
+        "note_slug":     {"type": "ref",  "to": "garden"},
+        "preview":       {"type": "text"},
+        "extras": {
+          "type": "object",
+          "fields": {
+            "cover_file": {"type": "text"},
+            "cover_url":  {"type": "text"}
+          },
+          "variants": {
+            "on": "media_type",
+            "cases": {
+              "film": {
+                "values": ["film"],
+                "fields": {
+                  "runtime_min": {"type": "int"},
+                  "tmdb_id":     {"type": "int"}
+                }
+              },
+              "series": {
+                "values": ["series"],
+                "fields": {
+                  "episode_count":   {"type": "int"},
+                  "current_episode": {"type": "int"},
+                  "current_season":  {"type": "int"},
+                  "tmdb_id":         {"type": "int"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "streams": {
+      "fields": {
+        "title":              {"type": "text", "required": true, "from": "pipeline"},
+        "date":               {"type": "date", "required": true, "from": "pipeline"},
+        "draft":              {"type": "bool", "required": true, "from": "pipeline"},
+        "platforms":          {"type": "list", "required": true},
+        "category":           {"type": "enum", "required": true,
+                               "values": ["coding", "creative", "game-dev", "research"]},
+        "archive_status":     {"type": "enum", "required": true,
+                               "values": ["archived", "live", "private", "removed"]},
+        "duration":           {"type": "text"},
+        "vod_url":            {"type": "text"},
+        "twitch_archive_url": {"type": "text"},
+        "archive_url":        {"type": "text"},
+        "tags":               {"type": "list", "from": "pipeline"},
+        "summary":            {"type": "text"},
+        "related_essays":     {"type": "refs", "to": "essays"},
+        "related_garden":     {"type": "refs", "to": "garden"},
+        "related_research":   {"type": "refs", "to": "research/questions"},
+        "related_works":      {"type": "list"}
+      }
+    },
+    "recipes": {
+      "fields": {
+        "title":         {"type": "text", "required": true, "from": "pipeline"},
+        "date":          {"type": "date", "required": true, "from": "pipeline"},
+        "lastmod":       {"type": "date", "required": true, "from": "pipeline"},
+        "draft":         {"type": "bool", "required": true, "from": "pipeline"},
+        "summary":       {"type": "text", "required": true},
+        "servings":      {"type": "structured", "required": true, "from": "pipeline"},
+        "sources":       {"type": "structured", "required": true, "from": "pipeline"},
+        "ingredients":   {"type": "structured", "required": true, "from": "pipeline"},
+        "steps":         {"type": "structured", "required": true, "from": "pipeline"},
+        "tags":          {"type": "list", "from": "pipeline"},
+        "cuisine":       {"type": "text", "from": "pipeline"},
+        "category":      {"type": "text", "from": "pipeline"},
+        "yield_unit":    {"type": "text", "from": "pipeline"},
+        "prep_minutes":  {"type": "int",  "from": "pipeline"},
+        "cook_minutes":  {"type": "int",  "from": "pipeline"},
+        "total_minutes": {"type": "int",  "from": "pipeline"},
+        "image":         {"type": "text", "from": "pipeline"},
+        "video":         {"type": "text", "from": "pipeline"},
+        "outputs":       {"type": "structured"}
+      }
+    },
+    "about": {
+      "closed": false,
+      "fields": {}
+    }
+  }
+}
