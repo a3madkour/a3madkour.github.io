@@ -2,7 +2,9 @@
 """Library fixture frontmatter linter.
 
 Validates `data/{reading,listening,playing,watching}.yaml` shape per
-docs/superpowers/specs/2026-05-12-library-section-design.md §3.
+docs/superpowers/specs/2026-05-12-library-section-design.md §3, each item
+against its shelf's `library/<shelf>` entry in data/sections.json
+(sections.check_fields; spec 2026-10-20 §5.1).
 
 Exits 0 on all-pass, 1 on any violation. Stdlib only.
 """
@@ -11,11 +13,11 @@ from __future__ import annotations
 import re
 import sys
 import urllib.parse
-from datetime import date as Date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_fixtures import parse_scalar  # noqa: E402
+import sections  # noqa: E402
 
 
 ITEM_START_RE = re.compile(r"^  - ([a-zA-Z_]+):\s*(.*)$")
@@ -109,98 +111,62 @@ def parse_library_yaml(text: str) -> list[dict[str, object]]:
     return items
 
 
-ALLOWED_MEDIA_TYPES = {
-    "reading.yaml":   {"book"},
-    "listening.yaml": {"album", "track"},
-    "playing.yaml":   {"game"},
-    "watching.yaml":  {"film", "series"},
-}
-
-ALLOWED_STATUSES = {
-    "reading.yaml":   {"finished", "reading", "queued", "abandoned"},
-    "listening.yaml": {"finished", "listening", "queued", "dropped"},
-    "playing.yaml":   {"finished", "100pct", "playing", "queued", "dropped"},
-    "watching.yaml":  {"finished", "watching", "queued", "dropped"},
-}
-
-COVER_KEYS_UNIVERSAL = {"cover_file", "cover_url"}
-COVER_KEYS_BY_MEDIA = {
-    "book":   {"isbn"},
-    "album":  {"musicbrainz_release_group"},
-    "track":  {"musicbrainz_release_group"},
-    "game":   {"igdb_id"},
-    "film":   {"tmdb_id"},
-    "series": {"tmdb_id"},
-}
+# --- contract ---
+#
+# Per-shelf field sets, media/status enums, types and the per-media_type
+# `extras` sub-keys live in data/sections.json under library/<shelf>
+# (store: "data"; spec 2026-10-20 §4). What stays here: the ISBN / slug / date
+# / cover-key format rules, slug uniqueness, the finished-date and episode
+# cross-field rules, the progress range, and the active-items warning.
 
 ISBN_RE = re.compile(r"^\d{10}$|^\d{13}$")
-
-ALLOWED_EXTRAS = {
-    "book":   {"progress_pct", "progress_label"} | COVER_KEYS_UNIVERSAL | COVER_KEYS_BY_MEDIA["book"],
-    "album":  COVER_KEYS_UNIVERSAL | COVER_KEYS_BY_MEDIA["album"],
-    "track":  COVER_KEYS_UNIVERSAL | COVER_KEYS_BY_MEDIA["track"],
-    "game":   {"hours_played", "platform"} | COVER_KEYS_UNIVERSAL | COVER_KEYS_BY_MEDIA["game"],
-    "film":   {"runtime_min"} | COVER_KEYS_UNIVERSAL | COVER_KEYS_BY_MEDIA["film"],
-    "series": {"episode_count", "current_episode", "current_season"} | COVER_KEYS_UNIVERSAL | COVER_KEYS_BY_MEDIA["series"],
-}
-
-REQUIRED_FIELDS = {"slug", "title", "creator", "year", "media_type", "status", "last_modified", "tags"}
-ALLOWED_FIELDS = REQUIRED_FIELDS | {
-    "started", "finished", "spoiler_level", "cite_key",
-    "canonical_url", "note_slug", "preview", "extras",
-}
-SPOILER_LEVELS = {"none", "light", "heavy"}
 SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 ACTIVE_STATUSES = {"reading", "listening", "playing", "watching"}
 
 
-def _validate_extras_cover_keys(extras: dict, media_type: str, errors: list, ctx: str) -> None:
-    allowed = COVER_KEYS_UNIVERSAL | COVER_KEYS_BY_MEDIA.get(media_type, set())
+def library_files(registry: dict | None = None) -> list[str]:
+    """`<shelf>.yaml` for every library/<shelf> section in the registry."""
+    return sorted(f"{name.split('/', 1)[1]}.yaml"
+                  for name in sections.section_names(registry)
+                  if name.startswith("library/"))
+
+
+def _validate_extras_formats(extras: dict, errors: list, ctx: str) -> None:
+    """Format rules for cover keys. Type and per-media allowance are the
+    registry's; each rule here fires only on a value of the declared type."""
     for key, value in extras.items():
-        if key not in allowed:
-            continue
         if key == "isbn":
-            if not isinstance(value, str) or not ISBN_RE.match(value):
+            if isinstance(value, str) and not ISBN_RE.match(value):
                 errors.append(f"{ctx}: extras.isbn must be 10 or 13 digits, got {value!r}")
         elif key in {"igdb_id", "tmdb_id"}:
-            if not isinstance(value, int) or value <= 0:
+            if isinstance(value, int) and not isinstance(value, bool) and value <= 0:
                 errors.append(f"{ctx}: extras.{key} must be a positive integer, got {value!r}")
         elif key == "musicbrainz_release_group":
-            if not isinstance(value, str) or not value:
+            if isinstance(value, str) and not value:
                 errors.append(f"{ctx}: extras.musicbrainz_release_group must be a non-empty string")
         elif key == "cover_url":
-            parsed = urllib.parse.urlparse(value) if isinstance(value, str) else None
-            if not parsed or not parsed.scheme or not parsed.netloc:
-                errors.append(f"{ctx}: extras.cover_url must be an absolute URL, got {value!r}")
+            if isinstance(value, str):
+                parsed = urllib.parse.urlparse(value)
+                if not parsed.scheme or not parsed.netloc:
+                    errors.append(f"{ctx}: extras.cover_url must be an absolute URL, got {value!r}")
         elif key == "cover_file":
-            if not isinstance(value, str) or "/" in value or ".." in value or not value:
+            if isinstance(value, str) and ("/" in value or ".." in value or not value):
                 errors.append(f"{ctx}: extras.cover_file must be a relative filename without '/' or '..', got {value!r}")
 
 
-def _check_date(prefix: str, field: str, value: object) -> str | None:
-    if value is None:
-        return None
-    # parse_scalar converts valid YYYY-MM-DD strings to datetime.date objects
-    if isinstance(value, Date):
-        return None
-    if not isinstance(value, str) or not DATE_RE.match(value):
-        return f"{prefix}: {field} not YYYY-MM-DD ('{value}')"
-    return None
-
-
-def lint_yaml_file(file_name: str, text: str) -> tuple[list[str], list[str]]:
+def lint_yaml_file(file_name: str, text: str,
+                   registry: dict | None = None) -> tuple[list[str], list[str]]:
     """Validate one library yaml file.
 
     Returns (errors, warnings). Errors fail CI; warnings print to stderr only.
     """
     errors: list[str] = []
     warnings: list[str] = []
-    if file_name not in ALLOWED_MEDIA_TYPES:
+    section = "library/" + file_name.removesuffix(".yaml")
+    if file_name not in library_files(registry):
         return [f"{file_name}: unknown library file"], []
 
-    media_allow = ALLOWED_MEDIA_TYPES[file_name]
-    status_allow = ALLOWED_STATUSES[file_name]
     items = parse_library_yaml(text)
 
     if not items:
@@ -212,83 +178,51 @@ def lint_yaml_file(file_name: str, text: str) -> tuple[list[str], list[str]]:
     for idx, item in enumerate(items):
         prefix = f"{file_name}[{idx}]"
 
-        # Required fields
-        missing = REQUIRED_FIELDS - set(item.keys())
-        for f in sorted(missing):
-            errors.append(f"{prefix}: missing required field '{f}'")
-
-        # Unknown fields
-        unknown = set(item.keys()) - ALLOWED_FIELDS
-        for f in sorted(unknown):
-            errors.append(f"{prefix}: unknown field '{f}'")
+        errors.extend(sections.check_fields(item, section, prefix, registry=registry))
 
         slug = item.get("slug")
-        if slug is not None and not isinstance(slug, str):
-            errors.append(f"{prefix}: slug must be a string, got {type(slug).__name__}")
-        elif isinstance(slug, str):
+        if isinstance(slug, str):
             if not SLUG_RE.match(slug):
                 errors.append(f"{prefix}: slug '{slug}' not kebab-case")
             if slug in seen_slugs:
                 errors.append(f"{prefix}: duplicate slug '{slug}'")
             seen_slugs.add(slug)
 
-        year = item.get("year")
-        if year is not None and not isinstance(year, int):
-            errors.append(f"{prefix}: year must be int, got {type(year).__name__}")
-
-        mt = item.get("media_type")
-        if mt is not None and mt not in media_allow:
-            errors.append(f"{prefix}: media_type='{mt}' not allowed in {file_name} (allowed: {sorted(media_allow)})")
+        # The registry's `date` accepts any ISO-date-prefixed string (stream
+        # datetimes). Library dates are bare dates, so the full match stays
+        # here, firing only where the registry's prefix check passed.
+        for date_field in ("started", "finished", "last_modified"):
+            v = item.get(date_field)
+            if isinstance(v, str) and sections.DATE_PREFIX_RE.match(v) and not DATE_RE.match(v):
+                errors.append(f"{prefix}: {date_field} not YYYY-MM-DD ('{v}')")
 
         status = item.get("status")
-        if status is not None and status not in status_allow:
-            errors.append(f"{prefix}: status='{status}' not allowed in {file_name} (allowed: {sorted(status_allow)})")
         if status in ACTIVE_STATUSES:
             active_count += 1
-
-        for date_field in ("started", "finished", "last_modified"):
-            err = _check_date(prefix, date_field, item.get(date_field))
-            if err:
-                errors.append(err)
 
         if status == "finished" and item.get("finished") in (None, ""):
             errors.append(f"{prefix}: finished date required when status='finished'")
 
-        sl = item.get("spoiler_level")
-        if sl is not None and sl not in SPOILER_LEVELS:
-            errors.append(f"{prefix}: spoiler_level='{sl}' not in {sorted(SPOILER_LEVELS)}")
-
         url = item.get("canonical_url")
-        if url is not None and not (isinstance(url, str) and url.startswith("https://")):
+        if isinstance(url, str) and not url.startswith("https://"):
             errors.append(f"{prefix}: canonical_url must be https:// or null")
 
         tags = item.get("tags")
-        if tags is None or not isinstance(tags, list):
-            errors.append(f"{prefix}: tags must be a list (may be empty)")
-        else:
+        if isinstance(tags, list):
             for t in tags:
-                if not isinstance(t, str) or not SLUG_RE.match(t):
+                if isinstance(t, str) and not SLUG_RE.match(t):
                     errors.append(f"{prefix}: tag '{t}' not slug-shaped")
 
         extras = item.get("extras")
-        if extras is not None:
-            if not isinstance(extras, dict):
-                errors.append(f"{prefix}: extras must be a mapping")
-            elif isinstance(mt, str):
-                allowed = ALLOWED_EXTRAS.get(mt, set())
-                for k in extras:
-                    if k not in allowed:
-                        errors.append(f"{prefix}: extras.{k} not allowed for media_type '{mt}'")
-                if "progress_pct" in extras:
-                    pct = extras["progress_pct"]
-                    if not isinstance(pct, int) or not 0 <= pct <= 100:
-                        errors.append(f"{prefix}: progress_pct must be int 0..100, got {pct}")
-                if "current_episode" in extras and "episode_count" in extras:
-                    ce = extras.get("current_episode")
-                    ec = extras.get("episode_count")
-                    if isinstance(ce, int) and isinstance(ec, int) and ce > ec:
-                        errors.append(f"{prefix}: current_episode ({ce}) > episode_count ({ec})")
-                _validate_extras_cover_keys(extras, mt, errors, prefix)
+        if isinstance(extras, dict):
+            pct = extras.get("progress_pct")
+            if isinstance(pct, int) and not isinstance(pct, bool) and not 0 <= pct <= 100:
+                errors.append(f"{prefix}: progress_pct must be int 0..100, got {pct}")
+            ce = extras.get("current_episode")
+            ec = extras.get("episode_count")
+            if isinstance(ce, int) and isinstance(ec, int) and ce > ec:
+                errors.append(f"{prefix}: current_episode ({ce}) > episode_count ({ec})")
+            _validate_extras_formats(extras, errors, prefix)
 
     if active_count > 3:
         warnings.append(f"{file_name}: {active_count} active items, expected ≤3 in currently-active highlight")
@@ -296,15 +230,19 @@ def lint_yaml_file(file_name: str, text: str) -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
-def run(repo_root: Path) -> tuple[int, list[str]]:
+def run(repo_root: Path, registry: dict | None = None) -> tuple[int, list[str]]:
+    try:
+        reg = registry if registry is not None else sections.default_registry()
+    except sections.SectionsError as e:
+        return 1, [str(e)]
     all_errs: list[str] = []
     all_warns: list[str] = []
     data_dir = repo_root / "data"
-    for fname in sorted(ALLOWED_MEDIA_TYPES.keys()):
+    for fname in library_files(reg):
         path = data_dir / fname
         if not path.exists():
             continue
-        errs, warns = lint_yaml_file(fname, path.read_text())
+        errs, warns = lint_yaml_file(fname, path.read_text(), reg)
         all_errs.extend(errs)
         all_warns.extend(warns)
     for w in all_warns:

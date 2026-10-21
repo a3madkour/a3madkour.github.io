@@ -3,9 +3,11 @@
 """
 from __future__ import annotations
 
+import copy
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import check_library_fixtures as lint  # noqa: E402
@@ -105,7 +107,7 @@ items:
     tags: []
 """
         errs = self._run("listening.yaml", text)
-        self.assertTrue(any("media_type='book' not allowed" in e for e in errs), errs)
+        self.assertTrue(any("media_type='book' not in ['album', 'track']" in e for e in errs), errs)
 
     def test_playing_rejects_unknown_status(self):
         text = """\
@@ -445,6 +447,68 @@ class CoverKeyTests(unittest.TestCase):
         yaml = self._item("book", "reading.yaml", "      cover_files: wizard.jpg")
         errs = self._run("reading.yaml", yaml)
         self.assertTrue(any("cover_files" in e for e in errs), errs)
+
+class RegistryTests(unittest.TestCase):
+    """Per-shelf contracts are data/sections.json's library/<shelf> entries."""
+
+    ITEM = (
+        "items:\n"
+        "  - slug: x\n"
+        "    title: X\n"
+        "    creator: Y\n"
+        "    year: 2020\n"
+        "    media_type: book\n"
+        "    status: queued\n"
+        "    last_modified: 2026-02-11\n"
+        "    tags: []\n"
+    )
+
+    def _run(self, text: str, file_name: str = "reading.yaml", registry=None) -> list[str]:
+        return lint.lint_yaml_file(file_name, text, registry)[0]
+
+    def test_library_files_come_from_the_registry(self):
+        self.assertEqual(lint.library_files(),
+                         ["listening.yaml", "playing.yaml", "reading.yaml", "watching.yaml"])
+
+    def test_null_required_field_now_fails(self):
+        # `year: null` parses to None; the old `is not None` guard passed it.
+        errs = self._run(self.ITEM.replace("year: 2020", "year: null"))
+        self.assertEqual(errs, ["reading.yaml[0]: year must be an integer"])
+
+    def test_null_optional_field_is_no_value(self):
+        self.assertEqual(self._run(self.ITEM + "    note_slug: null\n    started:\n"), [])
+
+    def test_null_tags_still_fails(self):
+        errs = self._run(self.ITEM.replace("tags: []", "tags: null"))
+        self.assertEqual(errs, ["reading.yaml[0]: tags must be a list"])
+
+    def test_datetime_string_date_still_fails(self):
+        errs = self._run(self.ITEM.replace("last_modified: 2026-02-11",
+                                           "last_modified: 2026-02-11T10:00"))
+        self.assertEqual(errs, ["reading.yaml[0]: last_modified not YYYY-MM-DD ('2026-02-11T10:00')"])
+
+    def test_extras_silent_when_media_type_is_missing(self):
+        # The missing media_type is the one failure; extras are not guessed at.
+        text = self.ITEM.replace("    media_type: book\n", "") + "    extras:\n      anything: 1\n"
+        self.assertEqual(self._run(text), ["reading.yaml[0]: missing required field 'media_type'"])
+
+    def test_extras_non_int_id_gets_the_registry_message(self):
+        text = (self.ITEM.replace("media_type: book", "media_type: game")
+                .replace("status: queued", "status: playing")
+                + "    extras:\n      igdb_id: abc\n")
+        self.assertEqual(self._run(text, "playing.yaml"),
+                         ["playing.yaml[0]: extras.igdb_id must be an integer"])
+
+    def test_shelf_statuses_come_from_the_registry(self):
+        reg = copy.deepcopy(lint.sections.default_registry())
+        reg["sections"]["library/reading"]["fields"]["status"]["values"] = ["finished"]
+        errs = self._run(self.ITEM, registry=reg)
+        self.assertEqual(errs, ["reading.yaml[0]: status='queued' not in ['finished']"])
+
+    def test_run_fails_closed_when_the_registry_cannot_load(self):
+        boom = lint.sections.SectionsError("sections: registry not found at X")
+        with mock.patch.object(lint.sections, "default_registry", side_effect=boom):
+            self.assertEqual(lint.run(Path("/nonexistent")), (1, ["sections: registry not found at X"]))
 
 
 if __name__ == "__main__":
