@@ -2,7 +2,10 @@
 """Recipe fixture frontmatter shape linter.
 
 Walks content/recipes/<slug>/index.md and validates frontmatter against
-spec 2026-07-06-recipe-slice-1-render-download-design.md. Stdlib only.
+spec 2026-07-06-recipe-slice-1-render-download-design.md. Field sets and
+types come from data/sections.json via sections.check_fields (spec
+2026-10-20); the structured ingredients/sources/steps shapes, the servings
+number rule and the zero-padding guard stay here. Stdlib only.
 Exits 0 on all-pass, 1 on any violation.
 """
 from __future__ import annotations
@@ -17,13 +20,7 @@ from check_fixtures import (  # noqa: E402
     _split_top_commas,
     parse_frontmatter,
 )
-
-REQUIRED = {"title", "date", "lastmod", "draft", "summary",
-            "servings", "sources", "ingredients", "steps"}
-OPTIONAL = {"tags", "cuisine", "category", "yield_unit",
-            "prep_minutes", "cook_minutes", "total_minutes",
-            "image", "video", "outputs"}
-FIELDS = REQUIRED | OPTIONAL
+import sections  # noqa: E402
 
 TIMECODE_RE = re.compile(r"^\[(\d{1,2}):([0-5]\d)(?:\.\d{1,2})?\]")
 
@@ -122,7 +119,7 @@ def _is_num(v) -> bool:
     return False
 
 
-def lint_file(md: Path) -> list[str]:
+def lint_file(md: Path, registry: dict | None = None) -> list[str]:
     errs: list[str] = []
     raw = md.read_text()
     fm = parse_frontmatter(raw)
@@ -130,19 +127,16 @@ def lint_file(md: Path) -> list[str]:
         return [f"{md}: no frontmatter"]
 
     errs.extend(_padded_errors(md, raw))
-
-    for f in sorted(REQUIRED - fm.keys()):
-        errs.append(f"{md}: missing required field '{f}'")
-    for f in sorted(fm.keys() - FIELDS):
-        errs.append(f"{md}: unknown field '{f}'")
+    errs.extend(sections.check_fields(fm, "recipes", md, registry=registry))
 
     sv = fm.get("servings")
     if sv is not None and not (_is_num(sv) and float(str(sv)) > 0):
         errs.append(f"{md}: servings must be a number > 0")
 
+    # Integer-ness is the registry's (`int`); the sign is not expressible there.
     for key in ("prep_minutes", "cook_minutes", "total_minutes"):
         v = fm.get(key)
-        if v is not None and not (isinstance(v, int) and not isinstance(v, bool) and v >= 0):
+        if isinstance(v, int) and not isinstance(v, bool) and v < 0:
             errs.append(f"{md}: {key} must be a non-negative integer")
 
     ings = fm.get("ingredients")
@@ -188,14 +182,18 @@ def lint_file(md: Path) -> list[str]:
     return errs
 
 
-def run(repo_root: Path) -> tuple[int, list[str]]:
+def run(repo_root: Path, registry: dict | None = None) -> tuple[int, list[str]]:
+    try:
+        reg = registry if registry is not None else sections.default_registry()
+    except sections.SectionsError as e:
+        return 1, [str(e)]
     all_errs: list[str] = []
     root = repo_root / "content" / "recipes"
     if root.exists():
         for child in sorted(root.iterdir()):
             md = child / "index.md"
             if child.is_dir() and md.exists():
-                all_errs.extend(lint_file(md))
+                all_errs.extend(lint_file(md, reg))
     return (1 if all_errs else 0), all_errs
 
 

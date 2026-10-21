@@ -1,9 +1,12 @@
+import copy
 import unittest
 from pathlib import Path
+from unittest import mock
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from test_helpers import TempRepo
 import check_recipes_fixtures as mod
+import sections
 
 VALID = """---
 title: "Example Recipe One"
@@ -188,6 +191,43 @@ class T(unittest.TestCase):
                                               f"{{ qty: {spelling}, unit: tbsp"))
                 rc, errs = mod.run(self.repo.root)
                 self.assertEqual(rc, 0, f"qty: {spelling} is legal YAML null: {errs}")
+
+
+class RegistryTests(unittest.TestCase):
+    """The field contract is data/sections.json's, read through sections.py."""
+
+    def setUp(self):
+        self.repo = TempRepo()
+
+    def tearDown(self):
+        self.repo.cleanup()
+
+    def test_tags_scalar_now_fails(self):
+        self.repo.write("content/recipes/ex/index.md",
+                        VALID.replace("servings: 4", "servings: 4\ntags: example"))
+        rc, errs = mod.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any(e.endswith(": tags must be a list") for e in errs), errs)
+
+    def test_non_integer_minutes_get_the_registry_message(self):
+        self.repo.write("content/recipes/ex/index.md",
+                        VALID.replace("servings: 4", "servings: 4\nprep_minutes: 1.5"))
+        rc, errs = mod.run(self.repo.root)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any(e.endswith(": prep_minutes must be an integer") for e in errs), errs)
+
+    def test_required_set_comes_from_the_registry(self):
+        reg = copy.deepcopy(sections.default_registry())
+        reg["sections"]["recipes"]["fields"]["video"]["required"] = True
+        self.repo.write("content/recipes/ex/index.md", VALID)
+        rc, errs = mod.run(self.repo.root, registry=reg)
+        self.assertEqual(rc, 1)
+        self.assertTrue(any("missing required field 'video'" in e for e in errs), errs)
+
+    def test_run_fails_closed_when_the_registry_cannot_load(self):
+        boom = sections.SectionsError("sections: registry not found at X")
+        with mock.patch.object(mod.sections, "default_registry", side_effect=boom):
+            self.assertEqual(mod.run(self.repo.root), (1, ["sections: registry not found at X"]))
 
 
 if __name__ == "__main__":
