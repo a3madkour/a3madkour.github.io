@@ -173,6 +173,28 @@ class LoaderTests(unittest.TestCase):
         _rejects(self, lambda d: d["sections"]["closed"]["fields"]["title"].update(**{"from": "author"}),
                  "'from' must be 'pipeline'")
 
+    def test_rejects_bad_source(self):
+        _rejects(self, lambda d: d["sections"]["closed"]["fields"]["title"].update(
+                     **{"from": "pipeline", "source": "drawer"}),
+                 "source 'drawer' not in")
+
+    def test_rejects_source_without_from_pipeline(self):
+        _rejects(self, lambda d: d["sections"]["closed"]["fields"]["title"].update(source="title"),
+                 "'source' needs 'from': 'pipeline'")
+
+    def test_real_registry_sources_required_buffer_fields(self):
+        """Every required pipeline field mark can supply names its buffer source:
+        tags (essays, research/themes) from #+filetags, title from #+title.
+        Library (store: data) items are written by a3-library-insert-item."""
+        reg = sections.load(sections.SITE_ROOT)
+        for name, spec in reg["sections"].items():
+            if spec.get("store") == "data":
+                continue
+            for field, want in (("title", "title"), ("tags", "filetags")):
+                fs = spec["fields"].get(field)
+                if fs and fs.get("required") and fs.get("from") == "pipeline":
+                    self.assertEqual(fs.get("source"), want, f"{name}.{field}")
+
     def test_rejects_bad_fill(self):
         _rejects(self, lambda d: d["sections"]["closed"]["fields"]["when"].update(fill="tomorrow"),
                  "fill 'tomorrow'")

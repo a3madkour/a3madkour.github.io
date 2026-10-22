@@ -4,12 +4,12 @@
     "essays": {
       "closed": false,
       "fields": {
-        "title":          {"type": "text", "required": true, "from": "pipeline"},
+        "title":          {"type": "text", "required": true, "from": "pipeline", "source": "title"},
         "date":           {"type": "date", "required": true, "from": "pipeline"},
         "lastmod":        {"type": "date", "required": true, "from": "pipeline"},
         "draft":          {"type": "bool", "required": true, "from": "pipeline"},
         "summary":        {"type": "text", "required": true},
-        "tags":           {"type": "list", "required": true, "from": "pipeline"},
+        "tags":           {"type": "list", "required": true, "from": "pipeline", "source": "filetags"},
         "series":         {"type": "text", "required": true, "from": "pipeline"},
         "series_order":   {"type": "int",  "required": true, "from": "pipeline"},
         "toc":            {"type": "bool", "required": true, "from": "pipeline"},
@@ -30,7 +30,7 @@
     },
     "garden": {
       "fields": {
-        "title":         {"type": "text", "required": true, "from": "pipeline"},
+        "title":         {"type": "text", "required": true, "from": "pipeline", "source": "title"},
         "draft":         {"type": "bool", "required": true, "from": "pipeline"},
         "last_modified": {"type": "date", "required": true, "from": "pipeline"},
         "growth_stage":  {"type": "enum", "required": true, "from": "pipeline",
@@ -79,9 +79,9 @@
     },
     "research/themes": {
       "fields": {
-        "title":            {"type": "text", "required": true, "from": "pipeline"},
+        "title":            {"type": "text", "required": true, "from": "pipeline", "source": "title"},
         "last_modified":    {"type": "date", "required": true, "from": "pipeline"},
-        "tags":             {"type": "list", "required": true, "from": "pipeline"},
+        "tags":             {"type": "list", "required": true, "from": "pipeline", "source": "filetags"},
         "draft":            {"type": "bool", "from": "pipeline"},
         "author":           {"type": "list", "from": "pipeline"},
         "description":      {"type": "text", "required": true},
@@ -95,7 +95,7 @@
     },
     "research/questions": {
       "fields": {
-        "title":            {"type": "text", "required": true, "from": "pipeline"},
+        "title":            {"type": "text", "required": true, "from": "pipeline", "source": "title"},
         "last_modified":    {"type": "date", "required": true, "from": "pipeline"},
         "tags":             {"type": "list", "from": "pipeline"},
         "draft":            {"type": "bool", "from": "pipeline"},
@@ -115,7 +115,7 @@
     },
     "works/games": {
       "fields": {
-        "title":              {"type": "text", "required": true, "from": "pipeline"},
+        "title":              {"type": "text", "required": true, "from": "pipeline", "source": "title"},
         "date":               {"type": "date", "required": true, "from": "pipeline"},
         "lastmod":            {"type": "date", "required": true, "from": "pipeline"},
         "draft":              {"type": "bool", "required": true, "from": "pipeline"},
@@ -145,7 +145,7 @@
     },
     "works/music": {
       "fields": {
-        "title":          {"type": "text", "required": true, "from": "pipeline"},
+        "title":          {"type": "text", "required": true, "from": "pipeline", "source": "title"},
         "date":           {"type": "date", "required": true, "from": "pipeline"},
         "lastmod":        {"type": "date", "required": true, "from": "pipeline"},
         "draft":          {"type": "bool", "required": true, "from": "pipeline"},
@@ -178,7 +178,7 @@
     },
     "works/poetry": {
       "fields": {
-        "title":         {"type": "text", "required": true, "from": "pipeline"},
+        "title":         {"type": "text", "required": true, "from": "pipeline", "source": "title"},
         "date":          {"type": "date", "required": true, "from": "pipeline"},
         "lastmod":       {"type": "date", "required": true, "from": "pipeline"},
         "draft":         {"type": "bool", "required": true, "from": "pipeline"},
@@ -372,7 +372,7 @@
     },
     "streams": {
       "fields": {
-        "title":              {"type": "text", "required": true, "from": "pipeline"},
+        "title":              {"type": "text", "required": true, "from": "pipeline", "source": "title"},
         "date":               {"type": "date", "required": true, "from": "pipeline"},
         "draft":              {"type": "bool", "required": true, "from": "pipeline"},
         "platforms":          {"type": "list", "required": true},
@@ -394,7 +394,7 @@
     },
     "recipes": {
       "fields": {
-        "title":         {"type": "text", "required": true, "from": "pipeline"},
+        "title":         {"type": "text", "required": true, "from": "pipeline", "source": "title"},
         "date":          {"type": "date", "required": true, "from": "pipeline"},
         "lastmod":       {"type": "date", "required": true, "from": "pipeline"},
         "draft":         {"type": "bool", "required": true, "from": "pipeline"},

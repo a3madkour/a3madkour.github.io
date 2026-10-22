@@ -31,10 +31,13 @@ TYPES = frozenset({
 SECTION_KEYS = frozenset({"closed", "store", "fields", "variants"})
 FIELD_KEYS = frozenset({
     "type", "required", "values", "to", "default", "from",
-    "ask", "fill", "fields", "variants",
+    "ask", "fill", "fields", "variants", "source",
 })
 STORES = frozenset({"frontmatter", "data"})
 FILLS = frozenset({"today", "next-weight"})
+# Where in the org buffer a `from: pipeline` field comes from, so
+# `a3-publish-mark` can check it and prompt when it would come out empty.
+SOURCES = frozenset({"title", "filetags"})
 VARIANT_KEYS = frozenset({"on", "cases"})
 CASE_KEYS = frozenset({"values", "fields"})
 
@@ -143,6 +146,11 @@ def _validate_fields(where: str, fields: dict, names: set, parent_fields: dict) 
                 _fail(at, f"'default' on type '{t}'")
         if "from" in fs and fs["from"] != "pipeline":
             _fail(at, f"'from' must be 'pipeline', got {fs['from']!r}")
+        if "source" in fs:
+            if fs["source"] not in SOURCES:
+                _fail(at, f"source {fs['source']!r} not in {sorted(SOURCES)}")
+            if fs.get("from") != "pipeline":
+                _fail(at, "'source' needs 'from': 'pipeline'")
         if "fill" in fs and fs["fill"] not in FILLS:
             _fail(at, f"fill {fs['fill']!r} not in {sorted(FILLS)}")
         if "fields" in fs and t != "object":
