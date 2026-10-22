@@ -27,6 +27,7 @@
 - [Hugo reserves type AND kind frontmatter](feedback_hugo_reserved_fields.md) — use domain-prefixed enum field names
 - [Measured tone in audits/reviews](feedback_tone.md) — drop asides, rhetorical flourishes, closers
 - [Mutation-test every guard](feedback_mutation_test_every_guard.md) — break it and watch the test fail; passing proves nothing
+- [Dogfood: fix the functions](feedback_dogfood_fix_the_functions.md) — defects get fixed in the code that ran, never by hand-editing its output
 
 ## Reference — gotchas & APIs
 - [Dotfiles `#+keyword:` API](reference_dotfiles_keywords_api.md) — `a3madkour-pub-keywords/extract` + `boolean-p`
