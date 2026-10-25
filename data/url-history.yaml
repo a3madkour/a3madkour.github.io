@@ -55,15 +55,15 @@ notes:
   - url: "/essays/example-one/"
     replaced_at: "2026-06-01T19:24:54Z"
     reason: removed
-  - reason: republished
-    url: null
+  - url: null
     replaced_at: "2026-06-01T22:18:53Z"
+    reason: republished
   - url: "/essays/example-one/"
     replaced_at: "2026-06-01T23:15:04Z"
     reason: removed
-  - reason: republished
-    url: null
+  - url: null
     replaced_at: "2026-06-01T23:15:19Z"
+    reason: republished
   state: live
 - id: essay-four-uuid-placeholder
   current_url: "/essays/example-four/"
@@ -80,9 +80,9 @@ notes:
 - id: E2C28B89-4E71-4E7C-B220-BCE051F1BD53
   current_url: null
   history: 
-  - replaced_at: "2026-10-16T15:53:57Z"
+  - url: "/garden/mei-r-wom-2026/"
+    replaced_at: "2026-10-16T15:53:57Z"
     reason: removed
-    url: "/garden/mei-r-wom-2026/"
   state: removed
 - id: 11111111-2222-3333-4444-555555555555
   current_url: "/essays/example-essay-multi-target-export/"
@@ -91,9 +91,9 @@ notes:
 - id: null
   current_url: "/essays/example-multi/"
   history: 
-  - reason: title_change
-    url: "/essays/example-essay-multi-target-export/"
+  - url: "/essays/example-essay-multi-target-export/"
     replaced_at: "2026-06-03T21:57:11Z"
+    reason: title_change
   state: live
 - id: 394db383-e408-44a2-a347-20ad7a54c5e7
   current_url: "/essays/example-multi/"
@@ -108,3 +108,13 @@ notes:
   history: []
   state: live
   last_modified: 2024-12-18
+- id: 3E650E6F-4C7F-43AE-91D8-1FE96AB31C02
+  current_url: "/research/themes/bayesian-reasoning-for-procedural-content-generation/"
+  history: []
+  state: live
+  last_modified: 2026-10-21
+- id: D5C56C0C-E136-4B5C-B63C-0921D194F0CD
+  current_url: "/research/questions/test-question/"
+  history: []
+  state: live
+  last_modified: 2026-10-21

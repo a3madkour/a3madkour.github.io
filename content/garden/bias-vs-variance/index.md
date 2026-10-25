@@ -5,4 +5,3 @@ last_modified: 2026-05-25
 tags: ["MachineLearning"]
 title: "Bias vs Variance"
 ---
-## Classic trade-off {#classic-trade-off}

@@ -5,4 +5,3 @@ last_modified: 2026-05-25
 tags: ["CalluarAutomata", "PCG"]
 title: "Cellular Automata are visual rule-based systems"
 ---
-## Cellular Automata are visual rule-based systems {#cellular-automata-are-visual-rule-based-systems}
