@@ -90,10 +90,12 @@
 
   <div class="cite-cta-zone research-cite-zone">{{ partial "cite/button.html" . }}</div>
 
+  {{ if .Content }}
   <section id="thinking" class="research-current-thinking">
     <h2>Current thinking</h2>
     {{ .Content }}
   </section>
+  {{ end }}
 
   {{ if $subQs }}
   <section id="sub" class="research-sub-questions">
