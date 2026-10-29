@@ -71,9 +71,14 @@ class PickSourceTests(unittest.TestCase):
 
 class LoadLeafTests(unittest.TestCase):
     def test_loads_listening(self):
-        items = fc.load_leaf("listening")
-        self.assertTrue(len(items) >= 1)
-        self.assertIn("slug", items[0])
+        # A fixture, not the live shelf: the live shelves come from shared
+        # item notes and may be empty (`items: []`).
+        with tempfile.TemporaryDirectory() as td:
+            (Path(td) / "listening.yaml").write_text(
+                "items:\n  - slug: example-album-one\n    title: Example 1\n")
+            with patch.object(fc, "DATA_DIR", Path(td)):
+                items = fc.load_leaf("listening")
+        self.assertEqual([i["slug"] for i in items], ["example-album-one"])
 
     def test_loads_reading_with_extras(self):
         items = fc.load_leaf("reading")
