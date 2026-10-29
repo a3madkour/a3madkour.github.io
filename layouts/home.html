@@ -9,15 +9,20 @@
   {{- $hasWorks = where $hasWorks "RelPermalink" "ne" "/works/music/" -}}
   {{- $hasWorks = where $hasWorks "RelPermalink" "ne" "/works/poetry/" -}}
   {{- if $hasWorks }}{{ partial "works/glyph-sprite.html" . }}{{ end -}}
-  {{ partial "page-sidebar.html" (dict "sections" (slice
-      (dict "id" "currently" "label" "Currently")
+  {{- /* Currently renders nothing when no shelf has an active item, so its
+       sidebar entry is added only when the widget rendered. */ -}}
+  {{- $currently := partial "home/currently.html" . -}}
+  {{- $sidebar := slice -}}
+  {{- if trim $currently " \n" }}{{ $sidebar = $sidebar | append (dict "id" "currently" "label" "Currently") }}{{ end -}}
+  {{- $sidebar = $sidebar | append (slice
       (dict "id" "essays"    "label" "Essays")
       (dict "id" "research"  "label" "Research")
       (dict "id" "works"     "label" "Works")
       (dict "id" "streams"   "label" "Streams")
-    )) }}
+    ) -}}
+  {{ partial "page-sidebar.html" (dict "sections" $sidebar) }}
   {{ partial "home/hero.html" . }}
-  {{ partial "home/currently.html" . }}
+  {{ $currently }}
 
   {{- $essays := where site.RegularPages "Section" "essays" -}}
   {{- $essays = sort $essays "Date" "desc" -}}

@@ -21,28 +21,34 @@
     {{- with .Content }}<div class="library-page-lede">{{ . }}</div>{{ end -}}
   </header>
 
-  {{- if $shelves -}}
-    {{ partial "library/umbrella-hero.html" (dict "hero_slug" (default "" $shelves.hero) "media_index" $media_index) }}
-    {{ partial "library/umbrella-catalogue.html" . }}
-    {{- range $shelf := (default slice $shelves.shelves) -}}
-      {{ partial "library/umbrella-shelf.html" (dict "shelf" $shelf "media_index" $media_index) }}
+  {{- /* Hero and shelves render nothing when they resolve to no item (an
+       empty library), so each is rendered first and its sidebar entry added
+       only when it rendered. */ -}}
+  {{- $hero := partial "library/umbrella-hero.html" (dict "hero_slug" (default "" (and $shelves $shelves.hero)) "media_index" $media_index) -}}
+  {{- $shelf_html := slice -}}
+  {{- $first_shelf := "" -}}
+  {{- range $shelf := (default slice (and $shelves $shelves.shelves)) -}}
+    {{- $out := partial "library/umbrella-shelf.html" (dict "shelf" $shelf "media_index" $media_index) -}}
+    {{- if trim $out " \n" -}}
+      {{- $shelf_html = $shelf_html | append $out -}}
+      {{- if not $first_shelf }}{{ $first_shelf = $shelf }}{{ end -}}
     {{- end -}}
-  {{- else -}}
-    {{/* Soft fall-back per spec §3.5: no shelves yaml → hero from max-last_modified */}}
-    {{ partial "library/umbrella-hero.html" (dict "hero_slug" "" "media_index" $media_index) }}
-    {{ partial "library/umbrella-catalogue.html" . }}
   {{- end -}}
+
+  {{ $hero }}
+  {{ partial "library/umbrella-catalogue.html" . }}
+  {{- range $shelf_html }}{{ . }}{{ end -}}
 
   {{/* Page sidebar — Featured / Browse / Shelves. Per-shelf entries are
        intentionally omitted: shelf count grows with content and the rotated
        rail labels overflow viewport at ~6+ entries. "Shelves" anchors to the
-       first shelf; the catalogue + linear scroll cover cross-shelf discovery. */}}
+       first rendered shelf; the catalogue + linear scroll cover cross-shelf
+       discovery. */}}
   {{- $sections := slice -}}
-  {{- $sections = $sections | append (dict "id" "hero" "label" "Featured") -}}
+  {{- if trim $hero " \n" }}{{ $sections = $sections | append (dict "id" "hero" "label" "Featured") }}{{ end -}}
   {{- $sections = $sections | append (dict "id" "catalogue" "label" "Browse") -}}
-  {{- with (and $shelves $shelves.shelves) -}}
-    {{- $first := index . 0 -}}
-    {{- $sections = $sections | append (dict "id" (printf "shelf-%s" (urlize $first.title)) "label" "Shelves") -}}
+  {{- with $first_shelf -}}
+    {{- $sections = $sections | append (dict "id" (printf "shelf-%s" (urlize .title)) "label" "Shelves") -}}
   {{- end -}}
   {{ partial "page-sidebar.html" (dict "sections" $sections) }}
 </main>
