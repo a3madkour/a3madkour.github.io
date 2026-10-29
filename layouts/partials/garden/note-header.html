@@ -32,8 +32,9 @@
 
   {{- if eq $flavor "media" -}}
     {{- with .Params.status -}}
+    {{- $label := cond (eq . "100pct") "100%" (title .) -}}
     <span class="meta-sep" aria-hidden="true">·</span>
-    <span class="status-pill status-{{ . }}" aria-label="status: {{ . }}">
+    <span class="status-pill status-{{ . }}" aria-label="status: {{ $label }}">
       {{- if in (slice "reading" "listening" "playing" "watching") . -}}
       <svg viewBox="0 0 9 9" aria-hidden="true"><circle cx="4.5" cy="4.5" r="3" fill="currentColor"/></svg>
       {{- else if in (slice "finished" "100pct") . -}}
@@ -43,7 +44,7 @@
       {{- else if eq . "queued" -}}
       <svg viewBox="0 0 9 9" aria-hidden="true"><path d="M4.5 7 V2 M2.5 4 L4.5 2 L6.5 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
       {{- end -}}
-      <span>{{ if eq . "100pct" }}100%{{ else }}{{ title . }}{{ end }}</span>
+      <span>{{ $label }}</span>
     </span>
     {{- end -}}
     {{- with .Params.started -}}
