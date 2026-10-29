@@ -4,7 +4,7 @@ draft: false
 last_modified: 2026-04-15
 growth_stage: budding
 media_type: series
-status: abandoned
+status: dropped
 creator: "Dan Erickson"
 year: 2025
 started: 2025-01-20

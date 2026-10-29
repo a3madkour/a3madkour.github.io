@@ -354,6 +354,12 @@ class GardenRegistryTest(unittest.TestCase):
     def tearDown(self) -> None:
         self.repo.cleanup()
 
+    def test_media_cases_derive_media_flavor(self) -> None:
+        for mt in ("book", "album", "game", "film"):
+            self.assertEqual(lint.derive_flavor({"media_type": mt}), "media", mt)
+        self.assertEqual(lint.derive_flavor({"media_type": "paper"}), "reference")
+        self.assertEqual(lint.derive_flavor({}), "concept")
+
     def test_empty_media_type_selects_concept(self) -> None:
         # derive_flavor treated a falsy media_type as concept; so does the
         # registry's null case — and media_type itself is then not permitted.
@@ -398,8 +404,10 @@ class GardenRegistryTest(unittest.TestCase):
     def test_media_types_come_from_the_registry(self) -> None:
         reg = copy.deepcopy(lint.sections.default_registry())
         cases = reg["sections"]["garden"]["variants"]["cases"]
-        cases["media"]["values"] = ["album"]
-        cases["media"]["fields"]["media_type"]["values"] = ["album"]
+        for name in ("media-book", "media-listening", "media-playing", "media-watching"):
+            cases.pop(name)
+        cases["media-listening"] = {"values": ["album"], "fields": {
+            "media_type": {"type": "enum", "required": True, "values": ["album"]}}}
         self.repo.write_note("n", MEDIA_NOTE)
         rc, errors = lint.run(self.repo.root, registry=reg)
         self.assertEqual(rc, 1)

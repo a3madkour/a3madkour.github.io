@@ -28,7 +28,11 @@ import sections  # noqa: E402
 
 def derive_flavor(fm: dict[str, object], registry: dict | None = None) -> str:
     """'concept' | 'media' | 'reference', or 'unknown' for an unlisted media_type."""
-    return sections.case_of(fm, "garden", registry) or "unknown"
+    case = sections.case_of(fm, "garden", registry)
+    if case is None:
+        return "unknown"
+    # The media cases are one per library shelf (media-book, media-listening, …).
+    return "media" if case.startswith("media-") else case
 
 
 def lint_note(note_dir: Path, registry: dict | None = None) -> tuple[list[str], dict[str, object] | None]:

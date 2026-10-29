@@ -51,17 +51,59 @@
               "weight": {"type": "int"}
             }
           },
-          "media": {
-            "values": ["album", "book", "film", "game", "series", "track"],
+          "media-book": {
+            "values": ["book"],
             "fields": {
-              "media_type":    {"type": "enum", "required": true,
-                                "values": ["album", "book", "film", "game", "series", "track"]},
-              "status":        {"type": "enum", "required": true,
+              "media_type":    {"type": "enum", "required": true, "from": "pipeline", "source": "drawer",
+                                "values": ["book"]},
+              "status":        {"type": "enum", "required": true, "from": "pipeline", "source": "drawer",
                                 "values": ["abandoned", "finished", "queued", "reading"]},
-              "creator":       {"type": "text", "required": true},
+              "creator":       {"type": "text", "required": true, "from": "pipeline", "source": "drawer"},
               "original_url":  {"type": "text"},
-              "started":       {"type": "date"},
-              "finished":      {"type": "date"},
+              "started":       {"type": "date", "from": "pipeline", "source": "drawer"},
+              "finished":      {"type": "date", "from": "pipeline", "source": "drawer"},
+              "spoiler_level": {"type": "enum", "values": ["heavy", "light", "none"]}
+            }
+          },
+          "media-listening": {
+            "values": ["album", "track"],
+            "fields": {
+              "media_type":    {"type": "enum", "required": true, "from": "pipeline", "source": "drawer",
+                                "values": ["album", "track"]},
+              "status":        {"type": "enum", "required": true, "from": "pipeline", "source": "drawer",
+                                "values": ["dropped", "finished", "listening", "queued"]},
+              "creator":       {"type": "text", "required": true, "from": "pipeline", "source": "drawer"},
+              "original_url":  {"type": "text"},
+              "started":       {"type": "date", "from": "pipeline", "source": "drawer"},
+              "finished":      {"type": "date", "from": "pipeline", "source": "drawer"},
+              "spoiler_level": {"type": "enum", "values": ["heavy", "light", "none"]}
+            }
+          },
+          "media-playing": {
+            "values": ["game"],
+            "fields": {
+              "media_type":    {"type": "enum", "required": true, "from": "pipeline", "source": "drawer",
+                                "values": ["game"]},
+              "status":        {"type": "enum", "required": true, "from": "pipeline", "source": "drawer",
+                                "values": ["100pct", "dropped", "finished", "playing", "queued"]},
+              "creator":       {"type": "text", "required": true, "from": "pipeline", "source": "drawer"},
+              "original_url":  {"type": "text"},
+              "started":       {"type": "date", "from": "pipeline", "source": "drawer"},
+              "finished":      {"type": "date", "from": "pipeline", "source": "drawer"},
+              "spoiler_level": {"type": "enum", "values": ["heavy", "light", "none"]}
+            }
+          },
+          "media-watching": {
+            "values": ["film", "series"],
+            "fields": {
+              "media_type":    {"type": "enum", "required": true, "from": "pipeline", "source": "drawer",
+                                "values": ["film", "series"]},
+              "status":        {"type": "enum", "required": true, "from": "pipeline", "source": "drawer",
+                                "values": ["dropped", "finished", "queued", "watching"]},
+              "creator":       {"type": "text", "required": true, "from": "pipeline", "source": "drawer"},
+              "original_url":  {"type": "text"},
+              "started":       {"type": "date", "from": "pipeline", "source": "drawer"},
+              "finished":      {"type": "date", "from": "pipeline", "source": "drawer"},
               "spoiler_level": {"type": "enum", "values": ["heavy", "light", "none"]}
             }
           },

@@ -175,8 +175,14 @@ class LoaderTests(unittest.TestCase):
 
     def test_rejects_bad_source(self):
         _rejects(self, lambda d: d["sections"]["closed"]["fields"]["title"].update(
-                     **{"from": "pipeline", "source": "drawer"}),
-                 "source 'drawer' not in")
+                     **{"from": "pipeline", "source": "elsewhere"}),
+                 "source 'elsewhere' not in")
+
+    def test_drawer_is_a_valid_source(self):
+        reg = copy.deepcopy(MINI)
+        reg["sections"]["closed"]["fields"]["title"].update(
+            **{"from": "pipeline", "source": "drawer"})
+        self.assertEqual(_reg(reg)["sections"]["closed"]["fields"]["title"]["source"], "drawer")
 
     def test_rejects_source_without_from_pipeline(self):
         _rejects(self, lambda d: d["sections"]["closed"]["fields"]["title"].update(source="title"),
@@ -194,6 +200,15 @@ class LoaderTests(unittest.TestCase):
                 fs = spec["fields"].get(field)
                 if fs and fs.get("required") and fs.get("from") == "pipeline":
                     self.assertEqual(fs.get("source"), want, f"{name}.{field}")
+
+    def test_real_registry_garden_media_fields_come_from_the_drawer(self):
+        reg = sections.load(sections.SITE_ROOT)
+        cases = reg["sections"]["garden"]["variants"]["cases"]
+        for cname in ("media-book", "media-listening", "media-playing", "media-watching"):
+            for field in ("media_type", "status", "creator", "started", "finished"):
+                fs = cases[cname]["fields"][field]
+                self.assertEqual((fs.get("from"), fs.get("source")), ("pipeline", "drawer"),
+                                 f"{cname}.{field}")
 
     def test_rejects_bad_fill(self):
         _rejects(self, lambda d: d["sections"]["closed"]["fields"]["when"].update(fill="tomorrow"),
@@ -403,6 +418,24 @@ class CheckFieldsTests(unittest.TestCase):
         self.assertIsNone(sections.case_of({"media_type": "scroll"}, "flavoured", self.reg))
         with self.assertRaises(sections.SectionsError):
             sections.case_of({}, "open", self.reg)
+
+    # --- garden media cases follow the shelf ---
+    def test_garden_media_status_follows_shelf(self):
+        reg = sections.load(sections.SITE_ROOT)
+        base = {"title": "T", "draft": False, "last_modified": "2026-01-01",
+                "growth_stage": "seedling", "media_type": "game", "creator": "C"}
+        errs = sections.check_fields({**base, "status": "100pct"}, "garden", "p.md", registry=reg)
+        self.assertFalse([e for e in errs if "status" in e], errs)
+        errs = sections.check_fields({**base, "status": "reading"}, "garden", "p.md", registry=reg)
+        self.assertTrue(any("status='reading' not in [" in e for e in errs), errs)
+
+    def test_series_abandoned_rejected(self):
+        reg = sections.load(sections.SITE_ROOT)
+        fm = {"title": "T", "draft": False, "last_modified": "2026-01-01",
+              "growth_stage": "seedling", "media_type": "series", "creator": "C",
+              "status": "abandoned"}
+        errs = sections.check_fields(fm, "garden", "p.md", registry=reg)
+        self.assertTrue(any("status='abandoned' not in [" in e for e in errs), errs)
 
     # --- object variants selected by the enclosing entry ---
     def test_object_variant_sub_keys(self):
