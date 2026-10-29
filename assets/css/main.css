@@ -1285,9 +1285,14 @@ main { flex-grow: 1; }
   font-size: var(--text-xs);
 }
 .status-pill svg { width: 0.7em; height: 0.7em; }
-.status-pill.status-reading   { color: var(--color-steel); }
-.status-pill.status-finished  { color: var(--color-green); }
-.status-pill.status-abandoned { color: var(--color-burgundy); }
+.status-pill.status-reading,
+.status-pill.status-listening,
+.status-pill.status-playing,
+.status-pill.status-watching { color: var(--color-steel); }
+.status-pill.status-finished,
+.status-pill.status-100pct   { color: var(--color-green); }
+.status-pill.status-abandoned,
+.status-pill.status-dropped   { color: var(--color-burgundy); }
 .status-pill.status-queued    { color: var(--color-warn); }
 
 .spoiler-warning {
