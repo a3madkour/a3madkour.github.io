@@ -126,18 +126,19 @@ Any org-roam note can be a library item:
 - for a book not in Zotero, a plain book note (the shape `boox--ensure-book-note` already makes);
 - for anything else, a new org-roam node.
 
-A note is a library item when its **file-level property drawer** carries `:LIBRARY_MEDIUM:`. The library
+A note is a library item when its **file-level property drawer** carries `:LIBRARY_MEDIA_TYPE:`. The library
 properties live there, prefixed, so they never collide with noter/Boox keys or a hand-set `:PROGRESS:`:
 
 | Property | Meaning |
 |---|---|
-| `:LIBRARY_MEDIUM:` | `book`, `album`, `track`, `game`, `film` or `series`. Determines the shelf (book→reading, album/track→listening, game→playing, film/series→watching). |
+| `:LIBRARY_MEDIA_TYPE:` | `book`, `album`, `track`, `game`, `film` or `series`. Determines the shelf (book→reading, album/track→listening, game→playing, film/series→watching). |
 | `:LIBRARY_STATUS:` | That shelf's own status word (see §4). |
 | `:LIBRARY_STARTED:` / `:LIBRARY_FINISHED:` | `YYYY-MM-DD`. Stamped by commands. |
 | `:LIBRARY_CREATOR:` / `:LIBRARY_YEAR:` | Filled from the bib entry for Zotero books, asked for otherwise. |
 | `:LIBRARY_PREVIEW:` | Optional one-line row preview (see §5.4). |
-| `:LIBRARY_COVER:` | Optional `cover_file` name under `static/library/covers/`. |
-| per-medium extras | e.g. `:LIBRARY_PROGRESS_PCT:`, `:LIBRARY_PROGRESS_LABEL:`, `:LIBRARY_HOURS_PLAYED:`, `:LIBRARY_PLATFORM:`, `:LIBRARY_CURRENT_EPISODE:`. The set is whatever the shelf's `extras` contract in `data/sections.json` defines, with the property name derived from the key. |
+| per-medium extras | `LIBRARY_` + the existing drawer key in `a3madkour-pub-library--extras-by-media`, e.g. `:LIBRARY_PROGRESS_PCT:`, `:LIBRARY_HOURS_PLAYED:`, `:LIBRARY_COVER_FILE:`. |
+
+Naming rule (plan-time call): a contract field `f` is stored as `LIBRARY_` + upcased `f` (`media_type` → `:LIBRARY_MEDIA_TYPE:`).
 
 **The site section.** The note's public body is exactly one level-1 heading tagged `:site:`, a sibling of
 the ref note's existing title heading. Its contents (not the heading line itself) become the garden page
@@ -166,7 +167,7 @@ Common to all media:
 
 **Reading, Zotero book**
 1. `citar-add-to-reading-queue`, on a bib entry whose type is a book, also ensures the ref note exists
-   (`citar-create-note`, as `boox--note-for-key` does). It sets `LIBRARY_MEDIUM: book`, creator and year
+   (`citar-create-note`, as `boox--note-for-key` does). It sets `LIBRARY_MEDIA_TYPE: book`, creator and year
    from the bib entry, and `LIBRARY_STATUS: reading` with `STARTED` today, because queue entries are born
    active (§8, call C2). Papers are queued exactly as today, with no library properties.
 2. `toggle-active` on a `:toread:` entry: going inactive sets the note to `queued`; going active sets it to
@@ -205,20 +206,20 @@ queue, no WIP limit and no tablet.
 - Both take effect on the next `M-x a3-publish-living`, like every other living section. On unshare the
   garden bundle goes through the existing manifest orphan sweep, and the row disappears because the
   shelf is regenerated from shared notes only.
-- **Living-publish contract gate:** a garden note with `:LIBRARY_MEDIUM:` but no non-empty `:site:`
+- **Living-publish contract gate:** a garden note with `:LIBRARY_MEDIA_TYPE:` but no non-empty `:site:`
   section is refused (logged as a contract error), the same way `--contract-gap` refuses a note with a
   missing required field. This is the backstop for the empty-body anti-goal if someone sets the header by
   hand.
 
 ### 5.4 Publishing
 
-**Garden page.** For a note with `:LIBRARY_MEDIUM:`, `publish-garden-file`:
+**Garden page.** For a note with `:LIBRARY_MEDIA_TYPE:`, `publish-garden-file`:
 - narrows the exported content to the `:site:` subtree's contents, in the rewrite-to-temp stage, before
   ox-hugo sees it;
 - emits the media frontmatter from the `LIBRARY_*` properties: `media_type`, `status`, `creator`, `year`,
   `started`, `finished`.
 
-`roam_refs` already flows. Concept garden notes (no `:LIBRARY_MEDIUM:`) are unchanged.
+`roam_refs` already flows. Concept garden notes (no `:LIBRARY_MEDIA_TYPE:`) are unchanged.
 
 **Library rows.** The library sections stop being "one file → one shelf". After the garden handler runs,
 a collector builds each `data/<medium>.yaml` from **every currently shared item note** of that shelf, not
@@ -300,7 +301,7 @@ User decision (2026-10-28): the lorem-ipsum library examples are removed, not mi
 - Module boundaries. Likely a new `a3madkour-publish-library-notes.el` (collector + share/unshare) plus
   the reading-flow hooks in `config.org`'s Boox/citar sections, next to their helpers.
 - How the collector enumerates shared item notes: reuse living publish's file discovery and filter on
-  `:LIBRARY_MEDIUM:` + `HUGO_PUBLISH: t`.
+  `:LIBRARY_MEDIA_TYPE:` + `HUGO_PUBLISH: t`.
 - How the bib entry type is read through citar (`=type=`), and which types count as a book (`book`,
   presumably `inbook`/`mvbook`; not `incollection`).
 - The first-sentence extraction for `preview`.
