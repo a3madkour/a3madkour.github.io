@@ -4,7 +4,8 @@
 Validates `data/{reading,listening,playing,watching}.yaml` shape per
 docs/superpowers/specs/2026-05-12-library-section-design.md §3, each item
 against its shelf's `library/<shelf>` entry in data/sections.json
-(sections.check_fields; spec 2026-10-20 §5.1).
+(sections.check_fields; spec 2026-10-20 §5.1). All four files must exist;
+a shelf with no items is `items: []`, the collector's empty form.
 
 Exits 0 on all-pass, 1 on any violation. Stdlib only.
 """
@@ -20,6 +21,10 @@ from check_fixtures import parse_scalar  # noqa: E402
 import sections  # noqa: E402
 
 
+# The empty shelf, as the collector writes it (`items: []`). A block
+# `items:` with nothing under it is YAML null, not this form.
+EMPTY_ITEMS_RE = re.compile(r"^items:\s*\[\]\s*$", re.MULTILINE)
+ITEMS_KEY_RE = re.compile(r"^items:", re.MULTILINE)
 ITEM_START_RE = re.compile(r"^  - ([a-zA-Z_]+):\s*(.*)$")
 ITEM_FIELD_RE = re.compile(r"^    ([a-zA-Z_]+):\s*(.*)$")
 NESTED_FIELD_RE = re.compile(r"^      ([a-zA-Z_]+):\s*(.*)$")
@@ -167,7 +172,15 @@ def lint_yaml_file(file_name: str, text: str,
     if file_name not in library_files(registry):
         return [f"{file_name}: unknown library file"], []
 
+    if not ITEMS_KEY_RE.search(text):
+        return [f"{file_name}: no items: key"], []
+
     items = parse_library_yaml(text)
+
+    if EMPTY_ITEMS_RE.search(text):
+        if items:
+            return [f"{file_name}: items: [] followed by rows"], []
+        return [], []
 
     if not items:
         return [f"{file_name}: no items parsed"], []
@@ -241,6 +254,7 @@ def run(repo_root: Path, registry: dict | None = None) -> tuple[int, list[str]]:
     for fname in library_files(reg):
         path = data_dir / fname
         if not path.exists():
+            all_errs.append(f"{fname}: missing (every shelf is written, empty as items: [])")
             continue
         errs, warns = lint_yaml_file(fname, path.read_text(), reg)
         all_errs.extend(errs)
