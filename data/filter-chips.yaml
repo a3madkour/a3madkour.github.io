@@ -33,19 +33,19 @@ works:
   primary_top_k: 10
 
 library-reading:
-  primary_tags: [fiction, nonfiction]
+  # Auto top-10 fallback applies until curated.
   primary_top_k: 10
 
 library-listening:
-  primary_tags: [ambient]
+  # Auto top-10 fallback applies until curated.
   primary_top_k: 10
 
 library-playing:
-  primary_tags: [puzzle]
+  # Auto top-10 fallback applies until curated.
   primary_top_k: 10
 
 library-watching:
-  primary_tags: [drama, scifi]
+  # Auto top-10 fallback applies until curated.
   primary_top_k: 10
 
 streams:

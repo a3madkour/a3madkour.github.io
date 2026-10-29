@@ -2,10 +2,10 @@
 # or a hand-curated slug list (items: [...]). hero: optionally pins a featured
 # item; absent or unresolvable → fall back to max-last_modified across all media.
 #
-# NOTE: currently referencing stub slugs from B.2 spot-check (Example * entries).
-# Re-curate when the org-side library content gets real entries.
-
-hero: example-book-one
+# NOTE: shelf rows come from shared item notes (the collector writes
+# data/{reading,listening,playing,watching}.yaml). No hero is pinned and no
+# slug-list shelf exists yet; add them once real items are shared. A shelf
+# that resolves to no items is not rendered.
 
 # NOTE: music (listening) tiles render at 1:1 aspect; books/games/films/series
 # render at 140:190 (portrait). Shelves are kept medium-homogeneous (or
@@ -20,20 +20,3 @@ shelves:
   - title: "On the listening bench"
     intro: "Albums in heavy rotation."
     tag: ambient
-
-  - title: "Field of game design"
-    intro: "Games and books that shaped how I think about play."
-    items:
-      - example-game-one
-      - example-game-two
-      - example-book-one
-
-  - title: "Long example"
-    intro: "Used to exercise the long-shelf detail-page pattern."
-    items:
-      - example-book-one
-      - example-book-two
-      - example-game-one
-      - example-game-two
-      - example-film-one
-      - example-series-two
