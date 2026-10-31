@@ -37,6 +37,7 @@ Out of scope by choice: icons (hand-drawn by constraint), explorables (code, not
 | S4 | B1a implementation: prose-page org handler | Merged, E2E green | B1 plan approved |
 | S5 | B1b implementation: structural direct-edit commands | Merged, E2E green | B1 plan approved (may run beside S4) |
 | S6 | B1 acceptance on real content | Acceptance log | S4 + S5 merged |
+| D1 | Authoring without Hugo keywords: neutral org metadata, translated on export (stub `2026-10-31-authoring-without-hugo-keywords-stub.md`) | Brainstorm → spec → plan | Filed 2026-10-31; decide before S7 |
 | S7 | C: authoring guide | Guide shipped | S6 done |
 | A2 | Streams: poller queues, Emacs adopts | Spec → plan → impl | Trigger: first real stream scheduled |
 
