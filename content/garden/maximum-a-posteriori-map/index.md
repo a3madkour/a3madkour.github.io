@@ -1,7 +1,7 @@
 ---
 draft: false
 growth_stage: "seedling"
-last_modified: 2026-05-25
+last_modified: 2026-04-06
 tags: ["Bayesian"]
 title: "Maximum A Posteriori (MAP)"
 ---

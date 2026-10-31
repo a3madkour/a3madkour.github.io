@@ -1,7 +1,7 @@
 ---
 draft: false
 growth_stage: "seedling"
-last_modified: 2024-12-18
+last_modified: 2026-10-17
 tags: ["Philosophy", "Bayesian", "Inference"]
 title: "Inference Queries"
 ---

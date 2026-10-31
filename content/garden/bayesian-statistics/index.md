@@ -1,7 +1,7 @@
 ---
 draft: false
 growth_stage: "seedling"
-last_modified: 2024-12-18
+last_modified: 2026-04-06
 tags: ["Statsitics", "Bayesian"]
 title: "Bayesian Statistics"
 ---

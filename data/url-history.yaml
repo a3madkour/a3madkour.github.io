@@ -3,22 +3,22 @@ notes:
   current_url: "/garden/bayesian-statistics/"
   history: []
   state: live
-  last_modified: 2024-12-18
+  last_modified: 2026-04-06
 - id: 0a07e759-74ec-44e1-903d-514ba068870f
   current_url: "/garden/bias-vs-variance/"
   history: []
   state: live
-  last_modified: 2026-05-25
+  last_modified: 2026-04-06
 - id: e191ccb8-0b1b-4d61-b0cf-e7eb26e866a6
   current_url: "/garden/cellular-automata-are-visual-rule-based-systems/"
   history: []
   state: live
-  last_modified: 2026-05-25
+  last_modified: 2026-04-06
 - id: 235402ca-0637-455a-b66c-fb23067b0874
   current_url: "/garden/maximum-a-posteriori-map/"
   history: []
   state: live
-  last_modified: 2026-05-25
+  last_modified: 2026-04-06
 - id: 20000004-0000-0000-0000-000000000004
   current_url: "/research/questions/example-question-four/"
   history: []
@@ -107,14 +107,22 @@ notes:
   current_url: "/garden/inference-queries/"
   history: []
   state: live
-  last_modified: 2024-12-18
+  last_modified: 2026-10-17
 - id: 3E650E6F-4C7F-43AE-91D8-1FE96AB31C02
   current_url: "/research/themes/bayesian-reasoning-for-procedural-content-generation/"
   history: []
   state: live
-  last_modified: 2026-10-21
+  last_modified: 2026-10-24
 - id: D5C56C0C-E136-4B5C-B63C-0921D194F0CD
   current_url: "/research/questions/test-question/"
   history: []
   state: live
   last_modified: 2026-10-21
+- id: 2918601c-88e4-448f-9545-52edd7147332
+  current_url: null
+  history: 
+  - url: "/garden/types-and-programming-languages/"
+    replaced_at: "2026-10-31T01:37:56Z"
+    reason: removed
+  state: removed
+  last_modified: 2026-10-30
