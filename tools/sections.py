@@ -37,7 +37,7 @@ STORES = frozenset({"frontmatter", "data"})
 FILLS = frozenset({"today", "next-weight"})
 # Where in the org buffer a `from: pipeline` field comes from, so
 # `a3-publish-mark` can check it and prompt when it would come out empty.
-SOURCES = frozenset({"title", "filetags", "drawer"})
+SOURCES = frozenset({"title", "filetags", "drawer", "date"})
 VARIANT_KEYS = frozenset({"on", "cases"})
 CASE_KEYS = frozenset({"values", "fields"})
 
