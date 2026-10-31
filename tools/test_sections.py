@@ -190,13 +190,17 @@ class LoaderTests(unittest.TestCase):
 
     def test_real_registry_sources_required_buffer_fields(self):
         """Every required pipeline field mark can supply names its buffer source:
-        tags (essays, research/themes) from #+filetags, title from #+title.
-        Library (store: data) items are written by a3-library-insert-item."""
+        tags from #+filetags, title from #+title.  Essays tags are the
+        exception: the essays normalizer always writes the key (`tags: []`
+        for an essay with none), so mark never asks for tags there.
+        Library (store: data) rows come from item notes."""
         reg = sections.load(sections.SITE_ROOT)
         for name, spec in reg["sections"].items():
             if spec.get("store") == "data":
                 continue
             for field, want in (("title", "title"), ("tags", "filetags")):
+                if (name, field) == ("essays", "tags"):
+                    want = None
                 fs = spec["fields"].get(field)
                 if fs and fs.get("required") and fs.get("from") == "pipeline":
                     self.assertEqual(fs.get("source"), want, f"{name}.{field}")
