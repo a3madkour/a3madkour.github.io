@@ -1,0 +1,17 @@
+{{- /* Pick the umbrella's featured item. Input dict: { hero_slug: <slug | "">, media_index: <slug -> {item, medium}> }
+       Returns the {item, medium} entry, or "" for an empty library: the pinned
+       hero_slug when it resolves, else the max-last_modified item. Shared by the
+       hero card and the shelves, which leave the featured item out. */ -}}
+{{- $entry := "" -}}
+{{- with .hero_slug -}}{{- $entry = index $.media_index . -}}{{- end -}}
+{{- if not $entry -}}
+  {{- $newest_date := "" -}}
+  {{- range $slug, $candidate := .media_index -}}
+    {{- $lm := default "1970-01-01" $candidate.item.last_modified -}}
+    {{- if gt $lm $newest_date -}}
+      {{- $newest_date = $lm -}}
+      {{- $entry = $candidate -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- return (default "" $entry) -}}

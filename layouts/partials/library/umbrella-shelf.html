@@ -1,7 +1,11 @@
-{{- /* One library shelf. Input dict: { shelf: <shelf-map>, media_index: <slug -> {item, medium}> }
+{{- /* One library shelf. Input dict: { shelf: <shelf-map>, media_index: <slug -> {item, medium}>,
+       exclude: <slug | ""> }. A shelf is a slug list (items:), a tag (tag:) or a set of
+       statuses (status:), newest first by finished/started date. `exclude` is the hero's
+       slug, so the featured item is not shown twice.
        The 12-tile cap is hardcoded; tag-driven shelves over-render → /tags/<tag>/ for the rest. */ -}}
 {{- $shelf := .shelf -}}
 {{- $media_index := .media_index -}}
+{{- $exclude := default "" .exclude -}}
 {{- $title := $shelf.title -}}
 {{- $shelf_slug := urlize $title -}}
 {{- $cap := 12 -}}
@@ -21,6 +25,22 @@
       {{- $items = $items | append $entry -}}
     {{- end -}}
   {{- end -}}
+{{- else if $shelf.status -}}
+  {{- $want := $shelf.status -}}
+  {{- if not (reflect.IsSlice $want) }}{{ $want = slice $want }}{{ end -}}
+  {{- $keyed := slice -}}
+  {{- range $slug, $entry := $media_index -}}
+    {{- if in $want $entry.item.status -}}
+      {{- $key := or $entry.item.finished $entry.item.started $entry.item.last_modified "" -}}
+      {{- $keyed = $keyed | append (dict "key" (printf "%v" $key) "entry" $entry) -}}
+    {{- end -}}
+  {{- end -}}
+  {{- range sort $keyed "key" "desc" }}{{ $items = $items | append .entry }}{{ end -}}
+{{- end -}}
+{{- with $exclude -}}
+  {{- $kept := slice -}}
+  {{- range $items }}{{ if ne .item.slug $exclude }}{{ $kept = $kept | append . }}{{ end }}{{ end -}}
+  {{- $items = $kept -}}
 {{- end -}}
 
 {{- $count := len $items -}}

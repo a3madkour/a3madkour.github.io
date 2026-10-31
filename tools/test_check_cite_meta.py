@@ -8,6 +8,7 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).parent))
+import check_cite_meta as lint  # noqa: E402
 from check_cite_meta import (
     inspect_html,
     is_citable_path,
@@ -71,6 +72,25 @@ class TestCiteMeta(unittest.TestCase):
         )
         issues = inspect_html(broken, citations=CITATIONS_FIXTURE)
         self.assertTrue(any('unknown-key' in i for i in issues))
+
+    def test_format_punctuation_flags_empty_field(self):
+        """A format whose trailing field is empty must not print its comma:
+        the 2026-10-30 TAPL shelf row read 'Types and Programming Languages,\" 2002, .'."""
+        bad = ('<article><script type="application/json" class="cite-data">'
+               '{"self":{"formats":{"chicago":"A, \\"T,\\" 2002, .","mla":"A. \\"T.\\" 2002."}},"refs":{}}'
+               '</script></article>')
+        issues = lint.format_punctuation_issues(bad)
+        self.assertEqual(len(issues), 1, issues)
+        self.assertIn('chicago', issues[0])
+        good = bad.replace('2002, .', '2002.')
+        self.assertEqual(lint.format_punctuation_issues(good), [])
+
+    def test_format_punctuation_reads_every_blob(self):
+        two = ''.join(
+            '<script type="application/json" class="cite-data">'
+            '{"self":{"formats":{"mla":"%s"}},"refs":{}}</script>' % f
+            for f in ('ok.', 'X, .'))
+        self.assertEqual(len(lint.format_punctuation_issues(two)), 1)
 
     def test_is_citable_path_essays(self):
         self.assertTrue(is_citable_path('public/essays/some-slug/index.html'))

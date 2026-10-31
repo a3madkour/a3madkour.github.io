@@ -70,10 +70,13 @@
   {{- if $items -}}
     {{ partial "library/currently-active.html" (dict "items" $active) }}
 
-    <p class="library-stats-line">{{ len $items }} total — partition counts shown via filter chips below.</p>
+    <p class="library-stats-line">{{ len $items }} total.</p>
+    {{- /* Only statuses some item has: one present value is no filter. */ -}}
+    {{- $statusValues := slice -}}
+    {{- range (slice "finished" "reading" "queued" "abandoned") }}{{ if where $items "status" . }}{{ $statusValues = $statusValues | append . }}{{ end }}{{ end -}}
     <div class="library-chips" data-page="reading">
       {{ partial "filter-chips.html" (dict "section" "library-reading" "dimensions" (slice
-        (dict "key" "status" "label" "Status" "values" (slice "finished" "reading" "queued" "abandoned"))
+        (dict "key" "status" "label" "Status" "values" $statusValues)
         (dict "key" "tag"    "label" "Tag"    "values" $tagValues)
       )) }}
     </div>

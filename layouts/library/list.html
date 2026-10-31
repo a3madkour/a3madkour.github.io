@@ -24,11 +24,13 @@
   {{- /* Hero and shelves render nothing when they resolve to no item (an
        empty library), so each is rendered first and its sidebar entry added
        only when it rendered. */ -}}
-  {{- $hero := partial "library/umbrella-hero.html" (dict "hero_slug" (default "" (and $shelves $shelves.hero)) "media_index" $media_index) -}}
+  {{- $heroEntry := partial "library/hero-pick.html" (dict "hero_slug" (default "" (and $shelves $shelves.hero)) "media_index" $media_index) -}}
+  {{- $hero := partial "library/umbrella-hero.html" (dict "entry" $heroEntry) -}}
+  {{- $heroSlug := "" -}}{{- with $heroEntry }}{{ $heroSlug = .item.slug }}{{ end -}}
   {{- $shelf_html := slice -}}
   {{- $first_shelf := "" -}}
   {{- range $shelf := (default slice (and $shelves $shelves.shelves)) -}}
-    {{- $out := partial "library/umbrella-shelf.html" (dict "shelf" $shelf "media_index" $media_index) -}}
+    {{- $out := partial "library/umbrella-shelf.html" (dict "shelf" $shelf "media_index" $media_index "exclude" $heroSlug) -}}
     {{- if trim $out " \n" -}}
       {{- $shelf_html = $shelf_html | append $out -}}
       {{- if not $first_shelf }}{{ $first_shelf = $shelf }}{{ end -}}

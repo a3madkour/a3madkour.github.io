@@ -5,7 +5,8 @@ Asserts:
   - data/library-media.yaml exists, parses, has media[] list with required keys.
   - For each media[].key: data/<key>.yaml exists AND assets/images/icons/<glyph>.svg exists.
   - data/library-shelves.yaml is optional; if present, every shelf has exactly
-    one of tag: or items:, every slug in items: resolves to a real library item,
+    one of tag:, items: or status:, every status: word is a library status in
+    data/sections.json, every slug in items: resolves to a real library item,
     and any shelf with items: count > 12 has a corresponding content stub.
   - hero: slug (if present) resolves to a real item.
   - No orphan stubs under content/library/shelves/.
@@ -112,6 +113,20 @@ def _scalar(s: str):
     return s
 
 
+def _library_statuses() -> set[str]:
+    """Every status word a library shelf section allows, from data/sections.json."""
+    import sections  # tools/sections.py, the registry reader
+    reg = sections.default_registry()
+    out: set[str] = set()
+    for name in sections.section_names(reg):
+        if name.startswith("library/"):
+            out |= set(sections.section_spec(name, reg)["fields"]["status"].get("values", []))
+    return out
+
+
+LIBRARY_STATUSES = _library_statuses()
+
+
 def _collect_slugs(project_root: Path) -> set[str]:
     slugs: set[str] = set()
     for key in MEDIUM_YAMLS:
@@ -189,15 +204,18 @@ def lint_library_shelves(project_root: Path) -> list[str]:
         title = shelf.get("title", f"<shelf #{idx}>")
         has_tag = "tag" in shelf and shelf.get("tag")
         has_items = "items" in shelf and shelf.get("items")
+        has_status = "status" in shelf and shelf.get("status")
 
-        if has_tag and has_items:
-            errors.append(f"data/library-shelves.yaml: shelf '{title}' has both tag and items (exactly one allowed)")
+        sources = [k for k, v in (("tag", has_tag), ("items", has_items), ("status", has_status)) if v]
+        if len(sources) != 1:
+            errors.append(f"data/library-shelves.yaml: shelf '{title}' has {' and '.join(sources) or 'none of tag, items, status'} (exactly one of tag, items, status required)")
             continue
-        if not has_tag and not has_items:
-            errors.append(f"data/library-shelves.yaml: shelf '{title}' has neither tag nor items (exactly one required)")
-            continue
-        if not shelf.get("intro"):
-            errors.append(f"data/library-shelves.yaml: shelf '{title}' missing intro")
+        # intro is optional: it is authored prose, never filler.
+        if has_status:
+            words = has_status if isinstance(has_status, list) else [has_status]
+            for word in words:
+                if word not in LIBRARY_STATUSES:
+                    errors.append(f"data/library-shelves.yaml: shelf '{title}' status '{word}' is not a library status {sorted(LIBRARY_STATUSES)}")
 
         if has_items:
             items = shelf["items"]

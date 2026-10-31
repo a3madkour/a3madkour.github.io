@@ -67,9 +67,12 @@
     {{ partial "library/currently-active.html" (dict "items" $active) }}
 
     <p class="library-stats-line">{{ len $items }} total.</p>
+    {{- /* Only statuses some item has: one present value is no filter. */ -}}
+    {{- $statusValues := slice -}}
+    {{- range (slice "finished" "listening" "queued" "dropped") }}{{ if where $items "status" . }}{{ $statusValues = $statusValues | append . }}{{ end }}{{ end -}}
     <div class="library-chips" data-page="listening">
       {{ partial "filter-chips.html" (dict "section" "library-listening" "dimensions" (slice
-        (dict "key" "status" "label" "Status" "values" (slice "finished" "listening" "queued" "dropped"))
+        (dict "key" "status" "label" "Status" "values" $statusValues)
         (dict "key" "media-type" "label" "Format" "values" $formatValues)
         (dict "key" "tag"    "label" "Tag"    "values" $tagValues)
       )) }}

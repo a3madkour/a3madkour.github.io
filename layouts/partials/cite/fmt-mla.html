@@ -29,7 +29,11 @@
 
 {{- $parts := slice (printf "%s. \"%s.\"" $authors_str $cite.title) -}}
 {{- with $cite.venue -}}{{- $parts = $parts | append (printf "%s," .) -}}{{- end -}}
-{{- $parts = $parts | append (printf "%d," $cite.year) -}}
-{{- with $cite.url -}}{{- $parts = $parts | append (printf "%s." .) -}}{{- else -}}{{- $parts = $parts | append "." -}}{{- end -}}
+{{- /* The year takes the comma only when a URL follows it. */ -}}
+{{- with $cite.url -}}
+  {{- $parts = $parts | append (printf "%d," $cite.year) (printf "%s." .) -}}
+{{- else -}}
+  {{- $parts = $parts | append (printf "%d." $cite.year) -}}
+{{- end -}}
 
 {{- return delimit $parts " " -}}

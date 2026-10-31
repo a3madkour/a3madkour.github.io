@@ -124,6 +124,41 @@ shelves:
             errors = lint.lint_library_shelves(root)
             self.assertTrue(any("both tag and items" in e.lower() or "exactly one" in e.lower() for e in errors))
 
+    def test_status_shelf_without_intro_passes(self):
+        good = """shelves:
+  - title: "Currently"
+    status: [reading, listening]
+  - title: "Recently finished"
+    status: [finished]
+"""
+        with tempfile.TemporaryDirectory() as td:
+            root = make_project(Path(td), media=MEDIA_YAML_GOOD, shelves=good,
+                                reading=READING_YAML, listening=LISTENING_YAML)
+            self.assertEqual(lint.lint_library_shelves(root), [])
+
+    def test_status_shelf_unknown_status_fails(self):
+        bad = """shelves:
+  - title: "Odd"
+    status: [reading, borrowed]
+"""
+        with tempfile.TemporaryDirectory() as td:
+            root = make_project(Path(td), media=MEDIA_YAML_GOOD, shelves=bad,
+                                reading=READING_YAML, listening=LISTENING_YAML)
+            errors = lint.lint_library_shelves(root)
+            self.assertTrue(any("'borrowed'" in e for e in errors), errors)
+
+    def test_shelf_with_tag_and_status_fails(self):
+        bad = """shelves:
+  - title: "Conflicted"
+    tag: fiction
+    status: [finished]
+"""
+        with tempfile.TemporaryDirectory() as td:
+            root = make_project(Path(td), media=MEDIA_YAML_GOOD, shelves=bad,
+                                reading=READING_YAML, listening=LISTENING_YAML)
+            errors = lint.lint_library_shelves(root)
+            self.assertTrue(any("exactly one" in e.lower() for e in errors), errors)
+
     def test_unresolved_hero_slug_warns(self):
         bad = """hero: nonexistent-slug
 

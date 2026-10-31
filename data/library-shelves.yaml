@@ -1,11 +1,12 @@
-# Library curation — hand-edited. Each shelf is either tag-driven (tag: …)
-# or a hand-curated slug list (items: [...]). hero: optionally pins a featured
+# Library curation — hand-edited. Each shelf is tag-driven (tag: …), a
+# hand-curated slug list (items: [...]) or status-driven (status: [...],
+# newest first; intro optional). hero: optionally pins a featured
 # item; absent or unresolvable → fall back to max-last_modified across all media.
 #
 # NOTE: shelf rows come from shared item notes (the collector writes
-# data/{reading,listening,playing,watching}.yaml). No hero is pinned and no
-# slug-list shelf exists yet; add them once real items are shared. A shelf
-# that resolves to no items is not rendered.
+# data/{reading,listening,playing,watching}.yaml). No hero is pinned; the
+# featured item is left off the shelves. A shelf that resolves to no items is
+# not rendered.
 
 # NOTE: music (listening) tiles render at 1:1 aspect; books/games/films/series
 # render at 140:190 (portrait). Shelves are kept medium-homogeneous (or
@@ -13,10 +14,8 @@
 # row is a known visual bug — see B.2.x follow-up #12 in project_b2_complete.
 
 shelves:
-  - title: "Recently finished"
-    intro: "Things I closed the cover on this season."
-    tag: fiction
+  - title: "Currently"
+    status: [reading, listening, playing, watching]
 
-  - title: "On the listening bench"
-    intro: "Albums in heavy rotation."
-    tag: ambient
+  - title: "Recently finished"
+    status: [finished, 100pct]

@@ -154,6 +154,49 @@ def inspect_html(html: str, citations: dict) -> list[str]:
     return issues
 
 
+class _CiteBlobs(HTMLParser):
+    """Every <script class="cite-data"> body on a page (library rows carry one each)."""
+    def __init__(self):
+        super().__init__()
+        self.blobs: list[str] = []
+        self._buf: list[str] | None = None
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'script' and 'cite-data' in (dict(attrs).get('class') or '').split():
+            self._buf = []
+
+    def handle_endtag(self, tag):
+        if tag == 'script' and self._buf is not None:
+            self.blobs.append(''.join(self._buf).strip())
+            self._buf = None
+
+    def handle_data(self, data):
+        if self._buf is not None:
+            self._buf.append(data)
+
+
+# A separator left before nothing: a format whose last field was empty.
+EMPTY_FIELD_RE = re.compile(r',\s*\.$|,\s*,')
+
+
+def format_punctuation_issues(html: str) -> list[str]:
+    """Formats in any cite-data blob on the page that print a comma before
+    an empty field ("2002, ."), on every page, citable or not."""
+    p = _CiteBlobs()
+    p.feed(html)
+    issues = []
+    for raw in p.blobs:
+        try:
+            blob = json.loads(raw)
+        except json.JSONDecodeError:
+            continue  # inspect_html reports parse errors on citable pages
+        formats = (blob.get('self') or {}).get('formats') or {}
+        for name, text in formats.items():
+            if isinstance(text, str) and EMPTY_FIELD_RE.search(text.strip()):
+                issues.append(f'self.formats.{name} prints a comma before an empty field: {text.strip()!r}')
+    return issues
+
+
 def load_citations(path: Path | None = None) -> dict:
     """Stdlib-only YAML key extraction. Returns {key: {}} for each
     top-level entry under `citations:` in data/citations.yaml."""
@@ -180,10 +223,10 @@ def run(repo_root: Path) -> tuple[int, list[str]]:
     errors: list[str] = []
     for html_path in public.rglob('*.html'):
         rel = str(html_path).replace('\\', '/')
-        if not is_citable_path(rel):
-            continue
         html = html_path.read_text(encoding='utf-8', errors='replace')
-        issues = inspect_html(html, citations=citations)
+        issues = format_punctuation_issues(html)
+        if is_citable_path(rel):
+            issues = inspect_html(html, citations=citations) + issues
         if issues:
             failures += 1
             errors.append(f'{rel}:')

@@ -31,6 +31,9 @@
   {{- end -}}
 
   {{- if eq $flavor "media" -}}
+    {{- /* A row of its own: one long strip wrapped mid-way and left a "·" at
+           the line end.  The CSS hides a separator that opens the row. */ -}}
+    <span class="media-meta">
     {{- with .Params.status -}}
     {{- $label := cond (eq . "100pct") "100%" (title .) -}}
     <span class="meta-sep" aria-hidden="true">·</span>
@@ -60,6 +63,7 @@
     <span class="meta-sep" aria-hidden="true">·</span>
     <span class="spoiler-warning" role="note">⚠ {{ $sl }} spoilers</span>
     {{- end -}}
+    </span>
   {{- else if eq $flavor "reference" -}}
     <span class="meta-sep" aria-hidden="true">·</span>
     <span class="ref-type">{{ upper $mediaType }}</span>
