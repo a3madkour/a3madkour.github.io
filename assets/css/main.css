@@ -4919,8 +4919,11 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   margin: var(--space-lg) 0 var(--space-4xl);
 }
 
+/* inline-block keeps the sibling § anchor-link on the heading's line
+ * (same pattern as .block-header); the card grid below is block-level. */
 .library-catalogue h2 {
-  margin: 0 0 var(--space-lg);
+  display: inline-block;
+  margin: 0 0.4em var(--space-lg) 0;
   font-size: 1.05rem;
 }
 
