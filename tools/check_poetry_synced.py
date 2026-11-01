@@ -15,6 +15,9 @@ one (non-escaped) [mm:ss] marker, validate the synced-poetry contract
                       from the marker counter and from shape checks.
   5. Monotonic     — non-decreasing marker order. WARNING only (rc stays 0).
   6. Non-empty     — at least one content (non-blank, non-marker-only) line.
+  7. No shortcode  — `{{<` or `{{%` anywhere in the body is an error, timed
+                      or not: bodies are raw lines and Hugo would parse it as
+                      a shortcode and fail the build.
 
 Exits 0 on all-pass (warnings do not fail), 1 on any error. Stdlib only.
 """
@@ -71,9 +74,17 @@ def lint_file(md: Path) -> tuple[list[str], list[str]]:
     body = _split_body(text)
     masked = _mask_escaped(body)
 
+    # (7) shortcode text — every poem, before the not-synced early return
+    for token in ("{{<", "{{%"):
+        if token in body:
+            errors.append(
+                f"{md}: body contains '{token}' — Hugo would read it as a "
+                f"shortcode and fail the build"
+            )
+
     loose = LOOSE_RE.findall(masked)
     if not loose:
-        return [], []  # not a synced poem
+        return errors, []  # not a synced poem
 
     # (1) marker shape
     seconds: list[float] = []

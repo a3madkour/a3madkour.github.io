@@ -46,6 +46,26 @@ class CheckPoetrySyncedTest(unittest.TestCase):
     def tearDown(self) -> None:
         self.repo.cleanup()
 
+    # --- shortcode text (every poem, timed or not) ---
+
+    def test_shortcode_open_is_an_error_on_a_plain_poem(self) -> None:
+        p = self.repo.write("sc", poem("a\n{{< x >}}\n"))
+        errs, _ = lint.lint_file(p)
+        self.assertEqual(len(errs), 1, errs)
+        self.assertIn(str(p), errs[0])
+        self.assertIn("{{<", errs[0])
+
+    def test_percent_shortcode_is_an_error(self) -> None:
+        p = self.repo.write("scp", poem("{{% x %}}\n"))
+        errs, _ = lint.lint_file(p)
+        self.assertEqual(len(errs), 1, errs)
+        self.assertIn("{{%", errs[0])
+
+    def test_clean_plain_poem_passes(self) -> None:
+        self.repo.write("clean", poem("a\nb\n"))
+        rc, errs = lint.run(self.repo.root)
+        self.assertEqual(rc, 0, errs)
+
     # --- happy path ---
 
     def test_happy_path_passes(self) -> None:
