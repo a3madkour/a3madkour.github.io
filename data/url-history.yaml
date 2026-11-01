@@ -103,6 +103,7 @@ notes:
   current_url: "/works/poetry/smoke-test-poem/"
   history: []
   state: live
+  last_modified: 2026-06-12
 - id: 32a9dc40-3031-4455-8c4b-f64bf0ccebad
   current_url: "/garden/inference-queries/"
   history: []
@@ -126,3 +127,16 @@ notes:
     reason: removed
   state: removed
   last_modified: 2026-10-30
+- id: 13401672-3490-4C34-9D53-DA0526DC7753
+  current_url: null
+  history: 
+  - url: "/essays/my-title-is-not-for-sale/"
+    replaced_at: "2026-11-01T19:22:17Z"
+    reason: removed
+  state: removed
+  last_modified: 2026-10-31
+- id: 435EFF16-358A-428D-AC24-42FA305C6BF0
+  current_url: "/works/poetry/defend/"
+  history: []
+  state: live
+  last_modified: 2026-11-01

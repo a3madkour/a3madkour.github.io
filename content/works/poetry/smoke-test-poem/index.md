@@ -15,6 +15,6 @@ title: "Smoke Test Poem"
 [00:09]sed [00:10]do [00:11]eiusmod [00:12]tempor
 [00:13]incididunt [00:14]ut [00:15]labore [00:16]dolore
 
-[00:17]Duis aute **irure** reprehenderit
+[00:17]Duis aute *irure* reprehenderit
 
 [00:18]ut [00:19]enim \[00:99] [00:20]minim [00:21]veniam
