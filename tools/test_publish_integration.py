@@ -454,6 +454,8 @@ class TestAssetHandling(unittest.TestCase):
             )
             forms = [
                 f'(setq a3madkour-pub/org-notes-dir "{notes}")',
+                # The removal path resolves the asset root; never the real one.
+                f'(setq a3madkour-pub-canonical-asset-root "{notes}/assets")',
                 f'(setq a3madkour-pub-site-content-dir "{content}/")',
                 # Stub org-roam-db-sync + manifest-path + org-roam-id-find (point at the .org files).
                 f'(cl-letf (((symbol-function (quote org-roam-db-sync)) (lambda () nil))'
