@@ -2626,6 +2626,11 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   gap: var(--space-sm);
   margin: var(--space-3xl) 0 var(--space-2xl) 0;
 }
+/* The Medium row has about 5px spare on a phone, so a fallback font or a
+   larger default text size tips its last chip onto a second row. */
+@media (max-width: 480px) {
+  .works-umbrella-controls .filter-chip { padding-inline: var(--space-sm); }
+}
 .works-umbrella-toolbar {
   display: flex;
   align-items: center;
