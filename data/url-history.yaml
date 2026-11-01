@@ -140,3 +140,22 @@ notes:
   history: []
   state: live
   last_modified: 2026-11-01
+- id: A1A1A1A1-0000-4000-8000-000000000002
+  current_url: null
+  history: 
+  - url: "/works/music/example-test-album/"
+    replaced_at: "2026-11-01T19:38:07Z"
+    reason: removed
+  state: removed
+  last_modified: 2026-11-01
+- id: A1A1A1A1-0000-4000-8000-000000000001
+  current_url: null
+  history: 
+  - url: "/works/games/example-test-game/"
+    replaced_at: "2026-11-01T19:37:55Z"
+    reason: title_change
+  - url: "/works/games/example-renamed-game/"
+    replaced_at: "2026-11-01T19:38:07Z"
+    reason: removed
+  state: removed
+  last_modified: 2026-11-01

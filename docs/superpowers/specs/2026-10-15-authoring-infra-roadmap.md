@@ -1,7 +1,7 @@
 # Authoring infrastructure roadmap
 
 **Date:** 2026-10-15
-**Status:** approved design; S1 is queue head
+**Status:** approved design; S1 closed 2026-11-01, S2 has one open row (friction row 14), then the re-plan checkpoint
 **Supersedes the sequencing in:** the 2026-09-27 authoring-surface audit (slices A1 → A2 → B1 → C)
 
 ## 1. Goal
@@ -13,7 +13,7 @@ org-roam content**, not fixtures. Recipes are out of scope (indefinite hiatus, 2
 
 | Gap tier (2026-09-27 audit) | What | Slice | State |
 |---|---|---|---|
-| 1. Real content, no path | `works/games`, `works/music` | A1 | Shipped and deployed. Never run against real org-roam (T12 open). |
+| 1. Real content, no path | `works/games`, `works/music` | A1 | Shipped. T12 closed 2026-11-01 on dummy notes through real org-roam; no real work note exists yet (friction row 46). |
 | 2. Machine-authored content | `streams`: `tools/poll_streams.py` writes `content/streams/<date>-<slug>/index.md` stubs | A2 | Not started. Trigger-gated (§5). |
 | 3. Hand-edited structural pages | 19 `_index.md` files, incl. homepage, about, credits, library leaves | B1 | Not started |
 | 4. Hand-edited curated YAML | `filter-chips.yaml`, `library-shelves.yaml`, `library-media.yaml`, `streams-schedule.yaml` | B1 | Not started |
@@ -62,6 +62,8 @@ games/music runs close A1 T12, which modifies real org files and needs explicit 
 the time.
 
 ### 3.2 S2 — dogfood fixes
+
+Open from S1: friction row 14 (parallel Playwright flake, LHCI `chromium` on macOS). New-slice stubs from S1: row 8 (`org-math-lint` does not KaTeX-parse fragments), row 36 (essay card line wrap and clipped series kicker), row 37 (D1, neutral authoring keywords).
 
 Each *fix now* row as a small TDD change. The parked elisp items join only if S1 hit them:
 P3.8 (dedup 13 `with-tmp-*` test macros), the ERT suite writing `citations.yaml` into both
