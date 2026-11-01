@@ -2,6 +2,8 @@
 
 **Status:** Designed 2026-06-12. Brainstorm transcript folded into this spec; the original stub (filed 2026-05-19) has been replaced.
 
+**Poem body (2026-11-01):** the body path described below is superseded for how a poem's lines reach the page. Poem bodies now bypass Org and Goldmark and render through one partial; see `docs/superpowers/specs/2026-11-01-poems-as-written-design.md`.
+
 **Phase fit:** Phase 3 (org-mode pipeline). Rides the **deliberate publish** command (`a3madkour-publish-deliberate.el`), not the frequent garden/library/research publish. Hard dependency on B.0 shared infra (already shipped). No new Hugo/JS/CSS — the consuming runtime shipped 2026-05-19 (see `[[project-time-synced-poetry-slice]]`).
 
 **Roadmap row:** Tier 8.2 in `docs/superpowers/specs/2026-06-07-polish-and-bugfix-roadmap.md`.
