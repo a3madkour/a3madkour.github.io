@@ -22,3 +22,5 @@ audio_url: "https://example.com/example-reading.mp3"
 [00:12]* nisi aliquip
 [00:13]ex a/b/c 2*3*4 <b> & ea
 [00:14]Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua ut enim ad minim veniam quis nostrud.
+  [00:20]*lorem ipsum* dolor
+next untimed
