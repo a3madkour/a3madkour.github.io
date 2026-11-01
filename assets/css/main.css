@@ -3036,9 +3036,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   line-height: 2.1;
   margin-top: var(--space-2xl);
 }
-.works-poem-body p {
-  margin: 0 0 1.3em 0;
-}
 
 /* =========================================================
  * §36 Works graph

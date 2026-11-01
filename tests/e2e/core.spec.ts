@@ -18,6 +18,20 @@ test('a plain poem keeps its line breaks', async ({ page }) => {
   expect(height / lineHeight).toBeCloseTo(2, 0);
 });
 
+test('plain and synced poems set their stanzas identically', async ({ page }) => {
+  // The two poem paths render separately; only this keeps them matched.
+  const stanzaStyle = async (url: string) => {
+    await page.goto(url);
+    return page.locator('.works-poem-body p.poem-stanza').first().evaluate((el) => {
+      const { fontFamily, fontSize, lineHeight, marginBottom } = getComputedStyle(el);
+      return { fontFamily, fontSize, lineHeight, marginBottom };
+    });
+  };
+  expect(await stanzaStyle('/works/poetry/example-poem-minimal/')).toEqual(
+    await stanzaStyle('/works/poetry/example-poem-synced/'),
+  );
+});
+
 test('no-js class is removed after load (R3.6 guard)', async ({ page }) => {
   await page.goto('/');
   // baseof.html ships <html class="no-js">; the inline head script strips it.

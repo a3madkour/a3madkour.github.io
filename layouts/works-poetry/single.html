@@ -33,8 +33,10 @@
     {{- if gt (len $all) (len $esc) -}}
       {{ partial "works/poem-synced.html" . }}
     {{- else -}}
-      {{- /* Markdown reads a single newline as a space; each one is a poem line. */ -}}
-      {{ .Content | replaceRE "</p>\n" "</p>" | replaceRE "\n" "<br>\n" | safeHTML }}
+      {{- /* Markdown reads a single newline as a space; each one is a poem line.
+             Same markup as works/synced-text-parser.html: a poem looks the
+             same with or without audio. */ -}}
+      {{ .Content | replaceRE "</p>\n" "</p>" | replaceRE "\n" "<br>\n" | replaceRE "<p>" `<p class="poem-stanza">` | safeHTML }}
     {{- end -}}
   </section>
 
