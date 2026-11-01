@@ -87,3 +87,61 @@ test('site header stays one row below 960px with all 8 nav items (RC3.1)', async
   await expect(sectionLinks).toHaveCount(8);
   expect(await headerHeight()).toBeLessThan(120);
 });
+
+const SAMPLE_LINES = [
+  'Lorem ipsum dolor.',
+  'Sit amet consectetur.',
+  'Adipiscing elit sed.',
+  '  Eiusmod tempor.',
+  '      Incididunt ut.',
+  'Labore  et  dolore.',
+  '- magna aliqua',
+  '1. enim minim',
+  '> veniam quis',
+  'nostrud and exercitation',
+  '# ullamco laboris',
+  '* nisi aliquip',
+  'ex a/b/c 2*3*4 <b> & ea',
+  'Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua ut enim ad minim veniam quis nostrud.',
+];
+
+for (const slug of ['example-poem-marks', 'example-poem-marks-timed']) {
+  test(`poem marks: every line as typed (${slug})`, async ({ page }) => {
+    await page.goto(`/works/poetry/${slug}/`);
+    const lines = await page.locator('.works-poem-body .poem-line').allInnerTexts();
+    expect(lines.map((l) => l.replace(/\u00a0/g, ' ').trimEnd())).toEqual(SAMPLE_LINES);
+    await expect(page.locator('.works-poem-body :is(ul, ol, h1, h2, h3, blockquote)')).toHaveCount(0);
+    await expect(page.locator('.works-poem-body')).not.toContainText('aria-label');
+    await expect(page.locator('.works-poem-body strong')).toHaveText('nostrud');
+    await expect(page.locator('.works-poem-body em')).toHaveText('exercitation');
+  });
+}
+
+test('poem marks: indentation is a real offset', async ({ page }) => {
+  await page.goto('/works/poetry/example-poem-marks/');
+  const x = (text: string) =>
+    page.locator('.works-poem-body .poem-line').filter({ hasText: text }).evaluate((el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      const node = walker.nextNode()!;
+      const at = node.textContent!.search(/\S/);
+      range.setStart(node, at);
+      range.setEnd(node, at + 1);
+      return range.getBoundingClientRect().x;
+    });
+  expect(await x('Incididunt ut.')).toBeGreaterThan(await x('Lorem ipsum dolor.'));
+});
+
+test('a plain poem has no player or timing', async ({ page }) => {
+  await page.goto('/works/poetry/example-poem-marks/');
+  await expect(page.locator('.poem-player')).toHaveCount(0);
+  await expect(page.locator('[data-t]')).toHaveCount(0);
+  await expect(page.locator('.poem-synced')).toHaveCount(0);
+});
+
+test('a long poem line wraps at phone width', async ({ page }) => {
+  await page.setViewportSize({ width: 400, height: 800 });
+  await page.goto('/works/poetry/example-poem-marks/');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(400);
+});

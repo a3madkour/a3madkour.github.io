@@ -1,0 +1,131 @@
+{{- /* Input dict: { "raw": <the body exactly as typed, frontmatter-free>,
+                      "audio": <audio_url or empty> }
+       Output: HTML string. The caller pipes through safeHTML.
+       A poem with no timing marker is stanzas of <span class=poem-line>
+       separated by <br>, with no wrapper. A poem with a marker is the same
+       markup plus .poem-word / data-t, inside a .poem-synced wrapper carrying
+       data-duration (and data-audio-src when audio is given).
+
+       Lines are kept as typed: only line-end whitespace is dropped, so
+       indentation and runs of spaces survive (the CSS sets pre-wrap). Nothing
+       is read as Markdown: each line is escaped, then poem-inline applies
+       /italic/ and *bold*.
+
+       Marker grammar: \[\d{1,2}:\d{2}(?:\.\d{1,2})?]  (spec §3). This
+       grammar is duplicated (no cross-partial constants in Hugo) in head.html
+       and this file; the canonical copy + validation lives in
+       tools/check_poetry_synced.py — change all sites in lockstep.
+       Escaped \[mm:ss] → literal [mm:ss] text (sentinel round-trip).      */ -}}
+
+{{- $raw := .raw -}}
+{{- $audio := .audio -}}
+{{- $markerRE := `\[\d{1,2}:\d{2}(?:\.\d{1,2})?\]` -}}
+
+{{- /* Protect escaped markers: \[02:03] → ⟦ESC:02:03⟧ (bracket-free).
+       U+27E6/U+27E7 chosen as collision-improbable in prose; NOT safe
+       against input that literally contains "⟦ESC:mm:ss⟧" — acceptable for
+       hand-authored poetry / fixtures (no untrusted input). */ -}}
+{{- $raw = replaceRE `\\\[(\d{1,2}:\d{2}(?:\.\d{1,2})?)\]` "⟦ESC:$1⟧" $raw -}}
+
+{{- $timed := gt (len (findRE $markerRE $raw)) 0 -}}
+{{- $lines := split $raw "\n" -}}
+{{- $maxT := 0.0 -}}
+{{- $prevT := -0.5 -}}      {{- /* first untimed line → 0.0 */ -}}
+{{- $stanzas := slice -}}
+{{- $cur := slice -}}       {{- /* rendered <span class=poem-line> for open stanza */ -}}
+
+{{- range $lines -}}
+  {{- $line := strings.TrimRight " \t\r" . -}}
+  {{- if eq (trim $line " \t") "" -}}
+    {{- if gt (len $cur) 0 -}}
+      {{- $stanzas = $stanzas | append (printf "<p class=\"poem-stanza\">%s</p>" (delimit $cur "<br>\n")) -}}
+      {{- $cur = slice -}}
+    {{- end -}}
+  {{- else -}}
+    {{- /* leading marker → line data-t; else inherit prevT + 0.5 */ -}}
+    {{- $leadRE := `^\[\d{1,2}:\d{2}(?:\.\d{1,2})?\]` -}}
+    {{- $lead := findRE $leadRE $line 1 -}}
+    {{- $lineT := 0.0 -}}
+    {{- if gt (len $lead) 0 -}}
+      {{- $lineT = partial "works/synced-marker-seconds.html" (index $lead 0) -}}
+      {{- $line = replaceRE $leadRE "" $line 1 -}}
+    {{- else -}}
+      {{- $lineT = add $prevT 0.5 -}}
+    {{- end -}}
+    {{- $prevT = $lineT -}}
+    {{- if gt $lineT $maxT -}}{{- $maxT = $lineT -}}{{- end -}}
+
+    {{- $midMarkers := findRE $markerRE $line -}}
+    {{- /* Hugo's HTML minifier collapses runs of literal spaces, and CSS
+           pre-wrap cannot restore what is no longer in the markup. A space that
+           follows another space (or the line start) is written as &nbsp; so
+           indentation and runs survive the build. */ -}}
+    {{- $esc := replaceRE `(^| ) ` "${1}&nbsp;" (htmlEscape $line) -}}
+    {{- $lineHTML := "" -}}
+
+    {{- if not $timed -}}
+      {{- $lineHTML = printf "<span class=\"poem-line\">%s</span>" (partial "works/poem-inline.html" $esc) -}}
+    {{- else if gt (len $midMarkers) 0 -}}
+      {{- /* per-word: a token may carry a LEADING marker glued to its word
+             (e.g. "[00:06]eiusmod" — spec §3) which both advances the clock
+             and times that word. A token that is only a marker just advances
+             the clock. An empty token (a run of spaces, or indentation) is
+             kept as one literal space. */ -}}
+      {{- $curT := $lineT -}}
+      {{- $words := slice -}}
+      {{- $tokMarkerRE := printf "^%s" $markerRE -}}
+      {{- range (split $line " ") -}}
+        {{- $tok := trim . " \t" -}}
+        {{- if eq $tok "" -}}
+          {{- $words = $words | append "&nbsp;" -}}
+        {{- else -}}
+          {{- $tm := findRE $tokMarkerRE $tok 1 -}}
+          {{- if gt (len $tm) 0 -}}
+            {{- $curT = partial "works/synced-marker-seconds.html" (index $tm 0) -}}
+            {{- if gt $curT $maxT -}}{{- $maxT = $curT -}}{{- end -}}
+            {{- $rest := trim (replaceRE $tokMarkerRE "" $tok 1) " \t" -}}
+            {{- if ne $rest "" -}}
+              {{- $words = $words | append (printf "<span class=\"poem-word\" data-t=\"%g\">%s </span>" $curT (partial "works/poem-inline.html" (htmlEscape $rest))) -}}
+            {{- end -}}
+          {{- else -}}
+            {{- $words = $words | append (printf "<span class=\"poem-word\" data-t=\"%g\">%s </span>" $curT (partial "works/poem-inline.html" (htmlEscape $tok))) -}}
+          {{- end -}}
+        {{- end -}}
+      {{- end -}}
+      {{- $lineHTML = printf "<span class=\"poem-line\">%s</span>" (delimit $words "") -}}
+    {{- else -}}
+      {{- $marked := partial "works/poem-inline.html" $esc -}}
+      {{- if ne $marked $esc -}}
+        {{- /* an inline mark can span words, so the line reveals as one unit */ -}}
+        {{- $lineHTML = printf "<span class=\"poem-line\" data-t=\"%g\">%s</span>" $lineT $marked -}}
+      {{- else -}}
+        {{- $words := slice -}}
+        {{- range (split $line " ") -}}
+          {{- if eq (trim . " \t") "" -}}
+            {{- $words = $words | append "&nbsp;" -}}
+          {{- else -}}
+            {{- $words = $words | append (printf "<span class=\"poem-word\" data-t=\"%g\">%s </span>" $lineT (htmlEscape (trim . " \t"))) -}}
+          {{- end -}}
+        {{- end -}}
+        {{- $lineHTML = printf "<span class=\"poem-line\">%s</span>" (delimit $words "") -}}
+      {{- end -}}
+    {{- end -}}
+
+    {{- $cur = $cur | append $lineHTML -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* flush trailing stanza */ -}}
+{{- if gt (len $cur) 0 -}}
+  {{- $stanzas = $stanzas | append (printf "<p class=\"poem-stanza\">%s</p>" (delimit $cur "<br>\n")) -}}
+{{- end -}}
+
+{{- $body := delimit $stanzas "\n" -}}
+{{- /* restore escaped markers as literal text */ -}}
+{{- $body = replaceRE `⟦ESC:(\d{1,2}:\d{2}(?:\.\d{1,2})?)⟧` "[$1]" $body -}}
+{{- if not $timed -}}
+  {{- return $body -}}
+{{- end -}}
+{{- $src := "" -}}
+{{- with $audio -}}{{- $src = printf ` data-audio-src="%s"` (htmlEscape .) -}}{{- end -}}
+{{- return (printf "<div class=\"poem-synced\"%s data-duration=\"%g\">%s</div>" $src $maxT $body) -}}

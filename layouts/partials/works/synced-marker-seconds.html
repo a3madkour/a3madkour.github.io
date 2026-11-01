@@ -1,6 +1,6 @@
 {{- /* Input: a marker string like "[12:34]" or "[00:03.5]".
        Output: float seconds. Hugo findRE has no capture groups, so we
-       strip brackets and split manually. Shared by synced-text-parser and
+       strip brackets and split manually. Shared by poem-body and
        the future lyrics slice.
 
        GOTCHA: Hugo's `int` casts strings via base-0 strconv, so a

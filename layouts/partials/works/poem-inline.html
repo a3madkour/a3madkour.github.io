@@ -1,0 +1,21 @@
+{{- /* Input: an already-escaped string. Output: the string with the two inline
+       marks applied. /italic/ and *bold* only; nothing else is interpreted.
+       A marker hugs its text and has a line edge, whitespace or punctuation
+       outside it, so a/b/c and 2*3*4 stay literal and "* x" is not a mark.
+       Each pass consumes the separator after a match, so adjacent marks need a
+       second pass. Sentinels (U+E000..E003) keep the emitted "</em>" from being
+       read as a slash by the next pass; they become tags at the end. */ -}}
+{{- $s := . -}}
+{{- $i := `(^|[\s\p{P}])/(\S|\S.*?\S)/($|[\s\p{P}])` -}}
+{{- $b := `(^|[\s\p{P}])\*(\S|\S.*?\S)\*($|[\s\p{P}])` -}}
+{{- range seq 2 -}}
+  {{- $s = replaceRE $i "${1}\ue000${2}\ue001${3}" $s -}}
+{{- end -}}
+{{- range seq 2 -}}
+  {{- $s = replaceRE $b "${1}\ue002${2}\ue003${3}" $s -}}
+{{- end -}}
+{{- $s = replace $s "\ue000" "<em>" -}}
+{{- $s = replace $s "\ue001" "</em>" -}}
+{{- $s = replace $s "\ue002" "<strong>" -}}
+{{- $s = replace $s "\ue003" "</strong>" -}}
+{{- return $s -}}
