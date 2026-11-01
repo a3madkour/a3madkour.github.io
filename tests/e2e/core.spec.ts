@@ -6,11 +6,13 @@ test('homepage renders the site brand', async ({ page }) => {
 });
 
 test('a plain poem keeps its line breaks', async ({ page }) => {
-  // Org line breaks reach the HTML as bare newlines inside one <p>, so the
-  // poem collapses into a paragraph unless the CSS preserves them. The first
-  // stanza of this fixture is two short lines.
+  // Org line breaks reach the HTML as bare newlines inside one <p>, which a
+  // browser reads as spaces. The page must carry real breaks, so the poem
+  // survives a stale stylesheet. The first stanza of this fixture is two
+  // short lines.
   await page.goto('/works/poetry/example-poem-minimal/');
   const stanza = page.locator('.works-poem-body p').first();
+  await expect(stanza.locator('br')).toHaveCount(1);
   const lineHeight = await stanza.evaluate((el) => parseFloat(getComputedStyle(el).lineHeight));
   const height = (await stanza.boundingBox())!.height;
   expect(height / lineHeight).toBeCloseTo(2, 0);

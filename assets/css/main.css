@@ -3038,8 +3038,6 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
 }
 .works-poem-body p {
   margin: 0 0 1.3em 0;
-  /* Each org line is a poem line; the source's newlines are the line breaks. */
-  white-space: pre-line;
 }
 
 /* =========================================================

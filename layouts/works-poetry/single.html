@@ -33,7 +33,8 @@
     {{- if gt (len $all) (len $esc) -}}
       {{ partial "works/poem-synced.html" . }}
     {{- else -}}
-      {{ .Content }}
+      {{- /* Markdown reads a single newline as a space; each one is a poem line. */ -}}
+      {{ .Content | replaceRE "</p>\n" "</p>" | replaceRE "\n" "<br>\n" | safeHTML }}
     {{- end -}}
   </section>
 
