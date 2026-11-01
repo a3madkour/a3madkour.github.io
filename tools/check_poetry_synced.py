@@ -75,12 +75,15 @@ def lint_file(md: Path) -> tuple[list[str], list[str]]:
     masked = _mask_escaped(body)
 
     # (7) shortcode text — every poem, before the not-synced early return
-    for token in ("{{<", "{{%"):
-        if token in body:
-            errors.append(
-                f"{md}: body contains '{token}' — Hugo would read it as a "
-                f"shortcode and fail the build"
-            )
+    offset = text[: len(text) - len(body)].count("\n")
+    for i, line in enumerate(body.splitlines(), start=offset + 1):
+        for token in ("{{<", "{{%"):
+            if token in line:
+                errors.append(
+                    f"{md}:{i}: body contains '{token}' — Hugo would read it "
+                    f"as a shortcode and fail the build"
+                )
+                break
 
     loose = LOOSE_RE.findall(masked)
     if not loose:

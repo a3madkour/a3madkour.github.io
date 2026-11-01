@@ -61,6 +61,23 @@ class CheckPoetrySyncedTest(unittest.TestCase):
         self.assertEqual(len(errs), 1, errs)
         self.assertIn("{{%", errs[0])
 
+    def test_shortcode_error_names_the_file_line(self) -> None:
+        text = poem("a\nb\n{{< x >}}\n")
+        p = self.repo.write("scl", text)
+        want = text.splitlines().index("{{< x >}}") + 1
+        errs, _ = lint.lint_file(p)
+        self.assertEqual(len(errs), 1, errs)
+        self.assertIn(f"{p}:{want}:", errs[0])
+
+    def test_shortcode_on_two_lines_gives_two_errors(self) -> None:
+        text = poem("{{< x >}}\nok\n{{% y %}}\n")
+        p = self.repo.write("sc2", text)
+        lines = text.splitlines()
+        errs, _ = lint.lint_file(p)
+        self.assertEqual(len(errs), 2, errs)
+        self.assertIn(f"{p}:{lines.index('{{< x >}}') + 1}:", errs[0])
+        self.assertIn(f"{p}:{lines.index('{{% y %}}') + 1}:", errs[1])
+
     def test_clean_plain_poem_passes(self) -> None:
         self.repo.write("clean", poem("a\nb\n"))
         rc, errs = lint.run(self.repo.root)
