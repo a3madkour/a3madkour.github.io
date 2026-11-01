@@ -5,6 +5,17 @@ test('homepage renders the site brand', async ({ page }) => {
   await expect(page.locator('.site-brand')).toHaveText('a3madkour');
 });
 
+test('a plain poem keeps its line breaks', async ({ page }) => {
+  // Org line breaks reach the HTML as bare newlines inside one <p>, so the
+  // poem collapses into a paragraph unless the CSS preserves them. The first
+  // stanza of this fixture is two short lines.
+  await page.goto('/works/poetry/example-poem-minimal/');
+  const stanza = page.locator('.works-poem-body p').first();
+  const lineHeight = await stanza.evaluate((el) => parseFloat(getComputedStyle(el).lineHeight));
+  const height = (await stanza.boundingBox())!.height;
+  expect(height / lineHeight).toBeCloseTo(2, 0);
+});
+
 test('no-js class is removed after load (R3.6 guard)', async ({ page }) => {
   await page.goto('/');
   // baseof.html ships <html class="no-js">; the inline head script strips it.

@@ -158,7 +158,7 @@
     "works/games": {
       "fields": {
         "title":              {"type": "text", "required": true, "from": "pipeline", "source": "title"},
-        "date":               {"type": "date", "required": true, "from": "pipeline"},
+        "date":               {"type": "date", "required": true, "from": "pipeline", "source": "date", "fill": "today"},
         "lastmod":            {"type": "date", "required": true, "from": "pipeline"},
         "draft":              {"type": "bool", "required": true, "from": "pipeline"},
         "status":             {"type": "enum", "required": true,
@@ -188,7 +188,7 @@
     "works/music": {
       "fields": {
         "title":          {"type": "text", "required": true, "from": "pipeline", "source": "title"},
-        "date":           {"type": "date", "required": true, "from": "pipeline"},
+        "date":           {"type": "date", "required": true, "from": "pipeline", "source": "date", "fill": "today"},
         "lastmod":        {"type": "date", "required": true, "from": "pipeline"},
         "draft":          {"type": "bool", "required": true, "from": "pipeline"},
         "format":         {"type": "enum", "required": true,
@@ -221,7 +221,7 @@
     "works/poetry": {
       "fields": {
         "title":         {"type": "text", "required": true, "from": "pipeline", "source": "title"},
-        "date":          {"type": "date", "required": true, "from": "pipeline"},
+        "date":          {"type": "date", "required": true, "from": "pipeline", "source": "date", "fill": "today"},
         "lastmod":       {"type": "date", "required": true, "from": "pipeline"},
         "draft":         {"type": "bool", "required": true, "from": "pipeline"},
         "lines":         {"type": "int",  "required": true, "from": "pipeline"},

@@ -470,5 +470,16 @@ class CheckFieldsTests(unittest.TestCase):
              "p.md: count must be an integer"])
 
 
+class WorksDateSourceTest(unittest.TestCase):
+    def test_every_works_date_comes_from_the_note(self):
+        """Mark must stamp `#+date:` for works; the pipeline has no other
+        source, so a poem once published with no date and failed the fixture
+        linter while the publish gate waved it through."""
+        for name in ("works/games", "works/music", "works/poetry"):
+            spec = sections.section_spec(name)["fields"]["date"]
+            self.assertEqual(spec.get("source"), "date", name)
+            self.assertEqual(spec.get("fill"), "today", name)
+
+
 if __name__ == "__main__":
     unittest.main()
