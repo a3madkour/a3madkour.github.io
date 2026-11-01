@@ -14,6 +14,12 @@ cd "$(dirname "$0")/.."
 
 separator() { printf "\n\033[1;34m── %s ──\033[0m\n" "$1"; }
 
+# A template can pass on a newer local Hugo and fail the build CI pins.
+pinned="$(sed -n 's/^ *HUGO_VERSION: *//p' .github/workflows/hugo.yaml | head -1)"
+if ! hugo version | grep -q "v$pinned[+-]"; then
+  printf "\033[1;33m⚠ local Hugo is not the %s CI pins; a green run here does not prove the CI build.\033[0m\n" "$pinned"
+fi
+
 separator "Pre-build linters + sibling tests"
 
 python3 tools/check-contrast.py

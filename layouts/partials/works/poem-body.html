@@ -62,10 +62,16 @@
 
     {{- $midMarkers := findRE $markerRE $line -}}
     {{- /* Hugo's HTML minifier collapses runs of literal spaces, and CSS
-           pre-wrap cannot restore what is no longer in the markup. A space that
-           follows another space (or the line start) is written as &nbsp; so
-           indentation and runs survive the build. */ -}}
-    {{- $esc := replaceRE `(^| ) ` "${1}&nbsp;" (htmlEscape $line) -}}
+           pre-wrap cannot restore what is no longer in the markup. Every space
+           in a run, and a lone leading space, is written as U+00A0 so
+           indentation and runs survive the build. A run is replaced by its own
+           length; the earlier alternating regex came out a space short on the
+           Hugo CI pins. */ -}}
+    {{- $esc := htmlEscape $line -}}
+    {{- range findRE `  +` $esc -}}
+      {{- $esc = replaceRE `  +` (strings.Repeat (len .) "\u00a0") $esc 1 -}}
+    {{- end -}}
+    {{- $esc = replaceRE `^ ` "\u00a0" $esc -}}
     {{- $lineHTML := "" -}}
 
     {{- if not $timed -}}
@@ -128,9 +134,10 @@
 {{- $body := delimit $stanzas "\n" -}}
 {{- /* restore escaped markers as literal text */ -}}
 {{- $body = replaceRE `⟦ESC:(\d{1,2}:\d{2}(?:\.\d{1,2})?)⟧` "[$1]" $body -}}
-{{- if not $timed -}}
-  {{- return $body -}}
+{{- /* one return: the Hugo CI pins rejects a second */ -}}
+{{- if $timed -}}
+  {{- $src := "" -}}
+  {{- with $audio -}}{{- $src = printf ` data-audio-src="%s"` (htmlEscape .) -}}{{- end -}}
+  {{- $body = printf "<div class=\"poem-synced\"%s data-duration=\"%g\">%s</div>" $src $maxT $body -}}
 {{- end -}}
-{{- $src := "" -}}
-{{- with $audio -}}{{- $src = printf ` data-audio-src="%s"` (htmlEscape .) -}}{{- end -}}
-{{- return (printf "<div class=\"poem-synced\"%s data-duration=\"%g\">%s</div>" $src $maxT $body) -}}
+{{- return $body -}}
