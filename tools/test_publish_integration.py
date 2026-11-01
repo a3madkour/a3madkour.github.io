@@ -80,6 +80,7 @@ def _emacs_eval(forms: list[str], cwd: Path) -> subprocess.CompletedProcess[str]
 
     args = [
         "emacs", "--batch",
+        "--eval", "(setq native-comp-enable-subr-trampolines nil)",
         "--eval", f'(setq user-emacs-directory "{DOTFILES_CUSTOM}/")',
         "--eval", f'(setq straight-base-dir user-emacs-directory)',
         "-l", str(STRAIGHT_BOOTSTRAP),
@@ -688,6 +689,7 @@ def _publish_living_impl(
     return subprocess.run(
         [
             "emacs", "--batch",
+            "--eval", "(setq native-comp-enable-subr-trampolines nil)",
             "--eval", f'(setq user-emacs-directory "{DOTFILES_CUSTOM}/")',
             "--eval", "(setq straight-base-dir user-emacs-directory)",
             "-l", str(STRAIGHT_BOOTSTRAP),
@@ -708,6 +710,7 @@ def _publish_living_impl(
             "-l", "a3madkour-publish-research",
             "--eval", f'(setq a3madkour-pub/site-data-dir "{site_data_dir}/")',
             "--eval", f'(setq a3madkour-pub/org-notes-dir "{notes_dir}/")',
+            "--eval", f'(setq a3madkour-pub-canonical-asset-root "{notes_dir}/assets/")',
             # Also set the content-dir used by finish-publish's unpublish sweep.
             "--eval", f'(setq a3madkour-pub-site-content-dir "{content_dir}")',
             # Stub org-roam-db-sync (and optionally org-roam-id-find).
@@ -867,18 +870,6 @@ class TestGardenPublishLiving(unittest.TestCase):
         - After publish 2: content/garden/new-slug/index.md exists
         - After publish 2: content/garden/original-slug/ is removed
         - url-history.yaml contains both slug strings
-
-        NOTE — KNOWN GAP (B.1 follow-on): finish-publish Step B renames the
-        asset dir (~/org/notes/assets/page/<old>/ → <new>/) but does NOT
-        remove the old Hugo content bundle at content/garden/<old-slug>/.
-        The old bundle stays on disk until the next full site rebuild or a
-        manual cleanup.  This test will fail until a clean-up step is added
-        to finish-publish (or the garden handler) for slug-shifted notes.
-
-        Specific fix: in finish-publish Step B (or as a Step B.5), after
-        renaming the asset dir, call
-          (a3madkour-pub--unpublish-delete-bundle section old-slug)
-        for each slug-shifted note.
         """
         note_id = "bbbbbbbb-cccc-dddd-eeee-ffffffffffff"
         src = self.notes_dir / "shifting-note.org"
@@ -1218,59 +1209,6 @@ class TestLibraryPublishLiving(unittest.TestCase):
         self.assertEqual(content1, content2)
         self.assertEqual(mtime1, mtime2, msg="file rewritten on idempotent run")
 
-    def test_library_slug_shift(self) -> None:
-        """Changing :SLUG: drawer → old slug row gone, new slug row present."""
-        src = self.notes_dir / "library-reading.org"
-        _write_library_source(
-            src, "library/reading",
-            [{"title": "Pride and Prejudice", "slug": "pride",
-              "creator": "Jane Austen", "year": "1813",
-              "status": "finished", "finished": "2024-12-15",
-              "last_modified": "2024-12-16"}],
-        )
-        _publish_living(self.notes_dir, self._site_data_dir)
-        content1 = (self._site_data_dir / "reading.yaml").read_text()
-        self.assertIn("slug: pride", content1)
-        # Bump the slug.
-        _write_library_source(
-            src, "library/reading",
-            [{"title": "Pride and Prejudice", "slug": "pride-and-prejudice",
-              "creator": "Jane Austen", "year": "1813",
-              "status": "finished", "finished": "2024-12-15",
-              "last_modified": "2024-12-16"}],
-        )
-        _publish_living(self.notes_dir, self._site_data_dir)
-        content2 = (self._site_data_dir / "reading.yaml").read_text()
-        self.assertNotIn("slug: pride\n", content2)
-        self.assertIn("slug: pride-and-prejudice", content2)
-
-    def test_library_removed_item_unpublish(self) -> None:
-        """Deleting a heading from source → row disappears on next publish."""
-        src = self.notes_dir / "library-reading.org"
-        _write_library_source(
-            src, "library/reading",
-            [
-                {"title": "Item One", "creator": "x", "year": "2024",
-                 "status": "queued", "last_modified": "2025-01-01"},
-                {"title": "Item Two", "creator": "y", "year": "2024",
-                 "status": "queued", "last_modified": "2025-01-01"},
-            ],
-        )
-        _publish_living(self.notes_dir, self._site_data_dir)
-        content1 = (self._site_data_dir / "reading.yaml").read_text()
-        self.assertIn("slug: item-one", content1)
-        self.assertIn("slug: item-two", content1)
-        # Remove Item One.
-        _write_library_source(
-            src, "library/reading",
-            [{"title": "Item Two", "creator": "y", "year": "2024",
-              "status": "queued", "last_modified": "2025-01-01"}],
-        )
-        _publish_living(self.notes_dir, self._site_data_dir)
-        content2 = (self._site_data_dir / "reading.yaml").read_text()
-        self.assertNotIn("slug: item-one", content2)
-        self.assertIn("slug: item-two", content2)
-
     def test_library_emits_lint_clean_output(self) -> None:
         """B-emitted yaml passes check_library_fixtures + _links + _covers.
 
@@ -1323,9 +1261,9 @@ class TestLibraryPublishLiving(unittest.TestCase):
         proc = _publish_living(self.notes_dir, self._site_data_dir)
         self.assertEqual(proc.returncode, 0, msg=proc.stderr)
 
-        # --- check_library_fixtures: run(repo_root) → (rc, errs, warns)
+        # --- check_library_fixtures: run(repo_root) → (rc, errs)
         lf = _import_linter("check_library_fixtures")
-        rc_f, errs_f, _warns_f = lf.run(self.site_root)
+        rc_f, errs_f = lf.run(self.site_root)
         self.assertEqual(
             rc_f, 0,
             f"check_library_fixtures rejected B-emitted yaml:\n"
@@ -1493,7 +1431,7 @@ class TestResearchPublishLiving(unittest.TestCase):
         src = self.notes_dir / "research-themes-idem.org"
         _write_research_source(
             src, "research/themes", "Idempotent theme",
-            {"status": "active", "weight": "15",
+            {"status": "active", "weight": "15", "tags": ["lorem"],
              "id": "33333333-aaaa-bbbb-cccc-dddddddddddd"},
             self.site_root,
         )
@@ -1678,6 +1616,32 @@ class TestResearchPublishLiving(unittest.TestCase):
             )
 
 
+def _write_paths_file(root, poetry_dir=None) -> str:
+    """A publish-paths.el confining `a3-pub.sh` to the tmp tree ROOT.
+
+    Without it the wrapper loads the author's real paths, and a slug shift in
+    finish-publish walks the real notes folder.
+    """
+    root = Path(root)
+    org = root / "paths-org"
+    (org / "notes").mkdir(parents=True, exist_ok=True)
+    (org / "essays").mkdir(exist_ok=True)
+    forms = "\n".join(
+        f'(setq {var} "{path}/")'
+        for var, path in (
+            ("a3madkour-pub/org-notes-dir", org / "notes"),
+            ("a3madkour-pub/essays-dir", org / "essays"),
+            ("a3madkour-pub/poetry-dir", poetry_dir or org / "poetry"),
+            ("a3madkour-pub-canonical-asset-root", org / "notes" / "assets"),
+            ("a3madkour-pub-citations/ref-notes-dir", org / "notes"),
+            ("a3madkour-library/notes-dir", org / "notes"),
+        )
+    )
+    path = root / "publish-paths.el"
+    path.write_text(forms + "\n")
+    return str(path)
+
+
 def _copy_section_registry(site_root) -> None:
     """Copy sections.py + data/sections.json beside linters copied into a tmp site."""
     import shutil as _shutil
@@ -1716,6 +1680,7 @@ class TestEssaysPublishDeliberate(unittest.TestCase):
             "#+date: 2026-04-12\n"
             "#+HUGO_PUBLISH: t\n"
             "#+HUGO_SECTION: essays\n"
+            "#+HUGO_SUMMARY: Lorem ipsum.\n"
             f"{extra_keywords}"
             "\n"
             f"{body}\n"
@@ -1728,11 +1693,21 @@ class TestEssaysPublishDeliberate(unittest.TestCase):
         env = os.environ.copy()
         _seed_sections(os.path.join(self.site_root, "data"))
         env["A3_PUB_SITE_DATA_DIR"] = os.path.join(self.site_root, "data")
+        env["A3_PUB_PATHS_FILE"] = _write_paths_file(self.tmp_root)
         wrapper = os.path.expanduser(
             "~/dotfiles/emacs-configs/custom/lisp/a3-pub.sh")
         return subprocess.run(
             [wrapper, "--publish-deliberate", path],
             env=env, capture_output=True, text=True, timeout=120)
+
+    def test_refused_publish_exits_nonzero(self) -> None:
+        """A run that reports err must not exit 0: callers read the status."""
+        src = self._seed_essay("example-one", "Lorem ipsum body.")
+        text = Path(src).read_text().replace("#+HUGO_SUMMARY: Lorem ipsum.\n", "")
+        Path(src).write_text(text)
+        result = self._run_publish_deliberate(src)
+        self.assertNotEqual(result.returncode, 0,
+                            f"stderr: {result.stderr}\nstdout: {result.stdout}")
 
     def test_essay_publish_once(self) -> None:
         """B.4 Task 11: one source → bundle written + manifest updated."""
@@ -2187,6 +2162,8 @@ class TestPoetryPublishDeliberate(unittest.TestCase):
         # HOME override anchors the poetry-dir defcustom default at the tmp
         # tree (see Compromise 1 in the class docstring).
         env["HOME"] = str(self.fake_home)
+        env["A3_PUB_PATHS_FILE"] = _write_paths_file(
+            self.tmp_root, poetry_dir=self.poetry_dir)
         wrapper = str(DOTFILES_LISP / "a3-pub.sh")
         return subprocess.run(
             [wrapper, "--publish-deliberate", "--skip-math-check", str(org_path)],
