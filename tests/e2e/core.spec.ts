@@ -103,6 +103,9 @@ const SAMPLE_LINES = [
   '* nisi aliquip',
   'ex a/b/c 2*3*4 <b> & ea',
   'Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua ut enim ad minim veniam quis nostrud.',
+  '    Tempor incididunt.',
+  'Ut    labore et.',
+  'see http://example.com/ dolore',
 ];
 
 for (const slug of ['example-poem-marks', 'example-poem-marks-timed']) {
@@ -116,6 +119,9 @@ for (const slug of ['example-poem-marks', 'example-poem-marks-timed']) {
     await expect(page.locator('.works-poem-body')).not.toContainText('aria-label');
     await expect(page.locator('.works-poem-body strong').first()).toHaveText('nostrud');
     await expect(page.locator('.works-poem-body em').first()).toHaveText('exercitation');
+    // A URL's slashes are not an italic mark; a real /mark/ still is.
+    await expect(page.locator('.works-poem-body .poem-line').filter({ hasText: 'example.com' }).locator('em')).toHaveCount(0);
+    await expect(page.locator('.works-poem-body em')).toHaveCount(1);
   });
 }
 

@@ -3,7 +3,7 @@ title: "Example Poem Marks Timed"
 date: 2026-11-01
 lastmod: 2026-11-01
 draft: false
-lines: 14
+lines: 19
 audio_url: "https://example.com/example-reading.mp3"
 ---
 
@@ -22,5 +22,8 @@ audio_url: "https://example.com/example-reading.mp3"
 [00:12]* nisi aliquip
 [00:13]ex a/b/c 2*3*4 <b> & ea
 [00:14]Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua ut enim ad minim veniam quis nostrud.
+[00:15]	Tempor incididunt.
+[00:16]Ut	labore et.
+[00:17]see http://example.com/ dolore
   [00:20]*lorem ipsum* dolor
 next untimed

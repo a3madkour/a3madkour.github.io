@@ -27,6 +27,9 @@
        hand-authored poetry / fixtures (no untrusted input). */ -}}
 {{- $raw = replaceRE `\\\[(\d{1,2}:\d{2}(?:\.\d{1,2})?)\]` "⟦ESC:$1⟧" $raw -}}
 
+{{- /* A tab would collapse to one space on the page; four spaces survive. */ -}}
+{{- $raw = replace $raw "\t" "    " -}}
+
 {{- $timed := gt (len (findRE $markerRE $raw)) 0 -}}
 {{- $lines := split $raw "\n" -}}
 {{- $maxT := 0.0 -}}

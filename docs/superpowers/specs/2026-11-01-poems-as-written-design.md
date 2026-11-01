@@ -44,7 +44,7 @@ The ox-hugo export still runs, but only for frontmatter. Its body is discarded.
 
 A new function, `a3madkour-pub-poetry--raw-body (file)`, reads the poem from the org file:
 
-- It skips the file-level property drawer and every line matching `^#\+`, wherever it appears. Those lines are settings, not verse.
+- It skips the file-level property drawer and every line matching `^[ \t]*#\+` (indented or not), wherever it appears. Those lines are settings, not verse.
 - It removes blank lines at the start and end.
 - It keeps everything else byte for byte, including `# `, `- `, `* `, indentation and `\[mm:ss]`.
 - It trims trailing whitespace at line ends, which a reader can never see.

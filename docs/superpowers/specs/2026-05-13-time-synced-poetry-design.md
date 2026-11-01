@@ -1,5 +1,7 @@
 # Time-synced poetry — design
 
+**Poem body (2026-11-01):** how a poem's lines reach the page is superseded; bodies bypass Org and Goldmark and render through one partial. See `docs/superpowers/specs/2026-11-01-poems-as-written-design.md`.
+
 **Phase:** Independent works/poetry runtime slice. Self-contained — no dependencies on other queued features. Naturally slots after Phase 8 close-out + Feature 1 (citation export).
 **Parent spec:** `docs/superpowers/specs/2026-05-03-personal-site-design.md`.
 **Origin:** `~/org/projects.org` TODO captured 2026-05-03 ("Pages on the website that are design for poetry where the words show up to the time", 1h effort).

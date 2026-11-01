@@ -1,12 +1,12 @@
 {{- /* Input: an already-escaped string. Output: the string with the two inline
        marks applied. /italic/ and *bold* only; nothing else is interpreted.
        A marker hugs its text and has a line edge, whitespace or punctuation
-       outside it, so a/b/c and 2*3*4 stay literal and "* x" is not a mark.
+       outside it (an italic's opening edge excludes : and /, so a URL stays literal), so a/b/c and 2*3*4 stay literal and "* x" is not a mark.
        Each pass consumes the separator after a match, so adjacent marks need a
        second pass. Sentinels (U+E000..E003) keep the emitted "</em>" from being
        read as a slash by the next pass; they become tags at the end. */ -}}
 {{- $s := . -}}
-{{- $i := `(^|[\s\p{P}])/(\S|\S.*?\S)/($|[\s\p{P}])` -}}
+{{- $i := `(^|[\s\p{Pd}\p{Ps}\p{Pe}\p{Pi}\p{Pf}\p{Pc}!"#%&'*,.;?@])/(\S|\S.*?\S)/($|[\s\p{P}])` -}}
 {{- $b := `(^|[\s\p{P}])\*(\S|\S.*?\S)\*($|[\s\p{P}])` -}}
 {{- range seq 2 -}}
   {{- $s = replaceRE $i "${1}\ue000${2}\ue001${3}" $s -}}
