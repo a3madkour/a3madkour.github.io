@@ -117,9 +117,13 @@ python3 tools/check_graph_chrome.py
 
 separator "Production build (HUGO_ENVIRONMENT=production strips drafts; matches CI)"
 
-# Kill any dev server first — `hugo --minify` poisons the dev-server CSS via
-# MIME mismatch if it's alive.
-pkill -f 'hugo server' 2>/dev/null || true
+# Kill this checkout's dev server first — `hugo --minify` poisons the dev-server
+# CSS via MIME mismatch if it's alive. One in another checkout has its own
+# public/ and is left running.
+for pid in $(pgrep -f 'hugo server' 2>/dev/null); do
+  cwd=$(readlink "/proc/$pid/cwd" 2>/dev/null || lsof -a -p "$pid" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p' || true)
+  if [ "$cwd" = "$(pwd -P)" ]; then kill "$pid" 2>/dev/null || true; fi
+done
 
 rm -rf public
 HUGO_ENVIRONMENT=production hugo --gc --minify
@@ -212,7 +216,11 @@ need_lhci_dep() {
 }
 
 need_lhci_dep npx "Install Node.js (pacman -S nodejs npm). LHCI runs via 'npx --yes @lhci/cli'."
-if ! command -v chromium >/dev/null 2>&1 && ! command -v google-chrome >/dev/null 2>&1; then
+# macOS has neither on PATH, so fall back to the Chromium Playwright installed.
+if ! command -v chromium >/dev/null 2>&1 && ! command -v google-chrome >/dev/null 2>&1 && [ -z "${CHROME_PATH:-}" ]; then
+  CHROME_PATH=$(node -e "import('@playwright/test').then(m => console.log(m.chromium.executablePath()))" 2>/dev/null) && [ -x "$CHROME_PATH" ] && export CHROME_PATH || unset CHROME_PATH
+fi
+if ! command -v chromium >/dev/null 2>&1 && ! command -v google-chrome >/dev/null 2>&1 && [ -z "${CHROME_PATH:-}" ]; then
   printf "\n\033[1;31m✘ No chromium/google-chrome on PATH.\033[0m Install one (pacman -S chromium) — LHCI drives a headless browser.\n"
   exit 1
 fi

@@ -22,7 +22,7 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: `python3 -m http.server ${PORT} --directory public --bind 127.0.0.1`,
+    command: `python3 tools/serve_public.py ${PORT} public`,
     url: `http://localhost:${PORT}/`,
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,
