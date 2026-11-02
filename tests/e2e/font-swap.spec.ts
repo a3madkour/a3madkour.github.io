@@ -7,7 +7,9 @@ import { test, expect } from '@playwright/test';
 // faces in §3 of main.css, and the swap itself must not move the page. This
 // measures whatever fallback the machine has, so CI measures Linux.
 
-test.use({ viewport: { width: 412, height: 823 }, isMobile: true, hasTouch: true });
+// The scale factor is Lighthouse's: text widths differ at 1x, and a sweep at 1x
+// missed a row that wraps at 1.75x.
+test.use({ viewport: { width: 412, height: 823 }, deviceScaleFactor: 1.75, isMobile: true, hasTouch: true });
 
 test('the font stacks start with the metric-matched fallbacks', async ({ page }) => {
   await page.goto('/garden/');
@@ -19,7 +21,7 @@ test('the font stacks start with the metric-matched fallbacks', async ({ page })
   expect(stacks[1]).toMatch(/^\s*"Petrona",\s*"Petrona Fallback",/);
 });
 
-for (const url of ['/garden/', '/works/', '/works/games/', '/credits/']) {
+for (const url of ['/garden/', '/works/', '/works/games/', '/credits/', '/research/questions/example-question-four/']) {
   test(`the web fonts swap in without moving ${url}`, async ({ page }) => {
     let release = () => {};
     const held = new Promise<void>((resolve) => { release = resolve; });

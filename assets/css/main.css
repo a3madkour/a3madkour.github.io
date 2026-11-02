@@ -2300,6 +2300,13 @@ details.spoiler[data-spoiler-level="heavy"] { border-left-width: 5px; }
   border: 1px solid var(--color-rule);
   border-radius: 4px;
 }
+/* Each meta row is fixed on a phone: a strip left to wrap on its own fits or
+   overflows by a few pixels depending on the font, and the swap then moves
+   the question below it. */
+@media (max-width: 480px) {
+  .research-question-status-strip .started,
+  .research-question-status-strip .question-tags { flex-basis: 100%; }
+}
 
 .question-statement {
   font-family: var(--font-body);
